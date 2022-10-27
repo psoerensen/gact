@@ -29,58 +29,62 @@
 
 #' @export
 #'
-gact <- function(version="gact-0.01", task="download", wkdir=NULL, what="lite") {
+gact <- function(version="t2dm-gact-0.01", task="download", wkdir=NULL, what="lite") {
+
  if(is.null(wkdir)) wkdir <- getwd()
- #if(dir.exists(wkdir))
- #dir.create(wkdir)
 
+ if(task=="download") {
 
- library(org.Hs.eg.db)
- library(reactome.db)
+ }
 
- # load Glist
- Glist_full_name <- paste0(wkdir,"/glist/",list.files(path="./glist",pattern="Glist"))
- Glist <- readRDS(Glist_full_name)
+ if(task=="prepare") {
+  gactdb <- NULL
+  gactdb$version <- version
 
- # update Glist$ldfiles
- ldfiles <- list.files(path=paste0(wkdir,"/glist"),pattern=".ld")
- rws <- sapply(ldfiles,function(x){grep(x,Glist$ldfiles)})
- rws <- order(rws)
- Glist$ldfiles <- paste0(wkdir,"/glist/",ldfiles[rws])
+  gactdb$traits <- c("t2d","cad")
+  gactdb$dirs <- list.dirs()
 
- gactdb <- NULL
- gactdb$version <- version
+  # load Glist
+  glistfile <- paste0(wkdir,"/glist/",list.files(path="./glist",pattern="Glist"))
+  if(file.exists(glistfile))  Glist <- readRDS(glistfile)
+  gactdb$glistfile <- glistfile
 
- gactdb$traits <- c("t2d","cad")
- gactdb$dirs <- list.dirs()
+  # update Glist$ldfiles
+  ldfiles <- list.files(path=paste0(wkdir,"/glist/ldfiles"),pattern=".ld")
+  rws <- sapply(ldfiles,function(x){grep(x,Glist$ldfiles)})
+  rws <- order(rws)
+  Glist$ldfiles <- paste0(wkdir,"/glist/",ldfiles[rws])
 
+  # features in the database
+  features <- c("Marker","Genes","Proteins","GO","Pathways",
+                "ProteinComplexes","ChemicalComplexes")
 
- glistfile <- paste0(wkdir,"/glist/",list.files(path="./glist",pattern="Glist"))
- gactdb$glistfile <- glistfile
+  gactdb$features <- features
 
- features <- c("Marker","Genes","Proteins","GO","Pathways",
-               "ProteinComplexes","ChemicalComplexes")
- gactdb$features <- features
+  featurefiles <- paste0(wkdir,"/statistics/gsea",features,".rds")
+  names(featurefiles) <- features
+  gactdb$featurefiles <- featurefiles
 
- featurefiles <- paste0(wkdir,"/statistics/gsea",features,".rds")
- names(featurefiles) <- features
- gactdb$featurefiles <- featurefiles
+  # update annotation
+  library(org.Hs.eg.db)
+  library(reactome.db)
 
- ensg2eg <- as.list(org.Hs.egENSEMBL2EG)
- eg2ensg <- org.Hs.egENSEMBL
- mapped_genes <- mappedkeys(eg2ensg)
- eg2ensg <- as.list(eg2ensg[mapped_genes])
- eg2sym <- org.Hs.egSYMBOL
- mapped_genes <- mappedkeys(eg2sym)
- eg2sym <- as.list(eg2sym[mapped_genes])
- ensg2sym <- sapply(ensg2eg, function(x){paste(unlist(eg2sym[x], use.names=FALSE),collapse=" ")})
+  ensg2eg <- as.list(org.Hs.egENSEMBL2EG)
+  eg2ensg <- org.Hs.egENSEMBL
+  mapped_genes <- mappedkeys(eg2ensg)
+  eg2ensg <- as.list(eg2ensg[mapped_genes])
+  eg2sym <- org.Hs.egSYMBOL
+  mapped_genes <- mappedkeys(eg2sym)
+  eg2sym <- as.list(eg2sym[mapped_genes])
+  ensg2sym <- sapply(ensg2eg, function(x){paste(unlist(eg2sym[x], use.names=FALSE),collapse=" ")})
 
- gactdb$ensg2eg <- ensg2eg
- gactdb$eg2ensg <- eg2ensg
- gactdb$eg2sym <- eg2sym
- gactdb$ensg2sym <- ensg2sym
+  gactdb$ensg2eg <- ensg2eg
+  gactdb$eg2ensg <- eg2ensg
+  gactdb$eg2sym <- eg2sym
+  gactdb$ensg2sym <- ensg2sym
 
- gactdb$pathways <- as.list(reactomePATHID2EXTID)
+  gactdb$pathways <- as.list(reactomePATHID2EXTID)
+ }
 
  return(gactdb)
 }
@@ -88,7 +92,7 @@ gact <- function(version="gact-0.01", task="download", wkdir=NULL, what="lite") 
 #' @export
 #'
 getStat <- function(GACTdb=NULL, feature=NULL, featureID=NULL,
-                    studyID=NULL, trait="T2D", threshold=1,
+                    studyID=NULL, trait="t2d", threshold=1,
                     format="data.frame", hyperlink=FALSE, cls=NULL) {
 
  features <- c("Marker","Genes","Proteins","GO","Pathways",
