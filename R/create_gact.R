@@ -48,11 +48,12 @@ gact <- function(version="gact-0.01", task="download", wkdir=NULL, what="lite") 
  rws <- order(rws)
  Glist$ldfiles <- paste0(wkdir,"/glist/",ldfiles[rws])
 
- gactdb$traits <- c("t2d","cad")
- gactdb_dirs <- list.dirs()
-
  gactdb <- NULL
  gactdb$version <- version
+
+ gactdb$traits <- c("t2d","cad")
+ gactdb$dirs <- list.dirs()
+
 
  glistfile <- paste0(wkdir,"/glist/",list.files(path="./glist",pattern="Glist"))
  gactdb$glistfile <- glistfile
