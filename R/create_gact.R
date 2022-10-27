@@ -29,8 +29,8 @@
 
 #' @export
 #'
-gact <- function(version="gact-0.01", task="download", what="lite") {
- #if(is.null(wkdir)) wkdir <- getwd()
+gact <- function(version="gact-0.01", task="download", wkdir=NULL, what="lite") {
+ if(is.null(wkdir)) wkdir <- getwd()
  #if(dir.exists(wkdir))
  #dir.create(wkdir)
 
