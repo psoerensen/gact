@@ -113,11 +113,11 @@ getStat <- function(GACTdb=NULL, feature=NULL, featureID=NULL,
 
  if(feature=="Genes") {
   if(!hyperlink) {
-   res <- cbind(rownames(res),gactdb$ensg2sym[rownames(res)], res)
+   res <- cbind(rownames(res),GACTdb$ensg2sym[rownames(res)], res)
    colnames(res)[1:2] <- c("Ensembl Gene ID","Symbol")
   }
   if(hyperlink) {
-   res <- cbind(rownames(res),rownames(res),gactdb$ensg2sym[rownames(res)], res)
+   res <- cbind(rownames(res),rownames(res),GACTdb$ensg2sym[rownames(res)], res)
    res2hyperlink_ensembl <- paste0("http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",res[,1])
    res2hyperlink_opentarget <- paste0("https://platform.opentargets.org/target/",res[,1])
    colnames(res)[1:3] <- c("Ensembl Gene ID","Open Target","Symbol")
