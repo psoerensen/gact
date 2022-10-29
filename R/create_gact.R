@@ -51,7 +51,7 @@ gact <- function(version="t2dm-gact-0.01", task="download", wkdir=NULL, what="li
                 "ProteinComplexes","ChemicalComplexes")
 
   for( feature in features) {
-   url <- paste0("https://github.com/psoerensen/gctdb/raw/main/",version,"/statistics/gsea",feature,".rds")
+   url <- paste0("https://github.com/psoerensen/gdtdb/raw/main/",version,"/statistics/gsea",feature,".rds")
    destfile <- paste0(dbstatdir,"gsea",feature,".rds")
    download.file( url=url, mode = "wb",  destfile=destfile)
   }
