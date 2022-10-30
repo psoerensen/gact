@@ -29,7 +29,7 @@
 
 #' @export
 #'
-gact <- function(version="t2dm-gact-0.01", task="download", wkdir=NULL, what="lite") {
+gact <- function(version="t2dm-gact-0.0.1", task="download", wkdir=NULL, what="lite") {
 
  if(is.null(wkdir)) wkdir <- getwd()
 
@@ -39,11 +39,15 @@ gact <- function(version="t2dm-gact-0.01", task="download", wkdir=NULL, what="li
   #wkdir <- "C:/Users/au223366/Dropbox/Projects/balder"
   if(is.null(wkdir)) wkdir <- getwd()
   dbdir <- paste0(wkdir,"/",version)
-  dbstatdir <- paste0(wkdir,"/",version,"/statistics/")
+  gtestdir <- paste0(wkdir,"/",version,"/gtest/")
+  gstatdir <- paste0(wkdir,"/",version,"/gstat/")
+  gsetsdir <- paste0(wkdir,"/",version,"/gsets/")
   if(dir.exists(dbdir)) stop(paste("Directory:",dbdir,"allready exists"))
   if(!dir.exists(dbdir)) {
    dir.create(dbdir)
-   dir.create(dbstatdir)
+   dir.create(gtestdir)
+   dir.create(gstatdir)
+   dir.create(gsetsdir)
   }
 
   # download feature files in the database
@@ -51,10 +55,40 @@ gact <- function(version="t2dm-gact-0.01", task="download", wkdir=NULL, what="li
                 "ProteinComplexes","ChemicalComplexes")
 
   for( feature in features) {
-   url <- paste0("https://github.com/psoerensen/gdtdb/raw/main/",version,"/statistics/gsea",feature,".rds")
-   destfile <- paste0(dbstatdir,"gsea",feature,".rds")
+   url <- paste0("https://github.com/psoerensen/gdtdb/raw/main/",version,"/gtest/gsea",feature,".rds")
+   destfile <- paste0(gtestdir,"gsea",feature,".rds")
    download.file( url=url, mode = "wb",  destfile=destfile)
   }
+
+  message("Downloading summary statistics")
+  url_stat <- "https://www.dropbox.com/s/9t01hctxl3e8jg1/gstat.rds?dl=1"
+  destfile <- paste0(gstatdir,"gstat.rds")
+  download.file(url=url_stat, mode = "wb", dest=destfile)
+
+  urls <- c("https://www.dropbox.com/s/bpf6z8qx28yrhgk/eg2rsids_10kb.rds?dl=1",
+            "https://www.dropbox.com/s/hlfb8dntehq7m4u/ensg2rsids_10kb.rds?dl=1",
+            "https://www.dropbox.com/s/n0dx9dvip2plxy7/ensp2rsids_10kb.rds?dl=1",
+            "https://www.dropbox.com/s/p7yn8tude5irfw4/ensg2sym.rds?dl=1",
+            "https://www.dropbox.com/s/f9db0lr6s63h8m8/go.rds?dl=1",
+            "https://www.dropbox.com/s/9fojtbh8augb1d9/reactome.rds?dl=1",
+            "https://www.dropbox.com/s/p1z9o6afxrf36pu/string.rds?dl=1",
+            "https://www.dropbox.com/s/dyvggmr0lty9fwi/stitch.rds?dl=1")
+
+  names(urls) <- c("eg2rsids_10kb.rds",
+                   "ensg2rsids_10kb.rds",
+                   "ensp2rsids_10kb.rds",
+                   "ensg2sym.rds",
+                   "go.rds",
+                   "reactome.rds",
+                   "string.rds",
+                   "stitch.rds")
+
+  for (feature in names(urls)) {
+   message(paste("Downloading file:",feature))
+   destfile <- paste0(gsetsdir,feature)
+   download.file(url=urls[feature], mode = "wb", dest=destfile)
+  }
+
 
   gactdb <- NULL
   gactdb$version <- version
@@ -64,9 +98,12 @@ gact <- function(version="t2dm-gact-0.01", task="download", wkdir=NULL, what="li
 
   gactdb$features <- features
 
-  featurefiles <- paste0(dbstatdir,"gsea",features,".rds")
+  featurefiles <- paste0(gtestdir,"gsea",features,".rds")
   names(featurefiles) <- features
   gactdb$featurefiles <- featurefiles
+  gactdb$gsetsfiles <- paste0(gsetsdir,names(urls))
+  gactdb$gstatfiles <- paste0(gstatdir,"gstat.rds")
+
 
 
   # load Glist
@@ -82,25 +119,10 @@ gact <- function(version="t2dm-gact-0.01", task="download", wkdir=NULL, what="li
    Glist$ldfiles <- paste0(wkdir,"/glist/",ldfiles[rws])
   }
 
-  # update annotation
-  library(org.Hs.eg.db)
-  library(reactome.db)
-
-  ensg2eg <- as.list(org.Hs.egENSEMBL2EG)
-  eg2ensg <- org.Hs.egENSEMBL
-  mapped_genes <- mappedkeys(eg2ensg)
-  eg2ensg <- as.list(eg2ensg[mapped_genes])
-  eg2sym <- org.Hs.egSYMBOL
-  mapped_genes <- mappedkeys(eg2sym)
-  eg2sym <- as.list(eg2sym[mapped_genes])
-  ensg2sym <- sapply(ensg2eg, function(x){paste(unlist(eg2sym[x], use.names=FALSE),collapse=" ")})
-
-  gactdb$ensg2eg <- ensg2eg
-  gactdb$eg2ensg <- eg2ensg
-  gactdb$eg2sym <- eg2sym
-  gactdb$ensg2sym <- ensg2sym
-
-  gactdb$pathways <- as.list(reactomePATHID2EXTID)
+  #gactdb$ensg2eg <- ensg2eg
+  #gactdb$eg2ensg <- eg2ensg
+  #gactdb$eg2sym <- eg2sym
+  gactdb$ensg2sym <- readRDS(paste0(gsetsdir,"ensg2sym.rds"))
 
  }
 
@@ -132,25 +154,6 @@ gact <- function(version="t2dm-gact-0.01", task="download", wkdir=NULL, what="li
   names(featurefiles) <- features
   gactdb$featurefiles <- featurefiles
 
-  # update annotation
-  library(org.Hs.eg.db)
-  library(reactome.db)
-
-  ensg2eg <- as.list(org.Hs.egENSEMBL2EG)
-  eg2ensg <- org.Hs.egENSEMBL
-  mapped_genes <- mappedkeys(eg2ensg)
-  eg2ensg <- as.list(eg2ensg[mapped_genes])
-  eg2sym <- org.Hs.egSYMBOL
-  mapped_genes <- mappedkeys(eg2sym)
-  eg2sym <- as.list(eg2sym[mapped_genes])
-  ensg2sym <- sapply(ensg2eg, function(x){paste(unlist(eg2sym[x], use.names=FALSE),collapse=" ")})
-
-  gactdb$ensg2eg <- ensg2eg
-  gactdb$eg2ensg <- eg2ensg
-  gactdb$eg2sym <- eg2sym
-  gactdb$ensg2sym <- ensg2sym
-
-  gactdb$pathways <- as.list(reactomePATHID2EXTID)
  }
 
  return(gactdb)
