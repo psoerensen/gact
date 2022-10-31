@@ -61,18 +61,20 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download", wkdir=
   }
 
   message("Downloading summary statistics")
-  url_stat <- "https://www.dropbox.com/s/9t01hctxl3e8jg1/gstat.rds?dl=1"
+
+  url_stat <- "https://www.dropbox.com/s/qrcivih31iuuril/stat.rds?dl=1"
   destfile <- paste0(gstatdir,"gstat.rds")
   download.file(url=url_stat, mode = "wb", dest=destfile)
 
-  urls <- c("https://www.dropbox.com/s/bpf6z8qx28yrhgk/eg2rsids_10kb.rds?dl=1",
-            "https://www.dropbox.com/s/hlfb8dntehq7m4u/ensg2rsids_10kb.rds?dl=1",
-            "https://www.dropbox.com/s/n0dx9dvip2plxy7/ensp2rsids_10kb.rds?dl=1",
-            "https://www.dropbox.com/s/p7yn8tude5irfw4/ensg2sym.rds?dl=1",
-            "https://www.dropbox.com/s/f9db0lr6s63h8m8/go.rds?dl=1",
-            "https://www.dropbox.com/s/9fojtbh8augb1d9/reactome.rds?dl=1",
-            "https://www.dropbox.com/s/p1z9o6afxrf36pu/string.rds?dl=1",
-            "https://www.dropbox.com/s/dyvggmr0lty9fwi/stitch.rds?dl=1")
+
+  urls <- c("https://www.dropbox.com/s/ijtc7l6hgpaieo1/eg2rsids_10kb.rds?dl=1",
+            "https://www.dropbox.com/s/0aqbqa7ihrg6i2e/ensg2rsids_10kb.rds?dl=1",
+            "https://www.dropbox.com/s/p3ut5dwfx0zw4v1/ensp2rsids_10kb.rds?dl=1",
+            "https://www.dropbox.com/s/1py37zd92ttsvnp/ensg2sym.rds?dl=1",
+            "https://www.dropbox.com/s/2ggu4u5hp406cif/go.rds?dl=1",
+            "https://www.dropbox.com/s/uryyxnjyhxa9azf/reactome.rds?dl=1",
+            "https://www.dropbox.com/s/v5d4pvdwnerfq7o/string.rds?dl=1",
+            "https://www.dropbox.com/s/ny94ibdbqhtg62h/stitch.rds?dl=1")
 
   names(urls) <- c("eg2rsids_10kb.rds",
                    "ensg2rsids_10kb.rds",
@@ -119,9 +121,6 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download", wkdir=
    Glist$ldfiles <- paste0(wkdir,"/glist/",ldfiles[rws])
   }
 
-  #GAlist$ensg2eg <- ensg2eg
-  #GAlist$eg2ensg <- eg2ensg
-  #GAlist$eg2sym <- eg2sym
   GAlist$ensg2sym <- readRDS(paste0(gsetsdir,"ensg2sym.rds"))
 
  }
