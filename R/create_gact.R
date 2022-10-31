@@ -165,13 +165,22 @@ getStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
                     studyID=NULL, trait="t2d", threshold=1,
                     format="data.frame", hyperlink=FALSE, cls=NULL) {
 
- features <- c("Marker","Genes","Proteins","GO","Pathways",
+ features <- c("Markers","Genes","Proteins","GO","Pathways",
                "ProteinComplexes","ChemicalComplexes")
  header <- c("Marker ID","Gene ID","Protein ID","GO ID","Pathway ID",
              "Protein ID","Chemical ID")
  names(header) <- features
 
+ if(feature=="Markers") {
+  res <- readRDS(GAlist$gstatfiles)
+  rownames(res) <- res$rsids
+  return(res)
+ }
+
  if(!feature%in%GAlist$features) stop(paste("feature:",feature,"not in GACT database"))
+
+
+
  res <- readRDS(GAlist$featurefiles[feature])
  #cls <- c("z_0.001","z_0.05","z_0.95")
  if(!is.null(cls)) {
