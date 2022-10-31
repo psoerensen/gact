@@ -12,7 +12,7 @@
 #' linked to different genomic features (e.g. genes, proteins, chemical-complexes,
 #' protein-complexes, biological pathways) are provided.
 #'
-#' @param GACTdb list object providing information about genomic associations for different traits
+#' @param GAlist list object providing information about genomic associations for different traits
 #' @param feature name of feature including "Marker","Genes","Proteins","GO","Pathways","ProteinComplexes","ChemicalComplexes"
 #' @param featureID is the feature specific IDs such as "GO:0000002"
 #' @param studyID is the study specific ID (not used currently)
@@ -29,7 +29,7 @@
 
 #' @export
 #'
-gact <- function(version="t2dm-gact-0.0.1", task="download", wkdir=NULL, what="lite") {
+gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download", wkdir=NULL, what="lite") {
 
  if(is.null(wkdir)) wkdir <- getwd()
 
@@ -90,19 +90,19 @@ gact <- function(version="t2dm-gact-0.0.1", task="download", wkdir=NULL, what="l
   }
 
 
-  gactdb <- NULL
-  gactdb$version <- version
+  GAlist <- NULL
+  GAlist$version <- version
 
-  gactdb$traits <- c("t2d")
-  gactdb$dirs <- list.dirs(dbdir)
+  GAlist$traits <- c("t2d")
+  GAlist$dirs <- list.dirs(dbdir)
 
-  gactdb$features <- features
+  GAlist$features <- features
 
   featurefiles <- paste0(gtestdir,"gsea",features,".rds")
   names(featurefiles) <- features
-  gactdb$featurefiles <- featurefiles
-  gactdb$gsetsfiles <- paste0(gsetsdir,names(urls))
-  gactdb$gstatfiles <- paste0(gstatdir,"gstat.rds")
+  GAlist$featurefiles <- featurefiles
+  GAlist$gsetsfiles <- paste0(gsetsdir,names(urls))
+  GAlist$gstatfiles <- paste0(gstatdir,"gstat.rds")
 
 
 
@@ -110,7 +110,7 @@ gact <- function(version="t2dm-gact-0.0.1", task="download", wkdir=NULL, what="l
   glistfile <- paste0(dbdir,"/glist/",list.files(path="./glist",pattern="Glist"))
   if(file.exists(glistfile))  {
    Glist <- readRDS(glistfile)
-   gactdb$glistfile <- glistfile
+   GAlist$glistfile <- glistfile
 
    # update Glist$ldfiles
    ldfiles <- list.files(path=paste0(wkdir,"/glist/ldfiles"),pattern=".ld")
@@ -119,24 +119,24 @@ gact <- function(version="t2dm-gact-0.0.1", task="download", wkdir=NULL, what="l
    Glist$ldfiles <- paste0(wkdir,"/glist/",ldfiles[rws])
   }
 
-  #gactdb$ensg2eg <- ensg2eg
-  #gactdb$eg2ensg <- eg2ensg
-  #gactdb$eg2sym <- eg2sym
-  gactdb$ensg2sym <- readRDS(paste0(gsetsdir,"ensg2sym.rds"))
+  #GAlist$ensg2eg <- ensg2eg
+  #GAlist$eg2ensg <- eg2ensg
+  #GAlist$eg2sym <- eg2sym
+  GAlist$ensg2sym <- readRDS(paste0(gsetsdir,"ensg2sym.rds"))
 
  }
 
  if(task=="prepare") {
-  gactdb <- NULL
-  gactdb$version <- version
+  GAlist <- NULL
+  GAlist$version <- version
 
-  gactdb$traits <- c("t2d","cad")
-  gactdb$dirs <- list.dirs()
+  GAlist$traits <- c("t2d","cad")
+  GAlist$dirs <- list.dirs()
 
   # load Glist
   glistfile <- paste0(wkdir,"/glist/",list.files(path="./glist",pattern="Glist"))
   if(file.exists(glistfile))  Glist <- readRDS(glistfile)
-  gactdb$glistfile <- glistfile
+  GAlist$glistfile <- glistfile
 
   # update Glist$ldfiles
   ldfiles <- list.files(path=paste0(wkdir,"/glist/ldfiles"),pattern=".ld")
@@ -148,20 +148,20 @@ gact <- function(version="t2dm-gact-0.0.1", task="download", wkdir=NULL, what="l
   features <- c("Marker","Genes","Proteins","GO","Pathways",
                 "ProteinComplexes","ChemicalComplexes")
 
-  gactdb$features <- features
+  GAlist$features <- features
 
   featurefiles <- paste0(wkdir,"/statistics/gsea",features,".rds")
   names(featurefiles) <- features
-  gactdb$featurefiles <- featurefiles
+  GAlist$featurefiles <- featurefiles
 
  }
 
- return(gactdb)
+ return(GAlist)
 }
 
 #' @export
 #'
-getStat <- function(GACTdb=NULL, feature=NULL, featureID=NULL,
+getStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
                     studyID=NULL, trait="t2d", threshold=1,
                     format="data.frame", hyperlink=FALSE, cls=NULL) {
 
@@ -171,8 +171,8 @@ getStat <- function(GACTdb=NULL, feature=NULL, featureID=NULL,
              "Protein ID","Chemical ID")
  names(header) <- features
 
- if(!feature%in%GACTdb$features) stop(paste("feature:",feature,"not in GACT database"))
- res <- readRDS(GACTdb$featurefiles[feature])
+ if(!feature%in%GAlist$features) stop(paste("feature:",feature,"not in GACT database"))
+ res <- readRDS(GAlist$featurefiles[feature])
  #cls <- c("z_0.001","z_0.05","z_0.95")
  if(!is.null(cls)) {
   #add check
@@ -189,11 +189,11 @@ getStat <- function(GACTdb=NULL, feature=NULL, featureID=NULL,
 
   if(feature=="Genes") {
    if(!hyperlink) {
-    res <- cbind(rownames(res),GACTdb$ensg2sym[rownames(res)], res)
+    res <- cbind(rownames(res),GAlist$ensg2sym[rownames(res)], res)
     colnames(res)[1:2] <- c("Ensembl Gene ID","Symbol")
    }
    if(hyperlink) {
-    res <- cbind(rownames(res),rownames(res),GACTdb$ensg2sym[rownames(res)], res)
+    res <- cbind(rownames(res),rownames(res),GAlist$ensg2sym[rownames(res)], res)
     res2hyperlink_ensembl <- paste0("http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",res[,1])
     res2hyperlink_opentarget <- paste0("https://platform.opentargets.org/target/",res[,1])
     colnames(res)[1:3] <- c("Ensembl Gene ID","Open Target","Symbol")
@@ -233,10 +233,10 @@ getStat <- function(GACTdb=NULL, feature=NULL, featureID=NULL,
 
 #' @export
 #'
-writeStat <- function(GACTdb=NULL, feature=NULL, featureID=NULL,
+writeStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
                       studyID=NULL, trait="T2D", threshold=1,
                       format="data.frame", file.csv=NULL, hyperlink=TRUE) {
- stat <- getStat(GACTdb=GACTdb, feature=feature, featureID=featureID,
+ stat <- getStat(GAlist=GAlist, feature=feature, featureID=featureID,
                  studyID=studyID, trait=trait, threshold=threshold,
                  format=format, hyperlink=hyperlink)
  write.csv2(stat,file=file.csv,row.names=FALSE)
