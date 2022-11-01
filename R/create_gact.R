@@ -73,8 +73,11 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download", wkdir=
             "https://www.dropbox.com/s/1py37zd92ttsvnp/ensg2sym.rds?dl=1",
             "https://www.dropbox.com/s/2ggu4u5hp406cif/go.rds?dl=1",
             "https://www.dropbox.com/s/uryyxnjyhxa9azf/reactome.rds?dl=1",
-            "https://www.dropbox.com/s/v5d4pvdwnerfq7o/string.rds?dl=1",
-            "https://www.dropbox.com/s/ny94ibdbqhtg62h/stitch.rds?dl=1")
+            "https://www.dropbox.com/s/9ah6aw0fborrp0z/string2ensg.rds?dl=1",
+            "https://www.dropbox.com/s/ny94ibdbqhtg62h/stitch.rds?dl=1",
+            "https://www.dropbox.com/s/q83q3mnvos8wdxk/reactome2ensg.rds?dl=1",
+            "https://www.dropbox.com/s/9ah6aw0fborrp0z/string2ensg.rds?dl=1",
+            "https://www.dropbox.com/s/7gj36rdec6spk9u/stitch2ensg.rds?dl=1")
 
   names(urls) <- c("eg2rsids_10kb.rds",
                    "ensg2rsids_10kb.rds",
@@ -83,7 +86,10 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download", wkdir=
                    "go.rds",
                    "reactome.rds",
                    "string.rds",
-                   "stitch.rds")
+                   "stitch.rds",
+                   "reactome2ensg.rds",
+                   "string2ensg.rds",
+                   "stitch2ensg.rds")
 
   for (feature in names(urls)) {
    message(paste("Downloading file:",feature))
@@ -123,6 +129,29 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download", wkdir=
 
   GAlist$ensg2sym <- readRDS(paste0(gsetsdir,"ensg2sym.rds"))
 
+  GAlist$gsets <- vector(mode = "list", length = length(GAlist$gsetsfiles))
+  for(i in 1:length(GAlist$gsetsfiles)) {
+   GAlist$gsets[[i]] <- readRDS(GAlist$gsetsfile[i])
+  }
+
+  stat <- readRDS(GAlist$gstatfiles)
+
+  GAlist$gsets[[1]] <- qgg:::mapSets(sets=GAlist$gsets[[1]], rsids=stat$rsids, index=FALSE)
+  GAlist$gsets[[2]] <- qgg:::mapSets(sets=GAlist$gsets[[2]], rsids=stat$rsids, index=FALSE)
+  GAlist$gsets[[3]] <- qgg:::mapSets(sets=GAlist$gsets[[3]], rsids=stat$rsids, index=FALSE)
+
+  names(GAlist$gsets) <- c("eg2rsids",
+                   "ensg2rsids",
+                   "ensp2rsids",
+                   "ensg2sym",
+                   "go",
+                   "reactome",
+                   "string",
+                   "stitch",
+                   "reactome2ensg",
+                   "string2ensg",
+                   "stitch2ensg")
+
  }
 
  if(task=="prepare") {
@@ -152,7 +181,6 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download", wkdir=
   featurefiles <- paste0(wkdir,"/statistics/gsea",features,".rds")
   names(featurefiles) <- features
   GAlist$featurefiles <- featurefiles
-
  }
 
  return(GAlist)
@@ -172,6 +200,7 @@ getStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
 
  if(feature=="Markers") {
   res <- readRDS(GAlist$gstatfiles)
+  res <- as.data.frame(res)
   rownames(res) <- res$rsids
   return(res)
  }
@@ -249,3 +278,29 @@ writeStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
                  format=format, hyperlink=hyperlink)
  write.csv2(stat,file=file.csv,row.names=FALSE)
 }
+
+
+#' @export
+#'
+getSets <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
+ sets <- NULL
+ if(feature=="Entres Genes") sets <- GAlist$gsets[[1]]
+ if(feature=="Genes") sets <- GAlist$gsets[[2]]
+ if(feature=="Proteins") sets <- GAlist$gsets[[3]]
+ if(feature=="Gene Symbol") sets <- GAlist$gsets[[4]]
+ if(feature=="GO") sets <- GAlist$gsets[[5]]
+ if(feature=="Pathways") sets <- GAlist$gsets[[6]]
+ if(feature=="ProteinComplexes") sets <- GAlist$gsets[[7]]
+ if(feature=="ChemicalComplexes") sets <- GAlist$gsets[[8]]
+ if(feature=="Pathways2Genes") sets <- GAlist$gsets[[9]]
+ if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
+ if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
+ if(!is.null(featureID)) {
+  inSet <- featureID%in%names(sets)
+  if(any(!inSet)) warning(paste("Some IDs not in data base:",featureID[!inSet]))
+  featureID <- featureID[featureID%in%names(sets)]
+  sets <- unlist(sets[featureID])
+ }
+ return(sets)
+ }
+
