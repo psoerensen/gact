@@ -136,8 +136,48 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   GAlist$gsets[[1]] <- qgg:::mapSets(sets=GAlist$gsets[[1]], rsids=GAlist$rsids, index=FALSE)
   GAlist$gsets[[2]] <- qgg:::mapSets(sets=GAlist$gsets[[2]], rsids=GAlist$rsids, index=FALSE)
   GAlist$gsets[[3]] <- qgg:::mapSets(sets=GAlist$gsets[[3]], rsids=GAlist$rsids, index=FALSE)
-
   names(GAlist$gsets) <- gsub(".rds","",names(urls))
+
+  # ensg2rsids <- GAlist$gsets[["ensg2rsids_10kb"]]
+  # ensg2rsids2index <- qgg:::mapSets(sets=ensg2rsids, rsids=GAlist$rsids, index=TRUE)
+  #
+  # fset <- getSets(GAlist=GAlist,feature="GO")
+  # #sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+  # sets <- lapply(fset,function(x){unique(unlist(ensg2rsids2index[x]))})
+  # sets <- sets[!sapply(sets,is.null)]
+  # setsfile <- paste0(GAlist$dirs["gsets"],"go2rsidsindex.rds")
+  # saveRDS(sets,file=setsfile)
+  #
+  # fset <- getSets(GAlist=GAlist,feature="Pathways2Genes")
+  # #sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+  # sets <- lapply(fset,function(x){unique(unlist(ensg2rsids2index[x]))})
+  # sets <- sets[!sapply(sets,is.null)]
+  # setsfile <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
+  # saveRDS(sets,file=setsfile)
+  #
+  # fset <- getSets(GAlist=GAlist,feature="ProteinComplexes2Genes")
+  # #sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+  # sets <- lapply(fset,function(x){unique(unlist(ensg2rsids2index[x]))})
+  # sets <- sets[!sapply(sets,is.null)]
+  # setsfile <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
+  # saveRDS(sets,file=setsfile)
+  #
+  # fset <- getSets(GAlist=GAlist,feature="ChemicalComplexes2Genes")
+  # #sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+  # sets <- lapply(fset,function(x){unique(unlist(ensg2rsids2index[x]))})
+  # sets <- sets[!sapply(sets,is.null)]
+  # setsfile <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
+  # saveRDS(sets,file=setsfile)
+  #
+  # GAlist$gsetsfiles[12] <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
+  # GAlist$gsetsfiles[13] <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
+  # GAlist$gsetsfiles[14] <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
+  # GAlist$gsetsfiles[15] <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
+  #
+  # names(GAlist$gsetsfiles[12]) <- "go2rsids"
+  # names(GAlist$gsetsfiles[13]) <- "reactome2rsids"
+  # names(GAlist$gsetsfiles[14]) <- "string2rsids"
+  # names(GAlist$gsetsfiles[15]) <- "stitch2rsids"
 
  }
 
@@ -174,17 +214,19 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   download.file(url=url_stat, mode = "wb", dest=destfile)
   GAlist$gstatfiles <- paste0(GAlist$dirs["gstat"],"gstat.rds")
 
-  url_stat <- "https://www.dropbox.com/s/jgdragns3a77wr4/GWAS_information.csv?dl=1"
+  url_stat <- "https://www.dropbox.com/s/0sizkeuw0sl51tn/GWAS_information.csv?dl=1"
   destfile <- paste0(GAlist$dirs["gstat"],"GWAS_information.csv")
   download.file(url=url_stat, mode = "wb", dest=destfile)
-  GAlist$study <- as.list(fread(destfile,data.table=FALSE))
+  GAlist$study <- as.list(read.csv2(destfile,data.table=FALSE))
 
   url_stat <- c("https://www.dropbox.com/s/iqd7c4bbds03nrg/GWAS1.txt.gz?dl=1",
                 "https://www.dropbox.com/s/pdv1fg280n86dwg/GWAS2.txt.gz?dl=1",
                 "https://www.dropbox.com/s/t3y05ex1uouo4qg/GWAS3.txt.gz?dl=1",
                 "https://www.dropbox.com/s/34yd6sxltqiv6e8/GWAS4.txt.gz?dl=1",
                 "https://www.dropbox.com/s/xyfadehraaajkol/GWAS5.txt.gz?dl=1",
-                "https://www.dropbox.com/s/2b5u6m60l6a5e82/GWAS6.txt.gz?dl=1")
+                "https://www.dropbox.com/s/2b5u6m60l6a5e82/GWAS6.txt.gz?dl=1",
+                "https://www.dropbox.com/s/zilng15j7c0kl8n/GWAS7.txt.gz?dl=1",
+                "https://www.dropbox.com/s/oo5o7suu2bx04bj/GWAS8.txt.gz?dl=1")
 
   for(study in 1:length(url_stat)) {
    destfile <- paste0(GAlist$dirs["gstat"],substring(url_stat[study],43,nchar(url_stat[study])-5))
@@ -192,23 +234,6 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   }
   GAlist$studyfiles <- paste0(GAlist$dirs["gstat"],GAlist$study$file,".gz")
   names(GAlist$studyfiles) <- GAlist$study$id
-
-  ncase <- GAlist$study$ncase
-  ncontrol <- GAlist$study$ncontrol
-  ntotal <- ncase + ncontrol
-  pcase <- ncase/(ncase+ncontrol)
-  GAlist$study$neff <- ntotal*pcase*(1-pcase)
-
-  if(is.null(GAlist$study$neff)) {
-   ncase <- GAlist$study$ncase
-   ncontrol <- GAlist$study$ncontrol
-   ntotal <- ncase + ncontrol
-   pcase <- ncase/(ncase+ncontrol)
-   GAlist$study$neff <- ntotal*pcase*(1-pcase)
-   quant <- GAlist$study$type=="quantitative"
-   GAlist$study$neff[quant] <- GAlist$study$n[quant]
-  }
-
 
  }
  if(what=="marker") {
@@ -225,9 +250,6 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
                        GAlist$markers$ea,
                        GAlist$markers$nea,sep="_")
  }
-
-
-
  return(GAlist)
 }
 
@@ -250,123 +272,6 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="gstat")
 
  }
- # if(task=="download") {
- #
- #  dbdir <- paste0(dbdir,"/",version)
- #  gseadir <- paste0(dbdir,"/gsea/")
- #  gstatdir <- paste0(dbdir,"/gstat/")
- #  gsetsdir <- paste0(dbdir,"/gsets/")
- #  if(dir.exists(dbdir)) stop(paste("Directory:",dbdir,"allready exists"))
- #  if(!dir.exists(dbdir)) {
- #   dir.create(dbdir)
- #   dir.create(gseadir)
- #   dir.create(gstatdir)
- #   dir.create(gsetsdir)
- #  }
- #
- #  # download feature files in the database
- #  features <- c("Genes","GO","Pathways",
- #                "ProteinComplexes","ChemicalComplexes")
- #
- #  for( feature in features) {
- #   url <- paste0("https://github.com/psoerensen/gdtdb/raw/main/",version,"/gsea/gsea",feature,".rds")
- #   destfile <- paste0(gseadir,"gsea",feature,".rds")
- #   download.file( url=url, mode = "wb",  destfile=destfile)
- #  }
- #
- #  message("Downloading summary statistics")
- #
- #  url_stat <- "https://www.dropbox.com/s/qrcivih31iuuril/stat.rds?dl=1"
- #  destfile <- paste0(gstatdir,"gstat.rds")
- #  download.file(url=url_stat, mode = "wb", dest=destfile)
- #
- #
- #  urls <- c("https://www.dropbox.com/s/ijtc7l6hgpaieo1/eg2rsids_10kb.rds?dl=1",
- #            "https://www.dropbox.com/s/0aqbqa7ihrg6i2e/ensg2rsids_10kb.rds?dl=1",
- #            "https://www.dropbox.com/s/p3ut5dwfx0zw4v1/ensp2rsids_10kb.rds?dl=1",
- #            "https://www.dropbox.com/s/1py37zd92ttsvnp/ensg2sym.rds?dl=1",
- #            "https://www.dropbox.com/s/2ggu4u5hp406cif/go.rds?dl=1",
- #            "https://www.dropbox.com/s/uryyxnjyhxa9azf/reactome.rds?dl=1",
- #            "https://www.dropbox.com/s/9ah6aw0fborrp0z/string2ensg.rds?dl=1",
- #            "https://www.dropbox.com/s/ny94ibdbqhtg62h/stitch.rds?dl=1",
- #            "https://www.dropbox.com/s/q83q3mnvos8wdxk/reactome2ensg.rds?dl=1",
- #            "https://www.dropbox.com/s/9ah6aw0fborrp0z/string2ensg.rds?dl=1",
- #            "https://www.dropbox.com/s/7gj36rdec6spk9u/stitch2ensg.rds?dl=1")
- #
- #  names(urls) <- c("eg2rsids_10kb.rds",
- #                   "ensg2rsids_10kb.rds",
- #                   "ensp2rsids_10kb.rds",
- #                   "ensg2sym.rds",
- #                   "go.rds",
- #                   "reactome.rds",
- #                   "string.rds",
- #                   "stitch.rds",
- #                   "reactome2ensg.rds",
- #                   "string2ensg.rds",
- #                   "stitch2ensg.rds")
- #
- #  for (feature in names(urls)) {
- #   message(paste("Downloading file:",feature))
- #   destfile <- paste0(gsetsdir,feature)
- #   download.file(url=urls[feature], mode = "wb", dest=destfile)
- #  }
- #
- #
- #  GAlist <- NULL
- #  GAlist$version <- version
- #
- #  GAlist$traits <- c("t2d")
- #  GAlist$dirs <- list.dirs(dbdir)
- #
- #  GAlist$features <- features
- #
- #  featurefiles <- paste0(gseadir,"gsea",features,".rds")
- #  names(featurefiles) <- features
- #  GAlist$featurefiles <- featurefiles
- #  GAlist$gsetsfiles <- paste0(gsetsdir,names(urls))
- #  GAlist$gstatfiles <- paste0(gstatdir,"gstat.rds")
- #
- #
- #
- #  # load Glist
- #  glistfile <- paste0(dbdir,"/glist/",list.files(path="./glist",pattern="Glist"))
- #  if(file.exists(glistfile))  {
- #   Glist <- readRDS(glistfile)
- #   GAlist$glistfile <- glistfile
- #
- #   # update Glist$ldfiles
- #   ldfiles <- list.files(path=paste0(dbdir,"/glist/ldfiles"),pattern=".ld")
- #   rws <- sapply(ldfiles,function(x){grep(x,Glist$ldfiles)})
- #   rws <- order(rws)
- #   Glist$ldfiles <- paste0(dbdir,"/glist/",ldfiles[rws])
- #  }
- #
- #  GAlist$ensg2sym <- readRDS(paste0(gsetsdir,"ensg2sym.rds"))
- #
- #  GAlist$gsets <- vector(mode = "list", length = length(GAlist$gsetsfiles))
- #  for(i in 1:length(GAlist$gsetsfiles)) {
- #   GAlist$gsets[[i]] <- readRDS(GAlist$gsetsfile[i])
- #  }
- #
- #  stat <- readRDS(GAlist$gstatfiles)
- #
- #  GAlist$gsets[[1]] <- qgg:::mapSets(sets=GAlist$gsets[[1]], rsids=stat$rsids, index=FALSE)
- #  GAlist$gsets[[2]] <- qgg:::mapSets(sets=GAlist$gsets[[2]], rsids=stat$rsids, index=FALSE)
- #  GAlist$gsets[[3]] <- qgg:::mapSets(sets=GAlist$gsets[[3]], rsids=stat$rsids, index=FALSE)
- #
- #  names(GAlist$gsets) <- c("eg2rsids",
- #                   "ensg2rsids",
- #                   "ensp2rsids",
- #                   "ensg2sym",
- #                   "go",
- #                   "reactome",
- #                   "string",
- #                   "stitch",
- #                   "reactome2ensg",
- #                   "string2ensg",
- #                   "stitch2ensg")
- #
- # }
 
  return(GAlist)
 }
@@ -493,6 +398,23 @@ getSets <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  return(sets)
  }
 
+#' @export
+#'
+removeStatDB <- function(GAlist,studyID=NULL) {
+ if (!any(studyID%in%GAlist$study$id)) stop("studyID not data base")
+ # remove summary statistics files
+ for (i in 1:length(studyID)) {
+  file.remove(GAlist$studyfiles[studyID[i]])
+ }
+ # update GAlist
+ study <- as.data.frame(GAlist$study)
+ study <- study[!study$id%in%studyID,]
+ GAlist$study <- as.list(study)
+ studyfiles <- GAlist$studyfiles
+ studyfiles <- studyfiles[!names(studyfiles)%in%studyID]
+ GAlist$studyfiles <- studyfiles
+ return(GAlist)
+}
 
 #' @export
 #'
@@ -505,11 +427,11 @@ updateStatDB <- function(GAlist=NULL,
                          n=NULL,
                          ncase=NULL,
                          ncontrol=NULL,
-                         reference="unknown") {
+                         reference="unknown",
+                         writeStatDB=TRUE,
+                         excludeMAFDIFF=0.05) {
 
- message("Perform quality control of external summary statistics")
- stat <- qcStatDB(GAlist=GAlist,stat=stat)
-
+ # Update study information only - useful if we need to add extra information
  message("Collecting information on external summary statistics")
  study_number <- length(GAlist$study$id)+1
  studyID <- paste0("GWAS",study_number)
@@ -531,16 +453,24 @@ updateStatDB <- function(GAlist=NULL,
 
  GAlist$study$reference[study_number] <- reference
  GAlist$study$source[study_number] <- source
- message(paste("Writing processed summary statistics til internal file:",
-               GAlist$study$file[study_number]))
- file_stat <- paste0(GAlist$dirs["gstat"],GAlist$study$file[study_number],".gz")
- if(file.exists(file_stat)) stop(paste("GWAS summary statistics file allready exists:",
-                                       file_stat))
- fwrite(stat, file_stat)
+
  file_stat_information <- paste0(GAlist$dirs["gstat"],"GWAS_information.csv")
  write.csv2(as.data.frame(GAlist$study),file=file_stat_information,row.names=FALSE)
  GAlist$studyfiles <- paste0(GAlist$dirs["gstat"],GAlist$study$file,".gz")
  names(GAlist$studyfiles) <- GAlist$study$id
+
+
+ # processing of summary statistics
+ if(writeStatDB) {
+  message("Perform quality control of external summary statistics")
+  stat <- qcStatDB(GAlist=GAlist,stat=stat, excludeMAFDIFF=excludeMAFDIFF)
+  message(paste("Writing processed summary statistics til internal file:",
+                GAlist$study$file[study_number]))
+  file_stat <- paste0(GAlist$dirs["gstat"],GAlist$study$file[study_number],".gz")
+  if(file.exists(file_stat)) stop(paste("GWAS summary statistics file allready exists:",
+                                        file_stat))
+  fwrite(stat, file_stat)
+ }
 
  return(GAlist)
 }
