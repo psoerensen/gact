@@ -190,6 +190,24 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
    destfile <- paste0(GAlist$dirs["gstat"],substring(url_stat[study],43,nchar(url_stat[study])-5))
    download.file(url=url_stat[study], mode = "wb", dest=destfile)
   }
+  GAlist$studyfiles <- paste0(GAlist$dirs["gstat"],GAlist$study$file,".gz")
+  names(GAlist$studyfiles) <- GAlist$study$id
+
+  ncase <- GAlist$study$ncase
+  ncontrol <- GAlist$study$ncontrol
+  ntotal <- ncase + ncontrol
+  pcase <- ncase/(ncase+ncontrol)
+  GAlist$study$neff <- ntotal*pcase*(1-pcase)
+
+  if(is.null(GAlist$study$neff)) {
+   ncase <- GAlist$study$ncase
+   ncontrol <- GAlist$study$ncontrol
+   ntotal <- ncase + ncontrol
+   pcase <- ncase/(ncase+ncontrol)
+   GAlist$study$neff <- ntotal*pcase*(1-pcase)
+   quant <- GAlist$study$type=="quantitative"
+   GAlist$study$neff[quant] <- GAlist$study$n[quant]
+  }
 
 
  }
@@ -503,6 +521,14 @@ updateStatDB <- function(GAlist=NULL,
  GAlist$study$n[study_number] <- n
  GAlist$study$ncase[study_number] <- ncase
  GAlist$study$ncontrol[study_number] <- ncontrol
+
+ if(type=="binary") {
+  ntotal <- ncase + ncontrol
+  pcase <- ncase/(ncase+ncontrol)
+  GAlist$study$neff[study_number] <- ntotal*pcase*(1-pcase)
+ }
+ if(type=="quantitative") GAlist$study$neff[study_number] <- n
+
  GAlist$study$reference[study_number] <- reference
  GAlist$study$source[study_number] <- source
  message(paste("Writing processed summary statistics til internal file:",
@@ -512,9 +538,42 @@ updateStatDB <- function(GAlist=NULL,
                                        file_stat))
  fwrite(stat, file_stat)
  file_stat_information <- paste0(GAlist$dirs["gstat"],"GWAS_information.csv")
- #fwrite(as.data.frame(GAlist$study), file_stat_information)
  write.csv2(as.data.frame(GAlist$study),file=file_stat_information,row.names=FALSE)
+ GAlist$studyfiles <- paste0(GAlist$dirs["gstat"],GAlist$study$file,".gz")
+ names(GAlist$studyfiles) <- GAlist$study$id
+
  return(GAlist)
+}
+
+#' @export
+#'
+getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE) {
+
+ if(is.null(studies)) studies <- GAlist$study$id
+ if(what=="list") {
+  b <- seb <- z <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
+  colnames(b) <- colnames(seb) <- colnames(z) <- studies
+  rownames(b) <- rownames(seb) <- rownames(z) <- GAlist$rsids
+  for (study in studies) {
+   message(paste("Extracting data from study:",study))
+   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
+   b[stat$rsids,study] <- stat$b
+   seb[stat$rsids,study] <- stat$seb
+   z[stat$rsids,study] <- stat$b/stat$seb
+  }
+  return(list(b=na.omit(b),seb=na.omit(seb),z=na.omit(z)))
+ }
+ if(what=="z") {
+  z <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
+  colnames(z) <- studies
+  rownames(z) <- GAlist$rsids
+  for (study in studies) {
+   message(paste("Extracting data from study:",study))
+   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
+   z[stat$rsids,study] <- stat$b/stat$seb
+  }
+  return(na.omit(z))
+ }
 }
 
 #' @export
