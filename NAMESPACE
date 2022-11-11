@@ -2,6 +2,7 @@
 export(gact)
 export(createDB)
 export(downloadDB)
+export(mapSetsDB)
 export(annotationDB)
 export(updateStatDB)
 export(removeStatDB)

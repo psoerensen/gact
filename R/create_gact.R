@@ -91,6 +91,49 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
  return(GAlist)
 }
 
+#' @export
+#'
+mapSetsDB <- function(GAlist=NULL) {
+ ensg2rsids <- GAlist$gsets[["ensg2rsids_10kb"]]
+
+ fset <- getSets(GAlist=GAlist,feature="GO")
+ sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+ sets <- sets[!sapply(sets,is.null)]
+ setsfile <- paste0(GAlist$dirs["gsets"],"go2rsidsindex.rds")
+ saveRDS(sets,file=setsfile)
+
+ fset <- getSets(GAlist=GAlist,feature="Pathways2Genes")
+ sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+ sets <- sets[!sapply(sets,is.null)]
+ setsfile <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
+ saveRDS(sets,file=setsfile)
+
+ fset <- getSets(GAlist=GAlist,feature="ProteinComplexes2Genes")
+ sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+ sets <- sets[!sapply(sets,is.null)]
+ setsfile <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
+ saveRDS(sets,file=setsfile)
+
+ fset <- getSets(GAlist=GAlist,feature="ChemicalComplexes2Genes")
+ sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+ sets <- sets[!sapply(sets,is.null)]
+ setsfile <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
+ saveRDS(sets,file=setsfile)
+
+ GAlist$gsetsfiles[12] <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
+ GAlist$gsetsfiles[13] <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
+ GAlist$gsetsfiles[14] <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
+ GAlist$gsetsfiles[15] <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
+
+ names(GAlist$gsetsfiles[12]) <- "go2rsids"
+ names(GAlist$gsetsfiles[13]) <- "reactome2rsids"
+ names(GAlist$gsetsfiles[14]) <- "string2rsids"
+ names(GAlist$gsetsfiles[15]) <- "stitch2rsids"
+ return(GAlist)
+}
+
+#' @export
+#'
 downloadDB <- function(GAlist=NULL, what=NULL) {
 
  if(is.null(what)) stop("Please specify what to download e.g. what=gsets")
@@ -137,47 +180,6 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   GAlist$gsets[[2]] <- qgg:::mapSets(sets=GAlist$gsets[[2]], rsids=GAlist$rsids, index=FALSE)
   GAlist$gsets[[3]] <- qgg:::mapSets(sets=GAlist$gsets[[3]], rsids=GAlist$rsids, index=FALSE)
   names(GAlist$gsets) <- gsub(".rds","",names(urls))
-
-  # ensg2rsids <- GAlist$gsets[["ensg2rsids_10kb"]]
-  # ensg2rsids2index <- qgg:::mapSets(sets=ensg2rsids, rsids=GAlist$rsids, index=TRUE)
-  #
-  # fset <- getSets(GAlist=GAlist,feature="GO")
-  # #sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
-  # sets <- lapply(fset,function(x){unique(unlist(ensg2rsids2index[x]))})
-  # sets <- sets[!sapply(sets,is.null)]
-  # setsfile <- paste0(GAlist$dirs["gsets"],"go2rsidsindex.rds")
-  # saveRDS(sets,file=setsfile)
-  #
-  # fset <- getSets(GAlist=GAlist,feature="Pathways2Genes")
-  # #sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
-  # sets <- lapply(fset,function(x){unique(unlist(ensg2rsids2index[x]))})
-  # sets <- sets[!sapply(sets,is.null)]
-  # setsfile <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
-  # saveRDS(sets,file=setsfile)
-  #
-  # fset <- getSets(GAlist=GAlist,feature="ProteinComplexes2Genes")
-  # #sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
-  # sets <- lapply(fset,function(x){unique(unlist(ensg2rsids2index[x]))})
-  # sets <- sets[!sapply(sets,is.null)]
-  # setsfile <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
-  # saveRDS(sets,file=setsfile)
-  #
-  # fset <- getSets(GAlist=GAlist,feature="ChemicalComplexes2Genes")
-  # #sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
-  # sets <- lapply(fset,function(x){unique(unlist(ensg2rsids2index[x]))})
-  # sets <- sets[!sapply(sets,is.null)]
-  # setsfile <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
-  # saveRDS(sets,file=setsfile)
-  #
-  # GAlist$gsetsfiles[12] <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
-  # GAlist$gsetsfiles[13] <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
-  # GAlist$gsetsfiles[14] <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
-  # GAlist$gsetsfiles[15] <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
-  #
-  # names(GAlist$gsetsfiles[12]) <- "go2rsids"
-  # names(GAlist$gsetsfiles[13]) <- "reactome2rsids"
-  # names(GAlist$gsetsfiles[14]) <- "string2rsids"
-  # names(GAlist$gsetsfiles[15]) <- "stitch2rsids"
 
  }
 
@@ -271,6 +273,11 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="gsea")
   GAlist <- downloadDB(GAlist=GAlist, what="gstat")
 
+  # Step 3: Create marker sets from database:
+  if(what=="full") {
+   message("Creating full marker sets - this make take some time")
+   GAlist <- mapSetsDB(GAlist=GAlist)
+  }
  }
 
  return(GAlist)
