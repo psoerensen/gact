@@ -99,7 +99,7 @@ mapSetsDB <- function(GAlist=NULL) {
  fset <- getSets(GAlist=GAlist,feature="GO")
  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
  sets <- sets[!sapply(sets,is.null)]
- setsfile <- paste0(GAlist$dirs["gsets"],"go2rsidsindex.rds")
+ setsfile <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
  saveRDS(sets,file=setsfile)
 
  fset <- getSets(GAlist=GAlist,feature="Pathways2Genes")
