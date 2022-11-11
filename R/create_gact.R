@@ -219,7 +219,7 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   url_stat <- "https://www.dropbox.com/s/0sizkeuw0sl51tn/GWAS_information.csv?dl=1"
   destfile <- paste0(GAlist$dirs["gstat"],"GWAS_information.csv")
   download.file(url=url_stat, mode = "wb", dest=destfile)
-  GAlist$study <- as.list(read.csv2(destfile,data.table=FALSE))
+  GAlist$study <- as.list(read.csv2(destfile))
 
   url_stat <- c("https://www.dropbox.com/s/iqd7c4bbds03nrg/GWAS1.txt.gz?dl=1",
                 "https://www.dropbox.com/s/pdv1fg280n86dwg/GWAS2.txt.gz?dl=1",
