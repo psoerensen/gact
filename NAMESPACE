@@ -9,6 +9,7 @@ export(removeStatDB)
 export(getMarkerStat)
 export(qcStatDB)
 export(getStat)
+export(getStatDB)
 export(writeStat)
 export(getSets)
 

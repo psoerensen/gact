@@ -313,8 +313,22 @@ getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
   if(feature=="Genes") {
    res <- cbind(rownames(res),GAlist$gsets[["ensg2sym"]][rownames(res)], res)
    colnames(res)[1:2] <- c("Ensembl Gene ID","Symbol")
-
+   ensg2sym_list <- lapply(res[,"Symbol"], function(x){
+    unlist(strsplit(x,split=" "))})
+   gsym <- unlist(ensg2sym_list)
+   rws <- rep(1:nrow(res),times=sapply(ensg2sym_list,length))
+   res <- res[rws,]
+   res[,"Symbol"] <- gsym
+   #ensg2sym_list <- lapply(GAlist$gsets[["ensg2sym"]], function(x){
+   # unlist(strsplit(x,split=" "))})
+   #ensg2sym_df <- data.frame(ensg=rep(names(ensg2sym_list),times=sapply(ensg2sym_list,length)),
+   #                          sym=unlist(ensg2sym_list, use.names=FALSE))
   }
+  if(!feature=="Genes") {
+   res <- cbind(rownames(res), res)
+   colnames(res)[1] <- header[feature]
+  }
+
  }
  return(res)
 }
@@ -575,15 +589,16 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE) {
 
  if(is.null(studies)) studies <- GAlist$study$id
  if(what=="list") {
-  b <- seb <- z <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
-  colnames(b) <- colnames(seb) <- colnames(z) <- studies
-  rownames(b) <- rownames(seb) <- rownames(z) <- GAlist$rsids
+  b <- seb <- z <- p <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
+  colnames(b) <- colnames(seb) <- colnames(z) <- colnames(p) <- studies
+  rownames(b) <- rownames(seb) <- rownames(z) <- colnames(p) <- GAlist$rsids
   for (study in studies) {
    message(paste("Extracting data from study:",study))
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
    b[stat$rsids,study] <- stat$b
    seb[stat$rsids,study] <- stat$seb
    z[stat$rsids,study] <- stat$b/stat$seb
+   p[stat$rsids,study] <- stat$p
   }
   return(list(b=na.omit(b),seb=na.omit(seb),z=na.omit(z)))
  }
@@ -610,6 +625,15 @@ annotationDB <- function(GAlist=NULL,
                          stitch_min_interaction=5) {
  file_string <- string
  file_stitch <- stitch
+
+ # http://bioconductor.org/packages/release/bioc/html/AnnotationHub.html
+ #install.packages("BiocManager")
+ #BiocManager::install("org.Hs.eg.db")
+ #BiocManager::install("reactome.db")
+
+ #library(data.table)
+ #library(org.Hs.eg.db)
+ #library(reactome.db)
 
  if(is.null(GAlist)) {
   message("Please provide GAlist used for creating marker sets")
