@@ -11,5 +11,6 @@ export(qcStatDB)
 export(getStat)
 export(getStatDB)
 export(writeStat)
+export(writeStatDB)
 export(getSets)
 

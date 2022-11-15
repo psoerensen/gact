@@ -192,11 +192,21 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
             "https://www.dropbox.com/s/2qyh12h0kaph2z3/gseaProteinComplexes.rds?dl=1",
             "https://www.dropbox.com/s/lhtf2mk41nhwxa0/gseaChemicalComplexes.rds?dl=1")
 
-  names(urls) <- c("gseaGenes.rds",
-                   "gseaGO.rds",
-                   "gseaPathways.rds",
-                   "gseaProteinComplexes.rds",
-                   "gseaChemicalComplexes.rds")
+
+  urls <- c("https://www.dropbox.com/s/uxm4wz9l5jls3pf/ct_gseaChromosomes_gdtdb.rds?dl=1",
+  "https://www.dropbox.com/s/bocpdcb3whqp60e/ct_gseaGenes_gdtdb.rds?dl=1",
+  "https://www.dropbox.com/s/b35i6h4k9vrx8rf/ct_gseaGO_gdtdb.rds?dl=1",
+  "https://www.dropbox.com/s/vtcs5xufpxdache/ct_gseaPathways_gdtdb.rds?dl=1",
+  "https://www.dropbox.com/s/fa73q57wcfldk5o/ct_gseaProteinComplexes_gdtdb.rds?dl=1",
+  "https://www.dropbox.com/s/wohvb1hfiuxzlp3/ct_gseaChemicalComplexes_gdtdb.rds?dl=1")
+
+
+  names(urls) <- c("ct_gseaChromosomes_gdtdb.rds",
+                   "ct_gseaGenes_gdtdb.rds",
+                   "ct_gseaGO_gdtdb.rds",
+                   "ct_gseaPathways_gdtdb.rds",
+                   "ct_gseaProteinComplexes_gdtdb.rds",
+                   "ct_gseaChemicalComplexes_gdtdb.rds")
 
   for (feature in names(urls)) {
    message(paste("Downloading file:",feature))
@@ -205,7 +215,7 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   }
   GAlist$gseafiles <- paste0(GAlist$dirs["gsea"],names(urls))
   names(GAlist$gseafiles) <- gsub(".rds","",names(urls))
-  names(GAlist$gseafiles) <- gsub("gsea","",names(GAlist$gseafiles))
+  #names(GAlist$gseafiles) <- gsub("gsea","",names(GAlist$gseafiles))
 
  }
  if(what=="gstat") {
@@ -295,7 +305,8 @@ getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
              "Protein ID","Chemical ID", "Chromosome ID")
  names(header) <- features
 
- gseafile <- paste0(GAlist$dirs["gsea"],"ct_gsea",feature,"_gdtdb.rds")
+ #gseafile <- paste0(GAlist$dirs["gsea"],"ct_gsea",feature,"_gdtdb.rds")
+ gseafile <- GAlist$gseafiles[paste0("ct_gsea",feature,"_gdtdb")]
  res <- readRDS(gseafile)
 
  colnames(res$stat) <- gsub("z_","",colnames(res$stat))
@@ -373,7 +384,7 @@ writeStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
                       "ProteinComplexes","ChemicalComplexes")
 
  if(!feature=="Genes") {
-  res <- cbind(rownames(res), res)
+  #res <- cbind(rownames(res), res)
   res2hyperlink <- paste0(res2html[feature],res[,1])
   if(feature=="ChemicalComplexes") res2hyperlink <- paste0(res2html[feature],substring(res[,1],5,nchar(as.character(res[,1]))))
   res2hyperlink <- paste0("=Hyperlink(",'"',res2hyperlink,'"',";",'"',res[,1],'"',")")
@@ -591,7 +602,7 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE) {
  if(what=="list") {
   b <- seb <- z <- p <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
   colnames(b) <- colnames(seb) <- colnames(z) <- colnames(p) <- studies
-  rownames(b) <- rownames(seb) <- rownames(z) <- colnames(p) <- GAlist$rsids
+  rownames(b) <- rownames(seb) <- rownames(z) <- rownames(p) <- GAlist$rsids
   for (study in studies) {
    message(paste("Extracting data from study:",study))
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
