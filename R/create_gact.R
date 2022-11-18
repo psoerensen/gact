@@ -200,6 +200,12 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   "https://www.dropbox.com/s/fa73q57wcfldk5o/ct_gseaProteinComplexes_gdtdb.rds?dl=1",
   "https://www.dropbox.com/s/wohvb1hfiuxzlp3/ct_gseaChemicalComplexes_gdtdb.rds?dl=1")
 
+  urls <- c("https://www.dropbox.com/s/ia5wmwrwiatwvqa/ct_gseaChromosomes_gdtdb.rds?dl=1",
+  "https://www.dropbox.com/s/bocpdcb3whqp60e/ct_gseaGenes_gdtdb.rds?dl=1",
+  "https://www.dropbox.com/s/b35i6h4k9vrx8rf/ct_gseaGO_gdtdb.rds?dl=1",
+  "https://www.dropbox.com/s/vtcs5xufpxdache/ct_gseaPathways_gdtdb.rds?dl=1",
+  "https://www.dropbox.com/s/fa73q57wcfldk5o/ct_gseaProteinComplexes_gdtdb.rds?dl=1",
+  "https://www.dropbox.com/s/3puru40dph8zu33/ct_gseaChemicalComplexes_gdtdb.rds?dl=1")
 
   names(urls) <- c("ct_gseaChromosomes_gdtdb.rds",
                    "ct_gseaGenes_gdtdb.rds",
