@@ -612,12 +612,14 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE) {
   for (study in studies) {
    message(paste("Extracting data from study:",study))
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
+   print(str(stat))
    b[stat$rsids,study] <- stat$b
    seb[stat$rsids,study] <- stat$seb
    z[stat$rsids,study] <- stat$b/stat$seb
    p[stat$rsids,study] <- stat$p
   }
-  return(list(b=na.omit(b),seb=na.omit(seb),z=na.omit(z)))
+  if(rm.na) return(list(b=na.omit(b),seb=na.omit(seb),z=na.omit(z),p=na.omit(p)))
+  if(!rm.na) return(list(b=b,seb=seb,z=z,p=p))
  }
  if(what=="z") {
   z <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
@@ -628,7 +630,8 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE) {
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
    z[stat$rsids,study] <- stat$b/stat$seb
   }
-  return(na.omit(z))
+  if(rm.na) return(na.omit(z))
+  if(!rm.na) return(z)
  }
 }
 
@@ -998,7 +1001,8 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
  format <- "unknown"
 
  if(all(fm_internal%in%colnames(stat))) format <- "internal"
- if(all(fm_internal[1:9]%in%colnames(stat))) format <- "internal"
+ #if(all(fm_internal[1:9]%in%colnames(stat))) format <- "internal"
+ if(all(fm_internal[1:5]%in%colnames(stat))) format <- "internal"
 
  if(format=="unknown") {
   message("Column headings for stat object not found")
@@ -1057,22 +1061,26 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
  effect <- stat[,"b"]
  effect_allele <- stat[,"ea"]
  non_effect_allele <- stat[,"nea"]
- if(!is.null(stat$eaf))effect_allele_freq <- stat[,"eaf"]
+ if(!is.null(stat$eaf)) effect_allele_freq <- stat[,"eaf"]
 
  # flip is not aligned
  stat[!aligned,"b"] <- -effect[!aligned]
  stat[!aligned,"ea"] <- non_effect_allele[!aligned]
  stat[!aligned,"nea"] <- effect_allele[!aligned]
- if(!is.null(stat$eaf)) {
-  stat[!aligned,"eaf"] <- 1-effect_allele_freq[!aligned]
-  excludeMAFDIFF <- abs(marker$eaf-stat$eaf) > excludeMAFDIFF
+
+ if(is.null(stat$eaf)) {
+  message("No effect allele frequency (eaf) provided - using eaf in database")
+  stat$eaf <- marker$eaf
  }
 
+
+ # exclude based on maf
+ excludeMAFDIFF <- abs(marker$eaf-stat$eaf) > excludeMAFDIFF
  message(paste("Number of markers excluded by large difference between MAF difference:", sum(excludeMAFDIFF)))
  message("")
+ stat <- stat[!excludeMAFDIFF,]
+ marker <- marker[!excludeMAFDIFF,]
 
- if(!is.null(stat$eaf)) stat <- stat[!excludeMAFDIFF,]
- if(!is.null(stat$eaf)) marker <- marker[!excludeMAFDIFF,]
  if(is.null(stat$n)) stat$n <- neff(seb=stat$seb,af=stat$eaf)
  colnames(stat)[1] <- "rsids"
  return(stat)
