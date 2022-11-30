@@ -605,21 +605,27 @@ updateStatDB <- function(GAlist=NULL,
 getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE) {
 
  if(is.null(studies)) studies <- GAlist$study$id
+ names(GAlist$study$neff) <-GAlist$study$id
  if(what=="list") {
-  b <- seb <- z <- p <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
-  colnames(b) <- colnames(seb) <- colnames(z) <- colnames(p) <- studies
-  rownames(b) <- rownames(seb) <- rownames(z) <- rownames(p) <- GAlist$rsids
+  b <- seb <- z <- p <- n <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
+  colnames(b) <- colnames(seb) <- colnames(z) <- colnames(p) <- colnames(n) <- studies
+  rownames(b) <- rownames(seb) <- rownames(z) <- rownames(p) <- rownames(n) <- GAlist$rsids
   for (study in studies) {
    message(paste("Extracting data from study:",study))
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
-   print(str(stat))
+   if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],length(stat$b))
+   #if(is.null(stat$ww)) stat$ww <- 1/(stat$seb^2 + stat$b^2/stat$n)
+   #if(is.null(stat$wy)) stat$wy <- stat$b*stat$ww
    b[stat$rsids,study] <- stat$b
    seb[stat$rsids,study] <- stat$seb
    z[stat$rsids,study] <- stat$b/stat$seb
    p[stat$rsids,study] <- stat$p
+   n[stat$rsids,study] <- stat$n
   }
-  if(rm.na) return(list(b=na.omit(b),seb=na.omit(seb),z=na.omit(z),p=na.omit(p)))
-  if(!rm.na) return(list(b=b,seb=seb,z=z,p=p))
+
+  if(rm.na) return(list(b=na.omit(b),seb=na.omit(seb),z=na.omit(z),
+                        p=na.omit(p), n=na.omit(n) ))
+  if(!rm.na) return(list(b=b,seb=seb,z=z,p=p,n=n ))
  }
  if(what=="z") {
   z <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
