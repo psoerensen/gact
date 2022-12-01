@@ -555,6 +555,7 @@ updateStatDB <- function(GAlist=NULL,
                          ncase=NULL,
                          ncontrol=NULL,
                          reference="unknown",
+                         comments="none",
                          writeStatDB=TRUE,
                          excludeMAFDIFF=0.05) {
 
