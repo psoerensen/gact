@@ -1073,6 +1073,7 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
  stat[!aligned,"b"] <- -effect[!aligned]
  stat[!aligned,"ea"] <- non_effect_allele[!aligned]
  stat[!aligned,"nea"] <- effect_allele[!aligned]
+ if(!is.null(stat$eaf)) stat[!aligned,"eaf"] <- 1-effect_allele_freq[!aligned]
 
  if(is.null(stat$eaf)) {
   message("No effect allele frequency (eaf) provided - using eaf in database")
