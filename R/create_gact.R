@@ -618,8 +618,6 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE) {
    message(paste("Extracting data from study:",study))
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
    if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],length(stat$b))
-   #if(is.null(stat$ww)) stat$ww <- 1/(stat$seb^2 + stat$b^2/stat$n)
-   #if(is.null(stat$wy)) stat$wy <- stat$b*stat$ww
    b[stat$rsids,study] <- stat$b
    seb[stat$rsids,study] <- stat$seb
    z[stat$rsids,study] <- stat$b/stat$seb
