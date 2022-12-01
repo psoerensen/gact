@@ -573,6 +573,7 @@ updateStatDB <- function(GAlist=NULL,
  GAlist$study$n[study_number] <- n
  GAlist$study$ncase[study_number] <- ncase
  GAlist$study$ncontrol[study_number] <- ncontrol
+ GAlist$study$comments[study_number] <- comments
 
  if(type=="binary") {
   ntotal <- ncase + ncontrol
