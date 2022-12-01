@@ -549,6 +549,8 @@ updateStatDB <- function(GAlist=NULL,
                          trait="unknown",
                          type="unknown",
                          gender="unknown",
+                         ancestry="unknown",
+                         build="unknown",
                          n=NULL,
                          ncase=NULL,
                          ncontrol=NULL,
@@ -565,6 +567,8 @@ updateStatDB <- function(GAlist=NULL,
  GAlist$study$trait[study_number] <- trait
  GAlist$study$type[study_number] <- type
  GAlist$study$gender[study_number] <- gender
+ GAlist$study$ancestry[study_number] <- ancestry
+ GAlist$study$build[study_number] <- build
  GAlist$study$n[study_number] <- n
  GAlist$study$ncase[study_number] <- ncase
  GAlist$study$ncontrol[study_number] <- ncontrol
