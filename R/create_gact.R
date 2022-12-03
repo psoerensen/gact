@@ -643,6 +643,18 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE) {
   if(rm.na) return(na.omit(z))
   if(!rm.na) return(z)
  }
+ if(what=="eaf") {
+  eaf <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
+  colnames(eaf) <- studies
+  rownames(eaf) <- GAlist$rsids
+  for (study in studies) {
+   message(paste("Extracting data from study:",study))
+   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
+   eaf[stat$rsids,study] <- stat[["eaf"]]
+  }
+  if(rm.na) return(na.omit(eaf))
+  if(!rm.na) return(eaf)
+ }
 }
 
 #' @export
