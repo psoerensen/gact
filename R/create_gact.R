@@ -613,7 +613,7 @@ updateStatDB <- function(GAlist=NULL,
 
 #' @export
 #'
-getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE) {
+getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE, rsids=NULL) {
 
  if(is.null(studies)) studies <- GAlist$study$id
  names(GAlist$study$neff) <-GAlist$study$id
@@ -631,36 +631,31 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE) {
    p[stat$rsids,study] <- stat$p
    n[stat$rsids,study] <- stat$n
   }
+  if(!is.null(rsids)) rsids <- rsids[rsids%in%GAlist$rsids]
+  if(is.null(rsids)) rsids <- stat$rsids[stat$rsids%in%GAlist$rsids]
+  if(rm.na) return(list(b=na.omit(b[rsids,]),seb=na.omit(seb[rsids,]),z=na.omit(z[rsids,]),
+                        p=na.omit(p[rsids,]), n=na.omit(n[rsids,]) ))
+  if(!rm.na) return(list(b=b[rsids,],seb=seb[rsids,],z=z[rsids,],p=p[rsids,],n=n[rsids,] ))
+ }
 
-  if(rm.na) return(list(b=na.omit(b),seb=na.omit(seb),z=na.omit(z),
-                        p=na.omit(p), n=na.omit(n) ))
-  if(!rm.na) return(list(b=b,seb=seb,z=z,p=p,n=n ))
+ if(is.null(studies)) studies <- GAlist$study$id
+ names(GAlist$study$neff) <-GAlist$study$id
+ if(what=="data.frame") {
+  if(length(studies)>1) stop("Only one study allowed")
+  message(paste("Extracting data from study:",study))
+  stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
+  if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],nrow(stat))
+  if(is.null(stat[["z"]])) stat$z <- stat$b/stat$seb
+
+  if(!is.null(rsids)) rsids <- rsids[rsids%in%GAlist$rsids]
+  if(is.null(rsids)) rsids <- stat$rsids[stat$rsids%in%GAlist$rsids]
+
+  if(rm.na) return(na.omit(stat[rsids,]))
+  if(!rm.na) return(na.omit(stat[rsids,]))
  }
- if(what=="z") {
-  z <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
-  colnames(z) <- studies
-  rownames(z) <- GAlist$rsids
-  for (study in studies) {
-   message(paste("Extracting data from study:",study))
-   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
-   z[stat$rsids,study] <- stat$b/stat$seb
-  }
-  if(rm.na) return(na.omit(z))
-  if(!rm.na) return(z)
- }
- if(what=="eaf") {
-  eaf <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
-  colnames(eaf) <- studies
-  rownames(eaf) <- GAlist$rsids
-  for (study in studies) {
-   message(paste("Extracting data from study:",study))
-   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
-   eaf[stat$rsids,study] <- stat[["eaf"]]
-  }
-  if(rm.na) return(na.omit(eaf))
-  if(!rm.na) return(eaf)
- }
+
  if(what%in%c("b","seb","eaf","ea","nea","z","p")) {
+  if(length(what)>1) stop("Only one feature allowed")
   res <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
   colnames(res) <- studies
   rownames(res) <- GAlist$rsids
