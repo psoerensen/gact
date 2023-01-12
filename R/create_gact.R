@@ -337,7 +337,7 @@ getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
    res <- res[rws,]
    res[,"Symbol"] <- gsym
    if(!is.null(featureID)) {
-    select <- res[,"Ensembl Gene ID"]%in%featureID | res[,"Symbol"]%in%featureID
+    select <- tolower(res[,"Ensembl Gene ID"])%in%tolower(featureID) | tolower(res[,"Symbol"])%in%tolower(featureID)
     if(any(select)) res <- res[select,]
     if(!any(select)) stop("None of featureIDs found in the database")
    }
