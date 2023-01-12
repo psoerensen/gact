@@ -613,11 +613,31 @@ updateStatDB <- function(GAlist=NULL,
 
 #' @export
 #'
-getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE, rsids=NULL) {
+getMarkerStat <- function(GAlist=NULL, studies=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
+
+ if(!is.null(cpra)) {
+  cpra1 <- paste(GAlist$markers[,"chr"],
+                 GAlist$markers[,"pos"],
+                 toupper(GAlist$markers[,"ea"]),
+                 toupper(GAlist$markers[,"nea"]), sep="_")
+  cpra2 <- paste(GAlist$markers[,"chr"],
+                 GAlist$markers[,"pos"],
+                 toupper(GAlist$markers[,"nea"]),
+                 toupper(GAlist$markers[,"ea"]),sep="_")
+
+  mapped <- cpra1%in%cpra | cpra2%in%cpra
+  message("Map markers based on cpra")
+  message(paste("Number of markers in cpra mapped to marker ids in GAlist:",sum(mapped)))
+  rsids <- GAlist$rsids[mapped]
+ }
 
  if(is.null(studies)) studies <- GAlist$study$id
  names(GAlist$study$neff) <-GAlist$study$id
- if(what=="list") {
+
+ if (length(studies)==1) format <- "data.frame"
+ if (length(studies)>1) format <- "list"
+
+ if(format=="list" && what=="all") {
   b <- seb <- z <- p <- n <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
   colnames(b) <- colnames(seb) <- colnames(z) <- colnames(p) <- colnames(n) <- studies
   rownames(b) <- rownames(seb) <- rownames(z) <- rownames(p) <- rownames(n) <- GAlist$rsids
@@ -633,22 +653,23 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE, rs
   }
   if(!is.null(rsids)) rsids <- rsids[rsids%in%GAlist$rsids]
   if(is.null(rsids)) rsids <- stat$rsids[stat$rsids%in%GAlist$rsids]
+  rsids <- match(rsids,GAlist$rsids)
   if(rm.na) return(list(b=na.omit(b[rsids,]),seb=na.omit(seb[rsids,]),z=na.omit(z[rsids,]),
                         p=na.omit(p[rsids,]), n=na.omit(n[rsids,]) ))
   if(!rm.na) return(list(b=b[rsids,],seb=seb[rsids,],z=z[rsids,],p=p[rsids,],n=n[rsids,] ))
  }
 
- if(what=="data.frame") {
+ if(format=="data.frame" && what=="all") {
   if(length(studies)>1) stop("Only one study allowed")
   study <- studies
   message(paste("Extracting data from study:",study))
   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
   if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],nrow(stat))
-  if(is.null(stat[["z"]])) stat$z <- stat$b/stat$seb
+  #if(is.null(stat[["z"]])) stat$z <- stat$b/stat$seb
 
-  if(!is.null(rsids)) rsids <- rsids[rsids%in%GAlist$rsids]
-  if(is.null(rsids)) rsids <- stat$rsids[stat$rsids%in%GAlist$rsids]
-
+  if(!is.null(rsids)) rsids <- rsids[rsids%in%stat$rsids]
+  if(is.null(rsids)) rsids <- stat$rsids
+  rsids <- match(rsids,stat$rsids)
   if(rm.na) return(na.omit(stat[rsids,]))
   if(!rm.na) return(na.omit(stat[rsids,]))
  }
@@ -664,8 +685,12 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE, rs
    if(what=="z") res[stat$rsids,study] <- stat$b/stat$seb
    if(!what=="z") res[stat$rsids,study] <- stat[,what]
   }
-  if(rm.na) return(na.omit(res))
-  if(!rm.na) return(res)
+  if(!is.null(rsids)) rsids <- rsids[rsids%in%stat$rsids]
+  if(is.null(rsids)) rsids <- stat$rsids
+  rsids <- match(rsids,stat$rsids)
+
+  if(rm.na) return(na.omit(res[rsids,]))
+  if(!rm.na) return(res[rsids,])
  }
 
 }
