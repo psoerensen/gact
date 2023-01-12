@@ -660,6 +660,20 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE) {
   if(rm.na) return(na.omit(eaf))
   if(!rm.na) return(eaf)
  }
+ if(what%in%c("b","seb","eaf","ea","nea","z","p")) {
+  res <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
+  colnames(res) <- studies
+  rownames(res) <- GAlist$rsids
+  for (study in studies) {
+   message(paste("Extracting data from study:",study))
+   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
+   if(what=="z") res[stat$rsids,study] <- stat$b/stat$seb
+   if(!what=="z") res[stat$rsids,study] <- stat[,what]
+  }
+  if(rm.na) return(na.omit(res))
+  if(!rm.na) return(res)
+ }
+
 }
 
 #' @export
