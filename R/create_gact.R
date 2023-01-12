@@ -336,6 +336,11 @@ getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
    rws <- rep(1:nrow(res),times=sapply(ensg2sym_list,length))
    res <- res[rws,]
    res[,"Symbol"] <- gsym
+   if(!is.null(featureID)) {
+    select <- res[,"Ensembl Gene ID"]%in%featureID | res[,"Symbol"]%in%featureID
+    if(any(select)) res <- res[select,]
+    if(!any(select)) stop("None of featureIDs found in the database")
+   }
    #ensg2sym_list <- lapply(GAlist$gsets[["ensg2sym"]], function(x){
    # unlist(strsplit(x,split=" "))})
    #ensg2sym_df <- data.frame(ensg=rep(names(ensg2sym_list),times=sapply(ensg2sym_list,length)),
