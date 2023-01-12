@@ -638,10 +638,9 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="list", rm.na=TRUE, rs
   if(!rm.na) return(list(b=b[rsids,],seb=seb[rsids,],z=z[rsids,],p=p[rsids,],n=n[rsids,] ))
  }
 
- if(is.null(studies)) studies <- GAlist$study$id
- names(GAlist$study$neff) <-GAlist$study$id
  if(what=="data.frame") {
   if(length(studies)>1) stop("Only one study allowed")
+  study <- studies
   message(paste("Extracting data from study:",study))
   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
   if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],nrow(stat))
