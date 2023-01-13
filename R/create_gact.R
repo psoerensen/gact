@@ -674,7 +674,7 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="all", format="list", 
   if(!rm.na) return(na.omit(stat[rsids,]))
  }
 
- if(what%in%c("b","seb","eaf","ea","nea","z","p")) {
+ if(what%in%c("rsids","b","seb","eaf","ea","nea","z","p")) {
   if(length(what)>1) stop("Only one feature allowed")
   res <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
   colnames(res) <- studies
@@ -688,9 +688,11 @@ getMarkerStat <- function(GAlist=NULL, studies=NULL, what="all", format="list", 
   if(!is.null(rsids)) rsids <- rsids[rsids%in%stat$rsids]
   if(is.null(rsids)) rsids <- stat$rsids
   rsids <- match(rsids,stat$rsids)
+  res <- res[rsids,]
 
-  if(rm.na) return(na.omit(res[rsids,]))
-  if(!rm.na) return(res[rsids,])
+  if(rm.na) res <- na.omit(res)
+  if(what=="rsids") res <- res[,1]
+  return(res)
  }
 
 }
