@@ -42,6 +42,7 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
  gbayesdir <- paste0(dbdir,"/gbayes/")
  markerdir <- paste0(dbdir,"/marker/")
  rawdir <- paste0(dbdir,"/raw/")
+ dgidir <- paste0(dbdir,"/dgidb/")
  if(dir.exists(dbdir)) stop(paste("Directory:",dbdir,"allready exists"))
  if(!dir.exists(dbdir)) {
   dir.create(dbdir)
@@ -53,6 +54,7 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
   dir.create(gbayesdir)
   dir.create(markerdir)
   dir.create(rawdir)
+  dir.create(dgidir)
  }
 
  GAlist <- NULL
@@ -60,8 +62,8 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
 
  GAlist$traits <- NULL
 
- GAlist$dirs <- c(glistdir,gstatdir,gsetsdir,gseadir, ldscdir, gbayesdir, markerdir, rawdir)
- names(GAlist$dirs) <- c("glist","gstat","gsets","gsea", "ldsc", "gbayes", "marker", "raw")
+ GAlist$dirs <- c(glistdir,gstatdir,gsetsdir,gseadir, ldscdir, gbayesdir, markerdir, rawdir, dgidir)
+ names(GAlist$dirs) <- c("glist","gstat","gsets","gsea", "ldsc", "gbayes", "marker", "raw", "dgidb")
 
  # features in the database
  GAlist$features <- c("Markers","Genes","Proteins","GO","Pathways",
@@ -268,6 +270,24 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
                        GAlist$markers$ea,
                        GAlist$markers$nea,sep="_")
  }
+
+ if(what=="dgidb") {
+  # download dgidb files in the database
+  message("Downloading Drug Gene Interaction database")
+  url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/interactions.tsv"
+  destfile <- paste0(GAlist$dirs["dgidb"],"interactions.tsv")
+  download.file(url=url_db, mode = "wb", dest=destfile)
+  url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/genes.tsv"
+  destfile <- paste0(GAlist$dirs["dgidb"],"genes.tsv")
+  download.file(url=url_db, mode = "wb", dest=destfile)
+  url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/drugs.tsv"
+  destfile <- paste0(GAlist$dirs["dgidb"],"drugs.tsv")
+  download.file(url=url_db, mode = "wb", dest=destfile)
+  url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/categories.tsv"
+  destfile <- paste0(GAlist$dirs["dgidb"],"categories.tsv")
+  download.file(url=url_db, mode = "wb", dest=destfile)
+
+ }
  return(GAlist)
 }
 
@@ -288,14 +308,14 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="gsets")
   GAlist <- downloadDB(GAlist=GAlist, what="gsea")
   GAlist <- downloadDB(GAlist=GAlist, what="gstat")
+  GAlist <- downloadDB(GAlist=GAlist, what="dgidb")
 
   # Step 3: Create marker sets from database:
   if(what=="full") {
-   message("Creating full marker sets - this make take some time")
+   message("Creating full marker sets - this may take some time")
    GAlist <- mapSetsDB(GAlist=GAlist)
   }
  }
-
  return(GAlist)
 }
 
@@ -527,6 +547,30 @@ getSets <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  }
  return(sets)
  }
+
+#' @export
+#'
+getMarkerSets <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
+ sets <- NULL
+ if(feature=="Entres Genes") sets <- GAlist$gsets[[1]]
+ if(feature=="Genes") sets <- GAlist$gsets[[2]]
+ if(feature=="Proteins") sets <- GAlist$gsets[[3]]
+ if(feature=="Gene Symbol") sets <- GAlist$gsets[[4]]
+ if(feature=="GO") sets <- GAlist$gsets[[5]]
+ if(feature=="Pathways") sets <- GAlist$gsets[[6]]
+ if(feature=="ProteinComplexes") sets <- GAlist$gsets[[7]]
+ if(feature=="ChemicalComplexes") sets <- GAlist$gsets[[8]]
+ if(feature=="Pathways2Genes") sets <- GAlist$gsets[[9]]
+ if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
+ if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
+ if(!is.null(featureID)) {
+  inSet <- featureID%in%names(sets)
+  if(any(!inSet)) warning(paste("Some IDs not in data base:",featureID[!inSet]))
+  featureID <- featureID[featureID%in%names(sets)]
+  sets <- unlist(sets[featureID])
+ }
+ return(sets)
+}
 
 #' @export
 #'
