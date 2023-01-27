@@ -311,10 +311,10 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="dgidb")
 
   # Step 3: Create marker sets from database:
-  if(what=="full") {
-   message("Creating full marker sets - this may take some time")
-   GAlist <- mapSetsDB(GAlist=GAlist)
-  }
+  #if(what=="full") {
+  message("Creating full marker sets - this may take some time")
+  GAlist <- mapSetsDB(GAlist=GAlist)
+  #}
  }
  return(GAlist)
 }
