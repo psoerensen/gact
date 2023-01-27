@@ -550,25 +550,24 @@ getSets <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
 
 #' @export
 #'
-getMarkerSets <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
- sets <- NULL
- if(feature=="Entres Genes") sets <- GAlist$gsets[[1]]
- if(feature=="Genes") sets <- GAlist$gsets[[2]]
- if(feature=="Proteins") sets <- GAlist$gsets[[3]]
- if(feature=="Gene Symbol") sets <- GAlist$gsets[[4]]
- if(feature=="GO") sets <- GAlist$gsets[[5]]
- if(feature=="Pathways") sets <- GAlist$gsets[[6]]
- if(feature=="ProteinComplexes") sets <- GAlist$gsets[[7]]
- if(feature=="ChemicalComplexes") sets <- GAlist$gsets[[8]]
- if(feature=="Pathways2Genes") sets <- GAlist$gsets[[9]]
- if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
- if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
+getMarkerSets <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NULL) {
+
+ if(feature=="Genes") setsfile <- paste0(GAlist$dirs["gsets"],"ensg2rsids_10kb.rds")
+ if(feature=="Entres Genes") setsfile <- paste0(GAlist$dirs["gsets"],"eg2rsids_10kb.rds")
+ if(feature=="Gene Symbol") setsfile <- paste0(GAlist$dirs["gsets"],"sym2rsids_10kb.rds")
+ if(feature=="Proteins") setsfile <- paste0(GAlist$dirs["gsets"],"ensp2rsids_10kb.rds")
+ if(feature=="Pathways") setsfile <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
+ if(feature=="GO") setsfile <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
+ if(feature=="ProteinComplexes") setsfile <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
+ if(feature=="ChemicalComplexes") setsfile <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
+ sets <- readRDS(file=setsfile)
  if(!is.null(featureID)) {
   inSet <- featureID%in%names(sets)
   if(any(!inSet)) warning(paste("Some IDs not in data base:",featureID[!inSet]))
   featureID <- featureID[featureID%in%names(sets)]
-  sets <- unlist(sets[featureID])
+  sets <- sets[featureID]
  }
+ if(!is.null(rsids)) sets <- qgg:::mapSets(sets=sets, rsids=rsids, index=FALSE)
  return(sets)
 }
 
