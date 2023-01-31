@@ -319,10 +319,12 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
                    "eg2ensg.rds")
   for (feature in names(urls)) {
    message(paste("Downloading file:",feature))
-   destfile <- paste0(GAlist$dirs["gsets"],feature)
+   #destfile <- paste0(GAlist$dirs["gsets"],feature)
+   destfile <- file.path(GAlist$dirs["gsets"],feature)
    download.file(url=urls[feature], mode = "wb", dest=destfile)
   }
-  GAlist$gsetsfiles <- paste0(GAlist$dirs["gsets"],names(urls))
+  GAlist$gsetsfiles <- file.path(GAlist$dirs["gsets"],names(urls))
+  #GAlist$gsetsfiles <- paste0(GAlist$dirs["gsets"],names(urls))
   names(GAlist$gsetsfiles) <- gsub(".rds","",names(urls))
 
   GAlist$gsets <- vector(mode = "list", length = length(GAlist$gsetsfiles))
@@ -369,10 +371,10 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
 
   for (feature in names(urls)) {
    message(paste("Downloading file:",feature))
-   destfile <- paste0(GAlist$dirs["gsea"],feature)
+   destfile <- file.path(GAlist$dirs["gsea"],feature)
    download.file(url=urls[feature], mode = "wb", dest=destfile)
   }
-  GAlist$gseafiles <- paste0(GAlist$dirs["gsea"],names(urls))
+  GAlist$gseafiles <- file.path(GAlist$dirs["gsea"],names(urls))
   names(GAlist$gseafiles) <- gsub(".rds","",names(urls))
   #names(GAlist$gseafiles) <- gsub("gsea","",names(GAlist$gseafiles))
 
@@ -381,12 +383,12 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   # download gstat files in the database
   message("Downloading GWAS summary statistics")
   url_stat <- "https://www.dropbox.com/s/qrcivih31iuuril/stat.rds?dl=1"
-  destfile <- paste0(GAlist$dirs["gstat"],"gstat.rds")
+  destfile <- file.path(GAlist$dirs["gstat"],"gstat.rds")
   download.file(url=url_stat, mode = "wb", dest=destfile)
   GAlist$gstatfiles <- paste0(GAlist$dirs["gstat"],"gstat.rds")
 
   url_stat <- "https://www.dropbox.com/s/0sizkeuw0sl51tn/GWAS_information.csv?dl=1"
-  destfile <- paste0(GAlist$dirs["gstat"],"GWAS_information.csv")
+  destfile <- file.path(GAlist$dirs["gstat"],"GWAS_information.csv")
   download.file(url=url_stat, mode = "wb", dest=destfile)
   GAlist$study <- as.list(read.csv2(destfile))
 
@@ -400,10 +402,10 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
                 "https://www.dropbox.com/s/oo5o7suu2bx04bj/GWAS8.txt.gz?dl=1")
 
   for(study in 1:length(url_stat)) {
-   destfile <- paste0(GAlist$dirs["gstat"],substring(url_stat[study],43,nchar(url_stat[study])-5))
+   destfile <- file.path(GAlist$dirs["gstat"],substring(url_stat[study],43,nchar(url_stat[study])-5))
    download.file(url=url_stat[study], mode = "wb", dest=destfile)
   }
-  GAlist$studyfiles <- paste0(GAlist$dirs["gstat"],GAlist$study$file,".gz")
+  GAlist$studyfiles <- file.path(GAlist$dirs["gstat"],GAlist$study$file,".gz")
   names(GAlist$studyfiles) <- GAlist$study$id
 
  }
@@ -411,7 +413,7 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   # download marker files in the database
   message("Downloading marker information")
   url_stat <- "https://www.dropbox.com/s/4k54owkby3uf2hf/markers.txt.gz?dl=1"
-  destfile <- paste0(GAlist$dirs["marker"],"markers.txt.gz")
+  destfile <- file.path(GAlist$dirs["marker"],"markers.txt.gz")
   download.file(url=url_stat, mode = "wb", dest=destfile)
   GAlist$markerfiles <-paste0(GAlist$dirs["marker"],"markers.txt.gz")
   GAlist$markers <- fread(GAlist$markerfiles, data.table=FALSE)
@@ -426,16 +428,16 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   # download dgidb files in the database
   message("Downloading Drug Gene Interaction database")
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/interactions.tsv"
-  destfile <- paste0(GAlist$dirs["dgidb"],"interactions.tsv")
+  destfile <- file.path(GAlist$dirs["dgidb"],"interactions.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/genes.tsv"
-  destfile <- paste0(GAlist$dirs["dgidb"],"genes.tsv")
+  destfile <- file.path(GAlist$dirs["dgidb"],"genes.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/drugs.tsv"
-  destfile <- paste0(GAlist$dirs["dgidb"],"drugs.tsv")
+  destfile <- file.path(GAlist$dirs["dgidb"],"drugs.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/categories.tsv"
-  destfile <- paste0(GAlist$dirs["dgidb"],"categories.tsv")
+  destfile <- file.path(GAlist$dirs["dgidb"],"categories.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
 
  }
@@ -549,10 +551,10 @@ getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
 #' @export
 #'
 writeStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
-                      studyID=NULL, trait=NULL, threshold=NULL,
+                      studyID=NULL, threshold=0.95,
                       format="data.frame", file.csv=NULL, hyperlink=TRUE) {
  res <- getStatDB(GAlist=GAlist, feature=feature, featureID=featureID,
-                 studyID=studyID, trait=trait, threshold=threshold,
+                 studyID=studyID, threshold=threshold,
                  format=format)
  features <- c("Markers","Genes","Proteins","GO","Pathways",
                "ProteinComplexes","ChemicalComplexes","Chromosomes")
@@ -585,7 +587,6 @@ writeStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
                       "ProteinComplexes","ChemicalComplexes")
 
  if(!feature=="Genes") {
-  #res <- cbind(rownames(res), res)
   res2hyperlink <- paste0(res2html[feature],res[,1])
   if(feature=="ChemicalComplexes") res2hyperlink <- paste0(res2html[feature],substring(res[,1],5,nchar(as.character(res[,1]))))
   res2hyperlink <- paste0("=Hyperlink(",'"',res2hyperlink,'"',";",'"',res[,1],'"',")")
@@ -754,7 +755,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  if(!is.null(featureID)) {
   select <- names(sets)%in%featureID
   if(sum(select)==0) stop("None of the fetureIDs found in sets")
-  if(any(!select)) message(paste("Some IDs not in data base:",featureID[!select]))
+  #if(any(!select)) message(paste("Some IDs not in data base:",featureID[!select]))
   sets <- sets[select]
  }
  return(sets)
@@ -915,7 +916,7 @@ updateStatDB <- function(GAlist=NULL,
 
 #' @export
 #'
-getMarkerStatDB <- function(GAlist=NULL, studies=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
+getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
 
  if(!is.null(cpra)) {
   cpra1 <- paste(GAlist$markers[,"chr"],
@@ -933,17 +934,17 @@ getMarkerStatDB <- function(GAlist=NULL, studies=NULL, what="all", format="list"
   rsids <- GAlist$rsids[mapped]
  }
 
- if(is.null(studies)) studies <- GAlist$study$id
+ if(is.null(studyID)) studyID <- GAlist$study$id
  names(GAlist$study$neff) <-GAlist$study$id
 
- if (length(studies)==1) format <- "data.frame"
- if (length(studies)>1) format <- "list"
+ if (length(studyID)==1) format <- "data.frame"
+ if (length(studyID)>1) format <- "list"
 
  if(format=="list" && what=="all") {
-  b <- seb <- z <- p <- n <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
-  colnames(b) <- colnames(seb) <- colnames(z) <- colnames(p) <- colnames(n) <- studies
+  b <- seb <- z <- p <- n <- matrix(NA,ncol=length(studyID),nrow=length(GAlist$rsids))
+  colnames(b) <- colnames(seb) <- colnames(z) <- colnames(p) <- colnames(n) <- studyID
   rownames(b) <- rownames(seb) <- rownames(z) <- rownames(p) <- rownames(n) <- GAlist$rsids
-  for (study in studies) {
+  for (study in studyID) {
    message(paste("Extracting data from study:",study))
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
    if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],length(stat$b))
@@ -962,8 +963,8 @@ getMarkerStatDB <- function(GAlist=NULL, studies=NULL, what="all", format="list"
  }
 
  if(format=="data.frame" && what=="all") {
-  if(length(studies)>1) stop("Only one study allowed")
-  study <- studies
+  if(length(studyID)>1) stop("Only one study allowed")
+  study <- studyID
   message(paste("Extracting data from study:",study))
   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
   if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],nrow(stat))
@@ -978,10 +979,10 @@ getMarkerStatDB <- function(GAlist=NULL, studies=NULL, what="all", format="list"
 
  if(what%in%c("rsids","b","seb","eaf","ea","nea","z","p")) {
   if(length(what)>1) stop("Only one feature allowed")
-  res <- matrix(NA,ncol=length(studies),nrow=length(GAlist$rsids))
-  colnames(res) <- studies
+  res <- matrix(NA,ncol=length(studyID),nrow=length(GAlist$rsids))
+  colnames(res) <- studyID
   rownames(res) <- GAlist$rsids
-  for (study in studies) {
+  for (study in studyID) {
    message(paste("Extracting data from study:",study))
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
    if(what=="z") res[stat$rsids,study] <- stat$b/stat$seb
