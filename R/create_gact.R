@@ -12,22 +12,82 @@
 #' linked to different genomic features (e.g. genes, proteins, chemical-complexes,
 #' protein-complexes, biological pathways) are provided.
 #'
-#' @param GAlist list object providing information about genomic associations for different traits
-#' @param feature name of feature including "Marker","Genes","Proteins","GO","Pathways","ProteinComplexes","ChemicalComplexes"
-#' @param featureID is the feature specific IDs such as "GO:0000002"
-#' @param studyID is the study specific ID (not used currently)
-#' @param trait is the trait or disease name such as "t2d"
-#' @param threshold is the p-value (or posterior inclusion probability) for which information is extracted
-#' @param format output format which currently is a data.frame
-#' @param hyperlink logical if TRUE then a feature specific hyperlink is provided in the data frame
-#' @param file.csv is the name of the csvs file used for writing the data
-
+#' @param GAlist A list object providing information and infrastructure of the gact database.
+#' @param version The version of the gact database to use.
+#' @param task The task to perform, either "download" or "process". By default "download".
+#' @param dbdir The directory where the database should be stored, by default the current working directory.
+#' @param what Specifies the type of data to download, either "lite" or "full". By default "lite".
 #'
-#' @return Returns a data frame with genomic associations for a specific feature
+#' @return A list providing information and infrastructure of the gact database.
+#'
+#' @examples
+#' \dontrun{
+#' GAlist <- gact()
+#' }
 
-#' @author Peter Soerensen
+
+#' @export
+#'
+gact <- function(GAlist=NULL, version=NULL, task="download",
+                 dbdir=NULL, what="lite") {
+
+ if(is.null(dbdir)) dbdir <- getwd()
+ if(is.null(version)) stop("Please provide database version")
+
+ if(task=="download") {
+  GAlist <- createDB(Glist=NULL, version=version, dbdir=dbdir)
+
+  # Step 2: Download data from database:
+  GAlist <- downloadDB(GAlist=GAlist, what="marker")
+  GAlist <- downloadDB(GAlist=GAlist, what="gsets")
+  GAlist <- downloadDB(GAlist=GAlist, what="gsea")
+  GAlist <- downloadDB(GAlist=GAlist, what="gstat")
+  GAlist <- downloadDB(GAlist=GAlist, what="dgidb")
+
+  # Step 3: Create marker sets from database:
+  if(what=="full") {
+  message("Creating full marker sets - this may take some time")
+  GAlist <- mapSetsDB(GAlist=GAlist)
+  }
+ }
+ return(GAlist)
+}
 
 
+#' createDB - Creates a database for genetic association studies
+#'
+#' @param Glist A list of genetic data. Default is NULL.
+#' @param version Character string indicating the name of the database.
+#'               It is a required argument.
+#' @param dbdir Character string indicating the directory where the database should be created.
+#'             Default is NULL.
+#' @param what Character string indicating the type of database.
+#'             Default is "lite".
+#'
+#' @return A list containing the following items:
+#'         - version: Name of the database
+#'         - traits: NULL
+#'         - dirs: List of subdirectories within the database directory
+#'         - features: List of features in the database
+#'         - markers: Data frame of markers in the database
+#'         - rsids: List of rsids in the database
+#'         - cpra: List of cpra in the database
+#'
+#' @details
+#' The createDB function creates a database for genetic association studies.
+#' If `dbdir` is not specified, the database will be created in the current working directory.
+#' The function creates subdirectories within the database directory, including "glist", "gstat",
+#' "gsets", "gsea", "ldsc", "gbayes", "marker", "raw", and "dgidb".
+#' The list `Glist` should contain the genetic data and will be filtered to only keep
+#' markers that are present in `Glist$rsidsLD`. The filtered markers are stored in a data frame
+#' and saved in the "marker" subdirectory as "markers.txt.gz".
+#'
+#' @examples
+#' \dontrun{
+#' createDB(Glist = genetic_data, version = "db1", dbdir = "/data/db1")
+#' createDB(Glist = genetic_data, version = "db2", dbdir = "/data/db2", what = "full")
+#' }
+#'
 #' @export
 #'
 createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
@@ -146,25 +206,25 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
 mapSetsDB <- function(GAlist = NULL) {
  ensg2rsids <- GAlist$gsets[["ensg2rsids_10kb"]]
 
- fset_go <- getSets(GAlist = GAlist, feature = "GO")
+ fset_go <- getSetsDB(GAlist = GAlist, feature = "GO")
  sets_go <- lapply(fset_go, function(x){unique(unlist(ensg2rsids[x]))})
  sets_go <- sets_go[!sapply(sets_go, is.null)]
  setsfile_go <- paste0(GAlist$dirs["gsets"], "go2rsids.rds")
  saveRDS(sets_go, file = setsfile_go)
 
- fset_reactome <- getSets(GAlist = GAlist, feature = "Pathways2Genes")
+ fset_reactome <- getSetsDB(GAlist = GAlist, feature = "Pathways2Genes")
  sets_reactome <- lapply(fset_reactome, function(x){unique(unlist(ensg2rsids[x]))})
  sets_reactome <- sets_reactome[!sapply(sets_reactome, is.null)]
  setsfile_reactome <- paste0(GAlist$dirs["gsets"], "reactome2rsids.rds")
  saveRDS(sets_reactome, file = setsfile_reactome)
 
- fset_string <- getSets(GAlist = GAlist, feature = "ProteinComplexes2Genes")
+ fset_string <- getSetsDB(GAlist = GAlist, feature = "ProteinComplexes2Genes")
  sets_string <- lapply(fset_string, function(x){unique(unlist(ensg2rsids[x]))})
  sets_string <- sets_string[!sapply(sets_string, is.null)]
  setsfile_string <- paste0(GAlist$dirs["gsets"], "string2rsids.rds")
  saveRDS(sets_string, file = setsfile_string)
 
- fset_stitch <- getSets(GAlist = GAlist, feature = "ChemicalComplexes2Genes")
+ fset_stitch <- getSetsDB(GAlist = GAlist, feature = "ChemicalComplexes2Genes")
  sets_stitch <- lapply(fset_stitch, function(x){unique(unlist(ensg2rsids[x]))})
  sets_stitch <- sets_stitch[!sapply(sets_stitch, is.null)]
  setsfile_stitch <- paste0(GAlist$dirs["gsets"], "stitch2rsids.rds")
@@ -185,25 +245,25 @@ mapSetsDB <- function(GAlist = NULL) {
 # mapSetsDB <- function(GAlist=NULL) {
 #  ensg2rsids <- GAlist$gsets[["ensg2rsids_10kb"]]
 #
-#  fset <- getSets(GAlist=GAlist,feature="GO")
+#  fset <- getSetsDB(GAlist=GAlist,feature="GO")
 #  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
 #  sets <- sets[!sapply(sets,is.null)]
 #  setsfile <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
 #  saveRDS(sets,file=setsfile)
 #
-#  fset <- getSets(GAlist=GAlist,feature="Pathways2Genes")
+#  fset <- getSetsDB(GAlist=GAlist,feature="Pathways2Genes")
 #  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
 #  sets <- sets[!sapply(sets,is.null)]
 #  setsfile <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
 #  saveRDS(sets,file=setsfile)
 #
-#  fset <- getSets(GAlist=GAlist,feature="ProteinComplexes2Genes")
+#  fset <- getSetsDB(GAlist=GAlist,feature="ProteinComplexes2Genes")
 #  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
 #  sets <- sets[!sapply(sets,is.null)]
 #  setsfile <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
 #  saveRDS(sets,file=setsfile)
 #
-#  fset <- getSets(GAlist=GAlist,feature="ChemicalComplexes2Genes")
+#  fset <- getSetsDB(GAlist=GAlist,feature="ChemicalComplexes2Genes")
 #  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
 #  sets <- sets[!sapply(sets,is.null)]
 #  setsfile <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
@@ -383,49 +443,6 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
 }
 
 
-#' The gact function
-#'
-#' This function downloads and processes data from the gact database.
-#'
-#' @param GAlist A list providing information and infrastructure of the gact database
-#' @param version The version of the gact database to use, by default "t2dm-gact-0.0.1".
-#' @param task The task to perform, either "download" or "process". By default "download".
-#' @param dbdir The directory where the database should be stored, by default the current working directory.
-#' @param what Specifies the type of data to download, either "lite" or "full". By default "lite".
-#'
-#' @return A list providing information and infrastructure of the gact database.
-#'
-#' @examples
-#' \dontrun{
-#' GAlist <- gact()
-#' }
-
-
-#' @export
-#'
-gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download",
-                 dbdir=NULL, what="lite") {
-
- if(is.null(dbdir)) dbdir <- getwd()
-
- if(task=="download") {
-  GAlist <- createDB(Glist=NULL, version=version, dbdir=dbdir)
-
-  # Step 2: Download data from database:
-  GAlist <- downloadDB(GAlist=GAlist, what="marker")
-  GAlist <- downloadDB(GAlist=GAlist, what="gsets")
-  GAlist <- downloadDB(GAlist=GAlist, what="gsea")
-  GAlist <- downloadDB(GAlist=GAlist, what="gstat")
-  GAlist <- downloadDB(GAlist=GAlist, what="dgidb")
-
-  # Step 3: Create marker sets from database:
-  #if(what=="full") {
-  message("Creating full marker sets - this may take some time")
-  GAlist <- mapSetsDB(GAlist=GAlist)
-  #}
- }
- return(GAlist)
-}
 
 
 
@@ -434,15 +451,15 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download",
 #' This function retrieves summary statistics from the gact database of GSEA results,
 #' such as marker statistics, gene statistics, protein statistics, etc.
 #'
-#' @param GAlist A list of GSEA results generated by the `runGSEA` function.
+#' @param GAlist A list object providing information and infrastructure of the gact database.
 #' @param feature The type of statistics to retrieve from the database, such as "Markers", "Genes", "Proteins", etc.
 #' @param featureID A character vector of specific features to extract from the database. If not specified, all features will be returned.
 #' @param file The file name of the database of GSEA results.
 #' @param studyID The study ID to retrieve the results for. If not specified, results will be returned for all studies.
 #' @param trait The trait to retrieve the results for. If not specified, results will be returned for all traits.
 #' @param threshold A numeric p-value threshold used to filter results.
-#' @param format The format to return the results in, either "data.frame" (default) or "matrix".
-#' @return A data.frame or matrix of summary statistics for the specified feature, study ID, and trait.
+#' @param format The format to return the results in, either "list" (default) or "data.frame".
+#' @return A list or data.frame of summary statistics for the specified feature, study ID, and trait.
 #' @examples
 #'
 #' \dontrun{
@@ -461,14 +478,13 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download",
 #' # get gene statistics filtered by a threshold
 #' stat <- getStatDB(GAlist = GAlist, feature = "Genes", threshold = 0.05)
 #' }
-#' @references
 
 
 #' @export
 #'
 getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
-                    studyID=NULL, trait=NULL, threshold=NULL,
-                    format="data.frame") {
+                    studyID=NULL, trait=NULL, threshold=0.95,
+                    format="list") {
  features <- c("Markers","Genes","Proteins","GO","Pathways",
                "ProteinComplexes","ChemicalComplexes","Chromosomes")
  header <- c("Marker ID","Gene ID","Protein ID","GO ID","Pathway ID",
@@ -479,17 +495,30 @@ getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
  #gseafile <- paste0(GAlist$dirs["gsea"],"ct_gsea",feature,"_gdtdb.rds")
  gseafile <- GAlist$gseafiles[paste0("ct_gsea",feature,"_gdtdb")]
  res <- readRDS(gseafile)
+ message(paste("Extract statistics based p-value threshold:",threshold))
+ cls5 <- grep("_0.05", colnames(res$stat))
+ cls95 <- grep("_0.95", colnames(res$stat))
+ cls <- 1:ncol(res$stat)
+ if(threshold==0.05) cls <- cls5
+ if(threshold==0.95) cls <- cls95
 
  colnames(res$stat) <- gsub("z_","",colnames(res$stat))
  colnames(res$p) <- gsub("z_","",colnames(res$p))
+ colnames(res$stat) <- gsub("_0.05","",colnames(res$stat))
+ colnames(res$p) <- gsub("_0.05","",colnames(res$p))
+ colnames(res$stat) <- gsub("_0.95","",colnames(res$stat))
+ colnames(res$p) <- gsub("_0.95","",colnames(res$p))
  res$p[res$stat==0] <- 1
- if(!is.null(threshold)) {
-  cls <- grep(paste0("_",as.character(threshold)),colnames(res$stat))
-  res$stat <- res$stat[,cls]
-  res$p <- res$p[,cls]
-  colnames(res$stat) <- gsub(paste0("_",as.character(threshold)),"",colnames(res$stat))
-  colnames(res$p) <- gsub(paste0("_",as.character(threshold)),"",colnames(res$p))
+ rws <- rep(TRUE,lenth=nrow(res$stat))
+ if(!is.null(featureID)) rws <- rownames(res$stat)%in%featureID
+ if(sum(rws)==0) stop("None of featureIDs found in database")
+ res$stat <- res$stat[rws,cls]
+ res$p <- res$p[rws,cls]
+ if(!is.null(studyID)) {
+  res$stat <- res$stat[,colnames(res$stat)%in%studyID]
+  res$p <- res$p[,colnames(res$p)%in%studyID]
  }
+
  if(format=="data.frame") {
   res <- as.data.frame(res)
   if(feature=="Genes") {
@@ -506,10 +535,6 @@ getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
     if(any(select)) res <- res[select,]
     if(!any(select)) stop("None of featureIDs found in the database")
    }
-   #ensg2sym_list <- lapply(GAlist$gsets[["ensg2sym"]], function(x){
-   # unlist(strsplit(x,split=" "))})
-   #ensg2sym_df <- data.frame(ensg=rep(names(ensg2sym_list),times=sapply(ensg2sym_list,length)),
-   #                          sym=unlist(ensg2sym_list, use.names=FALSE))
   }
   if(!feature=="Genes") {
    res <- cbind(rownames(res), res)
@@ -651,40 +676,70 @@ getStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
  return(res)
 }
 
-#' @export
-#'
-writeStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
-                      studyID=NULL, trait="T2D", threshold=1,
-                      format="data.frame", file.csv=NULL, hyperlink=TRUE) {
- stat <- getStat(GAlist=GAlist, feature=feature, featureID=featureID,
-                 studyID=studyID, trait=trait, threshold=threshold,
-                 format=format, hyperlink=hyperlink)
- write.csv2(stat,file=file.csv,row.names=FALSE)
-}
+#' #' @export
+#' #'
+#' writeStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
+#'                       studyID=NULL, trait="T2D", threshold=1,
+#'                       format="data.frame", file.csv=NULL, hyperlink=TRUE) {
+#'  stat <- getStat(GAlist=GAlist, feature=feature, featureID=featureID,
+#'                  studyID=studyID, trait=trait, threshold=threshold,
+#'                  format=format, hyperlink=hyperlink)
+#'  write.csv2(stat,file=file.csv,row.names=FALSE)
+#' }
 
 #' @export
 #'
-getStudies <- function(GAlist=NULL) {
+getStudiesDB <- function(GAlist=NULL) {
  return(as.data.frame(GAlist$study))
 }
 
 #' @export
 #'
-getSetsDesign <- function(sets=NULL,featureID=NULL) {
- if(is.null(featureID)) featureID <- unique(unlist(sets))
- sets <- qgg:::mapSets(sets=sets,rsids=featureID, index=TRUE)
- W <- matrix(0,nrow=length(featureID), ncol=length(sets))
+designSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeatureID=NULL) {
+ if(is.null(GAlist)) stop ("Please provide GAlist")
+ if(is.null(feature)) stop ("Please provide feature")
+ sets <- getSetsDB(GAlist=GAlist, feature=feature)
+ if(!is.null(featureID)) {
+  select <- names(sets)%in%featureID
+  if(sum(select)==0) stop("None of the fetureIDs found in sets")
+  sets <- sets[select]
+ }
+ if(is.null(rowFeatureID)) rowFeatureID <- unique(unlist(sets))
+ sets <- qgg:::mapSets(sets=sets,rsids=rowFeatureID, index=TRUE)
+ W <- matrix(0,nrow=length(rowFeatureID), ncol=length(sets))
  colnames(W) <- names(sets)
- rownames(W) <- featureID
+ rownames(W) <- rowFeatureID
  for(i in 1:length(sets)) {
   W[sets[[i]],i] <- 1
  }
  return(W)
 }
 
+#' Retrieve sets of features from a GAlist object
+#'
+#' The `getSetsDB` function retrieves sets of features from a GAlist object. The
+#' feature sets are specified by the `feature` argument, and the specific IDs of
+#' the features can be filtered using the `featureID` argument.
+#'
+#' @param GAlist A list object providing information and infrastructure of the gact database.
+#' @param feature A character string specifying the type of feature set to be
+#'   retrieved. Possible values are "Entres Genes", "Genes", "Proteins", "Gene
+#'   Symbol", "GO", "Pathways", "ProteinComplexes", "ChemicalComplexes",
+#'   "ProteinComplexes2Genes", and "ChemicalComplexes2Genes".
+#' @param featureID A character vector of IDs specifying the specific features to
+#'   be retrieved.
+#' @return A list of the specified feature sets. If `featureID` is not `NULL`,
+#'   returns only the sets with IDs in `featureID`.
+#'
+#' @examples
+#' \dontrun{
+#' sets <- getSetsDB(GAlist, feature="Genes")
+#' getSetsDB(GAlist, feature="Genes", featureID=c("gene1", "gene2"))
+#' }
+#'
 #' @export
 #'
-getSets <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
+getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  sets <- NULL
  if(feature=="Entres Genes") sets <- GAlist$gsets[[1]]
  if(feature=="Genes") sets <- GAlist$gsets[[2]]
@@ -697,20 +752,33 @@ getSets <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
  if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
  if(!is.null(featureID)) {
-  inSet <- featureID%in%names(sets)
-  if(any(!inSet)) warning(paste("Some IDs not in data base:",featureID[!inSet]))
-  featureID <- featureID[featureID%in%names(sets)]
-  sets <- unlist(sets[featureID])
+  select <- names(sets)%in%featureID
+  if(sum(select)==0) stop("None of the fetureIDs found in sets")
+  if(any(!select)) message(paste("Some IDs not in data base:",featureID[!select]))
+  sets <- sets[select]
  }
  return(sets)
  }
 
 
-
-
+#' Get Marker Sets from database
+#'
+#' This function retrieves marker sets based on a given feature and feature ID from a file. The feature can be one of the following: Genes, Inter Genes, Gene Symbol, Proteins, Pathways, GO, ProteinComplexes, ChemicalComplexes. The feature ID refers to the ID of the feature for which the marker sets are to be retrieved. The `rsids` argument is optional and refers to a list of SNP IDs for which the corresponding marker sets are to be retrieved.
+#'
+#' @param GAlist A list object providing information and infrastructure of the gact database.
+#' @param feature A string specifying the type of biological feature for which the marker sets are to be retrieved. The options are: "Genes", "Entrez Genes", "Gene Symbol", "Proteins", "Pathways", "GO", "Protein Complexes", and "Chemical Complexes".
+#' @param featureID The ID of the feature for which the marker sets are to be retrieved.
+#' @param rsids A character vector of rsids to subset the marker sets.
+#'
+#' @return A list of marker sets for the specified feature and feature ID, where each set is a character vector of rsids.
+#'
+#' @examples
+#' \dontrun{
+#' sets <- getMarkerSetsDB(GAlist=GAlist, feature="Genes", featureID=c("ENSG00000165879", "ENSG00000012048"))
+#' }
 #' @export
 #'
-getMarkerSets <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NULL) {
+getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NULL) {
 
  if(feature=="Genes") setsfile <- paste0(GAlist$dirs["gsets"],"ensg2rsids_10kb.rds")
  if(feature=="Entres Genes") setsfile <- paste0(GAlist$dirs["gsets"],"eg2rsids_10kb.rds")
@@ -758,6 +826,27 @@ removeStatDB <- function(GAlist,studyID=NULL) {
  return(GAlist)
 }
 
+#' Update and process genetic association study summary statistics
+#'
+#' This function updates and processes genetic association study summary statistics. The input to the function includes study information, summary statistics, and information about the sample.
+#'
+#' @param GAlist A list object providing information and infrastructure of the gact database.
+#' @param stat A dataframe of summary statistics for each SNP
+#' @param source Source of the summary statistics
+#' @param trait Trait being studied
+#' @param type Type of trait (binary or quantitative)
+#' @param gender Gender of study participants
+#' @param ancestry Ancestry of study participants
+#' @param build Genome build used in the study
+#' @param n Sample size
+#' @param ncase Number of cases
+#' @param ncontrol Number of controls
+#' @param reference Reference for the study
+#' @param comments Additional comments
+#' @param writeStatDB A flag indicating whether to perform quality control and write the processed summary statistics to a file
+#' @param excludeMAFDIFF A threshold used to exclude SNPs with a difference in minor allele frequency (MAF) between cases and controls that exceeds this threshold
+#' @return A list of updated study information, including the study id, file name, trait, type, gender, ancestry, build, sample size, case/control count, reference, and comments.
+#'
 #' @export
 #'
 updateStatDB <- function(GAlist=NULL,
@@ -826,7 +915,7 @@ updateStatDB <- function(GAlist=NULL,
 
 #' @export
 #'
-getMarkerStat <- function(GAlist=NULL, studies=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
+getMarkerStatDB <- function(GAlist=NULL, studies=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
 
  if(!is.null(cpra)) {
   cpra1 <- paste(GAlist$markers[,"chr"],
