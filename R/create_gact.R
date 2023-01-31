@@ -209,25 +209,25 @@ mapSetsDB <- function(GAlist = NULL) {
  fset_go <- getSetsDB(GAlist = GAlist, feature = "GO")
  sets_go <- lapply(fset_go, function(x){unique(unlist(ensg2rsids[x]))})
  sets_go <- sets_go[!sapply(sets_go, is.null)]
- setsfile_go <- paste0(GAlist$dirs["gsets"], "go2rsids.rds")
+ setsfile_go <- file.path(GAlist$dirs["gsets"], "go2rsids.rds")
  saveRDS(sets_go, file = setsfile_go)
 
  fset_reactome <- getSetsDB(GAlist = GAlist, feature = "Pathways2Genes")
  sets_reactome <- lapply(fset_reactome, function(x){unique(unlist(ensg2rsids[x]))})
  sets_reactome <- sets_reactome[!sapply(sets_reactome, is.null)]
- setsfile_reactome <- paste0(GAlist$dirs["gsets"], "reactome2rsids.rds")
+ setsfile_reactome <- file.path(GAlist$dirs["gsets"], "reactome2rsids.rds")
  saveRDS(sets_reactome, file = setsfile_reactome)
 
  fset_string <- getSetsDB(GAlist = GAlist, feature = "ProteinComplexes2Genes")
  sets_string <- lapply(fset_string, function(x){unique(unlist(ensg2rsids[x]))})
  sets_string <- sets_string[!sapply(sets_string, is.null)]
- setsfile_string <- paste0(GAlist$dirs["gsets"], "string2rsids.rds")
+ setsfile_string <- file.path(GAlist$dirs["gsets"], "string2rsids.rds")
  saveRDS(sets_string, file = setsfile_string)
 
  fset_stitch <- getSetsDB(GAlist = GAlist, feature = "ChemicalComplexes2Genes")
  sets_stitch <- lapply(fset_stitch, function(x){unique(unlist(ensg2rsids[x]))})
  sets_stitch <- sets_stitch[!sapply(sets_stitch, is.null)]
- setsfile_stitch <- paste0(GAlist$dirs["gsets"], "stitch2rsids.rds")
+ setsfile_stitch <- file.path(GAlist$dirs["gsets"], "stitch2rsids.rds")
  saveRDS(sets_stitch, file = setsfile_stitch)
 
  GAlist$gsetsfiles[12] <- setsfile_go
@@ -385,7 +385,7 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   url_stat <- "https://www.dropbox.com/s/qrcivih31iuuril/stat.rds?dl=1"
   destfile <- file.path(GAlist$dirs["gstat"],"gstat.rds")
   download.file(url=url_stat, mode = "wb", dest=destfile)
-  GAlist$gstatfiles <- paste0(GAlist$dirs["gstat"],"gstat.rds")
+  GAlist$gstatfiles <- file.path(GAlist$dirs["gstat"],"gstat.rds")
 
   url_stat <- "https://www.dropbox.com/s/0sizkeuw0sl51tn/GWAS_information.csv?dl=1"
   destfile <- file.path(GAlist$dirs["gstat"],"GWAS_information.csv")
@@ -405,7 +405,7 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
    destfile <- file.path(GAlist$dirs["gstat"],substring(url_stat[study],43,nchar(url_stat[study])-5))
    download.file(url=url_stat[study], mode = "wb", dest=destfile)
   }
-  GAlist$studyfiles <- file.path(GAlist$dirs["gstat"],GAlist$study$file,".gz")
+  GAlist$studyfiles <- file.path(GAlist$dirs["gstat"],paste0(GAlist$study$file,".gz"))
   names(GAlist$studyfiles) <- GAlist$study$id
 
  }
@@ -415,7 +415,7 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   url_stat <- "https://www.dropbox.com/s/4k54owkby3uf2hf/markers.txt.gz?dl=1"
   destfile <- file.path(GAlist$dirs["marker"],"markers.txt.gz")
   download.file(url=url_stat, mode = "wb", dest=destfile)
-  GAlist$markerfiles <-paste0(GAlist$dirs["marker"],"markers.txt.gz")
+  GAlist$markerfiles <-file.path(GAlist$dirs["marker"],"markers.txt.gz")
   GAlist$markers <- fread(GAlist$markerfiles, data.table=FALSE)
   GAlist$rsids <- GAlist$markers$rsids
   GAlist$cpra <- paste(GAlist$markers$chr,
@@ -781,14 +781,14 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
 #'
 getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NULL) {
 
- if(feature=="Genes") setsfile <- paste0(GAlist$dirs["gsets"],"ensg2rsids_10kb.rds")
- if(feature=="Entres Genes") setsfile <- paste0(GAlist$dirs["gsets"],"eg2rsids_10kb.rds")
- if(feature=="Gene Symbol") setsfile <- paste0(GAlist$dirs["gsets"],"sym2rsids_10kb.rds")
- if(feature=="Proteins") setsfile <- paste0(GAlist$dirs["gsets"],"ensp2rsids_10kb.rds")
- if(feature=="Pathways") setsfile <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
- if(feature=="GO") setsfile <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
- if(feature=="ProteinComplexes") setsfile <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
- if(feature=="ChemicalComplexes") setsfile <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
+ if(feature=="Genes") setsfile <- file.path(GAlist$dirs["gsets"],"ensg2rsids_10kb.rds")
+ if(feature=="Entres Genes") setsfile <- file.path(GAlist$dirs["gsets"],"eg2rsids_10kb.rds")
+ if(feature=="Gene Symbol") setsfile <- file.path(GAlist$dirs["gsets"],"sym2rsids_10kb.rds")
+ if(feature=="Proteins") setsfile <- file.path(GAlist$dirs["gsets"],"ensp2rsids_10kb.rds")
+ if(feature=="Pathways") setsfile <- file.path(GAlist$dirs["gsets"],"reactome2rsids.rds")
+ if(feature=="GO") setsfile <- file.path(GAlist$dirs["gsets"],"go2rsids.rds")
+ if(feature=="ProteinComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"string2rsids.rds")
+ if(feature=="ChemicalComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"stitch2rsids.rds")
  sets <- readRDS(file=setsfile)
  if(!is.null(featureID)) {
   inSet <- featureID%in%names(sets)
@@ -804,7 +804,7 @@ getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NUL
 #' @export
 #'
 getFeature <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="list") {
- if(feature=="DGIdb") df <- fread(paste0(GAlist$dirs["dgidb"],"interactions.tsv"), data.table=FALSE)
+ if(feature=="DGIdb") df <- fread(file.path(GAlist$dirs["dgidb"],"interactions.tsv"), data.table=FALSE)
  return(df)
 }
 
@@ -892,9 +892,9 @@ updateStatDB <- function(GAlist=NULL,
  GAlist$study$reference[study_number] <- reference
  GAlist$study$source[study_number] <- source
 
- file_stat_information <- paste0(GAlist$dirs["gstat"],"GWAS_information.csv")
+ file_stat_information <- file.path(GAlist$dirs["gstat"],"GWAS_information.csv")
  write.csv2(as.data.frame(GAlist$study),file=file_stat_information,row.names=FALSE)
- GAlist$studyfiles <- paste0(GAlist$dirs["gstat"],GAlist$study$file,".gz")
+ GAlist$studyfiles <- file.path(GAlist$dirs["gstat"],GAlist$study$file,".gz")
  names(GAlist$studyfiles) <- GAlist$study$id
 
 
@@ -904,7 +904,7 @@ updateStatDB <- function(GAlist=NULL,
   stat <- qcStatDB(GAlist=GAlist,stat=stat, excludeMAFDIFF=excludeMAFDIFF)
   message(paste("Writing processed summary statistics to internal file:",
                 GAlist$study$file[study_number]))
-  file_stat <- paste0(GAlist$dirs["gstat"],GAlist$study$file[study_number],".gz")
+  file_stat <- file.path(GAlist$dirs["gstat"],GAlist$study$file[study_number],".gz")
   if(file.exists(file_stat)) stop(paste("GWAS summary statistics file allready exists:",
                                         file_stat))
   fwrite(stat, file_stat)
