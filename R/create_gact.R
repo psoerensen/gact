@@ -6,8 +6,8 @@
 #'
 #' @description
 #' The gact function is used to create or download a GACT database with information
-#' on genomic assocations for complex traits. The genomic associations
-#' include single marker associations mapped to genetic markers in a Glist.
+#' on genomic associations for complex traits. The genomic associations
+#' include single marker associations linked to genetic markers in a Glist.
 #' This includes stringent quality control. In addition genomic associations
 #' linked to different genomic features (e.g. genes, proteins, chemical-complexes,
 #' protein-complexes, biological pathways) are provided.
@@ -21,111 +21,157 @@
 #' @param format output format which currently is a data.frame
 #' @param hyperlink logical if TRUE then a feature specific hyperlink is provided in the data frame
 #' @param file.csv is the name of the csvs file used for writing the data
-'
+
 #'
 #' @return Returns a data frame with genomic associations for a specific feature
 
 #' @author Peter Soerensen
 
+
 #' @export
 #'
 createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
+ if (is.null(version)) stop("Please include a database name using the version argument")
 
- if(is.null(version)) stop(paste("Please include a database name using the version argument"))
- #if(is.null(Glist)) stop(paste("Please include a Glist using the Glist argument"))
- dbdir <- paste0(dbdir,"/",version)
- gstatdir <- paste0(dbdir,"/gstat/")
- gsetsdir <- paste0(dbdir,"/gsets/")
- gseadir <- paste0(dbdir,"/gsea/")
- glistdir <- paste0(dbdir,"/glist/")
- ldscdir <- paste0(dbdir,"/ldsc/")
- gbayesdir <- paste0(dbdir,"/gbayes/")
- markerdir <- paste0(dbdir,"/marker/")
- rawdir <- paste0(dbdir,"/raw/")
- dgidir <- paste0(dbdir,"/dgidb/")
- if(dir.exists(dbdir)) stop(paste("Directory:",dbdir,"allready exists"))
- if(!dir.exists(dbdir)) {
-  dir.create(dbdir)
-  dir.create(glistdir)
-  dir.create(gstatdir)
-  dir.create(gsetsdir)
-  dir.create(gseadir)
-  dir.create(ldscdir)
-  dir.create(gbayesdir)
-  dir.create(markerdir)
-  dir.create(rawdir)
-  dir.create(dgidir)
- }
+ dbdir <- file.path(dbdir, version)
+ dirs <- c(glist = "glist",
+           gstat = "gstat",
+           gsets = "gsets",
+           gsea = "gsea",
+           ldsc = "ldsc",
+           gbayes = "gbayes",
+           marker = "marker",
+           raw = "raw",
+           dgidb = "dgidb")
 
- GAlist <- NULL
- GAlist$version <- version
+ if (dir.exists(dbdir)) stop(paste("Directory:",dbdir,"already exists"))
 
- GAlist$traits <- NULL
+ dir.create(dbdir)
+ lapply(names(dirs), function(x) {
+  dir.create(file.path(dbdir, dirs[x]))
+ })
 
- GAlist$dirs <- c(glistdir,gstatdir,gsetsdir,gseadir, ldscdir, gbayesdir, markerdir, rawdir, dgidir)
- names(GAlist$dirs) <- c("glist","gstat","gsets","gsea", "ldsc", "gbayes", "marker", "raw", "dgidb")
+ GAlist <- list(version = version,
+                traits = NULL,
+                dirs = file.path(dbdir, dirs),
+                features = c("Markers", "Genes", "Proteins", "GO", "Pathways", "ProteinComplexes", "ChemicalComplexes"))
 
- # features in the database
- GAlist$features <- c("Markers","Genes","Proteins","GO","Pathways",
-                      "ProteinComplexes","ChemicalComplexes")
+ keep <- Glist$rsids %in% Glist$rsidsLD
+ GAlist$markers <- data.frame(rsids = Glist$rsids[keep],
+                              chr = Glist$chr[keep],
+                              pos = Glist$pos[keep],
+                              ea = Glist$a1[keep],
+                              nea = Glist$a2[keep],
+                              eaf = Glist$af[keep],
+                              stringsAsFactors = FALSE)
 
- if(!is.null(Glist)) {
-  keep <- unlist(Glist$rsids)%in%unlist(Glist$rsidsLD)
-  GAlist$markers <- data.frame(rsids=unlist(Glist$rsids),
-                               chr=unlist(Glist$chr),
-                               pos=unlist(Glist$pos),
-                               ea=unlist(Glist$a1),
-                               nea=unlist(Glist$a2),
-                               eaf=unlist(Glist$af),
-                               stringsAsFactors=FALSE)[keep,]
-  GAlist$rsids <- unlist(Glist$rsids)[keep]
-  GAlist$cpra <- unlist(Glist$cpra)[keep]
-  file_markers <- paste0(GAlist$dirs["marker"],"markers.txt.gz")
-  fwrite(GAlist$markers, file=file_markers)
- }
+ GAlist$rsids <- Glist$rsids[keep]
+ GAlist$cpra <- Glist$cpra[keep]
 
- # update Glist$ldfiles
- #ldfiles <- list.files(path=paste0(dbdir,"/glist/ldfiles"),pattern=".ld")
- #rws <- sapply(ldfiles,function(x){grep(x,Glist$ldfiles)})
- #rws <- order(rws)
- #Glist$ldfiles <- paste0(dbdir,"/glist/",ldfiles[rws])
+ file_markers <- file.path(GAlist$dirs$marker, "markers.txt.gz")
+ fwrite(GAlist$markers, file = file_markers)
 
  return(GAlist)
 }
 
+
+# createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
+#
+#  if(is.null(version)) stop(paste("Please include a database name using the version argument"))
+#  #if(is.null(Glist)) stop(paste("Please include a Glist using the Glist argument"))
+#  dbdir <- paste0(dbdir,"/",version)
+#  gstatdir <- paste0(dbdir,"/gstat/")
+#  gsetsdir <- paste0(dbdir,"/gsets/")
+#  gseadir <- paste0(dbdir,"/gsea/")
+#  glistdir <- paste0(dbdir,"/glist/")
+#  ldscdir <- paste0(dbdir,"/ldsc/")
+#  gbayesdir <- paste0(dbdir,"/gbayes/")
+#  markerdir <- paste0(dbdir,"/marker/")
+#  rawdir <- paste0(dbdir,"/raw/")
+#  dgidir <- paste0(dbdir,"/dgidb/")
+#  if(dir.exists(dbdir)) stop(paste("Directory:",dbdir,"allready exists"))
+#  if(!dir.exists(dbdir)) {
+#   dir.create(dbdir)
+#   dir.create(glistdir)
+#   dir.create(gstatdir)
+#   dir.create(gsetsdir)
+#   dir.create(gseadir)
+#   dir.create(ldscdir)
+#   dir.create(gbayesdir)
+#   dir.create(markerdir)
+#   dir.create(rawdir)
+#   dir.create(dgidir)
+#  }
+#
+#  GAlist <- NULL
+#  GAlist$version <- version
+#
+#  GAlist$traits <- NULL
+#
+#  GAlist$dirs <- c(glistdir,gstatdir,gsetsdir,gseadir, ldscdir, gbayesdir, markerdir, rawdir, dgidir)
+#  names(GAlist$dirs) <- c("glist","gstat","gsets","gsea", "ldsc", "gbayes", "marker", "raw", "dgidb")
+#
+#  # features in the database
+#  GAlist$features <- c("Markers","Genes","Proteins","GO","Pathways",
+#                       "ProteinComplexes","ChemicalComplexes")
+#
+#  if(!is.null(Glist)) {
+#   keep <- unlist(Glist$rsids)%in%unlist(Glist$rsidsLD)
+#   GAlist$markers <- data.frame(rsids=unlist(Glist$rsids),
+#                                chr=unlist(Glist$chr),
+#                                pos=unlist(Glist$pos),
+#                                ea=unlist(Glist$a1),
+#                                nea=unlist(Glist$a2),
+#                                eaf=unlist(Glist$af),
+#                                stringsAsFactors=FALSE)[keep,]
+#   GAlist$rsids <- unlist(Glist$rsids)[keep]
+#   GAlist$cpra <- unlist(Glist$cpra)[keep]
+#   file_markers <- paste0(GAlist$dirs["marker"],"markers.txt.gz")
+#   fwrite(GAlist$markers, file=file_markers)
+#  }
+#
+#  # update Glist$ldfiles
+#  #ldfiles <- list.files(path=paste0(dbdir,"/glist/ldfiles"),pattern=".ld")
+#  #rws <- sapply(ldfiles,function(x){grep(x,Glist$ldfiles)})
+#  #rws <- order(rws)
+#  #Glist$ldfiles <- paste0(dbdir,"/glist/",ldfiles[rws])
+#
+#  return(GAlist)
+# }
+
 #' @export
 #'
-mapSetsDB <- function(GAlist=NULL) {
+mapSetsDB <- function(GAlist = NULL) {
  ensg2rsids <- GAlist$gsets[["ensg2rsids_10kb"]]
 
- fset <- getSets(GAlist=GAlist,feature="GO")
- sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
- sets <- sets[!sapply(sets,is.null)]
- setsfile <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
- saveRDS(sets,file=setsfile)
+ fset_go <- getSets(GAlist = GAlist, feature = "GO")
+ sets_go <- lapply(fset_go, function(x){unique(unlist(ensg2rsids[x]))})
+ sets_go <- sets_go[!sapply(sets_go, is.null)]
+ setsfile_go <- paste0(GAlist$dirs["gsets"], "go2rsids.rds")
+ saveRDS(sets_go, file = setsfile_go)
 
- fset <- getSets(GAlist=GAlist,feature="Pathways2Genes")
- sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
- sets <- sets[!sapply(sets,is.null)]
- setsfile <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
- saveRDS(sets,file=setsfile)
+ fset_reactome <- getSets(GAlist = GAlist, feature = "Pathways2Genes")
+ sets_reactome <- lapply(fset_reactome, function(x){unique(unlist(ensg2rsids[x]))})
+ sets_reactome <- sets_reactome[!sapply(sets_reactome, is.null)]
+ setsfile_reactome <- paste0(GAlist$dirs["gsets"], "reactome2rsids.rds")
+ saveRDS(sets_reactome, file = setsfile_reactome)
 
- fset <- getSets(GAlist=GAlist,feature="ProteinComplexes2Genes")
- sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
- sets <- sets[!sapply(sets,is.null)]
- setsfile <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
- saveRDS(sets,file=setsfile)
+ fset_string <- getSets(GAlist = GAlist, feature = "ProteinComplexes2Genes")
+ sets_string <- lapply(fset_string, function(x){unique(unlist(ensg2rsids[x]))})
+ sets_string <- sets_string[!sapply(sets_string, is.null)]
+ setsfile_string <- paste0(GAlist$dirs["gsets"], "string2rsids.rds")
+ saveRDS(sets_string, file = setsfile_string)
 
- fset <- getSets(GAlist=GAlist,feature="ChemicalComplexes2Genes")
- sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
- sets <- sets[!sapply(sets,is.null)]
- setsfile <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
- saveRDS(sets,file=setsfile)
+ fset_stitch <- getSets(GAlist = GAlist, feature = "ChemicalComplexes2Genes")
+ sets_stitch <- lapply(fset_stitch, function(x){unique(unlist(ensg2rsids[x]))})
+ sets_stitch <- sets_stitch[!sapply(sets_stitch, is.null)]
+ setsfile_stitch <- paste0(GAlist$dirs["gsets"], "stitch2rsids.rds")
+ saveRDS(sets_stitch, file = setsfile_stitch)
 
- GAlist$gsetsfiles[12] <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
- GAlist$gsetsfiles[13] <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
- GAlist$gsetsfiles[14] <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
- GAlist$gsetsfiles[15] <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
+ GAlist$gsetsfiles[12] <- setsfile_go
+ GAlist$gsetsfiles[13] <- setsfile_reactome
+ GAlist$gsetsfiles[14] <- setsfile_string
+ GAlist$gsetsfiles[15] <- setsfile_stitch
 
  names(GAlist$gsetsfiles[12]) <- "go2rsids"
  names(GAlist$gsetsfiles[13]) <- "reactome2rsids"
@@ -133,6 +179,45 @@ mapSetsDB <- function(GAlist=NULL) {
  names(GAlist$gsetsfiles[15]) <- "stitch2rsids"
  return(GAlist)
 }
+
+# mapSetsDB <- function(GAlist=NULL) {
+#  ensg2rsids <- GAlist$gsets[["ensg2rsids_10kb"]]
+#
+#  fset <- getSets(GAlist=GAlist,feature="GO")
+#  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+#  sets <- sets[!sapply(sets,is.null)]
+#  setsfile <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
+#  saveRDS(sets,file=setsfile)
+#
+#  fset <- getSets(GAlist=GAlist,feature="Pathways2Genes")
+#  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+#  sets <- sets[!sapply(sets,is.null)]
+#  setsfile <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
+#  saveRDS(sets,file=setsfile)
+#
+#  fset <- getSets(GAlist=GAlist,feature="ProteinComplexes2Genes")
+#  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+#  sets <- sets[!sapply(sets,is.null)]
+#  setsfile <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
+#  saveRDS(sets,file=setsfile)
+#
+#  fset <- getSets(GAlist=GAlist,feature="ChemicalComplexes2Genes")
+#  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
+#  sets <- sets[!sapply(sets,is.null)]
+#  setsfile <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
+#  saveRDS(sets,file=setsfile)
+#
+#  GAlist$gsetsfiles[12] <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
+#  GAlist$gsetsfiles[13] <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
+#  GAlist$gsetsfiles[14] <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
+#  GAlist$gsetsfiles[15] <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
+#
+#  names(GAlist$gsetsfiles[12]) <- "go2rsids"
+#  names(GAlist$gsetsfiles[13]) <- "reactome2rsids"
+#  names(GAlist$gsetsfiles[14]) <- "string2rsids"
+#  names(GAlist$gsetsfiles[15]) <- "stitch2rsids"
+#  return(GAlist)
+# }
 
 #' @export
 #'
@@ -149,11 +234,13 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
             "https://www.dropbox.com/s/1py37zd92ttsvnp/ensg2sym.rds?dl=1",
             "https://www.dropbox.com/s/2ggu4u5hp406cif/go.rds?dl=1",
             "https://www.dropbox.com/s/uryyxnjyhxa9azf/reactome.rds?dl=1",
-            "https://www.dropbox.com/s/9ah6aw0fborrp0z/string2ensg.rds?dl=1",
+            "https://www.dropbox.com/s/wnci7lldztnb93k/string2ensp.rds?dl=1",
             "https://www.dropbox.com/s/ny94ibdbqhtg62h/stitch.rds?dl=1",
             "https://www.dropbox.com/s/q83q3mnvos8wdxk/reactome2ensg.rds?dl=1",
             "https://www.dropbox.com/s/9ah6aw0fborrp0z/string2ensg.rds?dl=1",
-            "https://www.dropbox.com/s/7gj36rdec6spk9u/stitch2ensg.rds?dl=1")
+            "https://www.dropbox.com/s/7gj36rdec6spk9u/stitch2ensg.rds?dl=1",
+            "https://www.dropbox.com/s/7f7370ae4k7b6hc/ensg2eg.rds?dl=1",
+            "https://www.dropbox.com/s/3y9z8liv54jnhai/eg2ensg.rds?dl=1")
 
   names(urls) <- c("eg2rsids_10kb.rds",
                    "ensg2rsids_10kb.rds",
@@ -165,7 +252,9 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
                    "stitch.rds",
                    "reactome2ensg.rds",
                    "string2ensg.rds",
-                   "stitch2ensg.rds")
+                   "stitch2ensg.rds",
+                   "ensg2eg.rds",
+                   "eg2ensg.rds")
   for (feature in names(urls)) {
    message(paste("Downloading file:",feature))
    destfile <- paste0(GAlist$dirs["gsets"],feature)
@@ -318,6 +407,9 @@ gact <- function(GAlist=NULL, version="t2dm-gact-0.0.1", task="download",
  }
  return(GAlist)
 }
+
+
+
 
 #' @export
 #'
@@ -523,6 +615,19 @@ getStudies <- function(GAlist=NULL) {
  return(as.data.frame(GAlist$study))
 }
 
+#' @export
+#'
+getSetsDesign <- function(sets=NULL,featureID=NULL) {
+ if(is.null(featureID)) featureID <- unique(unlist(sets))
+ sets <- qgg:::mapSets(sets=sets,rsids=featureID, index=TRUE)
+ W <- matrix(0,nrow=length(featureID), ncol=length(sets))
+ colnames(W) <- names(sets)
+ rownames(W) <- featureID
+ for(i in 1:length(sets)) {
+  W[sets[[i]],i] <- 1
+ }
+ return(W)
+}
 
 #' @export
 #'
@@ -533,10 +638,9 @@ getSets <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  if(feature=="Proteins") sets <- GAlist$gsets[[3]]
  if(feature=="Gene Symbol") sets <- GAlist$gsets[[4]]
  if(feature=="GO") sets <- GAlist$gsets[[5]]
- if(feature=="Pathways") sets <- GAlist$gsets[[6]]
+ if(feature=="Pathways") sets <- GAlist$gsets[[9]]
  if(feature=="ProteinComplexes") sets <- GAlist$gsets[[7]]
  if(feature=="ChemicalComplexes") sets <- GAlist$gsets[[8]]
- if(feature=="Pathways2Genes") sets <- GAlist$gsets[[9]]
  if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
  if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
  if(!is.null(featureID)) {
@@ -547,6 +651,9 @@ getSets <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  }
  return(sets)
  }
+
+
+
 
 #' @export
 #'
@@ -570,6 +677,15 @@ getMarkerSets <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NULL)
  if(!is.null(rsids)) sets <- qgg:::mapSets(sets=sets, rsids=rsids, index=FALSE)
  return(sets)
 }
+
+
+#' @export
+#'
+getFeature <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="list") {
+ if(feature=="DGIdb") df <- fread(paste0(GAlist$dirs["dgidb"],"interactions.tsv"), data.table=FALSE)
+ return(df)
+}
+
 
 #' @export
 #'
@@ -643,7 +759,7 @@ updateStatDB <- function(GAlist=NULL,
  if(writeStatDB) {
   message("Perform quality control of external summary statistics")
   stat <- qcStatDB(GAlist=GAlist,stat=stat, excludeMAFDIFF=excludeMAFDIFF)
-  message(paste("Writing processed summary statistics til internal file:",
+  message(paste("Writing processed summary statistics to internal file:",
                 GAlist$study$file[study_number]))
   file_stat <- paste0(GAlist$dirs["gstat"],GAlist$study$file[study_number],".gz")
   if(file.exists(file_stat)) stop(paste("GWAS summary statistics file allready exists:",
@@ -653,6 +769,7 @@ updateStatDB <- function(GAlist=NULL,
 
  return(GAlist)
 }
+
 
 #' @export
 #'
@@ -788,6 +905,7 @@ annotationDB <- function(GAlist=NULL,
  # Map ENSEMBL GENE IDS to ENTREZ IDs
  ###########################################
  ensg2eg <- as.list(org.Hs.egENSEMBL2EG)
+ saveRDS(ensg2eg,file="ensg2eg.rds")
 
  ###########################################
  # Map ENSEMBL PROTEIN IDS to ENTREZ IDs
@@ -800,6 +918,7 @@ annotationDB <- function(GAlist=NULL,
  eg2ensg <- org.Hs.egENSEMBL
  mapped_genes <- mappedkeys(eg2ensg)
  eg2ensg <- as.list(eg2ensg[mapped_genes])
+ saveRDS(eg2ensg,file="eg2ensg.rds")
 
  ###########################################
  # Map ENTREZ IDs to ENSEMBL PROTEIN IDS
