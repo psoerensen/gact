@@ -805,8 +805,19 @@ getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NUL
 
 #' @export
 #'
-getFeature <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="list") {
- if(feature=="DGIdb") df <- fread(file.path(GAlist$dirs["dgidb"],"interactions.tsv"), data.table=FALSE)
+getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="list") {
+ if(feature=="Drug Gene Interactions") {
+  eg2ensg <- readRDS(file.path(GAlist$dirs["gsets"],"eg2ensg.rds"))
+  egs <- rep(names(eg2ensg),times=sapply(eg2ensg,length))
+  ensg <- unlist(eg2ensg, use.names=FALSE)
+  df1 <- data.frame(entrez_id=egs,ENSG=ensg)
+
+  df2 <- fread(file.path(GAlist$dirs["dgidb"],"interactions.tsv"), data.table=FALSE)
+  df2$entrez_id <- as.character(df2$entrez_id)
+
+  df <- merge(x=df1, y=df2, by.x="entrez_id", by.y="entrez_id",  all.y=TRUE)
+  colnames(df)[1:3] <- c("Entrez Gene","Ensembl Gene ID","Symbol")
+ }
  return(df)
 }
 
