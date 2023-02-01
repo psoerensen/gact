@@ -118,20 +118,22 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
 
  names(GAlist$dirs) <- c("glist","gstat","gsets","gsea", "ldsc", "gbayes", "marker", "raw", "dgidb")
 
- keep <- Glist$rsids %in% Glist$rsidsLD
- GAlist$markers <- data.frame(rsids = Glist$rsids[keep],
-                              chr = Glist$chr[keep],
-                              pos = Glist$pos[keep],
-                              ea = Glist$a1[keep],
-                              nea = Glist$a2[keep],
-                              eaf = Glist$af[keep],
-                              stringsAsFactors = FALSE)
+ if(!is.null(Glist)) {
+  keep <- Glist$rsids %in% Glist$rsidsLD
+  GAlist$markers <- data.frame(rsids = Glist$rsids[keep],
+                               chr = Glist$chr[keep],
+                               pos = Glist$pos[keep],
+                               ea = Glist$a1[keep],
+                               nea = Glist$a2[keep],
+                               eaf = Glist$af[keep],
+                               stringsAsFactors = FALSE)
 
- GAlist$rsids <- Glist$rsids[keep]
- GAlist$cpra <- Glist$cpra[keep]
+  GAlist$rsids <- Glist$rsids[keep]
+  GAlist$cpra <- Glist$cpra[keep]
 
- file_markers <- file.path(GAlist$dirs["marker"], "markers.txt.gz")
- fwrite(GAlist$markers, file = file_markers)
+  file_markers <- file.path(GAlist$dirs["marker"], "markers.txt.gz")
+  fwrite(GAlist$markers, file = file_markers)
+ }
 
  return(GAlist)
 }
