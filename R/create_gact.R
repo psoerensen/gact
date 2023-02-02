@@ -750,6 +750,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  if(feature=="Gene Symbol") sets <- GAlist$gsets[[4]]
  if(feature=="GO") sets <- GAlist$gsets[[5]]
  if(feature=="Pathways") sets <- GAlist$gsets[[9]]
+ if(feature=="Pathways2Genes") sets <- GAlist$gsets[[9]]
  if(feature=="ProteinComplexes") sets <- GAlist$gsets[[7]]
  if(feature=="ChemicalComplexes") sets <- GAlist$gsets[[8]]
  if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
