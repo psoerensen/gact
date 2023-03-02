@@ -2,8 +2,8 @@
 
 export(annotationDB)
 export(createDB)
-export(designSets)
-export(designSetsDB)
+export(designMatrix)
+export(designMatrixDB)
 export(downloadDB)
 export(gact)
 export(getFeatureDB)
