@@ -699,7 +699,7 @@ getStudiesDB <- function(GAlist=NULL) {
 
 #' @export
 #'
-designSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeatureID=NULL) {
+designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeatureID=NULL) {
  if(is.null(GAlist)) stop ("Please provide GAlist")
  if(is.null(feature)) stop ("Please provide feature")
  sets <- getSetsDB(GAlist=GAlist, feature=feature)
@@ -1557,7 +1557,7 @@ gpath <- function(GAlist = NULL,
 }
 
 #' @export
-designSets <- function(sets=NULL, rsids=NULL) {
+designMatrix <- function(sets=NULL, rsids=NULL) {
  sets <- qgg:::mapSets(sets=sets,rsids=rsids, index=TRUE)
  W <- matrix(0,nrow=length(rsids), ncol=length(sets))
  colnames(W) <- names(sets)
