@@ -1556,4 +1556,16 @@ gpath <- function(GAlist = NULL,
  return(gsets)
 }
 
+#' @export
+designSets <- function(sets=NULL, rsids=NULL) {
+ sets <- qgg:::mapSets(sets=sets,rsids=rsids, index=TRUE)
+ W <- matrix(0,nrow=length(rsids), ncol=length(sets))
+ colnames(W) <- names(sets)
+ rownames(W) <- rsids
+ for(i in 1:length(sets)) {
+  W[sets[[i]],i] <- 1
+ }
+ return(W)
+}
+
 
