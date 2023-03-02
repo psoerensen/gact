@@ -1504,7 +1504,9 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
 #' # Generate gene sets
 #' sets <- gpath(GAlist = GAlist, ngenes = 10, ncgenes = 2, ngsets = 5)
 #' }
+#'
 #' @export
+#'
 gpath <- function(GAlist = NULL,
                   mcausal=500, causal=NULL, overlap=FALSE,
                   ngenes=10, ncgenes=2, ngsets=10, format="markers"){
