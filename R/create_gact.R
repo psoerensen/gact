@@ -1536,15 +1536,16 @@ gpath <- function(GAlist = NULL,
  # These are non causal markers
  non_causal_genes <- names(sets)[!causal_sets]
 
- csets <- ncsets <- NULL
+ gsets <- NULL
  setnames <- NULL
  ijk <- 0
  for (i in 1:ngsets) {
   for (j in 1:length(ngenes)) {
    for (k in 1:length(ncgenes)) {
     ijk <- ijk + 1
-    csets[[ijk]] <- sample(causal_genes, ncgenes[k])
-    ncsets[[ijk]] <- sample(non_causal_genes, ngenes[j]-ncgenes[k])
+    csets <- sample(causal_genes, ncgenes[k])
+    ncsets <- sample(non_causal_genes, ngenes[j]-ncgenes[k])
+    gsets[[ijk]] <- c(csets, ncsets)
     setnames <- c(setnames, paste(c(i,ngenes[j],ncgenes[k]),collapse="_"))
    }
   }
