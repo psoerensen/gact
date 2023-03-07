@@ -107,7 +107,8 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
            marker = "marker",
            raw = "raw",
            dgidb = "dgidb",
-           pharmgkb = "pharmgkb")
+           pharmgkb = "pharmgkb",
+           opentargets = "opentargets")
 
  lapply(names(dirs), function(x) {
   dir.create(file.path(dbdir, dirs[x]))
@@ -118,7 +119,7 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
                 dirs = file.path(dbdir, dirs),
                 features = c("Markers", "Genes", "Proteins", "GO", "Pathways", "ProteinComplexes", "ChemicalComplexes"))
 
- names(GAlist$dirs) <- c("glist","gstat","gsets","gsea", "ldsc", "gbayes", "marker", "raw", "dgidb","pharmgkb")
+ names(GAlist$dirs) <- c("glist","gstat","gsets","gsea", "ldsc", "gbayes", "marker", "raw", "dgidb", "pharmgkb", "opentargets")
 
  if(!is.null(Glist)) {
   keep <- Glist$rsids %in% Glist$rsidsLD
@@ -140,70 +141,6 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
  return(GAlist)
 }
 
-
-# createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
-#
-#  if(is.null(version)) stop(paste("Please include a database name using the version argument"))
-#  #if(is.null(Glist)) stop(paste("Please include a Glist using the Glist argument"))
-#  dbdir <- paste0(dbdir,"/",version)
-#  gstatdir <- paste0(dbdir,"/gstat/")
-#  gsetsdir <- paste0(dbdir,"/gsets/")
-#  gseadir <- paste0(dbdir,"/gsea/")
-#  glistdir <- paste0(dbdir,"/glist/")
-#  ldscdir <- paste0(dbdir,"/ldsc/")
-#  gbayesdir <- paste0(dbdir,"/gbayes/")
-#  markerdir <- paste0(dbdir,"/marker/")
-#  rawdir <- paste0(dbdir,"/raw/")
-#  dgidir <- paste0(dbdir,"/dgidb/")
-#  if(dir.exists(dbdir)) stop(paste("Directory:",dbdir,"allready exists"))
-#  if(!dir.exists(dbdir)) {
-#   dir.create(dbdir)
-#   dir.create(glistdir)
-#   dir.create(gstatdir)
-#   dir.create(gsetsdir)
-#   dir.create(gseadir)
-#   dir.create(ldscdir)
-#   dir.create(gbayesdir)
-#   dir.create(markerdir)
-#   dir.create(rawdir)
-#   dir.create(dgidir)
-#  }
-#
-#  GAlist <- NULL
-#  GAlist$version <- version
-#
-#  GAlist$traits <- NULL
-#
-#  GAlist$dirs <- c(glistdir,gstatdir,gsetsdir,gseadir, ldscdir, gbayesdir, markerdir, rawdir, dgidir)
-#  names(GAlist$dirs) <- c("glist","gstat","gsets","gsea", "ldsc", "gbayes", "marker", "raw", "dgidb")
-#
-#  # features in the database
-#  GAlist$features <- c("Markers","Genes","Proteins","GO","Pathways",
-#                       "ProteinComplexes","ChemicalComplexes")
-#
-#  if(!is.null(Glist)) {
-#   keep <- unlist(Glist$rsids)%in%unlist(Glist$rsidsLD)
-#   GAlist$markers <- data.frame(rsids=unlist(Glist$rsids),
-#                                chr=unlist(Glist$chr),
-#                                pos=unlist(Glist$pos),
-#                                ea=unlist(Glist$a1),
-#                                nea=unlist(Glist$a2),
-#                                eaf=unlist(Glist$af),
-#                                stringsAsFactors=FALSE)[keep,]
-#   GAlist$rsids <- unlist(Glist$rsids)[keep]
-#   GAlist$cpra <- unlist(Glist$cpra)[keep]
-#   file_markers <- paste0(GAlist$dirs["marker"],"markers.txt.gz")
-#   fwrite(GAlist$markers, file=file_markers)
-#  }
-#
-#  # update Glist$ldfiles
-#  #ldfiles <- list.files(path=paste0(dbdir,"/glist/ldfiles"),pattern=".ld")
-#  #rws <- sapply(ldfiles,function(x){grep(x,Glist$ldfiles)})
-#  #rws <- order(rws)
-#  #Glist$ldfiles <- paste0(dbdir,"/glist/",ldfiles[rws])
-#
-#  return(GAlist)
-# }
 
 #' @export
 #'
@@ -428,7 +365,15 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
                        GAlist$markers$nea,sep="_")
  }
 
- if(what=="dgidb") {
+ if(what=="DGI") {
+  if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
+  if(!any(names(GAlist$dirs)%in%"dgidb")) {
+   dgidir <- file.path(GAlist$dbdir, "dgidb")
+   if (dir.exists(dgidir))   stop(paste("Directory:",dgidir,"already exists"))
+   dir.create(dgidir)
+   GAlist$dirs <- c(GAlist$dirs,dgidir)
+   names(GAlist$dirs)[length(GAlist$dirs)] <- "dgidb"
+  }
   # download dgidb files in the database
   message("Downloading Drug Gene Interaction database")
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/interactions.tsv"
@@ -444,6 +389,117 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   destfile <- file.path(GAlist$dirs["dgidb"],"categories.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
  }
+
+ if(what=="PharmGKB ") {
+  if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
+  if(!any(names(GAlist$dirs)%in%"pharmgkb")) {
+   pharmgkbdir <- file.path(GAlist$dbdir, "pharmgkb")
+   if (dir.exists(pharmgkbdir))   stop(paste("Directory:",pharmgkbdir,"already exists"))
+   dir.create(pharmgkbdir)
+   GAlist$dirs <- c(GAlist$dirs,pharmgkbdir)
+   names(GAlist$dirs)[length(GAlist$dirs)] <- "pharmgkb"
+  }
+
+  setwd(GAlist$dirs["pharmgkb"])
+  url <- "https://api.pharmgkb.org/v1/download/file/data/drugLabels.zip"
+  output_file <-  file.path(GAlist$dirs["pharmgkb"],"drugLabels.zip")
+  download.file(url, destfile = output_file, mode = "wb")
+  unzip(output_file)
+  file.remove(output_file)
+
+  url <- "https://api.pharmgkb.org/v1/download/file/data/relationships.zip"
+  output_file <-  file.path(GAlist$dirs["pharmgkb"],"relationships.zip")
+  download.file(url, destfile = output_file, mode = "wb")
+  unzip(output_file)
+  file.remove(output_file)
+
+  url <- "https://api.pharmgkb.org/v1/download/file/data/clinicalVariants.zip"
+  output_file <-  file.path(GAlist$dirs["pharmgkb"],"clinicalVariants.zip")
+  download.file(url, destfile = output_file, mode = "wb")
+  unzip(output_file)
+  file.remove(output_file)
+
+  url <- "https://api.pharmgkb.org/v1/download/file/data/automated_annotations.zip"
+  output_file <-  file.path(GAlist$dirs["pharmgkb"],"automated_annotations.zip")
+  download.file(url, destfile = output_file, mode = "wb")
+  unzip(output_file)
+  file.remove(output_file)
+
+ }
+ if(what=="OpenTargets") {
+  if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
+  if(!any(names(GAlist$dirs)%in%"opentargets")) {
+   dbdir <- file.path(GAlist$dbdir, "opentargets")
+   if (dir.exists(dbdir))   stop(paste("Directory:",dbdir,"already exists"))
+   dir.create(dbdir)
+   GAlist$dirs <- c(GAlist$dirs,dbdir)
+   names(GAlist$dirs)[length(GAlist$dirs)] <- "opentargets"
+   dir.create(file.path(GAlist$dirs["opentargets"], "targets"))
+   dir.create(file.path(GAlist$dirs["opentargets"], "diseases"))
+   dir.create(file.path(GAlist$dirs["opentargets"], "diseaseToPhenotype"))
+   dir.create(file.path(GAlist$dirs["opentargets"], "significantAdverseDrugReactions"))
+   dir.create(file.path(GAlist$dirs["opentargets"], "associationByDatasourceDirect"))
+   dir.create(file.path(GAlist$dirs["opentargets"], "associationByDatatypeDirect"))
+   dir.create(file.path(GAlist$dirs["opentargets"], "associationByOverallDirect"))
+  }
+
+
+  # Download opentarget
+  urls <- c("ftp.ebi.ac.uk/pub/databases/opentargets/platform/22.11/output/etl/json/targets/",
+            "ftp.ebi.ac.uk/pub/databases/opentargets/platform/22.11/output/etl/json/diseases/",
+            "ftp.ebi.ac.uk/pub/databases/opentargets/platform/22.11/output/etl/json/diseaseToPhenotype/",
+            "ftp.ebi.ac.uk/pub/databases/opentargets/platform/22.11/output/etl/json/fda/significantAdverseDrugReactions/",
+            "ftp.ebi.ac.uk/pub/databases/opentargets/platform/22.11/output/etl/json/associationByDatasourceDirect/",
+            "ftp.ebi.ac.uk/pub/databases/opentargets/platform/22.11/output/etl/json/associationByDatatypeDirect/",
+            "ftp.ebi.ac.uk/pub/databases/opentargets/platform/22.11/output/etl/json/associationByOverallDirect/")
+
+  for (i in 1:length(urls)) {
+   urldir <- unlist(strsplit(urls[i],split="/"))
+   urldir <- urldir[length(urldir)]
+   files = getURL(urls[i], ftp.use.epsv = FALSE, dirlistonly = TRUE)
+   files <- stringr::str_c(urls[i], stringr::str_split(files, "\n")[[1]])
+   files <- stringr::str_trim(files)
+   is.json <- grep(".json",files, fixed=TRUE)
+   files <- files[is.json]
+   for (j in 1:length(files)) {
+    destfile <- unlist(strsplit(files[j],split="/"))
+    destfile <- destfile[length(destfile)]
+    destfile <- file.path(file.path(GAlist$dirs["opentargets"], urldir),destfile)
+    download.file(url=files[j], mode = "wb", dest=destfile)
+   }
+  }
+  files <- dir(file.path(GAlist$dirs["opentargets"], "associationByOverallDirect"), full.names = TRUE)
+  df <- NULL
+  for (i in 1:length(files)) {
+   con <- file(files[i],"r")
+   df <- rbind(df,jsonlite::stream_in(con))
+   close(con)
+  }
+  filename <- file.path(GAlist$dirs["opentargets"], "associationByOverallDirect.tsv")
+  fwrite(df, file=filename)
+
+  files <- dir(file.path(GAlist$dirs["opentargets"], "associationByDatatypeDirect"), full.names = TRUE)
+  df <- NULL
+  for (i in 1:length(files)) {
+   con <- file(files[i],"r")
+   df <- rbind(df,jsonlite::stream_in(con))
+   close(con)
+  }
+  filename <- file.path(GAlist$dirs["opentargets"], "associationByDatatypeDirect.tsv")
+  fwrite(df, file=filename)
+
+  files <- dir(file.path(GAlist$dirs["opentargets"], "associationByDatasourceDirect"), full.names = TRUE)
+  df <- NULL
+  for (i in 1:length(files)) {
+   con <- file(files[i],"r")
+   df <- rbind(df,jsonlite::stream_in(con))
+   close(con)
+  }
+  filename <- file.path(GAlist$dirs["opentargets"], "associationByDatasourceDirect.tsv")
+  fwrite(df, file=filename)
+
+ }
+
  return(GAlist)
 }
 
