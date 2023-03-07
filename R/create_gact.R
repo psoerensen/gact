@@ -42,7 +42,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="gsets")
   GAlist <- downloadDB(GAlist=GAlist, what="gsea")
   GAlist <- downloadDB(GAlist=GAlist, what="gstat")
-  GAlist <- downloadDB(GAlist=GAlist, what="dgidb")
+  #GAlist <- downloadDB(GAlist=GAlist, what="dgidb")
 
   # Step 3: Create marker sets from database:
   if(what=="full") {
@@ -96,7 +96,6 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
  dbdir <- file.path(dbdir, version)
  if (dir.exists(dbdir)) stop(paste("Directory:",dbdir,"already exists"))
  dir.create(dbdir)
- GAlist$dbdir <- dbdir
 
  dirs <- c(glist = "glist",
            gstat = "gstat",
@@ -118,6 +117,7 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
                 traits = NULL,
                 dirs = file.path(dbdir, dirs),
                 features = c("Markers", "Genes", "Proteins", "GO", "Pathways", "ProteinComplexes", "ChemicalComplexes"))
+ GAlist$dbdir <- dbdir
 
  names(GAlist$dirs) <- c("glist","gstat","gsets","gsea", "ldsc", "gbayes", "marker", "raw", "dgidb", "pharmgkb", "opentargets")
 
@@ -366,14 +366,14 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
  }
 
  if(what=="DGI") {
-  if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
-  if(!any(names(GAlist$dirs)%in%"dgidb")) {
-   dgidir <- file.path(GAlist$dbdir, "dgidb")
-   if (dir.exists(dgidir))   stop(paste("Directory:",dgidir,"already exists"))
-   dir.create(dgidir)
-   GAlist$dirs <- c(GAlist$dirs,dgidir)
-   names(GAlist$dirs)[length(GAlist$dirs)] <- "dgidb"
-  }
+  #if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
+  #if(!any(names(GAlist$dirs)%in%"dgidb")) {
+  # dgidir <- file.path(GAlist$dbdir, "dgidb")
+  # if (dir.exists(dgidir))   stop(paste("Directory:",dgidir,"already exists"))
+  # dir.create(dgidir)
+  # GAlist$dirs <- c(GAlist$dirs,dgidir)
+  # names(GAlist$dirs)[length(GAlist$dirs)] <- "dgidb"
+  #}
   # download dgidb files in the database
   message("Downloading Drug Gene Interaction database")
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/interactions.tsv"
@@ -390,16 +390,17 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   download.file(url=url_db, mode = "wb", dest=destfile)
  }
 
- if(what=="PharmGKB ") {
-  if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
-  if(!any(names(GAlist$dirs)%in%"pharmgkb")) {
-   pharmgkbdir <- file.path(GAlist$dbdir, "pharmgkb")
-   if (dir.exists(pharmgkbdir))   stop(paste("Directory:",pharmgkbdir,"already exists"))
-   dir.create(pharmgkbdir)
-   GAlist$dirs <- c(GAlist$dirs,pharmgkbdir)
-   names(GAlist$dirs)[length(GAlist$dirs)] <- "pharmgkb"
-  }
+ if(what=="PharmGKB") {
+  #if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
+  #if(!any(names(GAlist$dirs)%in%"pharmgkb")) {
+  # pharmgkbdir <- file.path(GAlist$dbdir, "pharmgkb")
+  # if (dir.exists(pharmgkbdir))   stop(paste("Directory:",pharmgkbdir,"already exists"))
+  # dir.create(pharmgkbdir)
+  # GAlist$dirs <- c(GAlist$dirs,pharmgkbdir)
+  # names(GAlist$dirs)[length(GAlist$dirs)] <- "pharmgkb"
+  #}
 
+  cwd <- getwd()
   setwd(GAlist$dirs["pharmgkb"])
   url <- "https://api.pharmgkb.org/v1/download/file/data/drugLabels.zip"
   output_file <-  file.path(GAlist$dirs["pharmgkb"],"drugLabels.zip")
@@ -424,16 +425,18 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   download.file(url, destfile = output_file, mode = "wb")
   unzip(output_file)
   file.remove(output_file)
+  setwd(cwd)
 
  }
+
  if(what=="OpenTargets") {
-  if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
-  if(!any(names(GAlist$dirs)%in%"opentargets")) {
-   dbdir <- file.path(GAlist$dbdir, "opentargets")
-   if (dir.exists(dbdir))   stop(paste("Directory:",dbdir,"already exists"))
-   dir.create(dbdir)
-   GAlist$dirs <- c(GAlist$dirs,dbdir)
-   names(GAlist$dirs)[length(GAlist$dirs)] <- "opentargets"
+  #if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
+  #if(!any(names(GAlist$dirs)%in%"opentargets")) {
+   #dbdir <- file.path(GAlist$dbdir, "opentargets")
+   #if (dir.exists(dbdir))   stop(paste("Directory:",dbdir,"already exists"))
+   #dir.create(dbdir)
+   #GAlist$dirs <- c(GAlist$dirs,dbdir)
+   #names(GAlist$dirs)[length(GAlist$dirs)] <- "opentargets"
    dir.create(file.path(GAlist$dirs["opentargets"], "targets"))
    dir.create(file.path(GAlist$dirs["opentargets"], "diseases"))
    dir.create(file.path(GAlist$dirs["opentargets"], "diseaseToPhenotype"))
@@ -441,7 +444,7 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
    dir.create(file.path(GAlist$dirs["opentargets"], "associationByDatasourceDirect"))
    dir.create(file.path(GAlist$dirs["opentargets"], "associationByDatatypeDirect"))
    dir.create(file.path(GAlist$dirs["opentargets"], "associationByOverallDirect"))
-  }
+  #}
 
 
   # Download opentarget
