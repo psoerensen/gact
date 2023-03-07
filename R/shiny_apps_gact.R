@@ -4,6 +4,7 @@
 shinyAppsDB <- function(GAlist=NULL, what="DrugDBTables") {
 
  if(what=="DrugDBTables") {
+
   require(shiny)
   require(data.table)
   require(DT)
