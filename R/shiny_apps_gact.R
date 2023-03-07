@@ -43,13 +43,13 @@ shinyAppsDB <- function(GAlist=NULL, what="DrugDBTables") {
      } else if (input$what == "Automated Annotations PharmGKB") {
       drugdb_file <- file.path(GAlist$dirs["pharmgkb"], "automated_annotations.tsv")
      } else if (input$what == "Drugs DGI") {
-      drugdb_file <- file.path(GAlist$dirs["pharmgkb"], "drugs.tsv")
+      drugdb_file <- file.path(GAlist$dirs["dgidb"], "drugs.tsv")
      } else if (input$what == "Genes DGI") {
-      drugdb_file <- file.path(GAlist$dirs["pharmgkb"], "genes.tsv")
+      drugdb_file <- file.path(GAlist$dirs["dgidb"], "genes.tsv")
      } else if (input$what == "Categories DGI") {
-      drugdb_file <- file.path(GAlist$dirs["pharmgkb"], "categories.tsv")
+      drugdb_file <- file.path(GAlist$dirs["dgidb"], "categories.tsv")
      } else if (input$what == "Interactions DGI") {
-      drugdb_file <- file.path(GAlist$dirs["pharmgkb"], "interactions.tsv")
+      drugdb_file <- file.path(GAlist$dirs["dgidb"], "interactions.tsv")
      } else if (input$what == "Direct Associations OpenTarget") {
       drugdb_file <- file.path(GAlist$dirs["opentargets"], "associationByOverallDirect.tsv")
      } else if (input$what == "Direct Associations By Data Type OpenTarget") {
