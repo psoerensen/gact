@@ -47,7 +47,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   # Step 3: Create marker sets from database:
   if(what=="full") {
   message("Creating full marker sets - this may take some time")
-  GAlist <- mapSetsDB(GAlist=GAlist)
+  GAlist <- createSetsDB(GAlist=GAlist)
   }
  }
  return(GAlist)
@@ -144,7 +144,7 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
 
 #' @export
 #'
-mapSetsDB <- function(GAlist = NULL) {
+createSetsDB <- function(GAlist = NULL) {
  ensg2rsids <- GAlist$gsets[["ensg2rsids_10kb"]]
 
  fset_go <- getSetsDB(GAlist = GAlist, feature = "GO")
@@ -183,7 +183,7 @@ mapSetsDB <- function(GAlist = NULL) {
  return(GAlist)
 }
 
-# mapSetsDB <- function(GAlist=NULL) {
+# createSetsDB <- function(GAlist=NULL) {
 #  ensg2rsids <- GAlist$gsets[["ensg2rsids_10kb"]]
 #
 #  fset <- getSetsDB(GAlist=GAlist,feature="GO")
@@ -804,7 +804,7 @@ designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeature
 #'
 getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  sets <- NULL
- if(feature=="Entres Genes") sets <- GAlist$gsets[[1]]
+ if(feature=="Entrez Genes") sets <- GAlist$gsets[[1]]
  if(feature=="Genes") sets <- GAlist$gsets[[2]]
  if(feature=="Proteins") sets <- GAlist$gsets[[3]]
  if(feature=="Gene Symbol") sets <- GAlist$gsets[[4]]
@@ -844,15 +844,25 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
 #'
 getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NULL) {
 
+ setsfile <- NULL
  if(feature=="Genes") setsfile <- file.path(GAlist$dirs["gsets"],"ensg2rsids_10kb.rds")
- if(feature=="Entres Genes") setsfile <- file.path(GAlist$dirs["gsets"],"eg2rsids_10kb.rds")
+ if(feature=="Entrez Genes") setsfile <- file.path(GAlist$dirs["gsets"],"eg2rsids_10kb.rds")
  if(feature=="Gene Symbol") setsfile <- file.path(GAlist$dirs["gsets"],"sym2rsids_10kb.rds")
  if(feature=="Proteins") setsfile <- file.path(GAlist$dirs["gsets"],"ensp2rsids_10kb.rds")
  if(feature=="Pathways") setsfile <- file.path(GAlist$dirs["gsets"],"reactome2rsids.rds")
  if(feature=="GO") setsfile <- file.path(GAlist$dirs["gsets"],"go2rsids.rds")
  if(feature=="ProteinComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"string2rsids.rds")
  if(feature=="ChemicalComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"stitch2rsids.rds")
- sets <- readRDS(file=setsfile)
+ if(!is.null(setsfile)) sets <- readRDS(file=setsfile)
+ if(feature=="Drugs") {
+  drugdb_file <- file.path(GAlist$dirs["dgidb"], "interactions.tsv")
+  df <- fread(drugdb_file, quote = "", data.table = FALSE)
+  egSets <- getSetsDB(GAlist=GAlist,feature="Entrez Genes")
+  sets <- split( df$entrez_id, f=as.factor(df$drug_name) )
+  sets <- mapSetsDB(sets=sets, featureID=names(egSets))
+  sets <- lapply(sets,function(x){unlist(egSets[x])})
+ }
+
  if(!is.null(featureID)) {
   inSet <- featureID%in%names(sets)
   if(any(!inSet)) warning(paste("Some IDs not in data base:",featureID[!inSet]))
@@ -1551,7 +1561,7 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
 #'   include in each gene set. If a vector is supplied, a gene set will be
 #'   generated for each combination of values in \code{ngenes} and \code{ncgenes}.
 #'   Default is 2.
-#' @param ngsets an integer indicating the number of gene sets to generate.
+#' @param nreps an integer indicating the number of gene sets to generate.
 #'   Default is 10.
 #'
 #' @return a list of gene sets, where each gene set is represented as a vector of
@@ -1561,19 +1571,19 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
 #' @examples
 #' \dontrun{
 #' # Generate gene sets
-#' sets <- gpath(GAlist = GAlist, ngenes = 10, ncgenes = 2, ngsets = 5)
+#' sets <- gpath(GAlist = GAlist, ngenes = 10, ncgenes = 2, nreps = 5)
 #' }
 #'
 #' @export
 #'
 gpath <- function(GAlist = NULL,
                   mcausal=500, causal=NULL, overlap=FALSE,
-                  ngenes=10, ncgenes=2, ngsets=10, format="markers"){
+                  ngenes=10, ncgenes=2, nreps=10, format="markers"){
  # mcausal is the number of causal markers
  # causal is a vector of causal markers
  # ngenes is the number (or vector) of genes in pathway
  # ncgenes is the number (or vector) of causal genes in pathway
- # ngsets is the number of pathways
+ # nreps is the number of pathways
 
  rsids <- unlist(GAlist$rsids)
 
@@ -1598,7 +1608,7 @@ gpath <- function(GAlist = NULL,
  gsets <- NULL
  setnames <- NULL
  ijk <- 0
- for (i in 1:ngsets) {
+ for (i in 1:nreps) {
   for (j in 1:length(ngenes)) {
    for (k in 1:length(ncgenes)) {
     ijk <- ijk + 1
@@ -1627,4 +1637,19 @@ designMatrix <- function(sets=NULL, rsids=NULL) {
  return(W)
 }
 
+#' @export
+mapSetsDB <- function(sets = NULL, featureID = NULL, GAlist = NULL, index = TRUE) {
+ nsets <- sapply(sets, length)
+ if(is.null(names(sets))) names(sets) <- paste0("Set",1:length(sets))
+ rs <- rep(names(sets), times = nsets)
+ rsSets <- unlist(sets, use.names = FALSE)
+ rsSets <- match(rsSets, featureID)
+ inW <- !is.na(rsSets)
+ rsSets <- rsSets[inW]
+ if (!index) rsSets <- featureID[rsSets]
+ rs <- rs[inW]
+ rs <- factor(rs, levels = unique(rs))
+ rsSets <- split(rsSets, f = rs)
+ return(rsSets)
+}
 
