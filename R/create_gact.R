@@ -861,6 +861,7 @@ getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NUL
   sets <- split( df$entrez_id, f=as.factor(df$drug_name) )
   sets <- mapSetsDB(sets=sets, featureID=names(egSets))
   sets <- lapply(sets,function(x){unlist(egSets[x])})
+  sets <- sets[!names(sets)==""]
  }
 
  if(!is.null(featureID)) {
@@ -1056,6 +1057,7 @@ getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list"
 
   if(!is.null(rsids)) rsids <- rsids[rsids%in%stat$rsids]
   if(is.null(rsids)) rsids <- stat$rsids
+
   rsids <- match(rsids,stat$rsids)
   if(rm.na) return(na.omit(stat[rsids,]))
   if(!rm.na) return(na.omit(stat[rsids,]))
@@ -1072,12 +1074,12 @@ getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list"
    if(what=="z") res[stat$rsids,study] <- stat$b/stat$seb
    if(!what=="z") res[stat$rsids,study] <- stat[,what]
   }
-  if(!is.null(rsids)) rsids <- rsids[rsids%in%stat$rsids]
-  if(is.null(rsids)) rsids <- stat$rsids
-  rsids <- match(rsids,stat$rsids)
-  res <- res[rsids,]
+  if(!is.null(rsids)) rsids <- rsids[rsids%in%GAlist$rsids]
+  if(is.null(rsids)) rsids <- stat$rsids[stat$rsids%in%GAlist$rsids]
+  rsids <- match(rsids,GAlist$rsids)
 
-  if(rm.na) res <- na.omit(res)
+  if(rm.na) res <- na.omit(res[rsids,])
+  if(!rm.na) res <- res[rsids,]
   if(what=="rsids") res <- res[,1]
   return(res)
  }
