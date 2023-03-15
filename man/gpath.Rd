@@ -11,7 +11,7 @@ gpath(
   overlap = FALSE,
   ngenes = 10,
   ncgenes = 2,
-  ngsets = 10,
+  nreps = 10,
   format = "markers"
 )
 }
@@ -35,7 +35,7 @@ include in each gene set. If a vector is supplied, a gene set will be
 generated for each combination of values in \code{ngenes} and \code{ncgenes}.
 Default is 2.}
 
-\item{ngsets}{an integer indicating the number of gene sets to generate.
+\item{nreps}{an integer indicating the number of gene sets to generate.
 Default is 10.}
 }
 \value{
@@ -51,7 +51,7 @@ causal genes.
 \examples{
 \dontrun{
 # Generate gene sets
-sets <- gpath(GAlist = GAlist, ngenes = 10, ncgenes = 2, ngsets = 5)
+sets <- gpath(GAlist = GAlist, ngenes = 10, ncgenes = 2, nreps = 5)
 }
 
 }
