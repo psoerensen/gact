@@ -42,7 +42,8 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="gsets")
   GAlist <- downloadDB(GAlist=GAlist, what="gsea")
   GAlist <- downloadDB(GAlist=GAlist, what="gstat")
-  #GAlist <- downloadDB(GAlist=GAlist, what="dgidb")
+  GAlist <- downloadDB(GAlist=GAlist, what="ensembl")
+  GAlist <- downloadDB(GAlist=GAlist, what="string")
 
   # Step 3: Create marker sets from database:
   if(what=="full") {
@@ -182,45 +183,6 @@ createSetsDB <- function(GAlist = NULL) {
  names(GAlist$gsetsfiles[15]) <- "stitch2rsids"
  return(GAlist)
 }
-
-# createSetsDB <- function(GAlist=NULL) {
-#  ensg2rsids <- GAlist$gsets[["ensg2rsids_10kb"]]
-#
-#  fset <- getSetsDB(GAlist=GAlist,feature="GO")
-#  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
-#  sets <- sets[!sapply(sets,is.null)]
-#  setsfile <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
-#  saveRDS(sets,file=setsfile)
-#
-#  fset <- getSetsDB(GAlist=GAlist,feature="Pathways2Genes")
-#  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
-#  sets <- sets[!sapply(sets,is.null)]
-#  setsfile <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
-#  saveRDS(sets,file=setsfile)
-#
-#  fset <- getSetsDB(GAlist=GAlist,feature="ProteinComplexes2Genes")
-#  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
-#  sets <- sets[!sapply(sets,is.null)]
-#  setsfile <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
-#  saveRDS(sets,file=setsfile)
-#
-#  fset <- getSetsDB(GAlist=GAlist,feature="ChemicalComplexes2Genes")
-#  sets <- lapply(fset,function(x){unique(unlist(ensg2rsids[x]))})
-#  sets <- sets[!sapply(sets,is.null)]
-#  setsfile <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
-#  saveRDS(sets,file=setsfile)
-#
-#  GAlist$gsetsfiles[12] <- paste0(GAlist$dirs["gsets"],"go2rsids.rds")
-#  GAlist$gsetsfiles[13] <- paste0(GAlist$dirs["gsets"],"reactome2rsids.rds")
-#  GAlist$gsetsfiles[14] <- paste0(GAlist$dirs["gsets"],"string2rsids.rds")
-#  GAlist$gsetsfiles[15] <- paste0(GAlist$dirs["gsets"],"stitch2rsids.rds")
-#
-#  names(GAlist$gsetsfiles[12]) <- "go2rsids"
-#  names(GAlist$gsetsfiles[13]) <- "reactome2rsids"
-#  names(GAlist$gsetsfiles[14]) <- "string2rsids"
-#  names(GAlist$gsetsfiles[15]) <- "stitch2rsids"
-#  return(GAlist)
-# }
 
 #' @export
 #'
@@ -364,16 +326,39 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
                        GAlist$markers$ea,
                        GAlist$markers$nea,sep="_")
  }
+ if(what=="ensembl") {
+  url_ensembl <- "https://ftp.ensembl.org/pub/release-109/tsv/homo_sapiens/Homo_sapiens.GRCh38.109.entrez.tsv.gz"
+  destfile <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.entrez.tsv.gz")
+  download.file(url=url_ensembl, mode = "wb", dest=destfile)
+  file_ensembl <-file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.entrez.tsv.gz")
+  ensembl <- fread(file_ensembl, data.table=FALSE)
+  ensembl <- ensembl[!ensembl$protein_stable_id=="-",]
+
+  GAlist$gsets$eg2ensg <- split( ensembl$gene_stable_id, f=as.factor(ensembl$xref) )
+  GAlist$gsets$eg2ensp <- split( ensembl$protein_stable_id, f=as.factor(ensembl$xref) )
+  GAlist$gsets$eg2enst <- split( ensembl$transcript_stable_id, f=as.factor(ensembl$xref) )
+
+  GAlist$gsets$ensp2eg <- split( ensembl$xref, f=as.factor(ensembl$protein_stable_id) )
+  GAlist$gsets$ensp2ensg <- split( ensembl$gene_stable_id, f=as.factor(ensembl$protein_stable_id) )
+  GAlist$gsets$ensp2enst <- split( ensembl$transcript_stable_id, f=as.factor(ensembl$protein_stable_id) )
+
+  GAlist$gsets$ensg2eg <- split( ensembl$xref, f=as.factor(ensembl$gene_stable_id) )
+  GAlist$gsets$ensg2ensp <- split( ensembl$protein_stable_id, f=as.factor(ensembl$gene_stable_id) )
+  GAlist$gsets$ensg2enst <- split( ensembl$transcript_stable_id, f=as.factor(ensembl$gene_stable_id) )
+
+ }
+
+ if(what=="string") {
+  url_string <- "https://stringdb-static.org/download/protein.links.v11.5/9606.protein.links.v11.5.txt.gz"
+  destfile <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
+  download.file(url=url_string, mode = "wb", dest=destfile)
+  string <- fread(destfile, data.table=FALSE)
+  string$protein1 <- gsub("9606.","",string$protein1)
+  string$protein2 <- gsub("9606.","",string$protein2)
+  fwrite(string, file=destfile)
+ }
 
  if(what=="DGI") {
-  #if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
-  #if(!any(names(GAlist$dirs)%in%"dgidb")) {
-  # dgidir <- file.path(GAlist$dbdir, "dgidb")
-  # if (dir.exists(dgidir))   stop(paste("Directory:",dgidir,"already exists"))
-  # dir.create(dgidir)
-  # GAlist$dirs <- c(GAlist$dirs,dgidir)
-  # names(GAlist$dirs)[length(GAlist$dirs)] <- "dgidb"
-  #}
   # download dgidb files in the database
   message("Downloading Drug Gene Interaction database")
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/interactions.tsv"
@@ -388,18 +373,42 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/categories.tsv"
   destfile <- file.path(GAlist$dirs["dgidb"],"categories.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
+
+  drugdb <- fread(file.path(GAlist$dirs["dgidb"], "interactions.tsv"),
+                  quote = "", data.table = FALSE)
+
+  drug2eg <- split( drugdb$entrez_id, f=as.factor(drugdb$drug_name) )
+  drug2eg <- lapply(drug2eg,function(x){as.character(x)})
+  drug2eg <- drug2eg[!names(drug2eg)==""]
+
+  drugGenes <- lapply(drug2eg,function(x){na.omit(unlist(GAlist$gsets$eg2ensg[x]))})
+  drugGenes <- lapply(drugGenes, function(x){unique(x)})
+  drugGenes <- drugGenes[sapply(drugGenes, function(x){ !any(is.na(x)) } )]
+  drugGenes <- drugGenes[ sapply(drugGenes, length)>0]
+  saveRDS(drugGenes,file=file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
+
+  string <- getSetsDB(GAlist=GAlist, feature="String")
+  drug2ensp <- lapply(drugGenes,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
+  drugComplex <- lapply(drug2ensp,function(x){na.omit(unlist(string[x]))})
+  drugComplex <- lapply(drugComplex,function(x){na.omit(unlist(GAlist$gsets$ensp2ensg[x]))})
+  drugComplex <- lapply(drugComplex, function(x){unique(x)})
+
+  for(i in 1:length(drugComplex)) {
+   drugComplex[[i]] <- unique(c(drugGenes[[i]], drugComplex[[i]]))
+  }
+  saveRDS(drugComplex,file=file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
+
+  drugGenesSets <- lapply(drugGenes,function(x){unique(unlist(GAlist$gsets$ensg2rsids_10kb[x]))})
+  drugGenesSets <- drugGenesSets[!sapply(drugGenesSets,is.null)]
+  saveRDS(drugGenesSets,file=file.path(GAlist$dirs["gsets"],"drugGenesSets.rds"))
+
+  drugComplexSets <- lapply(drugComplex,function(x){unique(unlist(GAlist$gsets$ensg2rsids_10kb[x]))})
+  drugComplexSets <- drugComplexSets[!sapply(drugComplexSets,is.null)]
+  saveRDS(drugComplexSets,file=file.path(GAlist$dirs["gsets"],"drugComplexSets.rds"))
+
  }
 
  if(what=="PharmGKB") {
-  #if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
-  #if(!any(names(GAlist$dirs)%in%"pharmgkb")) {
-  # pharmgkbdir <- file.path(GAlist$dbdir, "pharmgkb")
-  # if (dir.exists(pharmgkbdir))   stop(paste("Directory:",pharmgkbdir,"already exists"))
-  # dir.create(pharmgkbdir)
-  # GAlist$dirs <- c(GAlist$dirs,pharmgkbdir)
-  # names(GAlist$dirs)[length(GAlist$dirs)] <- "pharmgkb"
-  #}
-
   cwd <- getwd()
   setwd(GAlist$dirs["pharmgkb"])
   url <- "https://api.pharmgkb.org/v1/download/file/data/drugLabels.zip"
@@ -430,22 +439,13 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
  }
 
  if(what=="OpenTargets") {
-  #if(is.null(GAlist$dbdir)) GAlist$dbdir <- gsub("/raw","",GAlist$dirs["raw"])
-  #if(!any(names(GAlist$dirs)%in%"opentargets")) {
-   #dbdir <- file.path(GAlist$dbdir, "opentargets")
-   #if (dir.exists(dbdir))   stop(paste("Directory:",dbdir,"already exists"))
-   #dir.create(dbdir)
-   #GAlist$dirs <- c(GAlist$dirs,dbdir)
-   #names(GAlist$dirs)[length(GAlist$dirs)] <- "opentargets"
-   dir.create(file.path(GAlist$dirs["opentargets"], "targets"))
-   dir.create(file.path(GAlist$dirs["opentargets"], "diseases"))
-   dir.create(file.path(GAlist$dirs["opentargets"], "diseaseToPhenotype"))
-   dir.create(file.path(GAlist$dirs["opentargets"], "significantAdverseDrugReactions"))
-   dir.create(file.path(GAlist$dirs["opentargets"], "associationByDatasourceDirect"))
-   dir.create(file.path(GAlist$dirs["opentargets"], "associationByDatatypeDirect"))
-   dir.create(file.path(GAlist$dirs["opentargets"], "associationByOverallDirect"))
-  #}
-
+  dir.create(file.path(GAlist$dirs["opentargets"], "targets"))
+  dir.create(file.path(GAlist$dirs["opentargets"], "diseases"))
+  dir.create(file.path(GAlist$dirs["opentargets"], "diseaseToPhenotype"))
+  dir.create(file.path(GAlist$dirs["opentargets"], "significantAdverseDrugReactions"))
+  dir.create(file.path(GAlist$dirs["opentargets"], "associationByDatasourceDirect"))
+  dir.create(file.path(GAlist$dirs["opentargets"], "associationByDatatypeDirect"))
+  dir.create(file.path(GAlist$dirs["opentargets"], "associationByOverallDirect"))
 
   # Download opentarget
   urls <- c("ftp.ebi.ac.uk/pub/databases/opentargets/platform/22.11/output/etl/json/targets/",
@@ -500,14 +500,10 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   }
   filename <- file.path(GAlist$dirs["opentargets"], "associationByDatasourceDirect.tsv")
   fwrite(df, file=filename)
-
  }
 
  return(GAlist)
 }
-
-
-
 
 
 #' Get summary statistics from the database
@@ -815,6 +811,20 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  if(feature=="ChemicalComplexes") sets <- GAlist$gsets[[8]]
  if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
  if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
+ if(feature=="DrugGenes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
+ if(feature=="DrugComplexes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
+
+ if(feature=="String") {
+  stitch_min_interactions <- 1
+  stitch_min_combined_score <- 900
+
+  file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
+  string <- fread(file_string, data.table=FALSE)
+  string  <- string[string$combined_score>=stitch_min_combined_score,]
+  string <- split( string$protein2,f=as.factor(string$protein1))
+  sets <- string[sapply(string ,length)>=stitch_min_interactions]
+ }
+
  if(!is.null(featureID)) {
   select <- names(sets)%in%featureID
   if(sum(select)==0) stop("None of the fetureIDs found in sets")
@@ -822,7 +832,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
   sets <- sets[select]
  }
  return(sets)
- }
+}
 
 
 #' Get Marker Sets from database
@@ -853,17 +863,9 @@ getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NUL
  if(feature=="GO") setsfile <- file.path(GAlist$dirs["gsets"],"go2rsids.rds")
  if(feature=="ProteinComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"string2rsids.rds")
  if(feature=="ChemicalComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"stitch2rsids.rds")
+ if(feature=="DrugGenes") setsfile <- file.path(GAlist$dirs["gsets"],"drugGenes.rds")
+ if(feature=="DrugComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"drugComplex.rds")
  if(!is.null(setsfile)) sets <- readRDS(file=setsfile)
- if(feature=="Drugs") {
-  drugdb_file <- file.path(GAlist$dirs["dgidb"], "interactions.tsv")
-  df <- fread(drugdb_file, quote = "", data.table = FALSE)
-  egSets <- getSetsDB(GAlist=GAlist,feature="Entrez Genes")
-  sets <- split( df$entrez_id, f=as.factor(df$drug_name) )
-  sets <- mapSetsDB(sets=sets, featureID=names(egSets))
-  sets <- lapply(sets,function(x){unlist(egSets[x])})
-  sets <- sets[!names(sets)==""]
- }
-
  if(!is.null(featureID)) {
   inSet <- featureID%in%names(sets)
   if(any(!inSet)) warning(paste("Some IDs not in data base:",featureID[!inSet]))
@@ -1101,6 +1103,7 @@ annotationDB <- function(GAlist=NULL,
  #install.packages("BiocManager")
  #BiocManager::install("org.Hs.eg.db")
  #BiocManager::install("reactome.db")
+ #BiocManager::install("TxDb.Hsapiens.UCSC.hg19.knownGene")
 
  #library(data.table)
  #library(org.Hs.eg.db)
