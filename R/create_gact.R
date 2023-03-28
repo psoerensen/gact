@@ -834,6 +834,27 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  return(sets)
 }
 
+#' @export
+#'
+getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, combined_score=900) {
+ drugGenes <- readRDS(file=file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
+ file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
+ string <- fread(file_string, data.table=FALSE)
+ string  <- string[string$combined_score>=combined_score,]
+ string <- split( string$protein2,f=as.factor(string$protein1))
+ string <- string[sapply(string ,length)>=min_interactions]
+
+ drug2ensp <- lapply(drugGenes,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
+ drugComplex <- lapply(drug2ensp,function(x){na.omit(unlist(string[x]))})
+ drugComplex <- lapply(drugComplex,function(x){na.omit(unlist(GAlist$gsets$ensp2ensg[x]))})
+ drugComplex <- lapply(drugComplex, function(x){unique(x)})
+
+ for(i in 1:length(drugComplex)) {
+  drugComplex[[i]] <- unique(c(drugGenes[[i]], drugComplex[[i]]))
+ }
+ return(drugComplex)
+}
+
 
 #' Get Marker Sets from database
 #'
