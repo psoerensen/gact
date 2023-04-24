@@ -44,6 +44,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="gstat")
   GAlist <- downloadDB(GAlist=GAlist, what="ensembl")
   GAlist <- downloadDB(GAlist=GAlist, what="string")
+  GAlist <- downloadDB(GAlist=GAlist, what="stitch")
 
   # Step 3: Create marker sets from database:
   if(what=="full") {
@@ -186,7 +187,8 @@ createSetsDB <- function(GAlist = NULL) {
 
 #' @export
 #'
-downloadDB <- function(GAlist=NULL, what=NULL) {
+downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_interactions=5) {
+
 
  if(is.null(what)) stop("Please specify what to download e.g. what=gsets")
 
@@ -348,6 +350,8 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
 
  }
 
+
+
  if(what=="string") {
   url_string <- "https://stringdb-static.org/download/protein.links.v11.5/9606.protein.links.v11.5.txt.gz"
   destfile <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
@@ -356,7 +360,30 @@ downloadDB <- function(GAlist=NULL, what=NULL) {
   string$protein1 <- gsub("9606.","",string$protein1)
   string$protein2 <- gsub("9606.","",string$protein2)
   fwrite(string, file=destfile)
+
+  #Create sets
+  string  <- string[string$combined_score>=min_combined_score,]
+  string <- string[string$protein2%in%names(GAlist$gsets$ensp2ensg),]
+  string <- split( string$protein2,f=as.factor(string$protein1))
+  sets <- string[sapply(string ,length)>=min_interactions]
+  sets <- lapply(sets,function(x){na.omit(unlist(GAlist$gsets$ensp2ensg[x]))})
+  GAlist$gsets[[7]] <- sets
  }
+
+ if(what=="stitch") {
+  file_stitch <- "http://stitch.embl.de/download/protein_chemical.links.v5.0/9606.protein_chemical.links.v5.0.tsv.gz"
+  stitch <- fread(file_stitch, data.table=FALSE)
+  stitch$protein <- gsub("9606.","",stitch$protein)
+  stitch <- stitch[stitch$protein%in%names(GAlist$gsets$ensp2ensg),]
+  stitch  <- stitch[stitch$combined_score>=min_combined_score,]
+  stitch <- split( stitch$protein,f=as.factor(stitch$chemical))
+  sets  <- stitch[sapply(stitch ,length)>=min_interactions]
+  sets <- lapply(sets,function(x){na.omit(unlist(GAlist$gsets$ensp2ensg[x]))})
+  GAlist$gsets[[8]] <- sets
+ }
+
+
+
 
  if(what=="DGI") {
   # download dgidb files in the database
@@ -798,7 +825,8 @@ designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeature
 #'
 #' @export
 #'
-getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
+getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
+                      min_combined_score=700, min_interactions=5) {
  sets <- NULL
  if(feature=="Entrez Genes") sets <- GAlist$gsets[[1]]
  if(feature=="Genes") sets <- GAlist$gsets[[2]]
@@ -815,15 +843,24 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  if(feature=="DrugComplexes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
 
  if(feature=="String") {
-  stitch_min_interactions <- 1
-  stitch_min_combined_score <- 900
-
   file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
   string <- fread(file_string, data.table=FALSE)
-  string  <- string[string$combined_score>=stitch_min_combined_score,]
+  string  <- string[string$combined_score>=min_combined_score,]
   string <- split( string$protein2,f=as.factor(string$protein1))
-  sets <- string[sapply(string ,length)>=stitch_min_interactions]
+  sets <- string[sapply(string ,length)>=min_interactions]
  }
+ if(feature=="Stitch") {
+  file_stitch <- "http://stitch.embl.de/download/protein_chemical.links.v5.0/9606.protein_chemical.links.v5.0.tsv.gz"
+  stitch <- fread(file_stitch, data.table=FALSE)
+  stitch$protein <- gsub("9606.","",stitch$protein)
+  stitch <- stitch[stitch$protein%in%names(GAlist$gsets$ensp2ensg),]
+  stitch  <- stitch[stitch$combined_score>=min_combined_score,]
+  stitch <- split( stitch$protein,f=as.factor(stitch$chemical))
+  sets  <- stitch[sapply(stitch ,length)>=min_interactions]
+ }
+
+
+
 
  if(!is.null(featureID)) {
   select <- names(sets)%in%featureID
@@ -833,6 +870,44 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL) {
  }
  return(sets)
 }
+
+#' @export
+#'
+
+# hyperg test
+hgtestDB <- function(p = NULL, sets = NULL, threshold = 0.05) {
+ population_size <- length(p)
+ sample_size <- sapply(sets, length)
+ n_successes_population <- sum(p < threshold)
+ n_successes_sample <- sapply(sets, function(x) {
+  sum(p[x] < threshold)
+ })
+ phyperg <- rep(1,length(sets))
+ names(phyperg) <- names(sets)
+ for (i in 1:length(sets)) {
+  phyperg[i] <- 1.0-phyper(n_successes_sample[i]-1, n_successes_population,
+                           population_size-n_successes_population,
+                           sample_size[i])
+ }
+ phyperg
+}
+
+
+
+
+#' @export
+#'
+# Create a plot function
+qqplotDB <- function(p=NULL, main=NULL) {
+ pobs <- -log10(p)
+ pexp <- -log10((1:length(pobs))/length(pobs) )
+ plot( y=sort(pobs), x=sort(pexp),
+       xlab="Expected -log10(P)",
+       ylab="Observed -log10(P)",
+       frame.plot=FALSE, main=main)
+ abline(a=0,b=1, col="red", lty=2, lwd=2)
+}
+
 
 #' @export
 #'
