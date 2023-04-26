@@ -1,12 +1,530 @@
  #' @export
  #'
 
+
  shinyAppsDB <- function(GAlist=NULL, what="DrugDBTables") {
 
   require(shiny)
   require(data.table)
   require(DT)
   require(ggplot2)
+  require(httr)
+  require(jsonlite)
+
+  if(what=="customGSEA") {
+   # Define the UI
+   ui <- fluidPage(
+    titlePanel("customGSEA"),
+    sidebarLayout(
+     sidebarPanel(
+      selectInput("studyID", "Select Study:",
+                  choices = GAlist$study$id,
+                  selected="GWAS1"),
+      textAreaInput("symbols", "Enter Gene Symbols (one per line or separated by spaces):"),
+      numericInput("threshold", "Enter Interaction Threshold (0-900):", value = 900),
+      numericInput("pval", "Enter P-value Threshold Enrichment Test:", value = 0.0001),
+      br(),
+      actionButton("submit", "Submit")
+     ),
+     mainPanel(
+      tabsetPanel(
+       tabPanel("Enrichment", DTOutput("result")),
+       tabPanel("Interactions", DTOutput("string")),
+       tabPanel("Ensembl Gene IDs", DTOutput("features")),
+       tabPanel("Summary Statistics", DTOutput("markers")),
+       tabPanel("Drug Targets", DTOutput("targets")),
+       tabPanel("Manhatten Plot", plotOutput("manhattenplot")),
+       tabPanel("Studies", DTOutput("studies"), selected = TRUE)
+      )
+     )
+    )
+   )
+
+   # Define the server logic
+   server <- function(input, output, session) {
+
+    # Define the function to translate gene symbols to Ensembl IDs
+    symbol_to_id <- function(symbol) {
+     base_url <- "https://rest.ensembl.org"
+     url <- paste0(base_url, "/lookup/symbol/homo_sapiens/", symbol)
+     response <- GET(url = url, content_type("application/json"))
+     gene <- fromJSON(content(response, "text"), flatten = TRUE)
+     if(!is.null(gene$error)) gene_information <- c(symbol, rep(NA, 6))
+     if(is.null(gene$error)) gene_information <- c(symbol, gene$id, gene$description, gene$biotype, gene$seq_region_name, gene$start, gene$end)
+     return(gene_information)
+    }
+
+    # Define function to retrieve interaction partners
+    get_interactions <- function(protein_list, species, score_cutoff) {
+
+     # Convert protein list to comma-separated string
+     protein_str <- paste0(protein_list, collapse = "%0d")
+
+     # Make API request to STRING database
+     url <- str_c("https://string-db.org/api/tsv/interaction_partners?identifiers=",
+                  protein_str,
+                  "&species=",
+                  species,
+                  "&required_score=",
+                  score_cutoff)
+
+     res <- GET(url)
+
+     # Extract interaction data
+     interactions <- read.table(text = content(res, "text"), sep = "\t",
+                                stringsAsFactors = FALSE, header=TRUE)
+
+     # Return interaction data
+     return(interactions)
+    }
+
+
+    # Prepare data frame for study information
+    output$studies <- renderDT(server=FALSE,{
+     studies <- as.data.frame(GAlist$study)[,-c(2,11)]
+     studies$neff <- as.integer(studies$neff)
+     pmid <- gsub("PMID:","",studies$reference)
+     pmid_link <- paste0("https://pubmed.ncbi.nlm.nih.gov/", pmid, "/")
+     html_code <- paste0("<a href='", pmid_link, "' target='_blank'>", pmid, "</a>")
+     studies$reference <- html_code
+
+     datatable(studies,
+               extensions = "Buttons",
+               options = list(paging = TRUE,
+                              scrollX=TRUE,
+                              searching = TRUE,
+                              ordering = TRUE,
+                              dom = 'Bfrtip',
+                              buttons = c('csv', 'excel'),
+                              pageLength=10,
+                              lengthMenu=c(3,5,10) ),
+               rownames= FALSE,
+               escape = FALSE)
+    })
+
+
+    stat <- reactive({
+     getMarkerStatDB(GAlist = GAlist, studyID = input$studyID)
+    })
+
+
+    # Display table when submit button is clicked
+    observeEvent(input$submit, {
+
+     symbol_list <- unlist(strsplit(input$symbols, "[\\s\n]+"))
+     result <- as.data.frame(t(sapply(symbol_list, function(x){symbol_to_id(x)})))
+     colnames(result) <- c("Symbol", "Ensembl Gene Id", "Description", "Type", "Chr", "Start", "End")
+
+     interactions <- get_interactions(symbol_list, "9606", input$threshold)
+     interactions[,1] <- gsub("9606.","",interactions[,1], fixed=TRUE)
+     interactions[,2] <- gsub("9606.","",interactions[,2], fixed=TRUE)
+
+     colnames(interactions)[1:5] <- c("Protein 1","Protein 2","Symbol 1","Symbol 2","NCBI Taxon ID")
+
+     # Render feature table
+     output$string <- renderDT(server=FALSE,{
+      datatable(interactions, extensions = "Buttons",
+                escape = FALSE,
+                options = list(paging = TRUE,
+                               scrollX=TRUE,
+                               searching = TRUE,
+                               ordering = TRUE,
+                               dom = 'Bfrtip',
+                               buttons = c('csv', 'excel'),
+                               pageLength=10,
+                               lengthMenu=c(3,5,10) ),
+                rownames= FALSE)
+     })
+
+     # Extract gene-marker sets
+     marker_sets_indices <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes")
+     marker_sets_indices <- qgg:::mapSets(sets=marker_sets_indices, rsids=stat()$rsids, index=TRUE)
+     pgenes <- sapply(marker_sets_indices, function(x) {min(stat()$p[x])})
+
+
+     protein_list <- unique(c(interactions[,1],interactions[,2]))
+     feature_genes <- unique(na.omit(unlist(GAlist$gsets$ensp2ensg[protein_list])))
+
+     # Get selected genes based on p-value threshold
+     selected_genes <- names(pgenes)[pgenes < input$pval]
+     feature_genes <- feature_genes[feature_genes%in%names(pgenes)]
+
+     # Calculate number of genes in each feature and number of associated genes based on p-value threshold
+     number_genes_feature <- length(feature_genes)
+     number_associated_genes_feature <- sum(feature_genes%in%selected_genes)
+
+     # Calculate hypergeometric test p-values
+     phgt <- hgtestDB(p = pgenes, sets = list(feature_genes), threshold = input$pval)
+
+     # Calculate enrichment factor
+     ef <- (number_associated_genes_feature/number_genes_feature)/
+      (length(selected_genes)/length(pgenes))
+
+     # Create data frame for table
+     df <- data.frame(feature = "PPI",
+                      ng = number_genes_feature,
+                      nag = number_associated_genes_feature,
+                      ef=ef,
+                      phgt = phgt)
+     colnames(df) <- c("Feature", "Number of Genes",
+                       "Number of Associated Genes",
+                       "Enrichment Factor",
+                       "P-value")
+
+     # Render feature table
+     output$result <- renderDT(server=FALSE,{
+      datatable(df, extensions = "Buttons",
+                escape = FALSE,
+                options = list(paging = TRUE,
+                               scrollX=TRUE,
+                               searching = TRUE,
+                               ordering = TRUE,
+                               dom = 'Bfrtip',
+                               buttons = c('csv', 'excel'),
+                               pageLength=10,
+                               lengthMenu=c(3,5,10) ),
+                rownames= FALSE)%>%
+       formatRound("Enrichment Factor", digits=2)%>%
+       formatSignif('P-value',3)
+     })
+
+     # Create data frame for markers
+     selected_markers <- unique(unlist(marker_sets_indices[feature_genes]))
+
+     df_markers <- stat()[selected_markers,]
+     rsid <- df_markers$rsids
+     gwas_url <- paste0("https://www.ebi.ac.uk/gwas/variants/", rsid)
+     dbsnp_url <- paste0("https://www.ncbi.nlm.nih.gov/snp/", rsid)
+     html_code <- paste0("<a href='", dbsnp_url, "' target='_blank'>", rsid, "</a>")
+     df_markers$rsids <- html_code
+
+     html_code <- paste0("<a href='", gwas_url, "' target='_blank'>", rsid, "</a>")
+     df_markers$gwas <- html_code
+
+
+
+     # Create data frame for features
+     df_features <- result
+
+     gene_id <- df_features[,2]
+     gene_link <- paste0("https://www.ensembl.org/Homo_sapiens/Gene/Summary?g=", gene_id)
+     html_code <- paste0("<a href='", gene_link, "' target='_blank'>", gene_id, "</a>")
+     df_features[,2] <- html_code
+
+     ot_gene_link <- paste0("https://genetics.opentargets.org/gene/", gene_id)
+     html_code <- paste0("<a href='", ot_gene_link, "' target='_blank'>", gene_id, "</a>")
+     df_features$open_target_gene <- html_code
+     ot_target_link <- paste0("https://platform.opentargets.org/target/", gene_id)
+     html_code <- paste0("<a href='", ot_target_link, "' target='_blank'>", gene_id, "</a>")
+     df_features$open_target_target <- html_code
+
+
+     # Create data frame for feature drug targets
+     df_targets <- GAlist$targets
+     atc_code <- df_targets$ATC
+     atc_url <- paste0("https://www.whocc.no/atc_ddd_index/?code=", atc_code)
+     html_code <- paste0("<a href='", atc_url, "' target='_blank'>", atc_code, "</a>")
+     df_targets$ATC <- html_code
+     df_feature_targets <- NULL
+     has_targets <- df_targets$Target%in%feature_genes
+     if(any(has_targets)) {
+      df_feature_targets <- data.frame(df_targets[df_targets$Target%in%feature_genes,],P=NA)
+      rws <- match(df_feature_targets$Target, names(pgenes))
+      df_feature_targets$P[!is.na(rws)] <- pgenes[rws[!is.na(rws)]]
+     }
+
+     # Render marker table
+     output$markers <- renderDT(server=FALSE,{
+      datatable(df_markers,
+                escape = FALSE,
+                extensions = "Buttons",
+                options = list(paging = TRUE,
+                               scrollX=TRUE,
+                               searching = TRUE,
+                               ordering = TRUE,
+                               dom = 'Bfrtip',
+                               buttons = c('csv', 'excel'),
+                               pageLength=10),
+                rownames= FALSE)%>%
+       formatRound("n", digits=0)
+     })
+
+     # Render feature table
+     output$features <- renderDT(server=FALSE,{
+      datatable(df_features, extensions = "Buttons",
+                escape = FALSE,
+                options = list(paging = TRUE,
+                               scrollX=TRUE,
+                               searching = TRUE,
+                               ordering = TRUE,
+                               dom = 'Bfrtip',
+                               buttons = c('csv', 'excel'),
+                               pageLength=10,
+                               lengthMenu=c(3,5,10) ),
+                rownames= FALSE)
+     })
+
+     # Render target table
+     output$targets <- renderDT(server=FALSE,{
+      datatable(df_feature_targets,
+                extensions = "Buttons",
+                escape = FALSE,
+                options = list(paging = TRUE,
+                               scrollX=TRUE,
+                               searching = TRUE,
+                               ordering = TRUE,
+                               dom = 'Bfrtip',
+                               buttons = c('csv', 'excel'),
+                               pageLength=10,
+                               lengthMenu=c(3,5,10) ),
+                rownames= FALSE)
+     })
+
+     # Create qqplot
+     output$qqplot <- renderPlot({
+      qqplotDB(p=pgenes, main="Markers")
+     })
+
+
+     # Create manhatten plot
+     output$manhattenplot <- renderPlot({
+      plot(-log10(stat()[selected_markers,"p"]),
+           pch = 20, ylim = c(0, max(-log10(stat()[selected_markers,"p"]))),
+           xlab = "Position", ylab = "-log10(p-value)", frame.plot=FALSE)
+      abline(h = 8, lty = 2, col = "red")
+
+     })
+
+    })
+   }
+
+  }
+
+  if(what=="geneDrugs") {
+   # Define the UI
+   ui <- fluidPage(
+    titlePanel("geneDrugs"),
+    sidebarLayout(
+     sidebarPanel(
+      selectInput("studyID", "Select Study:",
+                  choices = GAlist$study$id,
+                  selected="GWAS1"),
+      textAreaInput("symbols", "Enter Gene Symbols (one per line or separated by spaces):"),
+      br(),
+      actionButton("submit", "Submit")
+     ),
+     mainPanel(
+      tabsetPanel(
+       tabPanel("Ensembl Gene IDs", DTOutput("features")),
+       tabPanel("Summary Statistics", DTOutput("markers")),
+       tabPanel("Drug Targets", DTOutput("targets")),
+       tabPanel("Manhatten Plot", plotOutput("manhattenplot")),
+       tabPanel("Studies", DTOutput("studies"), selected = TRUE)
+      )
+     )
+    )
+   )
+
+   # Define the server logic
+   server <- function(input, output, session) {
+
+    # # Connect to the Ensembl database
+    # ensembl <- useMart("ensembl", dataset="hsapiens_gene_ensembl")
+    #
+    # # Define the function to translate gene symbols to Ensembl IDs
+    # symbol_to_id <- function(symbols) {
+    #  query <- getBM(attributes=c("ensembl_gene_id", "external_gene_name"),
+    #                 filters="external_gene_name",
+    #                 values=symbols,
+    #                 mart=ensembl)
+    #  return(query)
+    # }
+    #
+    # # Call the function when the user inputs a list of gene symbols
+    # output$output <- renderTable({
+    #  if (nchar(input$symbols) > 0) {
+    #   symbol_list <- unlist(strsplit(input$symbols, "[\\s\n]+"))
+    #   result <- symbol_to_id(symbol_list)
+    #   if (nrow(result) == 0) {
+    #    "No results found."
+    #   } else {
+    #    result
+    #   }
+    # }
+    # })
+
+    # Define the function to translate gene symbols to Ensembl IDs
+    symbol_to_id <- function(symbol) {
+     base_url <- "https://rest.ensembl.org"
+     url <- paste0(base_url, "/lookup/symbol/homo_sapiens/", symbol)
+     response <- GET(url = url, content_type("application/json"))
+     gene <- fromJSON(content(response, "text"), flatten = TRUE)
+     if(!is.null(gene$error)) gene_information <- c(symbol, rep(NA, 6))
+     if(is.null(gene$error)) gene_information <- c(symbol, gene$id, gene$description, gene$biotype, gene$seq_region_name, gene$start, gene$end)
+     return(gene_information)
+    }
+
+
+    # Prepare data frame for study information
+    output$studies <- renderDT(server=FALSE,{
+     studies <- as.data.frame(GAlist$study)[,-c(2,11)]
+     studies$neff <- as.integer(studies$neff)
+     pmid <- gsub("PMID:","",studies$reference)
+     pmid_link <- paste0("https://pubmed.ncbi.nlm.nih.gov/", pmid, "/")
+     html_code <- paste0("<a href='", pmid_link, "' target='_blank'>", pmid, "</a>")
+     studies$reference <- html_code
+
+     datatable(studies,
+               extensions = "Buttons",
+               options = list(paging = TRUE,
+                              scrollX=TRUE,
+                              searching = TRUE,
+                              ordering = TRUE,
+                              dom = 'Bfrtip',
+                              buttons = c('csv', 'excel'),
+                              pageLength=10,
+                              lengthMenu=c(3,5,10) ),
+               rownames= FALSE,
+               escape = FALSE)
+    })
+
+    stat <- reactive({
+     getMarkerStatDB(GAlist = GAlist, studyID = input$studyID)
+    })
+
+
+    # Display table when submit button is clicked
+    observeEvent(input$submit, {
+
+     symbol_list <- unlist(strsplit(input$symbols, "[\\s\n]+"))
+     #result <- symbol_to_id(symbol_list)
+     result <- as.data.frame(t(sapply(symbol_list, function(x){symbol_to_id(x)})))
+     colnames(result) <- c("Symbol", "Ensembl Gene Id", "Description", "Type", "Chr", "Start", "End")
+
+     feature_genes <- result[,2]
+
+     message("Extract gene-marker sets")
+
+     # Extract gene-marker sets
+     marker_sets_indices <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes")
+     marker_sets_indices <- qgg:::mapSets(sets=marker_sets_indices, rsids=stat()$rsids, index=TRUE)
+     pgenes <- sapply(marker_sets_indices, function(x) {min(stat()$p[x])})
+
+     # Create data frame for markers
+     selected_markers <- unique(unlist(marker_sets_indices[feature_genes]))
+
+     df_markers <- stat()[selected_markers,]
+     rsid <- df_markers$rsids
+     gwas_url <- paste0("https://www.ebi.ac.uk/gwas/variants/", rsid)
+     dbsnp_url <- paste0("https://www.ncbi.nlm.nih.gov/snp/", rsid)
+     html_code <- paste0("<a href='", dbsnp_url, "' target='_blank'>", rsid, "</a>")
+     df_markers$rsids <- html_code
+
+     html_code <- paste0("<a href='", gwas_url, "' target='_blank'>", rsid, "</a>")
+     df_markers$gwas <- html_code
+
+
+
+     # Create data frame for features
+     df_features <- result
+
+     gene_id <- df_features[,2]
+     gene_link <- paste0("https://www.ensembl.org/Homo_sapiens/Gene/Summary?g=", gene_id)
+     html_code <- paste0("<a href='", gene_link, "' target='_blank'>", gene_id, "</a>")
+     df_features[,2] <- html_code
+
+     ot_gene_link <- paste0("https://genetics.opentargets.org/gene/", gene_id)
+     html_code <- paste0("<a href='", ot_gene_link, "' target='_blank'>", gene_id, "</a>")
+     df_features$open_target_gene <- html_code
+     ot_target_link <- paste0("https://platform.opentargets.org/target/", gene_id)
+     html_code <- paste0("<a href='", ot_target_link, "' target='_blank'>", gene_id, "</a>")
+     df_features$open_target_target <- html_code
+
+
+     # Create data frame for feature drug targets
+     df_targets <- GAlist$targets
+     atc_code <- df_targets$ATC
+     atc_url <- paste0("https://www.whocc.no/atc_ddd_index/?code=", atc_code)
+     html_code <- paste0("<a href='", atc_url, "' target='_blank'>", atc_code, "</a>")
+     df_targets$ATC <- html_code
+     df_feature_targets <- NULL
+     has_targets <- df_targets$Target%in%feature_genes
+     if(any(has_targets)) {
+      df_feature_targets <- data.frame(df_targets[df_targets$Target%in%feature_genes,],P=NA)
+      rws <- match(df_feature_targets$Target, names(pgenes))
+      df_feature_targets$P[!is.na(rws)] <- pgenes[rws[!is.na(rws)]]
+     }
+
+     # Render marker table
+     output$markers <- renderDT(server=FALSE,{
+      datatable(df_markers,
+                escape = FALSE,
+                extensions = "Buttons",
+                options = list(paging = TRUE,
+                               scrollX=TRUE,
+                               searching = TRUE,
+                               ordering = TRUE,
+                               dom = 'Bfrtip',
+                               buttons = c('csv', 'excel'),
+                               pageLength=10,
+                               lengthMenu=c(3,5,10) ),
+                rownames= FALSE)%>%
+       formatRound("n", digits=0)
+     })
+
+     # Render feature table
+     output$features <- renderDT(server=FALSE,{
+      datatable(df_features, extensions = "Buttons",
+                escape = FALSE,
+                options = list(paging = TRUE,
+                               scrollX=TRUE,
+                               searching = TRUE,
+                               ordering = TRUE,
+                               dom = 'Bfrtip',
+                               buttons = c('csv', 'excel'),
+                               pageLength=10,
+                               lengthMenu=c(3,5,10) ),
+                rownames= FALSE)
+     })
+
+     # Render target table
+     output$targets <- renderDT(server=FALSE,{
+      datatable(df_feature_targets,
+                extensions = "Buttons",
+                escape = FALSE,
+                options = list(paging = TRUE,
+                               scrollX=TRUE,
+                               searching = TRUE,
+                               ordering = TRUE,
+                               dom = 'Bfrtip',
+                               buttons = c('csv', 'excel'),
+                               pageLength=10,
+                               lengthMenu=c(3,5,10) ),
+                rownames= FALSE)
+     })
+
+     # Create qqplot
+     output$qqplot <- renderPlot({
+      qqplotDB(p=pgenes, main="Markers")
+     })
+
+
+     # Create manhatten plot
+     output$manhattenplot <- renderPlot({
+      ggplot(data = stat()[selected_markers,],
+             aes(x = 1:length(selected_markers),
+                 y = -log10(p))) +
+       geom_point(size = 2) +
+       geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "red") +
+       xlab("Markers") +
+       ylab("-log10(p-value)") +
+       ggtitle("Association of Markers with Disease") +
+       theme_minimal()
+     })
+    })
+   }
+
+  }
 
   if(what=="drugFeatures") {
 
