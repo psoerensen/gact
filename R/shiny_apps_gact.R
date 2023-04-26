@@ -10,6 +10,7 @@
   require(ggplot2)
   require(httr)
   require(jsonlite)
+  require(stringr)
 
   if(what=="customGSEA") {
    # Define the UI
