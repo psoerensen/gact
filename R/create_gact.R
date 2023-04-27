@@ -350,7 +350,21 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
  }
 
-
+ if(what=="pubmed") {
+  url_pubmed <- "https://ftp.ncbi.nih.gov/gene/DATA/gene2pubmed.gz"
+  destfile <- file.path(GAlist$dirs["gsets"],"gene2pubmed.gz")
+  download.file(url=url_pubmed, mode = "wb", dest=destfile)
+  pubmed <- fread(destfile, data.table = FALSE)
+  pubmed <- pubmed[pubmed[,1]%in%9606,-1]
+  eg2pmid <- split(pubmed$PubMed_ID,f=as.factor(pubmed$GeneID))
+  pmid2eg <- split(pubmed$GeneID,f=as.factor(pubmed$PubMed_ID))
+  saveRDS(eg2pmid,file=file.path(GAlist$dirs["gsets"],"eg2pmid.rds"))
+  saveRDS(pmid2eg,file=file.path(GAlist$dirs["gsets"],"pmid2eg.rds"))
+ }
+ if(what=="pubchem") {
+  #https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2244/xrefs/PubMedID/TXT
+  #https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/CURRENT-Full/
+ }
 
  if(what=="string") {
   url_string <- "https://stringdb-static.org/download/protein.links.v11.5/9606.protein.links.v11.5.txt.gz"
