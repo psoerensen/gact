@@ -885,42 +885,6 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
  return(sets)
 }
 
-#' @export
-#'
-
-# hyperg test
-hgtestDB <- function(p = NULL, sets = NULL, threshold = 0.05) {
- population_size <- length(p)
- sample_size <- sapply(sets, length)
- n_successes_population <- sum(p < threshold)
- n_successes_sample <- sapply(sets, function(x) {
-  sum(p[x] < threshold)
- })
- phyperg <- rep(1,length(sets))
- names(phyperg) <- names(sets)
- for (i in 1:length(sets)) {
-  phyperg[i] <- 1.0-phyper(n_successes_sample[i]-1, n_successes_population,
-                           population_size-n_successes_population,
-                           sample_size[i])
- }
- phyperg
-}
-
-
-
-
-#' @export
-#'
-# Create a plot function
-qqplotDB <- function(p=NULL, main=NULL) {
- pobs <- -log10(p)
- pexp <- -log10((1:length(pobs))/length(pobs) )
- plot( y=sort(pobs), x=sort(pexp),
-       xlab="Expected -log10(P)",
-       ylab="Observed -log10(P)",
-       frame.plot=FALSE, main=main)
- abline(a=0,b=1, col="red", lty=2, lwd=2)
-}
 
 
 #' @export
@@ -1197,6 +1161,112 @@ getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list"
  }
 
 }
+
+#' @export
+#'
+
+# hyperg test
+hgtestDB <- function(p = NULL, sets = NULL, threshold = 0.05) {
+ population_size <- length(p)
+ sample_size <- sapply(sets, length)
+ n_successes_population <- sum(p < threshold)
+ n_successes_sample <- sapply(sets, function(x) {
+  sum(p[x] < threshold)
+ })
+ phyperg <- rep(1,length(sets))
+ names(phyperg) <- names(sets)
+ for (i in 1:length(sets)) {
+  phyperg[i] <- 1.0-phyper(n_successes_sample[i]-1, n_successes_population,
+                           population_size-n_successes_population,
+                           sample_size[i])
+ }
+ phyperg
+}
+
+
+
+
+#' @export
+#'
+# Create a plot function
+mhplotDB <- function(p=NULL, main=NULL) {
+ pobs <- -log10(p)
+ plot(pobs,
+      pch = 20, ylim = c(0, max(pobs)), main=main,
+      xlab = "Position", ylab = "-log10(p-value)", frame.plot=FALSE)
+ abline(h = 8, lty = 2, col = "red")
+}
+
+#' @export
+#'
+# Create a plot function
+qqplotDB <- function(p=NULL, main=NULL) {
+ pobs <- -log10(p)
+ pexp <- -log10((1:length(pobs))/length(pobs) )
+ plot( y=sort(pobs), x=sort(pexp),
+       xlab="Expected -log10(P)",
+       ylab="Observed -log10(P)",
+       frame.plot=FALSE, main=main)
+ abline(a=0,b=1, col="red", lty=2, lwd=2)
+}
+
+#' @export
+#'
+# Create a plot function
+createURL <- function(url=NULL,urlid=NULL){
+ url <- paste0(url, urlid)
+ html_code <- paste0("<a href='", url, "' target='_blank'>", urlid, "</a>")
+ html_code
+}
+
+#' @export
+#'
+createDT <- function(df=NULL) {
+ dt <- datatable(df, extensions = "Buttons",
+                 escape = FALSE,
+                 options = list(paging = TRUE,
+                                scrollX = TRUE,
+                                searching = TRUE,
+                                ordering = TRUE,
+                                dom = 'Bfrtip',
+                                buttons = c('csv', 'excel'),
+                                pageLength = 10,
+                                lengthMenu = c(3, 5, 10)),
+                 rownames = FALSE)
+ return(dt)
+}
+
+
+# Extract gene information from Ensembl
+#' @export
+#'
+getGeneDB <- function(symbol=NULL) {
+ base_url <- "https://rest.ensembl.org"
+ url <- paste0(base_url, "/lookup/symbol/homo_sapiens/", symbol)
+ response <- GET(url = url, content_type("application/json"))
+ gene <- fromJSON(content(response, "text"), flatten = TRUE)
+ if(!is.null(gene$error)) gene_information <- c(symbol, rep(NA, 6))
+ if(is.null(gene$error)) gene_information <- c(symbol, gene$id, gene$description, gene$biotype, gene$seq_region_name, gene$start, gene$end)
+ return(gene_information)
+}
+
+# Define function to retrieve interaction partners
+#' @export
+#'
+getInteractionsDB <- function(ids=NULL, species="9606", threshold=900) {
+ ids <- paste0(ids, collapse = "%0d")
+ url <- paste0("https://string-db.org/api/tsv/interaction_partners?identifiers=",
+               ids,
+               "&species=",
+               species,
+               "&required_score=",
+               threshold)
+ res <- GET(url)
+ interactions <- read.table(text = content(res, "text"), sep = "\t",
+                            stringsAsFactors = FALSE, header=TRUE)
+ return(interactions)
+}
+
 
 #' @export
 #'
