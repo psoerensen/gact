@@ -20,6 +20,8 @@
 #'
 #' @return A list providing information and infrastructure of the gact database.
 #'
+#' @import data.table
+#'
 #' @examples
 #' \dontrun{
 #' GAlist <- gact()
@@ -37,21 +39,31 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
  if(task=="download") {
   GAlist <- createDB(Glist=NULL, version=version, dbdir=dbdir)
 
+  options(download.file.method="libcurl", url.method="libcurl", timeout=600)
+
   # Step 2: Download data from database:
   GAlist <- downloadDB(GAlist=GAlist, what="marker")
   GAlist <- downloadDB(GAlist=GAlist, what="gsets")
-  GAlist <- downloadDB(GAlist=GAlist, what="gsea")
+  #GAlist <- downloadDB(GAlist=GAlist, what="gsea")
   GAlist <- downloadDB(GAlist=GAlist, what="gstat")
   GAlist <- downloadDB(GAlist=GAlist, what="ensembl")
   GAlist <- downloadDB(GAlist=GAlist, what="string")
   GAlist <- downloadDB(GAlist=GAlist, what="stitch")
-
-  # Step 3: Create marker sets from database:
-  if(what=="full") {
+  #GAlist <- downloadDB(GAlist=GAlist, what="pubmed")
+  #GAlist <- downloadDB(GAlist=GAlist, what="pubchem")
+  GAlist <- downloadDB(GAlist=GAlist, what="dgi")
+  #GAlist <- downloadDB(GAlist=GAlist, what="pharmgkb")
+  #GAlist <- downloadDB(GAlist=GAlist, what="opentargets")
+  GAlist <- downloadDB(GAlist=GAlist, what="gwascatalog")
+  GAlist <- downloadDB(GAlist=GAlist, what="atc")
+  #GAlist$study <- as.data.frame(GAlist$study)
+ }
+ # Step 3: Create marker sets from database:
+ if(what=="createSets") {
   message("Creating full marker sets - this may take some time")
   GAlist <- createSetsDB(GAlist=GAlist)
-  }
  }
+
  return(GAlist)
 }
 
@@ -79,7 +91,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
 #' The createDB function creates a database for genetic association studies.
 #' If `dbdir` is not specified, the database will be created in the current working directory.
 #' The function creates subdirectories within the database directory, including "glist", "gstat",
-#' "gsets", "gsea", "ldsc", "gbayes", "marker", "raw", and "dgidb".
+#' "gsets", "gsea", "ldsc", "gbayes", "marker", "download", and "drugdb".
 #' The list `Glist` should contain the genetic data and will be filtered to only keep
 #' markers that are present in `Glist$rsidsLD`. The filtered markers are stored in a data frame
 #' and saved in the "marker" subdirectory as "markers.txt.gz".
@@ -103,13 +115,11 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
            gstat = "gstat",
            gsets = "gsets",
            gsea = "gsea",
-           ldsc = "ldsc",
            gbayes = "gbayes",
+           ldsc = "ldsc",
            marker = "marker",
-           raw = "raw",
-           dgidb = "dgidb",
-           pharmgkb = "pharmgkb",
-           opentargets = "opentargets")
+           drugdb = "drugdb",
+           download = "download")
 
  lapply(names(dirs), function(x) {
   dir.create(file.path(dbdir, dirs[x]))
@@ -121,7 +131,7 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite") {
                 features = c("Markers", "Genes", "Proteins", "GO", "Pathways", "ProteinComplexes", "ChemicalComplexes"))
  GAlist$dbdir <- dbdir
 
- names(GAlist$dirs) <- c("glist","gstat","gsets","gsea", "ldsc", "gbayes", "marker", "raw", "dgidb", "pharmgkb", "opentargets")
+ names(GAlist$dirs) <- c("glist","gstat","gsets","gsea", "gbayes", "ldsc", "marker", "drugdb", "download")
 
  if(!is.null(Glist)) {
   keep <- Glist$rsids %in% Glist$rsidsLD
@@ -399,23 +409,23 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
 
 
- if(what=="DGI") {
+ if(what=="dgi") {
   # download dgidb files in the database
   message("Downloading Drug Gene Interaction database")
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/interactions.tsv"
-  destfile <- file.path(GAlist$dirs["dgidb"],"interactions.tsv")
+  destfile <- file.path(GAlist$dirs["drugdb"],"interactions.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/genes.tsv"
-  destfile <- file.path(GAlist$dirs["dgidb"],"genes.tsv")
+  destfile <- file.path(GAlist$dirs["drugdb"],"genes.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/drugs.tsv"
-  destfile <- file.path(GAlist$dirs["dgidb"],"drugs.tsv")
+  destfile <- file.path(GAlist$dirs["drugdb"],"drugs.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
   url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/categories.tsv"
-  destfile <- file.path(GAlist$dirs["dgidb"],"categories.tsv")
+  destfile <- file.path(GAlist$dirs["drugdb"],"categories.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
 
-  drugdb <- fread(file.path(GAlist$dirs["dgidb"], "interactions.tsv"),
+  drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
                   quote = "", data.table = FALSE)
 
   drug2eg <- split( drugdb$entrez_id, f=as.factor(drugdb$drug_name) )
@@ -449,29 +459,29 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
  }
 
- if(what=="PharmGKB") {
+ if(what=="pharmgkb") {
   cwd <- getwd()
-  setwd(GAlist$dirs["pharmgkb"])
+  setwd(GAlist$dirs["drugdb"])
   url <- "https://api.pharmgkb.org/v1/download/file/data/drugLabels.zip"
-  output_file <-  file.path(GAlist$dirs["pharmgkb"],"drugLabels.zip")
+  output_file <-  file.path(GAlist$dirs["drugdb"],"drugLabels.zip")
   download.file(url, destfile = output_file, mode = "wb")
   unzip(output_file)
   file.remove(output_file)
 
   url <- "https://api.pharmgkb.org/v1/download/file/data/relationships.zip"
-  output_file <-  file.path(GAlist$dirs["pharmgkb"],"relationships.zip")
+  output_file <-  file.path(GAlist$dirs["drugdb"],"relationships.zip")
   download.file(url, destfile = output_file, mode = "wb")
   unzip(output_file)
   file.remove(output_file)
 
   url <- "https://api.pharmgkb.org/v1/download/file/data/clinicalVariants.zip"
-  output_file <-  file.path(GAlist$dirs["pharmgkb"],"clinicalVariants.zip")
+  output_file <-  file.path(GAlist$dirs["drugdb"],"clinicalVariants.zip")
   download.file(url, destfile = output_file, mode = "wb")
   unzip(output_file)
   file.remove(output_file)
 
   url <- "https://api.pharmgkb.org/v1/download/file/data/automated_annotations.zip"
-  output_file <-  file.path(GAlist$dirs["pharmgkb"],"automated_annotations.zip")
+  output_file <-  file.path(GAlist$dirs["drugdb"],"automated_annotations.zip")
   download.file(url, destfile = output_file, mode = "wb")
   unzip(output_file)
   file.remove(output_file)
@@ -479,14 +489,14 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
  }
 
- if(what=="OpenTargets") {
-  dir.create(file.path(GAlist$dirs["opentargets"], "targets"))
-  dir.create(file.path(GAlist$dirs["opentargets"], "diseases"))
-  dir.create(file.path(GAlist$dirs["opentargets"], "diseaseToPhenotype"))
-  dir.create(file.path(GAlist$dirs["opentargets"], "significantAdverseDrugReactions"))
-  dir.create(file.path(GAlist$dirs["opentargets"], "associationByDatasourceDirect"))
-  dir.create(file.path(GAlist$dirs["opentargets"], "associationByDatatypeDirect"))
-  dir.create(file.path(GAlist$dirs["opentargets"], "associationByOverallDirect"))
+ if(what=="opentargets") {
+  dir.create(file.path(GAlist$dirs["drugdb"], "targets"))
+  dir.create(file.path(GAlist$dirs["drugdb"], "diseases"))
+  dir.create(file.path(GAlist$dirs["drugdb"], "diseaseToPhenotype"))
+  dir.create(file.path(GAlist$dirs["drugdb"], "significantAdverseDrugReactions"))
+  dir.create(file.path(GAlist$dirs["drugdb"], "associationByDatasourceDirect"))
+  dir.create(file.path(GAlist$dirs["drugdb"], "associationByDatatypeDirect"))
+  dir.create(file.path(GAlist$dirs["drugdb"], "associationByOverallDirect"))
 
   # Download opentarget
   urls <- c("ftp.ebi.ac.uk/pub/databases/opentargets/platform/22.11/output/etl/json/targets/",
@@ -508,466 +518,83 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
    for (j in 1:length(files)) {
     destfile <- unlist(strsplit(files[j],split="/"))
     destfile <- destfile[length(destfile)]
-    destfile <- file.path(file.path(GAlist$dirs["opentargets"], urldir),destfile)
+    destfile <- file.path(file.path(GAlist$dirs["drugdb"], urldir),destfile)
     download.file(url=files[j], mode = "wb", dest=destfile)
    }
   }
-  files <- dir(file.path(GAlist$dirs["opentargets"], "associationByOverallDirect"), full.names = TRUE)
+  files <- dir(file.path(GAlist$dirs["drugdb"], "associationByOverallDirect"), full.names = TRUE)
   df <- NULL
   for (i in 1:length(files)) {
    con <- file(files[i],"r")
    df <- rbind(df,jsonlite::stream_in(con))
    close(con)
   }
-  filename <- file.path(GAlist$dirs["opentargets"], "associationByOverallDirect.tsv")
+  filename <- file.path(GAlist$dirs["drugdb"], "associationByOverallDirect.tsv")
   fwrite(df, file=filename)
 
-  files <- dir(file.path(GAlist$dirs["opentargets"], "associationByDatatypeDirect"), full.names = TRUE)
+  files <- dir(file.path(GAlist$dirs["drugdb"], "associationByDatatypeDirect"), full.names = TRUE)
   df <- NULL
   for (i in 1:length(files)) {
    con <- file(files[i],"r")
    df <- rbind(df,jsonlite::stream_in(con))
    close(con)
   }
-  filename <- file.path(GAlist$dirs["opentargets"], "associationByDatatypeDirect.tsv")
+  filename <- file.path(GAlist$dirs["drugdb"], "associationByDatatypeDirect.tsv")
   fwrite(df, file=filename)
 
-  files <- dir(file.path(GAlist$dirs["opentargets"], "associationByDatasourceDirect"), full.names = TRUE)
+  files <- dir(file.path(GAlist$dirs["drugdb"], "associationByDatasourceDirect"), full.names = TRUE)
   df <- NULL
   for (i in 1:length(files)) {
    con <- file(files[i],"r")
    df <- rbind(df,jsonlite::stream_in(con))
    close(con)
   }
-  filename <- file.path(GAlist$dirs["opentargets"], "associationByDatasourceDirect.tsv")
+  filename <- file.path(GAlist$dirs["drugdb"], "associationByDatasourceDirect.tsv")
   fwrite(df, file=filename)
+ }
+
+ if(what=="gwascatalog") {
+  # http://ftp.ebi.ac.uk/pub/databases/gwas/releases/
+  # timeout=600 required for large file
+  options(download.file.method="libcurl", url.method="libcurl", timeout=600)
+  dbdir <- file.path(GAlist$dbdir, "gwas")
+  if(!dir.exists(dbdir)) dir.create(dbdir)
+
+  file_studies <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/2023/04/25/gwas-catalog-studies_ontology-annotated.tsv"
+  destfile <- file.path(dbdir, "gwas-catalog-studies_ontology-annotated.tsv")
+  download.file(file_studies, destfile = destfile, mode = "wb")
+
+  file_gwas <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/2023/04/25/gwas-catalog-associations_ontology-annotated.tsv"
+  destfile <- file.path(dbdir, "gwas-catalog-associations_ontology-annotated.tsv")
+  download.file(file_gwas, destfile = destfile, mode = "wb")
+
+  gwas <- fread(destfile, data.table=FALSE, quote="")
+ }
+
+ if(what=="atc") {
+  # Add targets to GAlist
+ df <- fread("https://www.dropbox.com/s/n5ehglmhhs0kcue/WHO%20ATC-DDD%202023-03-28.csv?dl=1",data.table = FALSE)
+ GAlist$atc <- NULL
+ GAlist$atc$code <- df$atc_code
+ GAlist$atc$name <- df$atc_name
+
+ # # Add drug target data frame with ATC information to GAlist
+ drugGenes <- getSetsDB(GAlist = GAlist, feature = "DrugGenes")
+ nreps <- sapply(drugGenes,length)
+ drugs <- rep(names(drugGenes), times=nreps)
+ ensg <- unlist(drugGenes)
+ ensg2drug <- split(drugs, f=as.factor(ensg))
+ df <- data.frame(Drug=drugs, Target=ensg)
+ df$ATC <- rep("Unknown",nrow(df))
+ has_atc <- match(tolower(df$Drug),tolower(GAlist$atc$name))
+ df$ATC[!is.na(has_atc)] <- as.character(GAlist$atc$code[has_atc[!is.na(has_atc)]])
+ GAlist$targets <- df
  }
 
  return(GAlist)
 }
 
 
-#' Get summary statistics from the database
-#'
-#' This function retrieves summary statistics from the gact database of GSEA results,
-#' such as marker statistics, gene statistics, protein statistics, etc.
-#'
-#' @param GAlist A list object providing information and infrastructure of the gact database.
-#' @param feature The type of statistics to retrieve from the database, such as "Markers", "Genes", "Proteins", etc.
-#' @param featureID A character vector of specific features to extract from the database. If not specified, all features will be returned.
-#' @param file The file name of the database of GSEA results.
-#' @param studyID The study ID to retrieve the results for. If not specified, results will be returned for all studies.
-#' @param trait The trait to retrieve the results for. If not specified, results will be returned for all traits.
-#' @param threshold A numeric p-value threshold used to filter results.
-#' @param format The format to return the results in, either "list" (default) or "data.frame".
-#' @return A list or data.frame of summary statistics for the specified feature, study ID, and trait.
-#' @examples
-#'
-#' \dontrun{
-#' # load example data
-#' GAlist <- readRDS(file="GAlist.rds")
-#'
-#' # get marker statistics
-#' stat <- getStatDB(GAlist = GAlist, feature = "Markers", studyID="GWAS1")
-#'
-#' # get gene statistics
-#' stat <- getStatDB(GAlist = GAlist, feature = "Genes")
-#'
-#' # get gene statistics for a specific feature
-#' stat <- getStatDB(GAlist = GAlist, feature = "Genes", featureID = "TP53")
-#'
-#' # get gene statistics filtered by a threshold
-#' stat <- getStatDB(GAlist = GAlist, feature = "Genes", threshold = 0.05)
-#' }
-
-
-#' @export
-#'
-getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
-                    studyID=NULL, trait=NULL, threshold=0.95,
-                    format="list") {
- features <- c("Markers","Genes","Proteins","GO","Pathways",
-               "ProteinComplexes","ChemicalComplexes","Chromosomes")
- header <- c("Marker ID","Gene ID","Protein ID","GO ID","Pathway ID",
-             "Protein ID","Chemical ID", "Chromosome ID")
- names(header) <- features
- if(!feature%in%features) stop(paste("feature:",feature,"not in database"))
-
- #gseafile <- paste0(GAlist$dirs["gsea"],"ct_gsea",feature,"_gdtdb.rds")
- gseafile <- GAlist$gseafiles[paste0("ct_gsea",feature,"_gdtdb")]
- res <- readRDS(gseafile)
- message(paste("Extract statistics based p-value threshold:",threshold))
- cls5 <- grep("_0.05", colnames(res$stat))
- cls95 <- grep("_0.95", colnames(res$stat))
- cls <- 1:ncol(res$stat)
- if(threshold==0.05) cls <- cls5
- if(threshold==0.95) cls <- cls95
-
- colnames(res$stat) <- gsub("z_","",colnames(res$stat))
- colnames(res$p) <- gsub("z_","",colnames(res$p))
- colnames(res$stat) <- gsub("_0.05","",colnames(res$stat))
- colnames(res$p) <- gsub("_0.05","",colnames(res$p))
- colnames(res$stat) <- gsub("_0.95","",colnames(res$stat))
- colnames(res$p) <- gsub("_0.95","",colnames(res$p))
- res$p[res$stat==0] <- 1
- rws <- rep(TRUE,lenth=nrow(res$stat))
- if(!is.null(featureID)) rws <- rownames(res$stat)%in%featureID
- if(sum(rws)==0) stop("None of featureIDs found in database")
- res$stat <- res$stat[rws,cls]
- res$p <- res$p[rws,cls]
- if(!is.null(studyID)) {
-  res$stat <- res$stat[,colnames(res$stat)%in%studyID]
-  res$p <- res$p[,colnames(res$p)%in%studyID]
- }
-
- if(format=="data.frame") {
-  res <- as.data.frame(res)
-  if(feature=="Genes") {
-   res <- cbind(rownames(res),GAlist$gsets[["ensg2sym"]][rownames(res)], res)
-   colnames(res)[1:2] <- c("Ensembl Gene ID","Symbol")
-   ensg2sym_list <- lapply(res[,"Symbol"], function(x){
-    unlist(strsplit(x,split=" "))})
-   gsym <- unlist(ensg2sym_list)
-   rws <- rep(1:nrow(res),times=sapply(ensg2sym_list,length))
-   res <- res[rws,]
-   res[,"Symbol"] <- gsym
-   if(!is.null(featureID)) {
-    select <- tolower(res[,"Ensembl Gene ID"])%in%tolower(featureID) | tolower(res[,"Symbol"])%in%tolower(featureID)
-    if(any(select)) res <- res[select,]
-    if(!any(select)) stop("None of featureIDs found in the database")
-   }
-  }
-  if(!feature=="Genes") {
-   res <- cbind(rownames(res), res)
-   colnames(res)[1] <- header[feature]
-  }
-
- }
- return(res)
-}
-
-
-#' @export
-#'
-writeStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
-                      studyID=NULL, threshold=0.95,
-                      format="data.frame", file.csv=NULL, hyperlink=TRUE) {
- res <- getStatDB(GAlist=GAlist, feature=feature, featureID=featureID,
-                 studyID=studyID, threshold=threshold,
-                 format=format)
- features <- c("Markers","Genes","Proteins","GO","Pathways",
-               "ProteinComplexes","ChemicalComplexes","Chromosomes")
- if(!feature%in%features) stop(paste("feature:",feature,"not in database"))
- header <- c("Marker ID","Gene ID","Protein ID","GO ID","Pathway ID",
-             "Protein ID","Chemical ID", "Chromosome ID")
- names(header) <- features
- if(feature=="Genes") {
-  if(hyperlink) {
-   res <- cbind(rownames(res), res)
-   res2hyperlink_ensembl <- paste0("http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",res[,1])
-   res2hyperlink_opentarget <- paste0("https://platform.opentargets.org/target/",res[,1])
-   colnames(res)[1:3] <- c("Ensembl Gene ID","Open Target","Symbol")
-
-   res2hyperlink_ensembl <- paste0("=Hyperlink(",'"',res2hyperlink_ensembl,'"',";",'"',res[,1],'"',")")
-   res2hyperlink_opentarget <- paste0("=Hyperlink(",'"',res2hyperlink_opentarget,'"',";",'"',res[,1],'"',")")
-   res[,1] <- res2hyperlink_ensembl
-   res[,2] <- res2hyperlink_opentarget
-  }
- }
- res2html <- c("https://www.ncbi.nlm.nih.gov/snp/",
-               "http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",
-               "http://www.ensembl.org/Homo_sapiens/Protein/Summary?p=",
-               "https://www.ebi.ac.uk/QuickGO/term/",
-               "https://reactome.org/content/detail/",
-               "https://string-db.org/network/9606.",
-               "https://pubchem.ncbi.nlm.nih.gov/compound/")
-
- names(res2html) <- c("Marker","Genes","Proteins","GO","Pathways",
-                      "ProteinComplexes","ChemicalComplexes")
-
- if(!feature=="Genes") {
-  res2hyperlink <- paste0(res2html[feature],res[,1])
-  if(feature=="ChemicalComplexes") res2hyperlink <- paste0(res2html[feature],substring(res[,1],5,nchar(as.character(res[,1]))))
-  res2hyperlink <- paste0("=Hyperlink(",'"',res2hyperlink,'"',";",'"',res[,1],'"',")")
-  if(hyperlink) res[,1] <- res2hyperlink
-  colnames(res)[1] <- header[feature]
- }
-
- write.csv2(res,file=file.csv,row.names=FALSE)
-}
-
-#' @export
-#'
-getStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
-                    studyID=NULL, trait="t2d", threshold=1,
-                    format="data.frame", hyperlink=FALSE, cls=NULL) {
-
- features <- c("Markers","Genes","Proteins","GO","Pathways",
-               "ProteinComplexes","ChemicalComplexes")
- header <- c("Marker ID","Gene ID","Protein ID","GO ID","Pathway ID",
-             "Protein ID","Chemical ID")
- names(header) <- features
-
- if(feature=="Markers") {
-  res <- readRDS(GAlist$gstatfiles)
-  res <- as.data.frame(res)
-  rownames(res) <- res$rsids
-  return(res)
- }
-
- if(!feature%in%GAlist$features) stop(paste("feature:",feature,"not in GACT database"))
-
- res <- readRDS(GAlist$gseafiles[feature])
- #cls <- c("z_0.001","z_0.05","z_0.95")
- if(!is.null(cls)) {
-  #add check
- }
- if(is.null(cls)) cls <- c("p=0.01")
- colnames(res$stat) <- gsub("z_","p=",colnames(res$stat))
- colnames(res$p) <- gsub("z_","p=",colnames(res$p))
- res$p[res$stat==0] <- 1
- res$stat <- res$stat[,cls]
- res$p <- res$p[,cls]
-
- if(format=="data.frame") {
-  res <- as.data.frame(res)
-
-  if(feature=="Genes") {
-   if(!hyperlink) {
-    res <- cbind(rownames(res),GAlist$gsets[["ensg2sym"]][rownames(res)], res)
-    colnames(res)[1:2] <- c("Ensembl Gene ID","Symbol")
-   }
-   if(hyperlink) {
-    res <- cbind(rownames(res),rownames(res),GAlist$gsets[["ensg2sym"]][rownames(res)], res)
-    res2hyperlink_ensembl <- paste0("http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",res[,1])
-    res2hyperlink_opentarget <- paste0("https://platform.opentargets.org/target/",res[,1])
-    colnames(res)[1:3] <- c("Ensembl Gene ID","Open Target","Symbol")
-
-    res2hyperlink_ensembl <- paste0("=Hyperlink(",'"',res2hyperlink_ensembl,'"',";",'"',res[,1],'"',")")
-    res2hyperlink_opentarget <- paste0("=Hyperlink(",'"',res2hyperlink_opentarget,'"',";",'"',res[,1],'"',")")
-    res[,1] <- res2hyperlink_ensembl
-    res[,2] <- res2hyperlink_opentarget
-   }
-  }
-
-  res2html <- c("https://www.ncbi.nlm.nih.gov/snp/",
-                "http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",
-                "http://www.ensembl.org/Homo_sapiens/Protein/Summary?p=",
-                "https://www.ebi.ac.uk/QuickGO/term/",
-                "https://reactome.org/content/detail/",
-                "https://string-db.org/network/9606.",
-                "https://pubchem.ncbi.nlm.nih.gov/compound/")
-
-  names(res2html) <- c("Marker","Genes","Proteins","GO","Pathways",
-                       "ProteinComplexes","ChemicalComplexes")
-
-
-
-  if(!feature=="Genes") {
-   res <- cbind(rownames(res), res)
-   res2hyperlink <- paste0(res2html[feature],res[,1])
-   if(feature=="ChemicalComplexes") res2hyperlink <- paste0(res2html[feature],substring(res[,1],5,nchar(as.character(res[,1]))))
-   res2hyperlink <- paste0("=Hyperlink(",'"',res2hyperlink,'"',";",'"',res[,1],'"',")")
-   if(hyperlink) res[,1] <- res2hyperlink
-   colnames(res)[1] <- header[feature]
-  }
- }
-
- return(res)
-}
-
-#' #' @export
-#' #'
-#' writeStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
-#'                       studyID=NULL, trait="T2D", threshold=1,
-#'                       format="data.frame", file.csv=NULL, hyperlink=TRUE) {
-#'  stat <- getStat(GAlist=GAlist, feature=feature, featureID=featureID,
-#'                  studyID=studyID, trait=trait, threshold=threshold,
-#'                  format=format, hyperlink=hyperlink)
-#'  write.csv2(stat,file=file.csv,row.names=FALSE)
-#' }
-
-#' @export
-#'
-getStudiesDB <- function(GAlist=NULL) {
- return(as.data.frame(GAlist$study))
-}
-
-#' @export
-#'
-designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeatureID=NULL) {
- if(is.null(GAlist)) stop ("Please provide GAlist")
- if(is.null(feature)) stop ("Please provide feature")
- sets <- getSetsDB(GAlist=GAlist, feature=feature)
- if(!is.null(featureID)) {
-  select <- names(sets)%in%featureID
-  if(sum(select)==0) stop("None of the fetureIDs found in sets")
-  sets <- sets[select]
- }
- if(is.null(rowFeatureID)) rowFeatureID <- unique(unlist(sets))
- sets <- qgg:::mapSets(sets=sets,rsids=rowFeatureID, index=TRUE)
- W <- matrix(0,nrow=length(rowFeatureID), ncol=length(sets))
- colnames(W) <- names(sets)
- rownames(W) <- rowFeatureID
- for(i in 1:length(sets)) {
-  W[sets[[i]],i] <- 1
- }
- return(W)
-}
-
-#' Retrieve sets of features from a GAlist object
-#'
-#' The `getSetsDB` function retrieves sets of features from a GAlist object. The
-#' feature sets are specified by the `feature` argument, and the specific IDs of
-#' the features can be filtered using the `featureID` argument.
-#'
-#' @param GAlist A list object providing information and infrastructure of the gact database.
-#' @param feature A character string specifying the type of feature set to be
-#'   retrieved. Possible values are "Entres Genes", "Genes", "Proteins", "Gene
-#'   Symbol", "GO", "Pathways", "ProteinComplexes", "ChemicalComplexes",
-#'   "ProteinComplexes2Genes", and "ChemicalComplexes2Genes".
-#' @param featureID A character vector of IDs specifying the specific features to
-#'   be retrieved.
-#' @return A list of the specified feature sets. If `featureID` is not `NULL`,
-#'   returns only the sets with IDs in `featureID`.
-#'
-#' @examples
-#' \dontrun{
-#' sets <- getSetsDB(GAlist, feature="Genes")
-#' getSetsDB(GAlist, feature="Genes", featureID=c("gene1", "gene2"))
-#' }
-#'
-#' @export
-#'
-getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
-                      min_combined_score=700, min_interactions=5) {
- sets <- NULL
- if(feature=="Entrez Genes") sets <- GAlist$gsets[[1]]
- if(feature=="Genes") sets <- GAlist$gsets[[2]]
- if(feature=="Proteins") sets <- GAlist$gsets[[3]]
- if(feature=="Gene Symbol") sets <- GAlist$gsets[[4]]
- if(feature=="GO") sets <- GAlist$gsets[[5]]
- if(feature=="Pathways") sets <- GAlist$gsets[[9]]
- if(feature=="Pathways2Genes") sets <- GAlist$gsets[[9]]
- if(feature=="ProteinComplexes") sets <- GAlist$gsets[[7]]
- if(feature=="ChemicalComplexes") sets <- GAlist$gsets[[8]]
- if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
- if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
- if(feature=="DrugGenes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
- if(feature=="DrugComplexes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
-
- if(feature=="String") {
-  file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
-  string <- fread(file_string, data.table=FALSE)
-  string  <- string[string$combined_score>=min_combined_score,]
-  string <- split( string$protein2,f=as.factor(string$protein1))
-  sets <- string[sapply(string ,length)>=min_interactions]
- }
- if(feature=="Stitch") {
-  file_stitch <- "http://stitch.embl.de/download/protein_chemical.links.v5.0/9606.protein_chemical.links.v5.0.tsv.gz"
-  stitch <- fread(file_stitch, data.table=FALSE)
-  stitch$protein <- gsub("9606.","",stitch$protein)
-  stitch <- stitch[stitch$protein%in%names(GAlist$gsets$ensp2ensg),]
-  stitch  <- stitch[stitch$combined_score>=min_combined_score,]
-  stitch <- split( stitch$protein,f=as.factor(stitch$chemical))
-  sets  <- stitch[sapply(stitch ,length)>=min_interactions]
- }
-
-
-
-
- if(!is.null(featureID)) {
-  select <- names(sets)%in%featureID
-  if(sum(select)==0) stop("None of the fetureIDs found in sets")
-  #if(any(!select)) message(paste("Some IDs not in data base:",featureID[!select]))
-  sets <- sets[select]
- }
- return(sets)
-}
-
-
-
-#' @export
-#'
-getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, min_combined_score=900) {
- drugGenes <- readRDS(file=file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
- file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
- string <- fread(file_string, data.table=FALSE)
- string  <- string[string$combined_score>=min_combined_score,]
- string <- split( string$protein2,f=as.factor(string$protein1))
- string <- string[sapply(string ,length)>=min_interactions]
-
- drug2ensp <- lapply(drugGenes,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
- drugComplex <- lapply(drug2ensp,function(x){na.omit(unlist(string[x]))})
- drugComplex <- lapply(drugComplex,function(x){na.omit(unlist(GAlist$gsets$ensp2ensg[x]))})
- drugComplex <- lapply(drugComplex, function(x){unique(x)})
-
- for(i in 1:length(drugComplex)) {
-  drugComplex[[i]] <- unique(c(drugGenes[[i]], drugComplex[[i]]))
- }
- return(drugComplex)
-}
-
-
-#' Get Marker Sets from database
-#'
-#' This function retrieves marker sets based on a given feature and feature ID from a file. The feature can be one of the following: Genes, Inter Genes, Gene Symbol, Proteins, Pathways, GO, ProteinComplexes, ChemicalComplexes. The feature ID refers to the ID of the feature for which the marker sets are to be retrieved. The `rsids` argument is optional and refers to a list of SNP IDs for which the corresponding marker sets are to be retrieved.
-#'
-#' @param GAlist A list object providing information and infrastructure of the gact database.
-#' @param feature A string specifying the type of biological feature for which the marker sets are to be retrieved. The options are: "Genes", "Entrez Genes", "Gene Symbol", "Proteins", "Pathways", "GO", "Protein Complexes", and "Chemical Complexes".
-#' @param featureID The ID of the feature for which the marker sets are to be retrieved.
-#' @param rsids A character vector of rsids to subset the marker sets.
-#'
-#' @return A list of marker sets for the specified feature and feature ID, where each set is a character vector of rsids.
-#'
-#' @examples
-#' \dontrun{
-#' sets <- getMarkerSetsDB(GAlist=GAlist, feature="Genes", featureID=c("ENSG00000165879", "ENSG00000012048"))
-#' }
-#' @export
-#'
-getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NULL) {
-
- setsfile <- NULL
- if(feature=="Genes") setsfile <- file.path(GAlist$dirs["gsets"],"ensg2rsids_10kb.rds")
- if(feature=="Entrez Genes") setsfile <- file.path(GAlist$dirs["gsets"],"eg2rsids_10kb.rds")
- if(feature=="Gene Symbol") setsfile <- file.path(GAlist$dirs["gsets"],"sym2rsids_10kb.rds")
- if(feature=="Proteins") setsfile <- file.path(GAlist$dirs["gsets"],"ensp2rsids_10kb.rds")
- if(feature=="Pathways") setsfile <- file.path(GAlist$dirs["gsets"],"reactome2rsids.rds")
- if(feature=="GO") setsfile <- file.path(GAlist$dirs["gsets"],"go2rsids.rds")
- if(feature=="ProteinComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"string2rsids.rds")
- if(feature=="ChemicalComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"stitch2rsids.rds")
- if(feature=="DrugGenes") setsfile <- file.path(GAlist$dirs["gsets"],"drugGenes.rds")
- if(feature=="DrugComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"drugComplex.rds")
- if(!is.null(setsfile)) sets <- readRDS(file=setsfile)
- if(!is.null(featureID)) {
-  inSet <- featureID%in%names(sets)
-  if(any(!inSet)) warning(paste("Some IDs not in data base:",featureID[!inSet]))
-  featureID <- featureID[featureID%in%names(sets)]
-  sets <- sets[featureID]
- }
- if(!is.null(rsids)) sets <- qgg:::mapSets(sets=sets, rsids=rsids, index=FALSE)
- return(sets)
-}
-
-
-#' @export
-#'
-getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="list") {
- if(feature=="Drug Gene Interactions") {
-  eg2ensg <- readRDS(file.path(GAlist$dirs["gsets"],"eg2ensg.rds"))
-  egs <- rep(names(eg2ensg),times=sapply(eg2ensg,length))
-  ensg <- unlist(eg2ensg, use.names=FALSE)
-  df1 <- data.frame(entrez_id=egs,ENSG=ensg)
-
-  df2 <- fread(file.path(GAlist$dirs["dgidb"],"interactions.tsv"), data.table=FALSE)
-  df2$entrez_id <- as.character(df2$entrez_id)
-
-  df <- merge(x=df1, y=df2, by.x="entrez_id", by.y="entrez_id",  all.y=TRUE)
-  colnames(df)[1:3] <- c("Entrez Gene","Ensembl Gene ID","Symbol")
- }
- return(df)
-}
 
 
 #' @export
@@ -1055,17 +682,22 @@ updateStatDB <- function(GAlist=NULL,
 
  file_stat_information <- file.path(GAlist$dirs["gstat"],"GWAS_information.csv")
  write.csv2(as.data.frame(GAlist$study),file=file_stat_information,row.names=FALSE)
- GAlist$studyfiles <- file.path(GAlist$dirs["gstat"],GAlist$study$file,".gz")
+ GAlist$studyfiles <- file.path(GAlist$dirs["gstat"],paste0(GAlist$study$file,".gz"))
  names(GAlist$studyfiles) <- GAlist$study$id
 
 
  # processing of summary statistics
  if(writeStatDB) {
   message("Perform quality control of external summary statistics")
+
+  if(any(!sapply(stat, class)[c("eaf", "b", "seb", "p")]%in%"numeric")) warning("Column classes wrong")
+  stat$p <- as.numeric(stat$p)
+  stat$p[stat$p==0] <- .Machine$double.xmin
+
   stat <- qcStatDB(GAlist=GAlist,stat=stat, excludeMAFDIFF=excludeMAFDIFF)
   message(paste("Writing processed summary statistics to internal file:",
                 GAlist$study$file[study_number]))
-  file_stat <- file.path(GAlist$dirs["gstat"],GAlist$study$file[study_number],".gz")
+  file_stat <- GAlist$studyfiles[study_number]
   if(file.exists(file_stat)) stop(paste("GWAS summary statistics file allready exists:",
                                         file_stat))
   fwrite(stat, file_stat)
@@ -1074,198 +706,6 @@ updateStatDB <- function(GAlist=NULL,
  return(GAlist)
 }
 
-
-#' @export
-#'
-getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
-
- if(!is.null(cpra)) {
-  cpra1 <- paste(GAlist$markers[,"chr"],
-                 GAlist$markers[,"pos"],
-                 toupper(GAlist$markers[,"ea"]),
-                 toupper(GAlist$markers[,"nea"]), sep="_")
-  cpra2 <- paste(GAlist$markers[,"chr"],
-                 GAlist$markers[,"pos"],
-                 toupper(GAlist$markers[,"nea"]),
-                 toupper(GAlist$markers[,"ea"]),sep="_")
-
-  mapped <- cpra1%in%cpra | cpra2%in%cpra
-  message("Map markers based on cpra")
-  message(paste("Number of markers in cpra mapped to marker ids in GAlist:",sum(mapped)))
-  rsids <- GAlist$rsids[mapped]
- }
-
- if(is.null(studyID)) studyID <- GAlist$study$id
- names(GAlist$study$neff) <-GAlist$study$id
-
- if (length(studyID)==1) format <- "data.frame"
- if (length(studyID)>1) format <- "list"
-
- if(format=="list" && what=="all") {
-  b <- seb <- z <- p <- n <- matrix(NA,ncol=length(studyID),nrow=length(GAlist$rsids))
-  colnames(b) <- colnames(seb) <- colnames(z) <- colnames(p) <- colnames(n) <- studyID
-  rownames(b) <- rownames(seb) <- rownames(z) <- rownames(p) <- rownames(n) <- GAlist$rsids
-  for (study in studyID) {
-   message(paste("Extracting data from study:",study))
-   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
-   if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],length(stat$b))
-   b[stat$rsids,study] <- stat$b
-   seb[stat$rsids,study] <- stat$seb
-   z[stat$rsids,study] <- stat$b/stat$seb
-   p[stat$rsids,study] <- stat$p
-   n[stat$rsids,study] <- stat$n
-  }
-  if(!is.null(rsids)) rsids <- rsids[rsids%in%GAlist$rsids]
-  if(is.null(rsids)) rsids <- stat$rsids[stat$rsids%in%GAlist$rsids]
-  rsids <- match(rsids,GAlist$rsids)
-  if(rm.na) return(list(b=na.omit(b[rsids,]),seb=na.omit(seb[rsids,]),z=na.omit(z[rsids,]),
-                        p=na.omit(p[rsids,]), n=na.omit(n[rsids,]) ))
-  if(!rm.na) return(list(b=b[rsids,],seb=seb[rsids,],z=z[rsids,],p=p[rsids,],n=n[rsids,] ))
- }
-
- if(format=="data.frame" && what=="all") {
-  if(length(studyID)>1) stop("Only one study allowed")
-  study <- studyID
-  message(paste("Extracting data from study:",study))
-  stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
-  if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],nrow(stat))
-  #if(is.null(stat[["z"]])) stat$z <- stat$b/stat$seb
-
-  if(!is.null(rsids)) rsids <- rsids[rsids%in%stat$rsids]
-  if(is.null(rsids)) rsids <- stat$rsids
-
-  rsids <- match(rsids,stat$rsids)
-  if(rm.na) return(na.omit(stat[rsids,]))
-  if(!rm.na) return(na.omit(stat[rsids,]))
- }
-
- if(what%in%c("rsids","b","seb","eaf","ea","nea","z","p")) {
-  if(length(what)>1) stop("Only one feature allowed")
-  res <- matrix(NA,ncol=length(studyID),nrow=length(GAlist$rsids))
-  colnames(res) <- studyID
-  rownames(res) <- GAlist$rsids
-  for (study in studyID) {
-   message(paste("Extracting data from study:",study))
-   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
-   if(what=="z") res[stat$rsids,study] <- stat$b/stat$seb
-   if(!what=="z") res[stat$rsids,study] <- stat[,what]
-  }
-  if(!is.null(rsids)) rsids <- rsids[rsids%in%GAlist$rsids]
-  if(is.null(rsids)) rsids <- stat$rsids[stat$rsids%in%GAlist$rsids]
-  rsids <- match(rsids,GAlist$rsids)
-
-  if(rm.na) res <- na.omit(res[rsids,])
-  if(!rm.na) res <- res[rsids,]
-  if(what=="rsids") res <- res[,1]
-  return(res)
- }
-
-}
-
-#' @export
-#'
-
-# hyperg test
-hgtestDB <- function(p = NULL, sets = NULL, threshold = 0.05) {
- population_size <- length(p)
- sample_size <- sapply(sets, length)
- n_successes_population <- sum(p < threshold)
- n_successes_sample <- sapply(sets, function(x) {
-  sum(p[x] < threshold)
- })
- phyperg <- rep(1,length(sets))
- names(phyperg) <- names(sets)
- for (i in 1:length(sets)) {
-  phyperg[i] <- 1.0-phyper(n_successes_sample[i]-1, n_successes_population,
-                           population_size-n_successes_population,
-                           sample_size[i])
- }
- phyperg
-}
-
-
-
-
-#' @export
-#'
-# Create a plot function
-mhplotDB <- function(p=NULL, main=NULL) {
- pobs <- -log10(p)
- plot(pobs,
-      pch = 20, ylim = c(0, max(pobs)), main=main,
-      xlab = "Position", ylab = "-log10(p-value)", frame.plot=FALSE)
- abline(h = 8, lty = 2, col = "red")
-}
-
-#' @export
-#'
-# Create a plot function
-qqplotDB <- function(p=NULL, main=NULL) {
- pobs <- -log10(p)
- pexp <- -log10((1:length(pobs))/length(pobs) )
- plot( y=sort(pobs), x=sort(pexp),
-       xlab="Expected -log10(P)",
-       ylab="Observed -log10(P)",
-       frame.plot=FALSE, main=main)
- abline(a=0,b=1, col="red", lty=2, lwd=2)
-}
-
-#' @export
-#'
-# Create a plot function
-createURL <- function(url=NULL,urlid=NULL){
- url <- paste0(url, urlid)
- html_code <- paste0("<a href='", url, "' target='_blank'>", urlid, "</a>")
- html_code
-}
-
-#' @export
-#'
-createDT <- function(df=NULL) {
- dt <- datatable(df, extensions = "Buttons",
-                 escape = FALSE,
-                 options = list(paging = TRUE,
-                                scrollX = TRUE,
-                                searching = TRUE,
-                                ordering = TRUE,
-                                dom = 'Bfrtip',
-                                buttons = c('csv', 'excel'),
-                                pageLength = 10,
-                                lengthMenu = c(3, 5, 10)),
-                 rownames = FALSE)
- return(dt)
-}
-
-
-# Extract gene information from Ensembl
-#' @export
-#'
-getGeneDB <- function(symbol=NULL) {
- base_url <- "https://rest.ensembl.org"
- url <- paste0(base_url, "/lookup/symbol/homo_sapiens/", symbol)
- response <- GET(url = url, content_type("application/json"))
- gene <- fromJSON(content(response, "text"), flatten = TRUE)
- if(!is.null(gene$error)) gene_information <- c(symbol, rep(NA, 6))
- if(is.null(gene$error)) gene_information <- c(symbol, gene$id, gene$description, gene$biotype, gene$seq_region_name, gene$start, gene$end)
- return(gene_information)
-}
-
-# Define function to retrieve interaction partners
-#' @export
-#'
-getInteractionsDB <- function(ids=NULL, species="9606", threshold=900) {
- ids <- paste0(ids, collapse = "%0d")
- url <- paste0("https://string-db.org/api/tsv/interaction_partners?identifiers=",
-               ids,
-               "&species=",
-               species,
-               "&required_score=",
-               threshold)
- res <- GET(url)
- interactions <- read.table(text = content(res, "text"), sep = "\t",
-                            stringsAsFactors = FALSE, header=TRUE)
- return(interactions)
-}
 
 
 #' @export
@@ -1724,117 +1164,4 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
 }
 
 
-
-#' Generate gene sets for pathway analysis
-#'
-#' Generates gene sets for pathway analysis based on a given set of SNPs, using a
-#' pathway database contained in a GAlist object. The function
-#' samples causal SNPs and constructs gene sets of a given size and number of
-#' causal genes.
-#'
-#' @param GAlist a list object containing SNP and pathway
-#'   data
-#' @param mcausal an integer indicating the number of causal SNPs to sample.
-#'   Default is 500.
-#' @param causal a vector of SNP IDs representing the causal SNPs to be used in
-#'   the gene set construction. Default is \code{NULL} and SNPs will be randomly
-#'   sampled from the available SNPs in \code{GAlist}.
-#' @param ngenes an integer or vector indicating the number of genes to include
-#'   in each gene set. If a vector is supplied, a gene set will be generated for
-#'   each value in the vector. Default is 10.
-#' @param ncgenes an integer or vector indicating the number of causal genes to
-#'   include in each gene set. If a vector is supplied, a gene set will be
-#'   generated for each combination of values in \code{ngenes} and \code{ncgenes}.
-#'   Default is 2.
-#' @param nreps an integer indicating the number of gene sets to generate.
-#'   Default is 10.
-#'
-#' @return a list of gene sets, where each gene set is represented as a vector of
-#'   SNP IDs.
-#'
-#'
-#' @examples
-#' \dontrun{
-#' # Generate gene sets
-#' sets <- gpath(GAlist = GAlist, ngenes = 10, ncgenes = 2, nreps = 5)
-#' }
-#'
-#' @export
-#'
-gpath <- function(GAlist = NULL,
-                  mcausal=500, causal=NULL, overlap=FALSE,
-                  ngenes=10, ncgenes=2, nreps=10, format="markers"){
- # mcausal is the number of causal markers
- # causal is a vector of causal markers
- # ngenes is the number (or vector) of genes in pathway
- # ncgenes is the number (or vector) of causal genes in pathway
- # nreps is the number of pathways
-
- rsids <- unlist(GAlist$rsids)
-
- if(min(ngenes)-max(ncgenes)<0) stop("Number of causal genes (ncgenes) larger than number of genes in pathway (ngenes)")
-
- # Sample causal markers
- if(is.null(causal)) causal <- sample(rsids, size = mcausal)
- mcausal <- length(causal)
-
- # Marker sets for genes in database
- sets <- getMarkerSetsDB(GAlist = GAlist, feature="Genes")
-
- # Identify genes with causal markers
- causal_sets <- sapply(sets, function(x){any(x %in% causal)})
-
- # These are causal genes
- causal_genes <- names(sets)[causal_sets]
-
- # These are non causal markers
- non_causal_genes <- names(sets)[!causal_sets]
-
- gsets <- NULL
- setnames <- NULL
- ijk <- 0
- for (i in 1:nreps) {
-  for (j in 1:length(ngenes)) {
-   for (k in 1:length(ncgenes)) {
-    ijk <- ijk + 1
-    csets <- sample(causal_genes, ncgenes[k])
-    ncsets <- sample(non_causal_genes, ngenes[j]-ncgenes[k])
-    gsets[[ijk]] <- c(csets, ncsets)
-    setnames <- c(setnames, paste(c(i,ngenes[j],ncgenes[k]),collapse="_"))
-   }
-  }
- }
-
- if(format=="markers") gsets <- lapply(gsets, function(x){unlist(sets[x])})
- names(gsets) <- setnames
- return(gsets)
-}
-
-#' @export
-designMatrix <- function(sets=NULL, rsids=NULL) {
- sets <- qgg:::mapSets(sets=sets,rsids=rsids, index=TRUE)
- W <- matrix(0,nrow=length(rsids), ncol=length(sets))
- colnames(W) <- names(sets)
- rownames(W) <- rsids
- for(i in 1:length(sets)) {
-  W[sets[[i]],i] <- 1
- }
- return(W)
-}
-
-#' @export
-mapSetsDB <- function(sets = NULL, featureID = NULL, GAlist = NULL, index = TRUE) {
- nsets <- sapply(sets, length)
- if(is.null(names(sets))) names(sets) <- paste0("Set",1:length(sets))
- rs <- rep(names(sets), times = nsets)
- rsSets <- unlist(sets, use.names = FALSE)
- rsSets <- match(rsSets, featureID)
- inW <- !is.na(rsSets)
- rsSets <- rsSets[inW]
- if (!index) rsSets <- featureID[rsSets]
- rs <- rs[inW]
- rs <- factor(rs, levels = unique(rs))
- rsSets <- split(rsSets, f = rs)
- return(rsSets)
-}
 

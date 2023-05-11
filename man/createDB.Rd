@@ -35,7 +35,7 @@ createDB - Creates a database for genetic association studies
 The createDB function creates a database for genetic association studies.
 If \code{dbdir} is not specified, the database will be created in the current working directory.
 The function creates subdirectories within the database directory, including "glist", "gstat",
-"gsets", "gsea", "ldsc", "gbayes", "marker", "raw", and "dgidb".
+"gsets", "gsea", "ldsc", "gbayes", "marker", "download", and "drugdb".
 The list \code{Glist} should contain the genetic data and will be filtered to only keep
 markers that are present in \code{Glist$rsidsLD}. The filtered markers are stored in a data frame
 and saved in the "marker" subdirectory as "markers.txt.gz".

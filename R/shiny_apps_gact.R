@@ -13,16 +13,17 @@
   #require(stringr)
 
   if(what=="customGSEA") {
+
    # Define the UI
    ui <- fluidPage(
-    titlePanel("Enrichment analysis of gene complexes"),
+    titlePanel("Gene Set Enrichment Analysis of Gene Complexes"),
     sidebarLayout(
      sidebarPanel(
       selectInput("studyID", "Select Study:",
                   choices = GAlist$study$id,
                   selected="GWAS1"),
       textAreaInput("symbols", "Enter Gene Symbols (one per line or separated by spaces):"),
-      numericInput("threshold", "Enter Interaction Threshold (0-900):", value = 900),
+      numericInput("threshold", "Enter Interaction Threshold (0-999):", value = 900),
       numericInput("pval", "Enter P-value Threshold Enrichment Test:", value = 0.0001),
       br(),
       actionButton("submit", "Submit")
@@ -128,10 +129,11 @@
 
      # Prepare data frame for marker information
      df_markers <- stat()[feature_markers,]
+     rsids <- df_markers$rsids
      df_markers$rsids <- createURL(url="https://www.ncbi.nlm.nih.gov/snp/",
-                                   urlid=df_markers$rsids)
+                                   urlid=rsids)
      df_markers$gwas <- createURL(url="https://www.ebi.ac.uk/gwas/variants/",
-                                  urlid=df_markers$rsids)
+                                  urlid=rsids)
 
      # Prepare data frame for feature information
      urlid <- df_features[,2]
@@ -188,7 +190,7 @@
   if(what=="geneDrugs") {
    # Define the UI
    ui <- fluidPage(
-    titlePanel("geneDrugs"),
+    titlePanel("Drug Target Analysis of Genomic Features"),
     sidebarLayout(
      sidebarPanel(
       selectInput("studyID", "Select Study:",
@@ -411,7 +413,7 @@
 
   }
 
-  if(what=="drugFeatures") {
+  if(what=="featureDRUGS") {
 
    # Define UI
    ui <- fluidPage(
@@ -649,10 +651,10 @@
 
   }
 
-  if(what=="gseaFeatures") {
+  if(what=="featureGSEA") {
    # Define UI
    ui <- fluidPage(
-    titlePanel("GSEA of Genomic Features"),
+    titlePanel("Gene Set Enrichment Analysis of Genomic Features"),
     sidebarLayout(
      sidebarPanel(
       selectInput("studyID", "Select Study:",
