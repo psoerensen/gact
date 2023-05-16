@@ -1165,3 +1165,48 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
 
 
 
+#' @export
+#'
+columnStatDB <- function(stat=NULL) {
+ col_names <- colnames(stat)
+ types <- sapply(stat,class)
+ isInteger <- types=="integer"
+ isNumeric <- types=="numeric"
+ isCharacter <- types=="character"
+
+ if(any(isInteger)) {
+  nlevs <- sapply(stat[,isInteger],function(x){length(unique(x))})
+  isChr <- col_names[isInteger][nlevs<26]
+  isPos <- col_names[isInteger][nlevs>23]
+ }
+ if(any(isCharacter)) {
+  nlevs <- sapply(stat[,isCharacter],function(x){length(unique(x))})
+  isAllele <- col_names[isCharacter][nlevs<5]
+  if(length(isAllele)==1) isEA <- isNEA <- isAllele
+  if(length(isAllele)==2) {
+   isEA <- isAllele[1]
+   isNEA <- isAllele[2]
+  }
+  isMarker <- col_names[isCharacter][nlevs>5]
+ }
+ if(any(isNumeric)) {
+  minVal <- sapply(stat[,isNumeric],min, na.rm=TRUE)
+  maxVal <- sapply(stat[,isNumeric],max, na.rm=TRUE)
+  meanVal <- sapply(stat[,isNumeric],mean, na.rm=TRUE)
+  medianVal <- sapply(stat[,isNumeric],median, na.rm=TRUE)
+  isB <- col_names[isNumeric][minVal<0]
+  isSEB <- col_names[isNumeric][0<minVal & maxVal<0.2]
+  isP <- col_names[isNumeric][meanVal>0 & minVal<0.00001 & meanVal<0.4]
+  isN <- col_names[isNumeric][minVal>1000]
+  isNca <- isN[1]
+  isNco <- isN[1]
+  isN <- isN[1]
+  isEAF <- col_names[isNumeric][0<=minVal & maxVal<1 & medianVal>0.1 & medianVal<0.7]
+  if(length(isEAF)==0) isEAF <- "Unknown"
+  isInfo <- col_names[isNumeric][0.3<minVal & maxVal<=1 & medianVal>0.7]
+  if(length(isInfo)==0) isInfo <- "Unknown"
+ }
+ best_guess <- c(isMarker,isChr,isPos, isEA, isNEA, isEAF,
+                 isB, isSEB, isP, isN, isNca, isNco, isInfo)
+ best_guess
+}
