@@ -571,6 +571,14 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   gwas <- fread(destfile, data.table=FALSE, quote="")
  }
 
+ if(what=="drugbank") {
+  setwd(GAlist$dirs["drugdb"])
+  url <- "https://www.dropbox.com/s/2rf7plojpkmy18z/drugid2drugname.rds?dl=1"
+  file_drugbank <- file.path(GAlist$dirs["drugdb"],"drugid2drugname.rds")
+  download.file(url, destfile = file_drugbank, mode = "wb")
+  GAlist$drugbank <- readRDS(file=file_drugbank)
+ }
+
  if(what=="atc") {
   # Add targets to GAlist
  df <- fread("https://www.dropbox.com/s/n5ehglmhhs0kcue/WHO%20ATC-DDD%202023-03-28.csv?dl=1",data.table = FALSE)
