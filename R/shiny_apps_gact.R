@@ -19,7 +19,6 @@
     titlePanel("Processing of external GWAS summary statistics"),
     sidebarLayout(
      sidebarPanel(
-
       #textInput("file_link", "Select file (file name or url):"),
       fileInput("file_link", "Select file"),
       actionButton("download", "Load Data"),
@@ -86,7 +85,7 @@
 
     options(shiny.maxRequestSize = 100 * 1024^2)
 
-    destfile <- tempfile(, fileext=".gz")
+    destfile <- tempfile(fileext=".gz")
 
     stat <- eventReactive(input$download,{
      req(input$file_link)
@@ -211,6 +210,214 @@
 
 
    }
+
+   #  # Define the UI for the Shiny app
+   #  ui <- fluidPage(
+   #   titlePanel("Processing of external GWAS summary statistics"),
+   #   sidebarLayout(
+   #    sidebarPanel(
+   #     selectInput("choose", "Choose file source",
+   #                 choices = c("file", "url"), selected = NULL),
+   #     conditionalPanel(
+   #      "input.choose=='file'",
+   #      fileInput("file_link", "Select file")),
+   #    conditionalPanel(
+   #     "input.choose=='url'",
+   #     textInput("url_link", "Select file (file name or url):")),
+   #    #textInput("file_link", "Select file (file name or url):"),
+   #    #fileInput("file_link", "Select file"),
+   #    actionButton("download", "Load Data"),
+   #    actionButton("reset", "Reset"),
+   #    br(),
+   #
+   #    conditionalPanel(
+   #     actionButton("process", "Process Data"),
+   #     actionButton("save", "Ingest Data"),
+   #     br(),
+   #     br(),
+   #     condition = "output.fileUploaded",
+   #     textInput("trait", "Trait Name:"),
+   #     selectInput("type", "Type of trait:", choices = c("Continous","Binary"),
+   #                 selected = NULL),
+   #     selectInput("gender", "Gender:", choices = c("Both","Males","Females"),
+   #                 selected = "Both"),
+   #     conditionalPanel(
+   #      condition = "input.type == 'Continous'",
+   #      numericInput("n", "Number of Observations:", NA, min=0)),
+   #     conditionalPanel(
+   #      condition = "input.type == 'Binary'",
+   #      numericInput("nca", "Number of Cases:", NA, min=0),
+   #      numericInput("nco", "Number of Controls:", NA, min=0)),
+   #     textInput("ancestry", "Ancestry:"),
+   #     selectInput("build", "Genome Build:", choices = c("GRCh37","GRCh38"),
+   #                 selected = NULL),
+   #     textInput("reference", "Reference (e.g. PMID or DOI):"),
+   #     textInput("comments", "Comments:"),
+   #     selectInput("marker", "Marker ID:", choices = NULL, selected = NULL),
+   #     selectInput("chr", "Chromosome:", choices = NULL, selected = NULL),
+   #     selectInput("pos", "Genome Position:", choices = NULL, selected = NULL),
+   #     selectInput("ea", "Effect Allele:", choices = NULL, selected = NULL),
+   #     selectInput("nea", "Non Effect Allele:", choices = NULL, selected = NULL),
+   #     selectInput("eaf", "Effect Allele Frequency:", choices = NULL, selected = NULL),
+   #     selectInput("b", "Effect:", choices = NULL, selected = NULL),
+   #     selectInput("seb", "Standard Error:", choices = NULL, selected = NULL),
+   #     selectInput("p", "P-value:", choices = NULL, selected = NULL),
+   #
+   #     conditionalPanel(
+   #      condition = "input.type == 'Continous'",
+   #      selectInput("n", "Number of observations:", choices = NULL, selected = NULL)
+   #     ),
+   #
+   #     conditionalPanel(
+   #      condition = "input.type == 'Binary'",
+   #      selectInput("ncase", "Number of Cases:", choices = NULL, selected = NULL),
+   #      selectInput("ncontrol", "Number of Controls:", choices = NULL, selected = NULL)
+   #     ),
+   #
+   #     selectInput("info", "Info Column:", choices = NULL, selected = NULL)),
+   #   ),
+   #   mainPanel(
+   #    tableOutput("table"),
+   #    plotOutput("plots")
+   #   )
+   #  )
+   #  )
+   #
+   #
+   # # Define the server for the Shiny app
+   # server <- function(input, output, session) {
+   #  # Monitor changes in the text input and update column choices
+   #
+   #  options(shiny.maxRequestSize = 100 * 1024^2)
+   #
+   #  destfile <- tempfile(fileext=".gz")
+   #
+   #  stat <- eventReactive(input$download,{
+   #   #req(input$file_link)
+   #   if(input$choose=="file") req(input$file_link)
+   #   if(input$choose=="url") req(input$url_link)
+   #   if(input$choose=="file") file_link <- input$file_link$datapath
+   #   if(input$choose=="url") file_link <- input$url_link
+   #   isURL <- grepl("www.|http:|https:", file_link)
+   #   if(isURL) {
+   #    download.file(url=file_link, destfile=destfile, mode = "wb")
+   #    stat <- fread(destfile, header=TRUE, data.table=FALSE)
+   #   }
+   #   if(!isURL) stat <- fread(file_link, header=TRUE, data.table=FALSE)
+   #   #output$fileUploaded <- TRUE
+   #   col_names <- colnames(stat)
+   #   best_guess <- columnStatDB(stat)
+   #   updateSelectInput(session, "marker", label = "Marker ID:", choices = col_names, selected = best_guess[1])
+   #   updateSelectInput(session, "chr", label = "Chromosome:", choices = col_names, selected = best_guess[2])
+   #   updateSelectInput(session, "pos", label = "Genome Position:", choices = col_names, selected = best_guess[3])
+   #   updateSelectInput(session, "ea", label = "Effect Allele:", choices = col_names, selected = best_guess[4])
+   #   updateSelectInput(session, "nea", label = "Non Effect Allele:", choices = col_names, selected = best_guess[5])
+   #   updateSelectInput(session, "eaf", label = "Effect Allele Frequency:", choices = col_names, selected = best_guess[6])
+   #   updateSelectInput(session, "b", label = "Effect:", choices = col_names, selected = best_guess[7])
+   #   updateSelectInput(session, "seb", label = "Standard Error:", choices = col_names, selected = best_guess[8])
+   #   updateSelectInput(session, "p", label = "P-value:", choices = col_names, selected = best_guess[9])
+   #   updateSelectInput(session, "n", label = "Number of observations:", choices = col_names, selected = best_guess[10])
+   #   updateSelectInput(session, "ncase", label = "Number of Cases:", choices = col_names, selected = best_guess[11])
+   #   updateSelectInput(session, "ncontrol", label = "Number of Controls:", choices = col_names, selected = best_guess[12])
+   #   updateSelectInput(session, "info", label = "Information Score:", choices = col_names, selected = best_guess[13])
+   #   stat
+   #
+   #  })
+   #
+   #  output$fileUploaded <- reactive({
+   #   return(!is.null(stat()))
+   #  })
+   #  outputOptions(output, 'fileUploaded', suspendWhenHidden=FALSE)
+   #
+   #  observeEvent(stat(), {
+   #   output$table <- renderTable({
+   #    head(stat())
+   #   })
+   #  })
+   #
+   #
+   #  observeEvent(input$reset, {
+   #   session$reload()
+   #  })
+   #
+   #  # Display table when submit button is clicked
+   #  observeEvent(input$process, {
+   #   selected <- c(input$marker,input$chr,input$pos,input$ea,input$nea,
+   #                 input$eaf,input$b,input$seb,input$p,input$n,input$ncase,
+   #                 input$ncontrol, input$info)
+   #   names(selected) <- c("marker","chr", "pos", "ea", "nea", "eaf", "b", "seb", "p","n","ncase","ncontrol","info")
+   #
+   #   if(input$type == "Binary") selected <- selected[!names(selected)%in%c("n")]
+   #   if(input$type == "Continous") selected <- selected[!names(selected)%in%c("ncase","ncontrol")]
+   #
+   #   selected <- selected[!selected=="Unknown"]
+   #   df <- stat()[,selected]
+   #   colnames(df) <- names(selected)
+   #
+   #   output$table <- renderTable({
+   #    head(df)
+   #   })
+   #   output$table <- renderTable({
+   #    head(df)
+   #   })
+   #   # Create qqplot
+   #   output$plots <- renderPlot({
+   #    layout(matrix(1:6,ncol=2))
+   #    hist(df$b, xlab="Beta", main="Marker Effects")
+   #    hist(df$b/df$seb, xlab="Z-score", main="Marker Test Statistic")
+   #    hist(df$eaf, xlab="EAF", main="Effect Allele Frequency")
+   #    qqplotDB(p=df$p, main="Markers")
+   #    if(!is.null(df$info)) hist(df$info, xlab="Info", main="Imputation Score")
+   #   })
+   #  })
+   #
+   #  observeEvent(input$save, {
+   #
+   #   selected <- c(input$marker,input$chr,input$pos,input$ea,input$nea,
+   #                 input$eaf,input$b,input$seb,input$p,input$n,input$ncase,
+   #                 input$ncontrol, input$info)
+   #   names(selected) <- c("marker","chr", "pos", "ea", "nea", "eaf", "b", "seb", "p","n","ncase","ncontrol","info")
+   #
+   #   if(input$type == "Binary") selected <- selected[!names(selected)%in%c("n")]
+   #   if(input$type == "Continous") selected <- selected[!names(selected)%in%c("ncase","ncontrol")]
+   #
+   #   selected <- selected[!selected=="Unknown"]
+   #   df <- stat()[,selected]
+   #   colnames(df) <- names(selected)
+   #   if(input$type=="Continous") trait_type <- "quantitative"
+   #   if(input$type=="Binary") trait_type <- "binary"
+   #
+   #   recipe <- list(inputs=reactiveValuesToList(input),
+   #                  raw=head(stat()),
+   #                  stat=head(df))
+   #
+   #   filename <- paste0("GWAS.",
+   #                      paste0(sample(c(0:9, letters, LETTERS), 12), collapse=""),
+   #                      ".recipe.rds")
+   #   saveRDS( recipe , file = filename)
+   #
+   #
+   #   # GAlist <- updateStatDB(GAlist=GAlist,
+   #   #                       stat=df,
+   #   #                       source=input$file_link,
+   #   #                       trait=input$trait,
+   #   #                       type = type,
+   #   #                       gender = tolower(input$gender),
+   #   #                       ancestry=input$ancestry,
+   #   #                       build=input$build,
+   #   #                       reference = input$reference,
+   #   #                       n = input$n,
+   #   #                       ncase = input$nca,
+   #   #                       ncontrol = input$nco,
+   #   #                       comments=input$comments,
+   #   #                       writeStatDB=TRUE,
+   #   #                       excludeMAFDIFF=0.05)
+   #   session$reload()
+   #
+   #  })
+   #
+   #
+   # }
 
 
   }
@@ -997,6 +1204,20 @@
       atc_url <- paste0("https://www.whocc.no/atc_ddd_index/?code=", atc_code)
       html_code <- paste0("<a href='", atc_url, "' target='_blank'>", atc_code, "</a>")
       df$ATC <- html_code
+
+      drugbank_code <- df$Feature
+      drugbank_url <- paste0("https://www.dgidb.org/drugs/", drugbank_code)
+      html_code <- paste0("<a href='", drugbank_url, "' target='_blank'>", drugbank_code, "</a>")
+      df$DGI <- html_code
+
+      rws <- match(tolower(df$Feature),tolower(GAlist$drugbank))
+      drugbank_code <- rep("Unknown", nrow(df))
+      drugbank_code[!is.na(rws)] <- names(GAlist$drugbank)[rws[!is.na(rws)]]
+      drugbank_url <- paste0("https://go.drugbank.com/drugs/", drugbank_code)
+      html_code <- paste0("<a href='", drugbank_url, "' target='_blank'>", drugbank_code, "</a>")
+      df$DRUGBANK <- html_code
+
+
      }
      if(!input$feature=="DrugGenes") {
       feature_id <- df$Feature
