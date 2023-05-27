@@ -250,7 +250,7 @@ getStudiesDB <- function(GAlist=NULL) {
 
 #' @export
 #'
-designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeatureID=NULL) {
+designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeatureID=NULL, scale=FALSE) {
  if(is.null(GAlist)) stop ("Please provide GAlist")
  if(is.null(feature)) stop ("Please provide feature")
  sets <- getSetsDB(GAlist=GAlist, feature=feature)
@@ -266,6 +266,7 @@ designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeature
  rownames(W) <- rowFeatureID
  for(i in 1:length(sets)) {
   W[sets[[i]],i] <- 1
+  if(scale) W[,i] <- scale(W[,i])
  }
  return(W)
 }
@@ -532,7 +533,21 @@ hgtestDB <- function(p = NULL, sets = NULL, threshold = 0.05) {
                            population_size-n_successes_population,
                            sample_size[i])
  }
- phyperg
+ # Calculate enrichment factor
+ ef <- (n_successes_sample/sample_size)/
+  (n_successes_population/population_size)
+
+ # Create data frame for table
+ df <- data.frame(feature = names(sets),
+                  ng = sample_size,
+                  nag = n_successes_sample,
+                  ef=ef,
+                  phgt = phyperg)
+ colnames(df) <- c("Feature", "Number of Genes",
+                   "Number of Associated Genes",
+                   "Enrichment Factor",
+                   "P-value")
+ df
 }
 
 
@@ -561,6 +576,20 @@ qqplotDB <- function(p=NULL, main=NULL) {
        frame.plot=FALSE, main=main)
  abline(a=0,b=1, col="red", lty=2, lwd=2)
 }
+
+
+
+
+#' @export
+#'
+getStudiesShinyDB <- function(GAlist=NULL) {
+ df_studies <- as.data.frame(GAlist$study)[,-c(2,11)]
+ df_studies$neff <- as.integer(df_studies$neff)
+ df_studies$reference <- createURL(url="https://pubmed.ncbi.nlm.nih.gov/",
+                                   urlid=gsub("PMID:","",df_studies$reference))
+ df_studies
+}
+
 
 #' @export
 #'
