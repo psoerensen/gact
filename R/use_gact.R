@@ -396,6 +396,12 @@ getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NUL
  if(feature=="DrugGenes") setsfile <- file.path(GAlist$dirs["gsets"],"drugGenes.rds")
  if(feature=="DrugComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"drugComplex.rds")
  if(!is.null(setsfile)) sets <- readRDS(file=setsfile)
+ if(feature=="Genes") {
+  ensg <- sapply(GAlist$gsets$eg2ensg,function(x){x[1]})
+  ensg <- unique(ensg)
+  inSet <- ensg%in%names(sets)
+  sets <- sets[inSet]
+ }
  if(!is.null(featureID)) {
   inSet <- featureID%in%names(sets)
   if(any(!inSet)) warning(paste("Some IDs not in data base:",featureID[!inSet]))
