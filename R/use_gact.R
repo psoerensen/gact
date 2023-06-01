@@ -399,7 +399,7 @@ getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NUL
  if(feature=="Genes") {
   ensg <- sapply(GAlist$gsets$eg2ensg,function(x){x[1]})
   ensg <- unique(ensg)
-  inSet <- ensg%in%names(sets)
+  inSet <- names(sets)%in%ensg
   sets <- sets[inSet]
  }
  if(!is.null(featureID)) {
