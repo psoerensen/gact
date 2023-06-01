@@ -47,6 +47,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   #GAlist <- downloadDB(GAlist=GAlist, what="gsea")
   GAlist <- downloadDB(GAlist=GAlist, what="gstat")
   GAlist <- downloadDB(GAlist=GAlist, what="ensembl")
+  GAlist <- downloadDB(GAlist=GAlist, what="reactome")
   GAlist <- downloadDB(GAlist=GAlist, what="string")
   GAlist <- downloadDB(GAlist=GAlist, what="stitch")
   #GAlist <- downloadDB(GAlist=GAlist, what="pubmed")
@@ -406,7 +407,43 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   GAlist$gsets[[8]] <- sets
  }
 
+ if(what=="1000G") {
+  url <- "https://www.dropbox.com/s/jk3p47jf8ser6se/1000G_EUR_Phase3_plink.zip?dl=1"
+  dest <- file.path(GAlist$dirs["marker"],"1000G_EUR_Phase3_plink.zip")
+  download.file(url=url, mode = "wb", dest=dest)
+  unzip(dest, exdir=GAlist$dirs["marker"])
+ }
 
+ if(what=="reactome") {
+  url_db <- "https://reactome.org/download/current/ReactomePathways.txt"
+  destfile <- file.path(GAlist$dirs["gsets"],"ReactomePathways.txt")
+  download.file(url=url_db, mode = "wb", dest=destfile)
+
+  url_db <- "https://reactome.org/download/current/Ensembl2Reactome.txt"
+  destfile <- file.path(GAlist$dirs["gsets"],"Ensembl2Reactome.txt")
+  download.file(url=url_db, mode = "wb", dest=destfile)
+
+  pathway <- fread(file.path(GAlist$dirs["gsets"],"ReactomePathways.txt"), data.table=FALSE, header=FALSE)
+  isHSA <- grep("R-HSA",pathway[,1])
+  pathway <- pathway[isHSA,]
+  path2names <- pathway[,2]
+  names(path2names) <- pathway[,1]
+
+  GAlist$gsets$path2names <- path2names
+
+
+  reactome <- fread(file.path(GAlist$dirs["gsets"],"Ensembl2Reactome.txt"),
+                    data.table=FALSE, header=FALSE)
+  isHSA <- grep("R-HSA",reactome[,2])
+  reactome <- reactome[isHSA,]
+  head(reactome)
+
+  reac2ens <- split(reactome[,1],f=reactome[,2])
+  ens2reac <- split(reactome[,2],f=reactome[,1])
+
+  GAlist$gsets$reac2ens <- reac2ens
+  GAlist$gsets$ens2reac <- ens2reac
+ }
 
 
  if(what=="dgi") {
