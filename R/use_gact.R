@@ -295,7 +295,7 @@ designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeature
 #'
 #' @export
 #'
-getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
+getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,downstream=FALSE,
                       min_combined_score=700, min_interactions=5) {
  sets <- NULL
  if(feature=="Entrez Genes") sets <- GAlist$gsets[[1]]
@@ -311,6 +311,57 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
  if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
  if(feature=="DrugGenes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
  if(feature=="DrugComplexes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
+
+ if(feature=="GTEx") {
+  dbdir <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL")
+  files <- list.files(dbdir)
+  rws <- grep("egenes",files)
+  files <- files[rws]
+  tissue <- gsub(".v8.egenes.txt.gz","",files)
+  gtexSets <- NULL
+  for(i in 1:length(files)) {
+   df <- fread(file.path(dbdir, files[i]), data.table=FALSE)
+   df$gene_id <- substr(df$gene_id,1,15)
+   df$variant_id <- gsub("chr","",df$variant_id)
+   df$variant_id <- gsub("_b38","",df$variant_id)
+   #gtexSets <- split(df$variant_id,f=df$gene_id)
+   gtexSets[[i]] <- data.frame(ensg=df$gene_id,cpra=df$variant_id,p=df$qval)
+   message(paste("Processing file:",files[i]))
+  }
+  names(gtexSets) <- tissue
+  return(gtexSets)
+ }
+
+ if(feature=="GWAScatalog") {
+  dbdir <- file.path(GAlist$dbdir, "gwas")
+  gwasfile <- file.path(dbdir, "gwas-catalog-associations_ontology-annotated.tsv")
+  gwas <- fread(gwasfile, data.table=FALSE, quote="")
+  gwasGenes <- split(gwas$SNP_GENE_IDS,f=gwas$MAPPED_TRAIT)
+  gwasGenesUp <- split(gwas$UPSTREAM_GENE_ID,f=gwas$MAPPED_TRAIT)
+  gwasGenesDown <- split(gwas$DOWNSTREAM_GENE_ID,f=gwas$MAPPED_TRAIT)
+  gwasGenes <- lapply(gwasGenes, function(x) {
+   set <- unlist(strsplit(x,split=","))
+   set <- gsub(" ", "",set)
+  })
+  gwasGenesUp <- lapply(gwasGenesUp, function(x) {
+   set <- unlist(strsplit(x,split=","))
+   set <- gsub(" ", "",set)
+  })
+  gwasGenesDown <- lapply(gwasGenesDown, function(x) {
+   set <- unlist(strsplit(x,split=","))
+   set <- gsub(" ", "",set)
+  })
+  empty <- sapply(gwasGenes, function(x){ any(identical(x, character(0)))})
+  gwasGenes[empty] <- NULL
+  empty <- sapply(gwasGenesUp, function(x){ any(identical(x, character(0)))})
+  gwasGenesUp[empty] <- NULL
+  empty <- sapply(gwasGenesDown, function(x){ any(identical(x, character(0)))})
+  gwasGenesDown[empty] <- NULL
+  #gwasGenes <- list(genes=gwasGenes, up=gwasGenesUp, down=gwasGenesDown)
+  return(gwasGenes)
+ }
+
+
 
  if(feature=="String") {
   file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
@@ -385,7 +436,8 @@ getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, min_combined_sco
 getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NULL) {
 
  setsfile <- NULL
- if(feature=="Genes") setsfile <- file.path(GAlist$dirs["gsets"],"ensg2rsids_10kb.rds")
+ if(feature=="Genes") setsfile <- file.path(GAlist$dirs["gsets"],"ensg2rsids.rds")
+ #if(feature=="Genes") setsfile <- file.path(GAlist$dirs["gsets"],"ensg2rsids_10kb.rds")
  if(feature=="Entrez Genes") setsfile <- file.path(GAlist$dirs["gsets"],"eg2rsids_10kb.rds")
  if(feature=="Gene Symbol") setsfile <- file.path(GAlist$dirs["gsets"],"sym2rsids_10kb.rds")
  if(feature=="Proteins") setsfile <- file.path(GAlist$dirs["gsets"],"ensp2rsids_10kb.rds")
