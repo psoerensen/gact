@@ -298,17 +298,17 @@ designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeature
 getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,downstream=FALSE,
                       min_combined_score=700, min_interactions=5) {
  sets <- NULL
- if(feature=="Entrez Genes") sets <- GAlist$gsets[[1]]
- if(feature=="Genes") sets <- GAlist$gsets[[2]]
- if(feature=="Proteins") sets <- GAlist$gsets[[3]]
- if(feature=="Gene Symbol") sets <- GAlist$gsets[[4]]
- if(feature=="GO") sets <- GAlist$gsets[[5]]
- if(feature=="Pathways") sets <- GAlist$gsets[[9]]
- if(feature=="Pathways2Genes") sets <- GAlist$gsets[[9]]
- if(feature=="ProteinComplexes") sets <- GAlist$gsets[[7]]
- if(feature=="ChemicalComplexes") sets <- GAlist$gsets[[8]]
- if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
- if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
+ #if(feature=="Entrez Genes") sets <- GAlist$gsets[[1]]
+ #if(feature=="Genes") sets <- GAlist$gsets[[2]]
+ #if(feature=="Proteins") sets <- GAlist$gsets[[3]]
+ #if(feature=="Gene Symbol") sets <- GAlist$gsets[[4]]
+ if(feature=="GO") sets <- readRDS(file=file.path(GAlist$dirs["gsets"],"go.rds"))
+ if(feature=="Pathways") sets <- readRDS(file=file.path(GAlist$dirs["gsets"],"reactome2ensg.rds"))
+ #if(feature=="Pathways2Genes") sets <- GAlist$gsets[[9]]
+ if(feature=="ProteinComplexes") sets <- readRDS(file=file.path(GAlist$dirs["gsets"],"string2ensg.rds"))
+ if(feature=="ChemicalComplexes") sets <- readRDS(file=file.path(GAlist$dirs["gsets"],"stitch2ensg.rds"))
+ #if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
+ #if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
  if(feature=="DrugGenes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
  if(feature=="DrugComplexes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
 
@@ -318,7 +318,6 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
   rws <- grep("egenes",files)
   files <- files[rws]
   tissue <- gsub(".v8.egenes.txt.gz","",files)
-  gtexSets <- NULL
   for(i in 1:length(files)) {
    df <- fread(file.path(dbdir, files[i]), data.table=FALSE)
    df$gene_id <- substr(df$gene_id,1,15)
@@ -360,8 +359,6 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
   #gwasGenes <- list(genes=gwasGenes, up=gwasGenesUp, down=gwasGenesDown)
   return(gwasGenes)
  }
-
-
 
  if(feature=="String") {
   file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
@@ -436,8 +433,8 @@ getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, min_combined_sco
 getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NULL) {
 
  setsfile <- NULL
- if(feature=="Genes") setsfile <- file.path(GAlist$dirs["gsets"],"ensg2rsids.rds")
- #if(feature=="Genes") setsfile <- file.path(GAlist$dirs["gsets"],"ensg2rsids_10kb.rds")
+ if(feature=="Genesplus") setsfile <- file.path(GAlist$dirs["gsets"],"ensg2rsids.rds")
+ if(feature=="Genes") setsfile <- file.path(GAlist$dirs["gsets"],"ensg2rsids_10kb.rds")
  if(feature=="Entrez Genes") setsfile <- file.path(GAlist$dirs["gsets"],"eg2rsids_10kb.rds")
  if(feature=="Gene Symbol") setsfile <- file.path(GAlist$dirs["gsets"],"sym2rsids_10kb.rds")
  if(feature=="Proteins") setsfile <- file.path(GAlist$dirs["gsets"],"ensp2rsids_10kb.rds")
