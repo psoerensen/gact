@@ -12,6 +12,233 @@
   require(jsonlite)
   #require(stringr)
 
+  if(what=="test") {
+   # Define UI
+   ui <- fluidPage(
+
+    titlePanel("Gene Set Enrichment Analysis of Genomic Features"),
+
+    sidebarLayout(
+
+     sidebarPanel(
+      selectInput("studyID", "Select Study:",
+                  choices = GAlist$study$id,
+                  selected="GWAS1"),
+      selectInput("feature", "Select Feature:", choices = c("Pathways",
+                                                            "GO",
+                                                            "DrugGenes",
+                                                            "ProteinComplexes",
+                                                            "ChemicalComplexes")),
+      numericInput("threshold", "Enter P-value Threshold:", value = 10e-5),
+      actionButton("submit", "Submit"),
+      textInput("featureID", "Select Feature ID:", value = "R-HSA-202427"),
+      br(),
+      actionButton("submit2", "Extract")
+     ),
+
+     mainPanel(
+      tabsetPanel(
+       tabPanel("Table", DTOutput("result")),
+       tabPanel("Ensembl Gene IDs", DTOutput("features")),
+       tabPanel("Summary Statistics", DTOutput("markers")),
+       tabPanel("GSEA plot", plotOutput("gseaplot")),
+       tabPanel("QQ plot", plotOutput("qqplot")),
+       tabPanel("Studies", DTOutput("studies"), selected = TRUE)
+      )
+     )
+    )
+   )
+
+
+   # Define server
+   server <- function(input, output, session) {
+
+
+    # Prepare data frame for study information
+    output$studies <- renderDT(server=FALSE,{
+     df_studies <- getStudiesShinyDB(GAlist=GAlist)
+     createDT(df_studies)
+    })
+
+
+    # Get marker data if new study selected
+    stat <- eventReactive(input$studyID,{
+     getMarkerStatDB(GAlist = GAlist, studyID = input$studyID)
+    })
+
+    # Extract feature sets
+    #featureSets <- eventReactive(input$feature,{
+    # getSetsDB(GAlist = GAlist, feature = input$feature)
+    #})
+
+    message("Extract gene-marker sets")
+
+    # Extract gene-marker sets and map to summary statistics
+    gene_marker_sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes")
+
+
+
+    observeEvent(input$feature, {
+     message("New feature selected")
+     #if(input$feature=="Genes") feature_value <- "ENSG00000149257"
+     if(input$feature=="Pathways") feature_value <- "R-HSA-202427"
+     if(input$feature=="GO") feature_value <- "GO:0000002"
+     if(input$feature=="DrugGenes") feature_value <- "REPAGLINIDE"
+     #if(input$feature=="ProteinComplexes") feature_value <- "ENSP00000000233"
+     #if(input$feature=="ChemicalComplexes") feature_value <- "CIDm00000001"
+     updateTextInput(session, "featureID", value = feature_value )
+    })
+
+
+    # Display table when submit button is clicked
+    observeEvent(input$submit, {
+
+     marker_sets_indices <- qgg:::mapSets(sets=gene_marker_sets, rsids=stat()$rsids, index=TRUE)
+
+     # Determine smallest p-value for each gene
+     pgenes <- sapply(marker_sets_indices, function(x) {min(stat()$p[x])})
+     genes <- names(pgenes)
+
+     message("Extract feature-gene sets")
+
+     # Extract feature-gene sets
+     feature_genes <- getSetsDB(GAlist = GAlist, feature = input$feature)
+     feature_genes <- qgg:::mapSets(sets=feature_genes, rsids=names(pgenes), index=FALSE)
+
+     # Get selected genes based on p-value threshold
+     selected_genes <- genes[pgenes < input$threshold]
+
+     # Calculate number of genes in each feature and number of associated genes based on p-value threshold
+     number_genes_feature <- sapply(feature_genes, function(x){length(x)})
+     number_associated_genes_feature <- sapply(feature_genes, function(x){sum(x %in% selected_genes)})
+
+     # Calculate hypergeometric test p-values
+     phgt <- hgtestDB(p = pgenes, sets = feature_genes, threshold = input$threshold)
+
+     # Calculate enrichment factor
+     ef <- (number_associated_genes_feature[names(phgt)]/number_genes_feature[names(phgt)])/
+      (length(selected_genes)/length(pgenes))
+
+     # Create data frame for table
+     df <- data.frame(feature = names(phgt),
+                      ng = number_genes_feature[names(phgt)],
+                      nag = number_associated_genes_feature[names(phgt)],
+                      ef=ef,
+                      phgt = phgt)
+     colnames(df) <- c("Feature", "Number of Genes",
+                       "Number of Associated Genes",
+                       "Enrichment Factor",
+                       "P-value")
+     if(input$feature=="DrugGenes") {
+      df$ATC <- rep("Unknown",nrow(df))
+      has_atc <- match(tolower(df$Feature),tolower(GAlist$atc$name))
+      df$ATC[!is.na(has_atc)] <- as.character(GAlist$atc$code[has_atc[!is.na(has_atc)]])
+      atc_code <- df$ATC
+      atc_url <- paste0("https://www.whocc.no/atc_ddd_index/?code=", atc_code)
+      html_code <- paste0("<a href='", atc_url, "' target='_blank'>", atc_code, "</a>")
+      df$ATC <- html_code
+
+      drugbank_code <- df$Feature
+      drugbank_url <- paste0("https://www.dgidb.org/drugs/", drugbank_code)
+      html_code <- paste0("<a href='", drugbank_url, "' target='_blank'>", drugbank_code, "</a>")
+      df$DGI <- html_code
+
+      rws <- match(tolower(df$Feature),tolower(GAlist$drugbank))
+      drugbank_code <- rep("Unknown", nrow(df))
+      drugbank_code[!is.na(rws)] <- names(GAlist$drugbank)[rws[!is.na(rws)]]
+      drugbank_url <- paste0("https://go.drugbank.com/drugs/", drugbank_code)
+      html_code <- paste0("<a href='", drugbank_url, "' target='_blank'>", drugbank_code, "</a>")
+      df$DRUGBANK <- html_code
+
+
+     }
+     if(!input$feature=="DrugGenes") {
+      feature_id <- df$Feature
+      if(input$feature=="Pathways") feature_link <- paste0("https://reactome.org/content/detail/", feature_id)
+      if(input$feature=="GO") feature_link <- paste0("https://www.ebi.ac.uk/QuickGO/term/", feature_id)
+      if(input$feature=="ProteinComplexes") feature_link <- paste0("https://string-db.org/network/9606.", feature_id)
+      if(input$feature=="ChemicalComplexes") feature_link <- paste0("https://pubchem.ncbi.nlm.nih.gov/compound/",
+                                                                    substring(feature_id,5,nchar(as.character(feature_id))))
+      html_code <- paste0("<a href='", feature_link, "' target='_blank'>", feature_id, "</a>")
+      df$Feature <- html_code
+     }
+
+     # Render feature table
+     output$result <- renderDT(server=FALSE,{
+      datatable(df, extensions = "Buttons",
+                escape = FALSE,
+                options = list(paging = TRUE,
+                               scrollX=TRUE,
+                               searching = TRUE,
+                               ordering = TRUE,
+                               dom = 'Bfrtip',
+                               buttons = c('csv', 'excel'),
+                               pageLength=10,
+                               lengthMenu=c(3,5,10) ),
+                rownames= FALSE)%>%
+       formatRound("Enrichment Factor", digits=2)%>%
+       formatSignif('P-value',3)
+     })
+
+     # Create plot of -log10 p-values
+     output$qqplot <- renderPlot({
+      qqplotDB(p=phgt, main="Features")
+     })
+
+     # Create plot of -log10 p-values
+     output$gseaplot <- renderPlot({
+      plot(y=-log10(df[,5]),x=df[,4], frame.plot=FALSE,
+           xlab="Enrichment factor", ylab="Enrichment -log10(P)")
+     })
+
+    })
+
+    observeEvent(input$submit2, {
+
+     featureSets <- getSetsDB(GAlist = GAlist, feature = input$feature)
+
+     # Selected feature genes
+     selected_genes <- featureSets[[input$featureID]]
+
+
+     # Create data frame for features
+     df_features <- data.frame(gene_id=selected_genes)
+     df_features$gene_id <- createURL(url="https://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",
+                                      urlid=selected_genes)
+     df_features$open_target_gene <- createURL(url="https://genetics.opentargets.org/gene/",
+                                               urlid=selected_genes)
+     df_features$open_target_target <- createURL(url="https://platform.opentargets.org/target/",
+                                                 urlid=selected_genes)
+     # Render feature table
+     output$features <- renderDT(server=FALSE,{
+      createDT(df_features)
+     })
+
+
+     marker_sets_indices <- qgg:::mapSets(sets=gene_marker_sets, rsids=stat()$rsids, index=TRUE)
+     selected_markers <- unique(unlist(marker_sets_indices[selected_genes]))
+
+     # Create data frame for selected markers
+     df_markers <- stat()[selected_markers,]
+     rsids <- df_markers$rsids
+     df_markers$rsids <- createURL(url="https://www.ncbi.nlm.nih.gov/snp/",
+                                   urlid=rsids)
+     df_markers$gwas <- createURL(url="https://www.ebi.ac.uk/gwas/variants/",
+                                  urlid=rsids)
+
+     # Render marker table
+     output$markers <- renderDT(server=FALSE,{
+      createDT(df_markers)%>%
+       formatRound("n", digits=0)
+     })
+
+    })
+
+
+   }
+
+  }
+
   if(what=="checkSTAT") {
 
    # Define the UI for the Shiny app
@@ -1396,3 +1623,190 @@
    shinyApp(ui = ui, server = server)
 
  }
+
+
+
+ # # Define UI
+ # ui <- fluidPage(
+ #
+ #  titlePanel("Gene Set Enrichment Analysis of Genomic Features"),
+ #
+ #  sidebarLayout(
+ #
+ #   sidebarPanel(
+ #    selectInput("studyID", "Select Study:",
+ #                choices = GAlist$study$id,
+ #                selected="GWAS1"),
+ #    selectInput("feature", "Select Feature:",
+ #                choices = c("Pathways",
+ #                            "GO",
+ #                            "DrugGenes",
+ #                            "ProteinComplexes",
+ #                            "ChemicalComplexes"),
+ #                selected="Pathways"),
+ #    numericInput("threshold", "Enter P-value Threshold:", value = 10e-5),
+ #    actionButton("submit", "Submit"),
+ #    textInput("featureID", "Select Feature ID:", value = "R-HSA-202427"),
+ #    br(),
+ #    actionButton("submit2", "Extract")
+ #   ),
+ #
+ #   mainPanel(
+ #    tabsetPanel(
+ #     tabPanel("Table", DTOutput("result")),
+ #     tabPanel("Ensembl Gene IDs", DTOutput("features")),
+ #     tabPanel("Summary Statistics", DTOutput("markers")),
+ #     tabPanel("GSEA plot", plotOutput("gseaplot")),
+ #     tabPanel("QQ plot", plotOutput("qqplot")),
+ #     tabPanel("Studies", DTOutput("studies"), selected = TRUE)
+ #    )
+ #   )
+ #  )
+ # )
+ #
+ #
+ # # Define server
+ # server <- function(input, output, session) {
+ #
+ #
+ #  # Prepare data frame for study information
+ #  output$studies <- renderDT(server=FALSE,{
+ #   df_studies <- getStudiesShinyDB(GAlist=GAlist)
+ #   createDT(df_studies)
+ #  })
+ #
+ #
+ #  # Get marker data if new study selected
+ #  #stat <- eventReactive(input$studyID,{
+ #  stat <- reactive({
+ #   getMarkerStatDB(GAlist = GAlist, studyID = input$studyID)
+ #  })
+ #
+ #  # Extract gene-marker sets and map to summary statistics
+ #  markerSets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes")
+ #
+ #
+ #  observeEvent(input$feature, {
+ #   message("New feature selected")
+ #   #if(input$feature=="Genes") feature_value <- "ENSG00000149257"
+ #   if(input$feature=="Pathways") feature_value <- "R-HSA-202427"
+ #   if(input$feature=="GO") feature_value <- "GO:0000002"
+ #   if(input$feature=="DrugGenes") feature_value <- "REPAGLINIDE"
+ #   #if(input$feature=="ProteinComplexes") feature_value <- "ENSP00000000233"
+ #   #if(input$feature=="ChemicalComplexes") feature_value <- "CIDm00000001"
+ #   updateTextInput(session, "featureID", value = feature_value )
+ #  })
+ #
+ #
+ #  # Display table when submit button is clicked
+ #  observeEvent(input$submit, {
+ #
+ #   markerSetsIndices <- qgg:::mapSets(sets=markerSets, rsids=stat()$rsids, index=TRUE)
+ #
+ #   # Determine smallest p-value for each gene
+ #   pgenes <- sapply(markerSetsIndices, function(x) {min(stat()$p[x])})
+ #
+ #   # Extract feature-gene sets
+ #   featureSets <- getSetsDB(GAlist = GAlist, feature = input$feature)
+ #   featureSets <- mapSetsDB(sets=featureSets, featureID=names(pgenes), index=FALSE)
+ #
+ #   # Calculate hypergeometric test p-values
+ #   df <- hgtestDB(p = pgenes, sets = featureSets, threshold = input$threshold)
+ #
+ #   if(input$feature=="DrugGenes") {
+ #
+ #    atc <- rep("Unknown",nrow(df))
+ #    has_atc <- match(tolower(df$Feature),tolower(GAlist$atc$name))
+ #    atc[!is.na(has_atc)] <- as.character(GAlist$atc$code[has_atc[!is.na(has_atc)]])
+ #    df$ATC <- createURL(url="https://www.whocc.no/atc_ddd_index/?code=",
+ #                        urlid=atc)
+ #    dgi <- df$Feature
+ #    df$DGI <- createURL(url="https://www.dgidb.org/drugs/",
+ #                        urlid=dgi)
+ #
+ #    drugbank <- rep("Unknown", nrow(df))
+ #    rws <- match(tolower(df$Feature),tolower(GAlist$drugbank))
+ #    drugbank[!is.na(rws)] <- names(GAlist$drugbank)[rws[!is.na(rws)]]
+ #    df$DRUGBANK <- createURL(url="https://go.drugbank.com/drugs/",
+ #                             urlid=drugbank)
+ #
+ #
+ #   }
+ #   if(!input$feature=="DrugGenes") {
+ #    feature_id <- df$Feature
+ #    if(input$feature=="Pathways") url <- "https://reactome.org/content/detail/"
+ #    if(input$feature=="GO") url <- "https://www.ebi.ac.uk/QuickGO/term/"
+ #    if(input$feature=="ProteinComplexes") url <- "https://string-db.org/network/9606."
+ #    if(input$feature=="ChemicalComplexes") {
+ #     url <- "https://pubchem.ncbi.nlm.nih.gov/compound/"
+ #     feature_id <- substring(feature_id,5,nchar(as.character(feature_id)))
+ #    }
+ #    df$Feature <- createURL(url=url, urlid=feature_id)
+ #   }
+ #
+ #   # Render feature table
+ #   output$result <- renderDT(server=FALSE,{
+ #    createDT(df)%>%
+ #     formatRound("Enrichment Factor", digits=2)%>%
+ #     formatSignif('P-value',3)
+ #   })
+ #
+ #   # Create plot of -log10 p-values
+ #   output$qqplot <- renderPlot({
+ #    qqplotDB(p=phgt, main="Features")
+ #   })
+ #
+ #   # Create plot of -log10 p-values
+ #   output$gseaplot <- renderPlot({
+ #    plot(y=-log10(df[,5]),x=df[,4], frame.plot=FALSE,
+ #         xlab="Enrichment factor", ylab="Enrichment -log10(P)")
+ #   })
+ #
+ #  })
+ #
+ #  observeEvent(input$submit2, {
+ #
+ #   featureSets <- getSetsDB(GAlist = GAlist, feature = input$feature)
+ #
+ #   # Selected feature genes
+ #   selected_genes <- featureSets[[input$featureID]]
+ #
+ #
+ #   # Create data frame for features
+ #   df_features <- data.frame(gene_id=selected_genes)
+ #   df_features$gene_id <- createURL(url="https://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",
+ #                                    urlid=selected_genes)
+ #   df_features$open_target_gene <- createURL(url="https://genetics.opentargets.org/gene/",
+ #                                             urlid=selected_genes)
+ #   df_features$open_target_target <- createURL(url="https://platform.opentargets.org/target/",
+ #                                               urlid=selected_genes)
+ #   # Render feature table
+ #   output$features <- renderDT(server=FALSE,{
+ #    createDT(df_features)
+ #   })
+ #
+ #
+ #   marker_sets_indices <- qgg:::mapSets(sets=markerSets, rsids=stat()$rsids, index=TRUE)
+ #   selected_markers <- unique(unlist(marker_sets_indices[selected_genes]))
+ #
+ #   # Create data frame for selected markers
+ #   df_markers <- stat()[selected_markers,]
+ #   rsids <- df_markers$rsids
+ #   df_markers$rsids <- createURL(url="https://www.ncbi.nlm.nih.gov/snp/",
+ #                                 urlid=rsids)
+ #   df_markers$gwas <- createURL(url="https://www.ebi.ac.uk/gwas/variants/",
+ #                                urlid=rsids)
+ #
+ #   # Render marker table
+ #   output$markers <- renderDT(server=FALSE,{
+ #    createDT(df_markers)%>%
+ #     formatRound("n", digits=0)
+ #   })
+ #
+ #  })
+ #
+ #
+ # }
+ #
+ # # Run the app
+ # shinyApp(ui = ui, server = server)
