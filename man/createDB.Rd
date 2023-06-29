@@ -4,7 +4,13 @@
 \alias{createDB}
 \title{createDB - Creates a database for genetic association studies}
 \usage{
-createDB(Glist = NULL, version = NULL, dbdir = NULL, what = "lite")
+createDB(
+  Glist = NULL,
+  version = NULL,
+  dbdir = NULL,
+  what = "lite",
+  markers = NULL
+)
 }
 \arguments{
 \item{Glist}{A list of genetic data. Default is NULL.}
