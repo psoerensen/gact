@@ -708,8 +708,8 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
 
  # Gene marker sets
  # Specify parameters
- upstream <- 35
- downstream <- 10
+ #upstream <- 35
+ #downstream <- 10
 
  file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.gtf.gz")
  df <- fread(file, data.table=FALSE)
