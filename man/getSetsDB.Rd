@@ -8,6 +8,8 @@ getSetsDB(
   GAlist = NULL,
   feature = NULL,
   featureID = NULL,
+  upstream = FALSE,
+  downstream = FALSE,
   min_combined_score = 700,
   min_interactions = 5
 )
