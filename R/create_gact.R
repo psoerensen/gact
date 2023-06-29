@@ -522,6 +522,12 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
                          upstream=35, downstream=10,
                          min_combined_score=900, min_interactions=5) {
 
+ #if(is.null(what)) what <- c("ensembl")
+
+ if("ensembl"%in%what) {
+
+ }
+
  # default sets
 
  GAlist$gsets <- vector(mode = "list", length = length(GAlist$gsetsfiles))
@@ -628,8 +634,9 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
  file <- file.path(GAlist$dirs["gsets"],"GRCh38.Regulatory_Build.regulatory_features.gff.gz")
  df <- fread(file, data.table=FALSE)
  colnames(df) <- c("chr","source","type","start","end","score","strand","phase","attributes")
- df <- df[!df$chr=="X",]
- df <- df[!df$chr=="Y",]
+ df <- df[df$chr%in%as.character(1:22),]
+ #df <- df[!df$chr=="X",]
+ #df <- df[!df$chr=="Y",]
  df$chr <- as.integer(df$chr)
  df <- df[!is.na(df$chr),]
  att <- strsplit(df$attributes, ";")
