@@ -58,7 +58,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="dgi")
   #GAlist <- downloadDB(GAlist=GAlist, what="pharmgkb")
   #GAlist <- downloadDB(GAlist=GAlist, what="opentargets")
-  #GAlist <- downloadDB(GAlist=GAlist, what="atc")
+  GAlist <- downloadDB(GAlist=GAlist, what="atc")
   message("Creating full marker sets - this may take some time")
   GAlist <- createSetsDB(GAlist=GAlist)
 
