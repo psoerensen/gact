@@ -357,6 +357,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
   empty <- sapply(gwasGenesDown, function(x){ any(identical(x, character(0)))})
   gwasGenesDown[empty] <- NULL
   #gwasGenes <- list(genes=gwasGenes, up=gwasGenesUp, down=gwasGenesDown)
+  gwasGenes <- lapply(gwasGenes,unique)
   return(gwasGenes)
  }
 
@@ -653,6 +654,15 @@ createURL <- function(url=NULL,urlid=NULL){
  url <- paste0(url, urlid)
  html_code <- paste0("<a href='", url, "' target='_blank'>", urlid, "</a>")
  html_code
+}
+
+#' @export
+#'
+addATC <- function(drugname=NULL) {
+ atc <- rep("Unknown",length(drugname))
+ has_atc <- match(tolower(drugname),tolower(GAlist$atc$name))
+ atc[!is.na(has_atc)] <- as.character(GAlist$atc$code[has_atc[!is.na(has_atc)]])
+ return(atc)
 }
 
 #' @export
