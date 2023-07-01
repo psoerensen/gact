@@ -54,6 +54,8 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="string")
   GAlist <- downloadDB(GAlist=GAlist, what="stitch")
   GAlist <- downloadDB(GAlist=GAlist, what="pubmed")
+  GAlist <- downloadDB(GAlist=GAlist, what="diseases")
+  GAlist <- downloadDB(GAlist=GAlist, what="tiga")
   #GAlist <- downloadDB(GAlist=GAlist, what="pubchem")
   GAlist <- downloadDB(GAlist=GAlist, what="dgi")
   #GAlist <- downloadDB(GAlist=GAlist, what="pharmgkb")
@@ -175,6 +177,7 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite", markers=
 #'
 downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_interactions=5) {
 
+ options(download.file.method="libcurl", url.method="libcurl", timeout=600)
 
  if(is.null(what)) stop("Please specify what to download e.g. what=gsets")
 
@@ -303,6 +306,64 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   url <- "https://ftp.ncbi.nih.gov/gene/DATA/gene2pubmed.gz"
   destfile <- file.path(GAlist$dirs["gsets"],"gene2pubmed.gz")
   download.file(url=url, mode = "wb", dest=destfile)
+ }
+
+ if(what=="diseases") {
+  url <- "https://download.jensenlab.org/human_disease_textmining_full.tsv"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://download.jensenlab.org/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  gzip(destfile)
+
+  url <- "https://download.jensenlab.org/human_disease_textmining_filtered.tsv"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://download.jensenlab.org/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  gzip(destfile)
+
+  url <- "https://download.jensenlab.org/human_disease_knowledge_full.tsv"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://download.jensenlab.org/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  gzip(destfile)
+
+  url <- "https://download.jensenlab.org/human_disease_knowledge_filtered.tsv"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://download.jensenlab.org/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  gzip(destfile)
+
+  url <- "https://download.jensenlab.org/human_disease_experiments_full.tsv"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://download.jensenlab.org/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  gzip(destfile)
+
+  url <- "https://download.jensenlab.org/human_disease_experiments_filtered.tsv"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://download.jensenlab.org/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  gzip(destfile)
+
+  url <- "https://download.jensenlab.org/human_disease_integrated_full.tsv"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://download.jensenlab.org/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  gzip(destfile)
+ }
+ if(what=="tiga") {
+  url <- "https://unmtid-shinyapps.net/download/TIGA/latest/tiga_gene-trait_provenance.tsv"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://unmtid-shinyapps.net/download/TIGA/latest/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  gzip(destfile)
+
+  url <- "https://unmtid-shinyapps.net/download/TIGA/latest/tiga_gene-trait_stats.tsv"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://unmtid-shinyapps.net/download/TIGA/latest/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  gzip(destfile)
+
+  url <- "https://unmtid-shinyapps.net/download/TIGA/latest/tiga_genes.tsv"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://unmtid-shinyapps.net/download/TIGA/latest/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  gzip(destfile)
+
+  url <- "https://unmtid-shinyapps.net/download/TIGA/latest/tiga_traits.tsv"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://unmtid-shinyapps.net/download/TIGA/latest/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  gzip(destfile)
  }
  if(what=="pubchem") {
   #https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2244/xrefs/PubMedID/TXT
@@ -524,9 +585,36 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
 
  #if(is.null(what)) what <- c("ensembl")
 
- if("ensembl"%in%what) {
+ if("diseases"%in%what) {
+  ensp <- names(GAlist$gsets$ensp2ensg)
+
+  filenames <- c("human_disease_textmining_full.tsv.gz",
+                 "human_disease_textmining_filtered.tsv.gz",
+                 "human_disease_knowledge_full.tsv.gz",
+                 "human_disease_knowledge_filtered.tsv.gz",
+                 "human_disease_experiments_full.tsv.gz",
+                 "human_disease_experiments_filtered.tsv.gz",
+                 "human_disease_integrated_full.tsv.gz")
+
+
+  for (file in filenames) {
+   df <- fread(file.path(GAlist$dirs["gsets"],file), data.table=FALSE)
+   df <- df[df[,1]%in%ensp,]
+   disease2ensp <- split(df[,1],f=as.factor(as.character(df[,4])))
+   sets <- mapSetsDB(disease2ensp,featureID=ensp,index=TRUE)
+   disease2ensg <- lapply(sets,function(x) {unique(unlist(GAlist$gsets$ensp2ensg[x]))})
+   ensg <- unlist(disease2ensg)
+   disease <- rep(names(disease2ensg),times=sapply(disease2ensg,length))
+   ensg2disease <- split(disease,f=as.factor(ensg))
+
+   saveRDS(disease2ensp, file = file.path(GAlist$dirs["gsets"], paste0("disease2ensp_",gsub(".tsv.gz",".rds",file))))
+   saveRDS(disease2ensg, file = file.path(GAlist$dirs["gsets"], paste0("disease2ensg_",gsub(".tsv.gz",".rds",file))))
+   saveRDS(ensg2disease, file = file.path(GAlist$dirs["gsets"], paste0("ensg2disease_",gsub(".tsv.gz",".rds",file))))
+  }
+  return(GAlist)
 
  }
+
 
  # default sets
 
@@ -683,21 +771,22 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
  drug2ensg <- lapply(drug2ensg, function(x){unique(x)})
  drug2ensg <- drug2ensg[sapply(drug2ensg, function(x){ !any(is.na(x)) } )]
  drug2ensg <- drug2ensg[ sapply(drug2ensg, length)>0]
+
  #saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
  saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
- #
- # string2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"string2ensg.rds"))
- # drug2ensp <- lapply(drug2ensg,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
- # drug2complex2ensg <- lapply(drug2ensp,function(x){na.omit(unlist(string2ensg[x]))})
- # #drug2complex <- lapply(drug2complex2ensg,function(x){na.omit(unlist(GAlist$gsets$ensp2ensg[x]))})
- # drug2complex2ensg <- lapply(drug2complex2ensg, function(x){unique(x)})
- # for(i in 1:length(drug2complex2ensg)) {
- #  drug2complex2ensg[[i]] <- unique(c(drug2ensg[[i]], drug2complex2ensg[[i]]))
- # }
- # saveRDS(drug2complex2ensg,file=file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
- #
- #
- #
+
+ string2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"string2ensg.rds"))
+ drug2ensp <- lapply(drug2ensg,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
+ drug2complex2ensg <- lapply(drug2ensp,function(x){na.omit(unlist(string2ensg[x]))})
+ #drug2complex <- lapply(drug2complex2ensg,function(x){na.omit(unlist(GAlist$gsets$ensp2ensg[x]))})
+ drug2complex2ensg <- lapply(drug2complex2ensg, function(x){unique(x)})
+ for(i in 1:length(drug2complex2ensg)) {
+  drug2complex2ensg[[i]] <- unique(c(drug2ensg[[i]], drug2complex2ensg[[i]]))
+ }
+ saveRDS(drug2complex2ensg,file=file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
+
+
+
  # drugGenesSets <- lapply(drugGenes,function(x){unique(unlist(GAlist$gsets$ensg2rsids_10kb[x]))})
  # drugGenesSets <- drugGenesSets[!sapply(drugGenesSets,is.null)]
  # saveRDS(drugGenesSets,file=file.path(GAlist$dirs["gsets"],"drugGenesSets.rds"))
