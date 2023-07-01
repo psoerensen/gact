@@ -311,6 +311,13 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
  #if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
  if(feature=="DrugGenes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
  if(feature=="DrugComplexes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
+ if(feature=="DiseaseGenes") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_integrated_full.rds"))
+ if(feature=="DiseaseGenesEXP") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_experiments_filtered.rds"))
+ if(feature=="DiseaseGenesKB") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_knowledge_filtered.rds"))
+ if(feature=="DiseaseGenesTM") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_textmining_filtered.rds"))
+ if(feature=="DiseaseGenesEXPplus") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_experiments_full.rds"))
+ if(feature=="DiseaseGenesKBplus") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_knowledge_full.rds"))
+ if(feature=="DiseaseGenesTMplus") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_textmining_full.rds"))
 
  if(feature=="GTEx") {
   dbdir <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL")
@@ -358,8 +365,13 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
   gwasGenesDown[empty] <- NULL
   #gwasGenes <- list(genes=gwasGenes, up=gwasGenesUp, down=gwasGenesDown)
   if(feature=="GWAScatalogPlus") {
-   for(i in length(gwasGenes)) {
-    gwasGenes[[i]] <- c(gwasGenes[[i]],gwasGenesUp[[i]],gwasGenesDown[[i]])
+   tnames <- names(gwasGenesUp)
+   for(i in length(gwasGenesUp)) {
+    gwasGenes[[tnames[i]]] <- c(gwasGenes[[tnames[i]]],gwasGenesUp[[i]])
+   }
+   tnames <- names(gwasGenesDown)
+   for(i in length(gwasGenesDown)) {
+    gwasGenes[[tnames[i]]] <- c(gwasGenes[[tnames[i]]],gwasGenesDown[[i]])
    }
   }
   gwasGenes <- lapply(gwasGenes,unique)
