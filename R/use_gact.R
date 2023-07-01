@@ -331,7 +331,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
   return(gtexSets)
  }
 
- if(feature=="GWAScatalog") {
+ if(feature%in%c("GWAScatalog","GWAScatalogPlus")) {
   dbdir <- file.path(GAlist$dbdir, "gwas")
   gwasfile <- file.path(dbdir, "gwas-catalog-associations_ontology-annotated.tsv")
   gwas <- fread(gwasfile, data.table=FALSE, quote="")
@@ -357,6 +357,11 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
   empty <- sapply(gwasGenesDown, function(x){ any(identical(x, character(0)))})
   gwasGenesDown[empty] <- NULL
   #gwasGenes <- list(genes=gwasGenes, up=gwasGenesUp, down=gwasGenesDown)
+  if(feature=="GWAScatalogPlus") {
+   for(i in length(gwasGenes)) {
+    gwasGenes[[i]] <- c(gwasGenes[[i]],gwasGenesUp[[i]],gwasGenesDown[[i]])
+   }
+  }
   gwasGenes <- lapply(gwasGenes,unique)
   return(gwasGenes)
  }
