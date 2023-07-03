@@ -320,6 +320,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
  if(feature=="DiseaseGenesTMplus") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_textmining_full.rds"))
 
  if(feature=="GTEx") {
+  gtexSets <- NULL
   dbdir <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL")
   files <- list.files(dbdir)
   rws <- grep("egenes",files)
