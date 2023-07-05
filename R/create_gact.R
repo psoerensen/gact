@@ -61,6 +61,11 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   #GAlist <- downloadDB(GAlist=GAlist, what="pharmgkb")
   #GAlist <- downloadDB(GAlist=GAlist, what="opentargets")
   #GAlist <- downloadDB(GAlist=GAlist, what="atc")
+
+  # https://www.medrxiv.org/content/10.1101/2020.09.08.20190561v1
+  # Promoter capture Hi-C
+  # Enhancer-promoter correlation
+  # ABC-Max
   message("Creating full marker sets - this may take some time")
   GAlist <- createSetsDB(GAlist=GAlist)
 
