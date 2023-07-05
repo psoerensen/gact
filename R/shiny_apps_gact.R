@@ -726,6 +726,8 @@
      feature_genes <- unique(c(feature_genes,na.omit(df_features[,2])))
      feature_genes <- feature_genes[feature_genes%in%names(pgenes)]
      feature_markers <- unique(unlist(marker_sets_indices[feature_genes]))
+     sets <- list(feature_genes)
+     names(sets) <- "custom"
 
      # Get selected genes based on p-value threshold
      selected_genes <- names(pgenes)[pgenes < input$pval]
@@ -735,7 +737,7 @@
      number_associated_genes_feature <- sum(feature_genes%in%selected_genes)
 
      # Calculate hypergeometric test p-values
-     phgt <- hgtestDB(p = pgenes, sets = list(feature_genes), threshold = input$pval)
+     phgt <- hgtestDB(p = pgenes, sets = sets, threshold = input$pval)
 
      # Calculate enrichment factor
      ef <- (number_associated_genes_feature/number_genes_feature)/
