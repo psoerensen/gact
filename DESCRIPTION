@@ -9,4 +9,4 @@ License: `use_mit_license()`
 Encoding: UTF-8
 Imports: XML, data.table, RCurl, DT, shiny
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
