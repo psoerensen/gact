@@ -358,21 +358,18 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
    set <- unlist(strsplit(x,split=","))
    set <- gsub(" ", "",set)
   })
-  empty <- sapply(gwasGenes, function(x){ any(identical(x, character(0)))})
-  gwasGenes[empty] <- NULL
-  empty <- sapply(gwasGenesUp, function(x){ any(identical(x, character(0)))})
-  gwasGenesUp[empty] <- NULL
-  empty <- sapply(gwasGenesDown, function(x){ any(identical(x, character(0)))})
-  gwasGenesDown[empty] <- NULL
+  if(any(!names(gwasGenes)==names(gwasGenesUp))) stop("Mismatch detected in trait names")
+  if(any(!names(gwasGenes)==names(gwasGenesDown))) stop("Mismatch detected in trait names")
+  #empty <- sapply(gwasGenes, function(x){ any(identical(x, character(0)))})
+  #gwasGenes[empty] <- NULL
+  #empty <- sapply(gwasGenesUp, function(x){ any(identical(x, character(0)))})
+  #gwasGenesUp[empty] <- NULL
+  #empty <- sapply(gwasGenesDown, function(x){ any(identical(x, character(0)))})
+  #gwasGenesDown[empty] <- NULL
   #gwasGenes <- list(genes=gwasGenes, up=gwasGenesUp, down=gwasGenesDown)
   if(feature=="GWAScatalogPlus") {
-   tnames <- names(gwasGenesUp)
-   for(i in length(gwasGenesUp)) {
-    gwasGenes[[tnames[i]]] <- c(gwasGenes[[tnames[i]]],gwasGenesUp[[i]])
-   }
-   tnames <- names(gwasGenesDown)
-   for(i in length(gwasGenesDown)) {
-    gwasGenes[[tnames[i]]] <- c(gwasGenes[[tnames[i]]],gwasGenesDown[[i]])
+   for(i in 1:length(gwasGenes)) {
+    gwasGenes[[i]] <- c(gwasGenes[[i]],gwasGenesUp[[i]],gwasGenesDown[[i]])
    }
   }
   gwasGenes <- lapply(gwasGenes,unique)
