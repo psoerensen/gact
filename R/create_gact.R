@@ -27,6 +27,8 @@
 #' GAlist <- gact()
 #' }
 
+#' @importFrom R.utils gzip
+
 
 #' @export
 #'
@@ -61,6 +63,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   #GAlist <- downloadDB(GAlist=GAlist, what="pharmgkb")
   #GAlist <- downloadDB(GAlist=GAlist, what="opentargets")
   #GAlist <- downloadDB(GAlist=GAlist, what="atc")
+  GAlist <- downloadDB(GAlist=GAlist, what="alphamissense")
 
   # https://www.medrxiv.org/content/10.1101/2020.09.08.20190561v1
   # Promoter capture Hi-C
@@ -68,6 +71,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   # ABC-Max
   message("Creating full marker sets - this may take some time")
   GAlist <- createSetsDB(GAlist=GAlist)
+  GAlist <- createSetsDB(GAlist=GAlist, what="diseases")
 
   GAlist <- createMarkerSetsDB(GAlist=GAlist, what="GO")
 
@@ -317,7 +321,7 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   url <- "https://download.jensenlab.org/human_disease_textmining_full.tsv"
   destfile <- file.path(GAlist$dirs["gsets"],gsub("https://download.jensenlab.org/","",url))
   download.file(url=url, mode = "wb", dest=destfile)
-  gzip(destfile)
+  R.utils::gzip(destfile)
 
   url <- "https://download.jensenlab.org/human_disease_textmining_filtered.tsv"
   destfile <- file.path(GAlist$dirs["gsets"],gsub("https://download.jensenlab.org/","",url))
@@ -564,7 +568,7 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   GAlist$atc$code <- df$atc_code
   GAlist$atc$name <- df$atc_name
 
-  # # Add drug target data frame with ATC information to GAlist
+  # Add drug target data frame with ATC information to GAlist
   drugGenes <- getSetsDB(GAlist = GAlist, feature = "DrugGenes")
   nreps <- sapply(drugGenes,length)
   drugs <- rep(names(drugGenes), times=nreps)
@@ -577,6 +581,14 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   GAlist$targets <- df
  }
 
+ if(what=="alphamissense") {
+  url <- "https://storage.googleapis.com/dm_alphamissense/AlphaMissense_hg19.tsv.gz"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://storage.googleapis.com/dm_alphamissense/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+  url <- "https://storage.googleapis.com/dm_alphamissense/AlphaMissense_hg38.tsv.gz"
+  destfile <- file.path(GAlist$dirs["gsets"],gsub("https://storage.googleapis.com/dm_alphamissense/","",url))
+  download.file(url=url, mode = "wb", dest=destfile)
+ }
  return(GAlist)
 }
 
@@ -620,7 +632,30 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
 
  }
 
-
+ # alpha <- fread(file.path(GAlist$dirs["gsets"],"AlphaMissense_hg38.tsv.gz"), data.table=FALSE)
+ # alpha <- alpha[,c(1:4,9:10)]
+ # alpha[,"#CHROM"] <- gsub("chr","",alpha[,"#CHROM"])
+ #
+ # cpra1 <- paste(alpha[,"#CHROM"],alpha[,"POS"],toupper(alpha[,"REF"]),toupper(alpha[,"ALT"]),sep="_")
+ # cpra2 <- paste(alpha[,"#CHROM"],alpha[,"POS"],toupper(alpha[,"ALT"]),toupper(alpha[,"REF"]),sep="_")
+ #
+ # mapped <- cpra1%in%GAlist$cpra | cpra2%in%GAlist$cpra
+ # sum(mapped)
+ #
+ # alpha <- alpha[mapped,]
+ # cpra1 <- cpra1[mapped]
+ # cpra2 <- cpra2[mapped]
+ # alpha$cpra <- rep(NA,nrow(alpha))
+ # alpha$rsids <- rep(NA,nrow(alpha))
+ #
+ # rws1 <- match(cpra1,GAlist$cpra)
+ # rws2 <- match(cpra2,GAlist$cpra)
+ #
+ # alpha$cpra[!is.na(rws1)] <- GAlist$cpra[rws1[!is.na(rws1)]]
+ # alpha$cpra[!is.na(rws2)] <- GAlist$cpra[rws2[!is.na(rws2)]]
+ # alpha$rsids[!is.na(rws1)] <- GAlist$rsids[rws1[!is.na(rws1)]]
+ # alpha$rsids[!is.na(rws2)] <- GAlist$rsids[rws2[!is.na(rws2)]]
+ #
  # default sets
 
  GAlist$gsets <- vector(mode = "list", length = length(GAlist$gsetsfiles))
@@ -779,6 +814,9 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
 
  #saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
  saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
+
+ # Add atc codes
+ GAlist <- downloadDB(GAlist=GAlist, what="atc")
 
  string2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"string2ensg.rds"))
  drug2ensp <- lapply(drug2ensg,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
