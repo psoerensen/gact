@@ -12,6 +12,297 @@
   require(jsonlite)
   #require(stringr)
 
+  if(what=="checkBAYES") {
+   ui <- fluidPage(
+    titlePanel("Convergence Statistics"),
+    sidebarLayout(
+     sidebarPanel(
+      fileInput("file", "Choose RDS File"),
+      br(),
+      selectInput("Region", "Select Region:",
+                  choices = "Set1",
+                  selected="Set1")
+     ),
+     mainPanel(
+      tabsetPanel(
+       tabPanel("Parameter Boxplots",
+                plotOutput("parameter_boxplot")),
+       tabPanel("Parameter Pairs Plot",
+                plotOutput("pairs_plot")),
+       tabPanel("Parameter Histograms",
+                plotOutput("histograms")),
+       tabPanel("Convergence Statistics Plot",
+                plotOutput("mat_plot")),
+       #tabPanel("Convergence Parameter Plot",
+       #         plotOutput("region_plot")),
+       tabPanel("Convergence Statistics QQ Plot",
+                plotOutput("qq_plot")),
+       tabPanel("Marker Effect Plot",
+                plotOutput("effect")),
+       tabPanel("Region Marker Effect Plot",
+                plotOutput("region_effect")),
+       tabPanel("Region Parameter Trace Plot",
+                plotOutput("trace_plot")),
+       tabPanel("Region Marker Effect Trace Plot",
+                plotOutput("marker_trace_plot")),
+       tabPanel("Region Marker Effect Correlation Plot",
+                plotOutput("marker_corr_plot")),
+       tabPanel("Region Statistics", DTOutput("stat")),
+       tabPanel("Posterior Means", DTOutput("post")),
+       tabPanel("Convergence Statistics", DTOutput("conv")),
+       tabPanel("Divergence Statistics", DTOutput("divergence"))
+
+      )
+     )
+    )
+   )
+
+
+   server <- function(input, output, session) {
+
+    # Set the maximum request size limit to 30 MB
+    options(shiny.maxRequestSize = 100 * 1024^2)
+
+    # Load the data from the file uploaded
+    fit <- reactive({
+     req(input$file)
+     infile <- input$file
+     readRDS(infile$datapath)
+    })
+
+    observeEvent(fit(), {
+     nregions <- length(fit()$ves)
+     updateSelectInput(session, "Region", choices = paste0("Set",1:nregions))
+    })
+
+
+
+    output$parameter_boxplot <- renderPlot({
+     layout(matrix(1:4,ncol=2))
+     ve <- as.data.frame(fit()$ves)
+     vg <- as.data.frame(fit()$vgs)
+     vb <- as.data.frame(fit()$vbs)
+     pi <- as.data.frame(fit()$pis)
+     boxplot(rowMeans(ve), main="Ve", frame.plot=FALSE)
+     boxplot(rowSums(vg), main="Vg", frame.plot=FALSE)
+     boxplot(rowMeans(vb), main="Vb", frame.plot=FALSE)
+     boxplot(rowMeans(pi), main="Pi", frame.plot=FALSE)
+    })
+
+    output$divergence <- renderDT(server=FALSE,{
+     nsets <- length(fit()$bm)
+     divergence <- NULL
+     for(i in 1:nsets) {
+      dm <- fit()$dm[[i]]
+      bm <- fit()$bm[[i]]
+      b <- fit()$b[names(bm),1]
+      critb1 <- dm>0.01 & bm>0 & bm>b
+      critb2 <- dm>0.01 & bm<0 & bm<b
+      critb <- any(critb1 | critb2)
+      divergence <- rbind(divergence, c(any(critb1),any(critb2),critb))
+     }
+     colnames(divergence) <- c("Criterion 1", "Criterion 2", "Divergence")
+     rownames(divergence) <- paste0("Set",1:length(fit()$bm))
+     datatable(divergence,
+               extensions = "Buttons",
+               options = list(paging = TRUE,
+                              scrollX=TRUE,
+                              searching = TRUE,
+                              ordering = TRUE,
+                              dom = 'Bfrtip',
+                              buttons = c('csv', 'excel'),
+                              pageLength=10,
+                              lengthMenu=c(3,5,10) ),
+               rownames= TRUE,
+               escape = FALSE)
+    })
+
+    output$mat_plot <- renderPlot({
+     matplot(fit()$conv, type="l", col=1:4, ylab="Z-statistics",
+             xlab="Region", frame.plot=FALSE, main="Convergence Statistics")
+     legend("bottomright", legend=c("Ve","Vg","Vb","Pi"),
+            lty=1, bty="n", lwd=2, col=1:4, horiz=TRUE)
+    })
+
+
+    output$region_plot <- renderPlot({
+     layout(matrix(1:4,ncol=2, byrow=TRUE))
+     plot(fit()$conv[,1], frame.plot=FALSE, xlab="Region", ylab="Z-statistics", main="Ve")
+     plot(fit()$conv[,2], frame.plot=FALSE, xlab="Region", ylab="Z-statistics", main="Vg")
+     plot(fit()$conv[,3], frame.plot=FALSE, xlab="Region", ylab="Z-statistics", main="Vb")
+     plot(fit()$conv[,4], frame.plot=FALSE, xlab="Region", ylab="Z-statistics", main="Pi")
+    })
+
+    output$qq_plot <- renderPlot({
+     layout(matrix(1:4,ncol=2, byrow=TRUE))
+     qqnorm(fit()$conv[,1], frame.plot=FALSE,  main="Ve")
+     qqline(fit()$conv[,1])
+     qqnorm(fit()$conv[,2], frame.plot=FALSE,  main="Vg")
+     qqline(fit()$conv[,4])
+     qqnorm(fit()$conv[,3], frame.plot=FALSE,  main="Vb")
+     qqline(fit()$conv[,3])
+     qqnorm(fit()$conv[,4], frame.plot=FALSE,  main="Pi")
+     qqline(fit()$conv[,4])
+    })
+
+    output$pairs_plot <- renderPlot({
+     pairs(fit()$post[,1:4], labels=c("Ve","Vg", "Vb","Pi" ))
+    })
+
+    output$histograms <- renderPlot({
+     layout(matrix(1:4,ncol=2, byrow=TRUE))
+     hist(fit()$post[,1], main="Ve", xlab="")
+     hist(fit()$post[,2], main="Vg", xlab="")
+     hist(fit()$post[,3], main="Vb", xlab="")
+     hist(fit()$post[,4], main="Pi", xlab="")
+    })
+
+
+    output$effect <- renderPlot({
+     select <- fit()$stat$dm>0
+     xylim <- c(min(c(fit()$stat$bm[select],fit()$b[select])),
+                max(c(fit()$stat$bm[select],fit()$b[select])))
+     plot(fit()$b[select],fit()$stat$bm[select], xlim=xylim, ylim=xylim,
+          frame.plot=FALSE, main="Markers included in model across all regions",
+          ylab="Adjusted effect", xlab="Marginal effect")
+     abline(a=0,b=1, lwd=3, lty=2, col=2)
+     abline(v=0, lwd=3, lty=2, col=3)
+     abline(h=0, lwd=3, lty=2, col=3)
+    })
+
+    output$stat <- renderDT(server=FALSE,{
+     datatable(fit()$stat,
+               extensions = "Buttons",
+               options = list(paging = TRUE,
+                              scrollX=TRUE,
+                              searching = TRUE,
+                              ordering = TRUE,
+                              dom = 'Bfrtip',
+                              buttons = c('csv', 'excel'),
+                              pageLength=10,
+                              lengthMenu=c(3,5,10) ),
+               rownames= FALSE,
+               escape = FALSE)
+    })
+
+
+    output$post <- renderDT(server=FALSE,{
+     post <- fit()$post
+     colnames(post) <- c("Ve", "Vg", "Vb", "Pi","PIP", "Min b",
+                         "Max b", "m", "Mb", "cM", "Chr", "Start", "End")
+     rownames(post) <- paste0("Set",1:length(fit()$bm))
+     datatable(post,
+               extensions = "Buttons",
+               options = list(paging = TRUE,
+                              scrollX=TRUE,
+                              autoWidth = TRUE,
+                              searching = TRUE,
+                              ordering = TRUE,
+                              dom = 'Bfrtip',
+                              buttons = c('csv', 'excel'),
+                              pageLength=10,
+                              lengthMenu=c(3,5,10) ),
+               rownames= TRUE,
+               escape = FALSE)%>%
+      formatSignif(c(1:7,9),3)
+    })
+
+    output$conv <- renderDT(server=FALSE,{
+     conv <- fit()$conv
+     colnames(conv) <- c("Ve", "Vg", "Vb", "Pi")
+     rownames(conv) <- paste0("Set",1:length(fit()$bm))
+     datatable(conv,
+               extensions = "Buttons",
+               options = list(paging = TRUE,
+                              scrollX=TRUE,
+                              searching = TRUE,
+                              ordering = TRUE,
+                              dom = 'Bfrtip',
+                              buttons = c('csv', 'excel'),
+                              pageLength=10,
+                              lengthMenu=c(3,5,10) ),
+               rownames= TRUE,
+               escape = FALSE)%>%
+      formatRound(1:4, digits=2)
+    })
+
+
+    observeEvent(input$Region, {
+
+     ves <- fit()$ves
+     vgs <- fit()$vgs
+     vbs <- fit()$vbs
+     pis <- fit()$pis
+     bm <- fit()$bm
+     ves <- fit()$ves
+     vgs <- fit()$vgs
+     vbs <- fit()$vbs
+     pis <- fit()$pis
+     names(bm) <- paste0("Set",1:length(bm))
+     names(ves) <- paste0("Set",1:length(ves))
+     names(vgs) <- paste0("Set",1:length(vgs))
+     names(vbs) <- paste0("Set",1:length(vbs))
+     names(pis) <- paste0("Set",1:length(pis))
+
+     region <- as.integer(gsub("Set","",input$Region))
+     select <- fit()$stat$rsids%in%names(fit()$bm[[region]])
+
+     output$region_effect <- renderPlot({
+      layout(matrix(1:2, ncol=2))
+      xylim <- c(min(c(fit()$stat$bm[select],fit()$b[select])),
+                 max(c(fit()$stat$bm[select],fit()$b[select])))
+      plot(fit()$b[select],fit()$stat$bm[select], xlim=xylim, ylim=xylim,
+           frame.plot=FALSE, main="Markers in region",
+           ylab="Adjusted effect", xlab="Marginal effect")
+      abline(a=0,b=1, lwd=3, lty=2, col=2)
+      abline(v=0, lwd=3, lty=2, col=3)
+      abline(h=0, lwd=3, lty=2, col=3)
+      plot(fit()$stat$bm[select], ylim=xylim,
+           frame.plot=FALSE, main="Markers in region",
+           ylab="Adjusted effect", xlab="Position")
+
+     })
+
+     output$stat <- renderDT(server=FALSE,{
+      datatable(fit()$stat[select,],
+                extensions = "Buttons",
+                options = list(paging = TRUE,
+                               autoWidth = TRUE,
+                               scrollX=TRUE,
+                               searching = TRUE,
+                               ordering = TRUE,
+                               dom = 'Bfrtip',
+                               buttons = c('csv', 'excel'),
+                               pageLength=10,
+                               lengthMenu=c(3,5,10) ),
+                rownames= TRUE,
+                escape = FALSE)%>%
+       formatSignif(6:9,3)
+     })
+     output$trace_plot <- renderPlot({
+      region <- as.integer(gsub("Set","",input$Region))
+      layout(matrix(1:4,ncol=2, byrow=TRUE))
+      plot(ves[[region]], frame.plot=FALSE, xlab="Iteration", ylab="Value", main="Ve")
+      plot(vgs[[region]], frame.plot=FALSE, xlab="Iteration", ylab="Value", main="Vg")
+      plot(vbs[[region]], frame.plot=FALSE, xlab="Iteration", ylab="Value", main="Vb")
+      plot(pis[[region]], frame.plot=FALSE, xlab="Iteration", ylab="Value", main="Pi")
+     })
+
+     output$marker_trace_plot <- renderPlot({
+      region <- as.integer(gsub("Set","",input$Region))
+      matplot(t(fit()$bs[[region]]), frame.plot=FALSE,
+              ylab="Effect", xlab="Iteration")
+     })
+     output$marker_corr_plot <- renderPlot({
+      region <- as.integer(gsub ("Set","",input$Region))
+      corrplot(cor(t(fit()$bs[[region]])))
+     })
+    })
+
+   }
+
+  }
+
   if(what=="test") {
    # Define UI
    ui <- fluidPage(
