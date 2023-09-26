@@ -4,9 +4,9 @@ Version: 0.0.0.1
 Authors@R: 
     person("Peter", "Soerensen", , "pso@r-qgg.org", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: Infrastructure for creating and using genomic association statistics for complex traits and diseases .
+Description: Infrastructure for creating and using genomic association statistics for complex traits and diseases.
 License: `use_mit_license()`
 Encoding: UTF-8
-Imports: XML, data.table, RCurl, DT, shiny
+Imports: XML, data.table, RCurl, DT, shiny, R.utils
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
