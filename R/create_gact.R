@@ -380,8 +380,10 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
  }
 
  if(what=="string") {
-  url <- "https://stringdb-static.org/download/protein.links.v11.5/9606.protein.links.v11.5.txt.gz"
-  destfile <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
+  url <- "https://stringdb-static.org/download/protein.links.v12.0/9606.protein.links.v12.0.txt.gz"
+  destfile <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v12.0.txt.gz")
+  #url <- "https://stringdb-static.org/download/protein.links.v11.5/9606.protein.links.v11.5.txt.gz"
+  #destfile <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
   download.file(url=url, mode = "wb", dest=destfile)
  }
 
