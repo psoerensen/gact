@@ -713,7 +713,8 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
  saveRDS(pmid2eg,file=file.path(GAlist$dirs["gsets"],"pmid2eg.rds"))
 
  #String
- file <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
+ #file <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
+ file <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v12.0.txt.gz")
  string <- fread(file, data.table=FALSE)
  string$protein1 <- gsub("9606.","",string$protein1)
  string$protein2 <- gsub("9606.","",string$protein2)
