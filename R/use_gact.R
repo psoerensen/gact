@@ -734,7 +734,7 @@ getInteractionsDB <- function(ids=NULL, species="9606", threshold=900) {
 designMatrix <- function(sets=NULL, rsids=NULL, format="sparse") {
  if(format=="sparse") {
   # Compute design matrix for marker sets in sparse format
-  is <- qgg::mapSets(sets=sets, rsids=stat$rsids, index=TRUE)
+  is <- qgg::mapSets(sets=sets, rsids=rsids, index=TRUE)
   js <- rep(1:length(is),times=sapply(is,length))
   W <- sparseMatrix(unlist(is),as.integer(js),x=rep(1,length(js)))
   indx <- 1:max(sapply(is,max))
