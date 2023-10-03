@@ -739,6 +739,8 @@ designMatrix <- function(sets=NULL, rsids=NULL, format="sparse") {
   W <- sparseMatrix(unlist(is),as.integer(js),x=rep(1,length(js)))
   indx <- 1:max(sapply(is,max))
   rsids <- rsids[indx]
+  colnames(W) <- names(is)
+  rownames(W) <- rsids
  }
  if(format=="dense") {
   sets <- qgg:::mapSets(sets=sets,rsids=rsids, index=TRUE)
@@ -746,9 +748,9 @@ designMatrix <- function(sets=NULL, rsids=NULL, format="sparse") {
   for(i in 1:length(sets)) {
    W[sets[[i]],i] <- 1
   }
+  colnames(W) <- names(sets)
+  rownames(W) <- rsids
  }
- colnames(W) <- names(sets)
- rownames(W) <- rsids
  return(W)
 }
 
