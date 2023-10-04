@@ -887,6 +887,15 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
  setsfile <- file.path(GAlist$dirs["gsets"], "ensg2rsids.rds")
  saveRDS(ensg2rsids, file = setsfile)
 
+ markerSets <- readRDS(file=file.path(GAlist$dirs["gsets"],"ensg2rsids.rds"))
+ markerSets <- mapSetsDB(sets=markerSets, featureID=GAlist$markers$rsids, index=TRUE)
+ chr <- sapply(markerSets, function(x) {unique(GAlist$markers$chr[x])})
+ start <- sapply(markerSets, function(x) {min(GAlist$markers$pos[x])})
+ stop <- sapply(markerSets, function(x) {max(GAlist$markers$pos[x])})
+ df <- data.frame(geneID=names(markerSets),chr,start,stop)
+ saveRDS(df, file = file.path(GAlist$dirs["gsets"], "genesplus_annotation.rds"))
+
+
 
  return(GAlist)
 }
