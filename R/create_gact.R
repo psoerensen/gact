@@ -71,8 +71,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   # ABC-Max
   message("Creating full marker sets - this may take some time")
   GAlist <- createSetsDB(GAlist=GAlist)
-  GAlist <- createSetsDB(GAlist=GAlist, what="diseases")
-
+  #GAlist <- createSetsDB(GAlist=GAlist, what="diseases")
   GAlist <- createMarkerSetsDB(GAlist=GAlist, what="GO")
 
  }
