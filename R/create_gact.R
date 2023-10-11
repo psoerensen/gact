@@ -309,6 +309,10 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   destfile <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.gtf.gz")
   download.file(url=url, mode = "wb", dest=destfile)
 
+  url <- "https://ftp.ensembl.org/pub/release-110/gtf/homo_sapiens/Homo_sapiens.GRCh38.110.gtf.gz"
+  destfile <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.110.gtf.gz")
+  download.file(url=url, mode = "wb", dest=destfile)
+
  }
 
  if(what=="pubmed") {
@@ -847,6 +851,7 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
  #downstream <- 10
 
  file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.gtf.gz")
+ #file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.110.gtf.gz")
  df <- fread(file, data.table=FALSE)
  colnames(df) <- c("chr","source","type","start","end","score","strand","phase","attributes")
  df <- df[df$type=="gene" & df$source=="ensembl_havana",]
@@ -884,8 +889,10 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
  names(ensg2rsids) <- df$gene_id
  empty <- sapply(ensg2rsids, function(x){ identical(x, character(0))})
  ensg2rsids <- ensg2rsids[!empty]
+ #setsfile <- file.path(GAlist$dirs["gsets"], "GRCh38.110.ensg2rsids.rds")
  setsfile <- file.path(GAlist$dirs["gsets"], "ensg2rsids.rds")
  saveRDS(ensg2rsids, file = setsfile)
+
 
  sets <- mapSetsDB(sets=ensg2rsids, featureID=GAlist$markers$rsids, index=TRUE)
  chr <- sapply(sets, function(x) {unique(GAlist$markers$chr[x])})
