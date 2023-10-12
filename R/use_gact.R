@@ -730,29 +730,29 @@ getInteractionsDB <- function(ids=NULL, species="9606", threshold=900) {
 
 
 
-#' @export
-designMatrix <- function(sets=NULL, rsids=NULL, format="sparse") {
- if(format=="sparse") {
-  # Compute design matrix for marker sets in sparse format
-  is <- qgg::mapSets(sets=sets, rsids=rsids, index=TRUE)
-  js <- rep(1:length(is),times=sapply(is,length))
-  W <- sparseMatrix(unlist(is),as.integer(js),x=rep(1,length(js)))
-  indx <- 1:max(sapply(is,max))
-  rsids <- rsids[indx]
-  colnames(W) <- names(is)
-  rownames(W) <- rsids
- }
- if(format=="dense") {
-  sets <- qgg:::mapSets(sets=sets,rsids=rsids, index=TRUE)
-  W <- matrix(0,nrow=length(rsids), ncol=length(sets))
-  for(i in 1:length(sets)) {
-   W[sets[[i]],i] <- 1
-  }
-  colnames(W) <- names(sets)
-  rownames(W) <- rsids
- }
- return(W)
-}
+#' #' @export
+#' designMatrix <- function(sets=NULL, values=NULL, featureIDs=NULL, format="sparse") {
+#'  if(format=="sparse") {
+#'   # Compute design matrix for marker sets in sparse format
+#'   is <- qgg::mapSets(sets=sets, rsids=featureIDs, index=TRUE)
+#'   js <- rep(1:length(is),times=sapply(is,length))
+#'   W <- sparseMatrix(unlist(is),as.integer(js),x=rep(1,length(js)))
+#'   indx <- 1:max(sapply(is,max))
+#'   featureIDs <- featureIDs[indx]
+#'   colnames(W) <- names(is)
+#'   rownames(W) <- featureIDs
+#'  }
+#'  if(format=="dense") {
+#'   sets <- qgg:::mapSets(sets=sets,rsids=featureIDs, index=TRUE)
+#'   W <- matrix(0,nrow=length(featureIDs), ncol=length(sets))
+#'   for(i in 1:length(sets)) {
+#'    W[sets[[i]],i] <- 1
+#'   }
+#'   colnames(W) <- names(sets)
+#'   rownames(W) <- featureIDs
+#'  }
+#'  return(W)
+#' }
 
 #' @export
 mapSetsDB <- function(sets = NULL, featureID = NULL, GAlist = NULL, index = TRUE) {
