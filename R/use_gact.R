@@ -532,6 +532,8 @@ getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list"
   for (study in studyID) {
    message(paste("Extracting data from study:",study))
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
+   stat$p <- as.numeric(stat$p)
+   stat$p[stat$p<.Machine$double.xmin] <- .Machine$double.xmin
    if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],length(stat$b))
    b[stat$rsids,study] <- stat$b
    seb[stat$rsids,study] <- stat$seb
@@ -552,6 +554,8 @@ getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list"
   study <- studyID
   message(paste("Extracting data from study:",study))
   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
+  stat$p <- as.numeric(stat$p)
+  stat$p[stat$p<.Machine$double.xmin] <- .Machine$double.xmin
   if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],nrow(stat))
   #if(is.null(stat[["z"]])) stat$z <- stat$b/stat$seb
 
@@ -571,6 +575,8 @@ getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list"
   for (study in studyID) {
    message(paste("Extracting data from study:",study))
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
+   stat$p <- as.numeric(stat$p)
+   stat$p[stat$p<.Machine$double.xmin] <- .Machine$double.xmin
    if(what=="z") res[stat$rsids,study] <- stat$b/stat$seb
    if(!what=="z") res[stat$rsids,study] <- stat[,what]
   }
