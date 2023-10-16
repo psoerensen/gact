@@ -295,7 +295,8 @@ designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeature
 #'
 #' @export
 #'
-getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,downstream=FALSE,
+getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
+                      upstream=FALSE,downstream=FALSE,
                       min_combined_score=700, min_interactions=5) {
  sets <- NULL
  #if(feature=="Entrez Genes") sets <- GAlist$gsets[[1]]
@@ -310,6 +311,10 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
  #if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
  #if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
  if(feature=="DrugGenes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
+ if(feature=="DrugATCGenes") {
+  hasATC <- !GAlist$target$ATC=="Unknown"
+  sets <- split(GAlist$target$Target[hasATC],GAlist$target$Drug[hasATC])
+ }
  if(feature=="DrugComplexes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
  if(feature=="DiseaseGenes") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_integrated_full.rds"))
  if(feature=="DiseaseGenesEXP") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_experiments_filtered.rds"))
@@ -336,7 +341,8 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
    message(paste("Processing file:",files[i]))
   }
   names(gtexSets) <- tissue
-  return(gtexSets)
+  sets <- gtexSets
+  #return(gtexSets)
  }
 
  if(feature%in%c("GWAScatalog","GWAScatalogPlus")) {
@@ -372,8 +378,8 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
     gwasGenes[[i]] <- c(gwasGenes[[i]],gwasGenesUp[[i]],gwasGenesDown[[i]])
    }
   }
-  gwasGenes <- lapply(gwasGenes,unique)
-  return(gwasGenes)
+  sets <- lapply(gwasGenes,unique)
+  #return(gwasGenes)
  }
 
  if(feature=="String") {
@@ -393,15 +399,14 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, upstream=FALSE,
   sets  <- stitch[sapply(stitch ,length)>=min_interactions]
  }
 
-
-
-
  if(!is.null(featureID)) {
   select <- names(sets)%in%featureID
   if(sum(select)==0) stop("None of the fetureIDs found in sets")
   #if(any(!select)) message(paste("Some IDs not in data base:",featureID[!select]))
   sets <- sets[select]
  }
+ mset <- sapply(sets,length)
+ if(!is.null(minsets)) sets <- sets[mset>minsets]
  return(sets)
 }
 
