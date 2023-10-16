@@ -129,7 +129,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
 createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite", markers=NULL) {
  if (is.null(version)) stop("Please include a database name using the version argument")
 
- dbdir <- normalizePath(file.path(dbdir, version), winslash="/", mustWork=FALSE))
+ dbdir <- normalizePath(file.path(dbdir, version), winslash="/", mustWork=FALSE)
  if (dir.exists(dbdir)) stop(paste("Directory:",dbdir,"already exists"))
  dir.create(dbdir)
 
