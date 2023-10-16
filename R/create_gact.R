@@ -401,6 +401,37 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   dest <- file.path(GAlist$dirs["marker"],"1000G_EUR_Phase3_plink.zip")
   download.file(url=url, mode = "wb", dest=dest)
   unzip(dest, exdir=GAlist$dirs["marker"])
+
+  url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_eur.zip"
+  dest <- file.path(GAlist$dirs["marker"],
+                    gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
+  download.file(url=url, mode = "wb", dest=dest)
+  unzip(dest, exdir=GAlist$dirs["marker"])
+
+  url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_afr.zip"
+  dest <- file.path(GAlist$dirs["marker"],
+                    gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
+  download.file(url=url, mode = "wb", dest=dest)
+  unzip(dest, exdir=GAlist$dirs["marker"])
+
+  url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_eas.zip"
+  dest <- file.path(GAlist$dirs["marker"],
+                    gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
+  download.file(url=url, mode = "wb", dest=dest)
+  unzip(dest, exdir=GAlist$dirs["marker"])
+
+  url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_sas.zip"
+  dest <- file.path(GAlist$dirs["marker"],
+                    gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
+  download.file(url=url, mode = "wb", dest=dest)
+  unzip(dest, exdir=GAlist$dirs["marker"])
+
+  url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_amr.zip"
+  dest <- file.path(GAlist$dirs["marker"],
+                    gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
+  download.file(url=url, mode = "wb", dest=dest)
+  unzip(dest, exdir=GAlist$dirs["marker"])
+
  }
 
  if(what=="gtex") {
@@ -584,6 +615,11 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   has_atc <- match(tolower(df$Drug),tolower(GAlist$atc$name))
   df$ATC[!is.na(has_atc)] <- as.character(GAlist$atc$code[has_atc[!is.na(has_atc)]])
   GAlist$targets <- df
+  target <- GAlist$targets
+  target <- target[!duplicated(target$Drug),]
+  drug2atc <- target$ATC
+  names(drug2atc) <- target$Drug
+  GAlist$drug2atc <- drug2atc
  }
 
  if(what=="alphamissense") {
