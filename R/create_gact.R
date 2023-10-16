@@ -165,7 +165,7 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite", markers=
                                chr = Glist$chr[keep],
                                pos = Glist$pos[keep],
                                ea = Glist$a1[keep],
-            -                   nea = Glist$a2[keep],
+                               nea = Glist$a2[keep],
                                eaf = Glist$af[keep],
                                stringsAsFactors = FALSE)
 
