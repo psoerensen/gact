@@ -227,17 +227,21 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
  if(what=="gsea") {
   message("Downloading gsea results")
 
-  urls <- c("https://www.dropbox.com/s/ia5wmwrwiatwvqa/ct_gseaChromosomes_gdtdb.rds?dl=1",
-            "https://www.dropbox.com/s/bocpdcb3whqp60e/ct_gseaGenes_gdtdb.rds?dl=1",
-            "https://www.dropbox.com/s/b35i6h4k9vrx8rf/ct_gseaGO_gdtdb.rds?dl=1",
-            "https://www.dropbox.com/s/vtcs5xufpxdache/ct_gseaPathways_gdtdb.rds?dl=1",
-            "https://www.dropbox.com/s/fa73q57wcfldk5o/ct_gseaProteinComplexes_gdtdb.rds?dl=1",
-            "https://www.dropbox.com/s/3puru40dph8zu33/ct_gseaChemicalComplexes_gdtdb.rds?dl=1")
+  # urls <- c("https://www.dropbox.com/s/ia5wmwrwiatwvqa/ct_gseaChromosomes_gdtdb.rds?dl=1",
+  #           "https://www.dropbox.com/s/bocpdcb3whqp60e/ct_gseaGenes_gdtdb.rds?dl=1",
+  #           "https://www.dropbox.com/s/b35i6h4k9vrx8rf/ct_gseaGO_gdtdb.rds?dl=1",
+  #           "https://www.dropbox.com/s/vtcs5xufpxdache/ct_gseaPathways_gdtdb.rds?dl=1",
+  #           "https://www.dropbox.com/s/fa73q57wcfldk5o/ct_gseaProteinComplexes_gdtdb.rds?dl=1",
+  #           "https://www.dropbox.com/s/3puru40dph8zu33/ct_gseaChemicalComplexes_gdtdb.rds?dl=1")
 
-  urlnames <- gsub("https://www.dropbox.com/s/", "", urls, fixed=TRUE)
+  urls <- c("https://www.dropbox.com/scl/fi/xr6jvf2kk2dvy0cabffjn/Z_magma.rds?rlkey=k9j3alan5zvjc9lp7ztrny649&dl=1",
+            "https://www.dropbox.com/scl/fi/fcrw3ue8xequ6bis23adr/P_magma.rds?rlkey=r4pmqtd8ei7kkkj1svn6pkx9d&dl=1")
+  urlnames <- gsub("https://www.dropbox.com/scl/fi/", "", urls, fixed=TRUE)
   urlnames <- gsub("?dl=1", "", urlnames, fixed=TRUE)
   urlnames <- strsplit(urlnames,split="/")
   urlnames <- sapply(urlnames,function(x){x[2]})
+  urlnames <- strsplit(urlnames,split="?rlke", fixed=TRUE)
+  urlnames <- sapply(urlnames,function(x){x[1]})
 
   names(urls) <- urlnames
 
@@ -603,6 +607,8 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   GAlist$atc <- NULL
   GAlist$atc$code <- df$atc_code
   GAlist$atc$name <- df$atc_name
+  names(GAlist$atc$code) <- GAlist$atc$name
+  names(GAlist$atc$name) <- GAlist$atc$code
 
   # Add drug target data frame with ATC information to GAlist
   drugGenes <- getSetsDB(GAlist = GAlist, feature = "DrugGenes")
@@ -672,6 +678,34 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
   return(GAlist)
 
  }
+
+ if("atc"%in%what) {
+
+  target <- GAlist$targets
+  target <- target[!duplicated(target$Drug),]
+  drug2atc <- target$ATC
+  names(drug2atc) <- target$Drug
+  GAlist$drug2atc <- drug2atc
+  drug2atc <- drug2atc[!drug2atc=="Unknown"]
+  atcL1 <- substr(drug2atc, 1,1)
+  atcL2 <- substr(drug2atc, 1,3)
+  atcL3 <- substr(drug2atc, 1,4)
+  atcL4 <- substr(drug2atc, 1,5)
+
+  atcSets1 <- split(names(atcL1),f=atcL1)
+  atcSets2 <- split(names(atcL2),f=atcL2)
+  atcSets3 <- split(names(atcL3),f=atcL3)
+  atcSets4 <- split(names(atcL4),f=atcL4)
+
+  saveRDS(atcSets1, file = file.path(GAlist$dirs["gsets"], "atcSets1.rds"))
+  saveRDS(atcSets2, file = file.path(GAlist$dirs["gsets"], "atcSets2.rds"))
+  saveRDS(atcSets3, file = file.path(GAlist$dirs["gsets"], "atcSets3.rds"))
+  saveRDS(atcSets4, file = file.path(GAlist$dirs["gsets"], "atcSets4.rds"))
+
+  return(GAlist)
+
+ }
+
 
  # alpha <- fread(file.path(GAlist$dirs["gsets"],"AlphaMissense_hg38.tsv.gz"), data.table=FALSE)
  # alpha <- alpha[,c(1:4,9:10)]
