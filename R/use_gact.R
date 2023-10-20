@@ -314,6 +314,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
  if(feature=="DrugATCGenes") {
   hasATC <- !GAlist$target$ATC=="Unknown"
   sets <- split(GAlist$target$Target[hasATC],GAlist$target$Drug[hasATC])
+  sets <- lapply(sets,unique)
  }
  if(feature=="DrugComplexes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
  if(feature=="DiseaseGenes") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_integrated_full.rds"))
@@ -323,6 +324,19 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
  if(feature=="DiseaseGenesEXPplus") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_experiments_full.rds"))
  if(feature=="DiseaseGenesKBplus") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_knowledge_full.rds"))
  if(feature=="DiseaseGenesTMplus") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_textmining_full.rds"))
+
+ if(feature%in%c("ATC1Genes","ATC2Genes","ATC3Genes","ATC4Genes")) {
+  if(feature=="ATC1Genes") atcSets <- readRDS(file = file.path(GAlist$dirs["gsets"], "atcSets1.rds"))
+  if(feature=="ATC2Genes") atcSets <- readRDS(file = file.path(GAlist$dirs["gsets"], "atcSets2.rds"))
+  if(feature=="ATC3Genes") atcSets <- readRDS(file = file.path(GAlist$dirs["gsets"], "atcSets3.rds"))
+  if(feature=="ATC4Genes") atcSets <- readRDS(file = file.path(GAlist$dirs["gsets"], "atcSets4.rds"))
+  drugSets <- getSetsDB(GAlist = GAlist, feature = "DrugGenes")
+  atcSets <- mapSetsDB(sets=atcSets, featureID=names(drugSets), index=FALSE)
+  sets <- lapply(atcSets, function(x){
+   unlist(drugSets[x])
+  })
+  sets <- lapply(sets,unique)
+ }
 
  if(feature=="GTEx") {
   gtexSets <- NULL
@@ -416,7 +430,8 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
 #'
 getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, min_combined_score=900) {
  drugGenes <- readRDS(file=file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
- file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
+ #file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
+ file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v12.0.txt.gz")
  string <- fread(file_string, data.table=FALSE)
  string  <- string[string$combined_score>=min_combined_score,]
  string <- split( string$protein2,f=as.factor(string$protein1))
