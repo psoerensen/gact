@@ -335,7 +335,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
   sets <- lapply(atcSets, function(x){
    unlist(drugSets[x])
   })
-  sets <- lapply(sets,unique)
+  #sets <- lapply(sets,unique)
  }
 
  if(feature=="GTEx") {
