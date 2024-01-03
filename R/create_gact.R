@@ -48,9 +48,9 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="gsets")
   #GAlist <- downloadDB(GAlist=GAlist, what="gsea")
   GAlist <- downloadDB(GAlist=GAlist, what="gstat")
-  GAlist <- downloadDB(GAlist=GAlist, what="gtex")
+  #GAlist <- downloadDB(GAlist=GAlist, what="gtex")
   GAlist <- downloadDB(GAlist=GAlist, what="gwascatalog")
-  #GAlist <- downloadDB(GAlist=GAlist, what="1000G")
+  GAlist <- downloadDB(GAlist=GAlist, what="1000G")
   GAlist <- downloadDB(GAlist=GAlist, what="ensembl")
   GAlist <- downloadDB(GAlist=GAlist, what="reactome")
   GAlist <- downloadDB(GAlist=GAlist, what="string")
@@ -63,7 +63,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   #GAlist <- downloadDB(GAlist=GAlist, what="pharmgkb")
   #GAlist <- downloadDB(GAlist=GAlist, what="opentargets")
   #GAlist <- downloadDB(GAlist=GAlist, what="atc")
-  GAlist <- downloadDB(GAlist=GAlist, what="alphamissense")
+  #GAlist <- downloadDB(GAlist=GAlist, what="alphamissense")
 
   # https://www.medrxiv.org/content/10.1101/2020.09.08.20190561v1
   # Promoter capture Hi-C
@@ -262,6 +262,7 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   destfile <- file.path(GAlist$dirs["gstat"],"GWAS_information.csv")
   download.file(url=url, mode = "wb", dest=destfile)
   GAlist$study <- as.list(read.csv2(destfile))
+  GAlist$studies <- as.data.frame(GAlist$study)
 
   urls <- c("https://www.dropbox.com/s/iqd7c4bbds03nrg/GWAS1.txt.gz?dl=1",
             "https://www.dropbox.com/s/pdv1fg280n86dwg/GWAS2.txt.gz?dl=1",
