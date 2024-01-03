@@ -880,34 +880,34 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
  # saveRDS(reg2rsids, file = setsfile)
  #
 
- # Drug databases
- drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
-                 quote = "", data.table = FALSE)
-
- drug2eg <- split( drugdb$entrez_id, f=as.factor(drugdb$drug_name) )
- drug2eg <- lapply(drug2eg,function(x){as.character(x)})
- drug2eg <- drug2eg[!names(drug2eg)==""]
-
- drug2ensg <- lapply(drug2eg,function(x){na.omit(unlist(GAlist$gsets$eg2ensg[x]))})
- drug2ensg <- lapply(drug2ensg, function(x){unique(x)})
- drug2ensg <- drug2ensg[sapply(drug2ensg, function(x){ !any(is.na(x)) } )]
- drug2ensg <- drug2ensg[ sapply(drug2ensg, length)>0]
-
- #saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
- saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
-
- # Add atc codes
- GAlist <- downloadDB(GAlist=GAlist, what="atc")
-
- string2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"string2ensg.rds"))
- drug2ensp <- lapply(drug2ensg,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
- drug2complex2ensg <- lapply(drug2ensp,function(x){na.omit(unlist(string2ensg[x]))})
- #drug2complex <- lapply(drug2complex2ensg,function(x){na.omit(unlist(GAlist$gsets$ensp2ensg[x]))})
- drug2complex2ensg <- lapply(drug2complex2ensg, function(x){unique(x)})
- for(i in 1:length(drug2complex2ensg)) {
-  drug2complex2ensg[[i]] <- unique(c(drug2ensg[[i]], drug2complex2ensg[[i]]))
- }
- saveRDS(drug2complex2ensg,file=file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
+ # # Drug databases
+ # drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
+ #                 quote = "", data.table = FALSE)
+ #
+ # drug2eg <- split( drugdb$entrez_id, f=as.factor(drugdb$drug_name) )
+ # drug2eg <- lapply(drug2eg,function(x){as.character(x)})
+ # drug2eg <- drug2eg[!names(drug2eg)==""]
+ #
+ # drug2ensg <- lapply(drug2eg,function(x){na.omit(unlist(GAlist$gsets$eg2ensg[x]))})
+ # drug2ensg <- lapply(drug2ensg, function(x){unique(x)})
+ # drug2ensg <- drug2ensg[sapply(drug2ensg, function(x){ !any(is.na(x)) } )]
+ # drug2ensg <- drug2ensg[ sapply(drug2ensg, length)>0]
+ #
+ # #saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
+ # saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
+ #
+ # # Add atc codes
+ # GAlist <- downloadDB(GAlist=GAlist, what="atc")
+ #
+ # string2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"string2ensg.rds"))
+ # drug2ensp <- lapply(drug2ensg,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
+ # drug2complex2ensg <- lapply(drug2ensp,function(x){na.omit(unlist(string2ensg[x]))})
+ # #drug2complex <- lapply(drug2complex2ensg,function(x){na.omit(unlist(GAlist$gsets$ensp2ensg[x]))})
+ # drug2complex2ensg <- lapply(drug2complex2ensg, function(x){unique(x)})
+ # for(i in 1:length(drug2complex2ensg)) {
+ #  drug2complex2ensg[[i]] <- unique(c(drug2ensg[[i]], drug2complex2ensg[[i]]))
+ # }
+ # saveRDS(drug2complex2ensg,file=file.path(GAlist$dirs["gsets"],"drugComplex.rds"))
 
 
 
