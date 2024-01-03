@@ -485,16 +485,20 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
  if(what=="dgi") {
   # download dgidb files in the database
   message("Downloading Drug Gene Interaction database")
-  url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/interactions.tsv"
+  #url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/interactions.tsv"
+  url_db <- "https://www.dgidb.org/data/2023-Dec/interactions.tsv"
   destfile <- file.path(GAlist$dirs["drugdb"],"interactions.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
-  url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/genes.tsv"
+  #url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/genes.tsv"
+  url_db <- "https://www.dgidb.org/data/2023-Dec/genes.tsv"
   destfile <- file.path(GAlist$dirs["drugdb"],"genes.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
-  url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/drugs.tsv"
+  #url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/drugs.tsv"
+  url_db <- "https://www.dgidb.org/data/2023-Dec/drugs.tsv"
   destfile <- file.path(GAlist$dirs["drugdb"],"drugs.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
-  url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/categories.tsv"
+  #url_db <- "https://www.dgidb.org/data/monthly_tsvs/2022-Feb/categories.tsv"
+  url_db <- "https://www.dgidb.org/data/2023-Dec/categories.tsv"
   destfile <- file.path(GAlist$dirs["drugdb"],"categories.tsv")
   download.file(url=url_db, mode = "wb", dest=destfile)
  }
