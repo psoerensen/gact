@@ -46,18 +46,19 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   # Step 2: Download data from database:
   GAlist <- downloadDB(GAlist=GAlist, what="marker")
   GAlist <- downloadDB(GAlist=GAlist, what="gsets")
-  #GAlist <- downloadDB(GAlist=GAlist, what="gsea")
+  GAlist <- downloadDB(GAlist=GAlist, what="gsea")
   GAlist <- downloadDB(GAlist=GAlist, what="gstat")
+  GAlist <- downloadDB(GAlist=GAlist, what="gbayes")
   #GAlist <- downloadDB(GAlist=GAlist, what="gtex")
   GAlist <- downloadDB(GAlist=GAlist, what="gwascatalog")
-  GAlist <- downloadDB(GAlist=GAlist, what="1000G")
+  #GAlist <- downloadDB(GAlist=GAlist, what="1000G")
   GAlist <- downloadDB(GAlist=GAlist, what="ensembl")
   GAlist <- downloadDB(GAlist=GAlist, what="reactome")
   GAlist <- downloadDB(GAlist=GAlist, what="string")
   GAlist <- downloadDB(GAlist=GAlist, what="stitch")
   GAlist <- downloadDB(GAlist=GAlist, what="pubmed")
-  GAlist <- downloadDB(GAlist=GAlist, what="diseases")
-  GAlist <- downloadDB(GAlist=GAlist, what="tiga")
+  #GAlist <- downloadDB(GAlist=GAlist, what="diseases")
+  #GAlist <- downloadDB(GAlist=GAlist, what="tiga")
   #GAlist <- downloadDB(GAlist=GAlist, what="pubchem")
   GAlist <- downloadDB(GAlist=GAlist, what="dgi")
   #GAlist <- downloadDB(GAlist=GAlist, what="pharmgkb")
@@ -72,7 +73,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   message("Creating full marker sets - this may take some time")
   GAlist <- createSetsDB(GAlist=GAlist)
   #GAlist <- createSetsDB(GAlist=GAlist, what="diseases")
-  GAlist <- createMarkerSetsDB(GAlist=GAlist, what="GO")
+  #GAlist <- createMarkerSetsDB(GAlist=GAlist, what="GO")
 
  }
  # Step 3: Create marker sets from database:
@@ -160,20 +161,21 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite", markers=
                 features = features)
 
  if(!is.null(Glist)) {
-  keep <- Glist$rsids %in% Glist$rsidsLD
-  GAlist$markers <- data.frame(rsids = Glist$rsids[keep],
-                               chr = Glist$chr[keep],
-                               pos = Glist$pos[keep],
-                               ea = Glist$a1[keep],
-                               nea = Glist$a2[keep],
-                               eaf = Glist$af[keep],
-                               stringsAsFactors = FALSE)
-
-  GAlist$rsids <- Glist$rsids[keep]
-  GAlist$cpra <- Glist$cpra[keep]
-
-  file_markers <- file.path(GAlist$dirs["marker"], "markers.txt.gz")
-  fwrite(GAlist$markers, file = file_markers)
+  stop("Use of Glist is deprecated")
+  # keep <- Glist$rsids %in% Glist$rsidsLD
+  # GAlist$markers <- data.frame(rsids = Glist$rsids[keep],
+  #                              chr = Glist$chr[keep],
+  #                              pos = Glist$pos[keep],
+  #                              ea = Glist$a1[keep],
+  #                              nea = Glist$a2[keep],
+  #                              eaf = Glist$af[keep],
+  #                              stringsAsFactors = FALSE)
+  #
+  # GAlist$rsids <- Glist$rsids[keep]
+  # GAlist$cpra <- Glist$cpra[keep]
+  #
+  # file_markers <- file.path(GAlist$dirs["marker"], "markers.txt.gz")
+  # fwrite(GAlist$markers, file = file_markers)
  }
 
  return(GAlist)
@@ -186,118 +188,49 @@ createDB <- function(Glist=NULL, version=NULL, dbdir=NULL, what="lite", markers=
 downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_interactions=5) {
 
  options(download.file.method="libcurl", url.method="libcurl", timeout=600)
-
  if(is.null(what)) stop("Please specify what to download e.g. what=gsets")
 
+ if(what=="db") {
+  download_zenodo(doi = "10.5281/zenodo.10464396", path=GAlist$dbdir)
+  dest <- file.path(GAlist$dbdir,"hsa.0.01.zip")
+  unzip(dest, exdir=dest)
+ }
+
  if(what=="gsets") {
-  message("Marker sets")
-  urls <- c("https://www.dropbox.com/s/ijtc7l6hgpaieo1/eg2rsids_10kb.rds?dl=1",
-            "https://www.dropbox.com/s/0aqbqa7ihrg6i2e/ensg2rsids_10kb.rds?dl=1",
-            "https://www.dropbox.com/s/p3ut5dwfx0zw4v1/ensp2rsids_10kb.rds?dl=1",
-            "https://www.dropbox.com/s/1py37zd92ttsvnp/ensg2sym.rds?dl=1",
-            "https://www.dropbox.com/s/2ggu4u5hp406cif/go.rds?dl=1",
-            #"https://www.dropbox.com/s/uryyxnjyhxa9azf/reactome.rds?dl=1",
-            #"https://www.dropbox.com/s/wnci7lldztnb93k/string2ensp.rds?dl=1",
-            #"https://www.dropbox.com/s/ny94ibdbqhtg62h/stitch.rds?dl=1",
-            #"https://www.dropbox.com/s/q83q3mnvos8wdxk/reactome2ensg.rds?dl=1",
-            #"https://www.dropbox.com/s/9ah6aw0fborrp0z/string2ensg.rds?dl=1",
-            #"https://www.dropbox.com/s/7gj36rdec6spk9u/stitch2ensg.rds?dl=1",
-            #"https://www.dropbox.com/s/7f7370ae4k7b6hc/ensg2eg.rds?dl=1",
-            #"https://www.dropbox.com/s/3y9z8liv54jnhai/eg2ensg.rds?dl=1",
-            "https://www.dropbox.com/s/kg2pfu74zawlzvt/ensg2rsids.rds?dl=1",
-            #"https://www.dropbox.com/s/qc4q3edxnbbizk0/regSets.rds?dl=1",
-            "https://www.dropbox.com/s/3at6uz8x3ja2i33/reg2rsids.rds?dl=1")
-
-
-  urlnames <- gsub("https://www.dropbox.com/s/", "", urls, fixed=TRUE)
-  urlnames <- gsub("?dl=1", "", urlnames, fixed=TRUE)
-  urlnames <- strsplit(urlnames,split="/")
-  urlnames <- sapply(urlnames,function(x){x[2]})
-  names(urls) <- urlnames
-
-  for (feature in names(urls)) {
-   message(paste("Downloading file:",feature))
-   destfile <- file.path(GAlist$dirs["gsets"],feature)
-   download.file(url=urls[feature], mode = "wb", dest=destfile)
-  }
-  GAlist$gsetsfiles <- file.path(GAlist$dirs["gsets"],names(urls))
-  names(GAlist$gsetsfiles) <- gsub(".rds","", names(urls))
+  message("Downloading marker sets")
+  gact:::download_zenodo(doi = "10.5281/zenodo.10462983", path=GAlist$dirs["gsets"])
+  GAlist$gsetsfiles <- list.files(file.path(GAlist$dirs["gsets"]), pattern=".rds")
+  names(GAlist$gsetsfiles) <- gsub(".rds","", GAlist$gsetsfiles)
  }
 
  if(what=="gsea") {
-  message("Downloading gsea results")
-
-  # urls <- c("https://www.dropbox.com/s/ia5wmwrwiatwvqa/ct_gseaChromosomes_gdtdb.rds?dl=1",
-  #           "https://www.dropbox.com/s/bocpdcb3whqp60e/ct_gseaGenes_gdtdb.rds?dl=1",
-  #           "https://www.dropbox.com/s/b35i6h4k9vrx8rf/ct_gseaGO_gdtdb.rds?dl=1",
-  #           "https://www.dropbox.com/s/vtcs5xufpxdache/ct_gseaPathways_gdtdb.rds?dl=1",
-  #           "https://www.dropbox.com/s/fa73q57wcfldk5o/ct_gseaProteinComplexes_gdtdb.rds?dl=1",
-  #           "https://www.dropbox.com/s/3puru40dph8zu33/ct_gseaChemicalComplexes_gdtdb.rds?dl=1")
-
-  urls <- c("https://www.dropbox.com/scl/fi/xr6jvf2kk2dvy0cabffjn/Z_magma.rds?rlkey=k9j3alan5zvjc9lp7ztrny649&dl=1",
-            "https://www.dropbox.com/scl/fi/fcrw3ue8xequ6bis23adr/P_magma.rds?rlkey=r4pmqtd8ei7kkkj1svn6pkx9d&dl=1")
-  urlnames <- gsub("https://www.dropbox.com/scl/fi/", "", urls, fixed=TRUE)
-  urlnames <- gsub("?dl=1", "", urlnames, fixed=TRUE)
-  urlnames <- strsplit(urlnames,split="/")
-  urlnames <- sapply(urlnames,function(x){x[2]})
-  urlnames <- strsplit(urlnames,split="?rlke", fixed=TRUE)
-  urlnames <- sapply(urlnames,function(x){x[1]})
-
-  names(urls) <- urlnames
-
-  for (feature in names(urls)) {
-   message(paste("Downloading file:",feature))
-   destfile <- file.path(GAlist$dirs["gsea"],feature)
-   download.file(url=urls[feature], mode = "wb", dest=destfile)
-  }
-  GAlist$gseafiles <- file.path(GAlist$dirs["gsea"],names(urls))
-  names(GAlist$gseafiles) <- gsub(".rds","",names(urls))
+  message("Downloading gsea summary statistics")
+  download_zenodo(doi = "10.5281/zenodo.10462485", path=GAlist$dirs["gsea"])
+  GAlist$gseafiles <- list.files(file.path(GAlist$dirs["gsea"]), pattern=".rds")
+  names(GAlist$gseafiles) <- gsub(".rds","",GAlist$gseafiles)
  }
 
  if(what=="gstat") {
   # download gstat files in the database
   message("Downloading GWAS summary statistics")
-
-  url <- "https://www.dropbox.com/s/0sizkeuw0sl51tn/GWAS_information.csv?dl=1"
+  download_zenodo(doi = "10.5281/zenodo.10462496", path=GAlist$dirs["gstat"])
   destfile <- file.path(GAlist$dirs["gstat"],"GWAS_information.csv")
-  download.file(url=url, mode = "wb", dest=destfile)
   GAlist$study <- as.list(read.csv2(destfile))
   GAlist$studies <- as.data.frame(GAlist$study)
-
-  urls <- c("https://www.dropbox.com/s/iqd7c4bbds03nrg/GWAS1.txt.gz?dl=1",
-            "https://www.dropbox.com/s/pdv1fg280n86dwg/GWAS2.txt.gz?dl=1",
-            "https://www.dropbox.com/s/t3y05ex1uouo4qg/GWAS3.txt.gz?dl=1",
-            "https://www.dropbox.com/s/34yd6sxltqiv6e8/GWAS4.txt.gz?dl=1",
-            "https://www.dropbox.com/s/xyfadehraaajkol/GWAS5.txt.gz?dl=1",
-            "https://www.dropbox.com/s/2b5u6m60l6a5e82/GWAS6.txt.gz?dl=1",
-            "https://www.dropbox.com/s/zilng15j7c0kl8n/GWAS7.txt.gz?dl=1",
-            "https://www.dropbox.com/s/oo5o7suu2bx04bj/GWAS8.txt.gz?dl=1")
-
-  urlnames <- gsub("https://www.dropbox.com/s/", "", urls, fixed=TRUE)
-  urlnames <- gsub("?dl=1", "", urlnames, fixed=TRUE)
-  urlnames <- strsplit(urlnames,split="/")
-  urlnames <- sapply(urlnames,function(x){x[2]})
-
-  for(i in 1:length(urls)) {
-   destfile <- file.path(GAlist$dirs["gstat"],urlnames[i])
-   download.file(url=urls[i], mode = "wb", dest=destfile)
-  }
-  GAlist$studyfiles <- file.path(GAlist$dirs["gstat"],urlnames)
-  names(GAlist$studyfiles) <- GAlist$study$id
+  GAlist$studyfiles <- list.files(file.path(GAlist$dirs["gstat"]), pattern=".gz")
+  names(GAlist$studyfiles) <- gsub(".txt.gz","",GAlist$studyfiles)
 
  }
  if(what=="marker") {
   message("Downloading marker information")
-  url <- "https://www.dropbox.com/s/4k54owkby3uf2hf/markers.txt.gz?dl=1"
-  destfile <- file.path(GAlist$dirs["marker"],"markers.txt.gz")
-  download.file(url=url, mode = "wb", dest=destfile)
+  download_zenodo(doi = "10.5281/zenodo.10467174", path=GAlist$dirs["marker"])
   GAlist$markerfiles <-file.path(GAlist$dirs["marker"],"markers.txt.gz")
-  GAlist$markers <- fread(GAlist$markerfiles, data.table=FALSE)
+  #GAlist$markers <- fread(GAlist$markerfiles, data.table=FALSE)
   GAlist$rsids <- GAlist$markers$rsids
-  GAlist$cpra <- paste(GAlist$markers$chr,
-                       GAlist$markers$pos,
-                       GAlist$markers$ea,
-                       GAlist$markers$nea,sep="_")
+  #GAlist$cpra <- paste(GAlist$markers$chr,
+  #                     GAlist$markers$pos,
+  #                     GAlist$markers$ea,
+  #                     GAlist$markers$nea,sep="_")
  }
  if(what=="ensembl") {
   url <- "https://ftp.ensembl.org/pub/release-109/tsv/homo_sapiens/Homo_sapiens.GRCh38.109.entrez.tsv.gz"
@@ -401,10 +334,18 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   download.file(url=url, mode = "wb", dest=destfile)
  }
 
+ if(what=="gbayes") {
+  download_zenodo(doi = "10.5281/zenodo.10462421", path=GAlist$dirs["gbayes"])
+ }
+
+
+
  if(what=="1000G") {
-  url <- "https://www.dropbox.com/s/jk3p47jf8ser6se/1000G_EUR_Phase3_plink.zip?dl=1"
+  #url <- "https://www.dropbox.com/s/jk3p47jf8ser6se/1000G_EUR_Phase3_plink.zip?dl=1"
+  url <- "https://zenodo.org/api/records/10462403"
+  download_zenodo(doi = "10.5281/zenodo.10462403", path=GAlist$dirs["marker"])
   dest <- file.path(GAlist$dirs["marker"],"1000G_EUR_Phase3_plink.zip")
-  download.file(url=url, mode = "wb", dest=dest)
+  #download.file(url=url, mode = "wb", dest=dest)
   unzip(dest, exdir=GAlist$dirs["marker"])
 
   url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_eur.zip"
@@ -648,7 +589,7 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
 #' @export
 #'
-createSetsDB <- function(GAlist = NULL, what=NULL,
+createSetsDB <- function(GAlist = NULL, what="ensembl",
                          upstream=35, downstream=10,
                          min_combined_score=900, min_interactions=5) {
 
@@ -736,16 +677,18 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
  # alpha$rsids[!is.na(rws1)] <- GAlist$rsids[rws1[!is.na(rws1)]]
  # alpha$rsids[!is.na(rws2)] <- GAlist$rsids[rws2[!is.na(rws2)]]
  #
+
  # default sets
 
  GAlist$gsets <- vector(mode = "list", length = length(GAlist$gsetsfiles))
  for(i in 1:length(GAlist$gsetsfiles)) {
-  GAlist$gsets[[i]] <- readRDS(GAlist$gsetsfiles[i])
+  GAlist$gsets[[i]] <- readRDS(file.path(GAlist$dirs["gsets"],GAlist$gsetsfiles[i]))
  }
  names(GAlist$gsets) <- names(GAlist$gsetsfiles)
+ GAlist$gsets <- GAlist$gsets[c("eg2ensg", "ensg2eg", "ensg2sym", "ensp2ensg")]
 
  # Ensembl genes, proteins, transcripts
- file <-file.path(GAlist$dirs["gsets"],"GRCh38.109.entrez.tsv.gz")
+ file <- file.path(GAlist$dirs["gsets"],"GRCh38.109.entrez.tsv.gz")
  ensembl <- fread(file, data.table=FALSE)
  ensembl <- ensembl[!ensembl$protein_stable_id=="-",]
 
@@ -926,7 +869,7 @@ createSetsDB <- function(GAlist = NULL, what=NULL,
 
  file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.gtf.gz")
  #file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.110.gtf.gz")
- df <- fread(file, data.table=FALSE)
+ df <- fread(file, data.table=FALSE,skip=1, header=FALSE)
  colnames(df) <- c("chr","source","type","start","end","score","strand","phase","attributes")
  df <- df[df$type=="gene" & df$source=="ensembl_havana",]
  att <- strsplit(df$attributes, ";")
@@ -2232,7 +2175,208 @@ columnStatDB <- function(stat=NULL) {
 #  return(GAlist)
 # }
 
+#' Get data from a Zenodo archive
+#'
+#' This function will download an entire archive from Zenodo
+#' (\url{https://zenodo.org}).
+#' It only works for Zenodo created DOI (not when the DOI is for
+#' example derived from Zookeys.)
+#'
+#' @author Hans Van Calster, \email{hans.vancalster@@inbo.be}
+#' @author Floris Vanderhaeghe, \email{floris.vanderhaeghe@@inbo.be}
+#'
+#' @param path Path where the data must be downloaded.
+#' Defaults to the working directory.
+#' @param doi a doi pointer to the Zenodo archive starting with
+#' '10.5281/zenodo.'.
+#' See examples.
+#' @param parallel Logical.
+#' If \code{TRUE} (the default), files will be
+#' downloaded concurrently for multi-file records.
+#' Of course, the operation is limited by bandwidth and traffic limitations.
+#' @param quiet Logical (\code{FALSE} by default).
+#' Do you want to suppress informative messages (not warnings)?
+#'
+#' @importFrom stringr
+#' fixed
+#' str_remove
+#' str_split
+#' str_match
+#' @importFrom curl curl_fetch_memory curl_download
+#' @importFrom jsonlite fromJSON
+#' @importFrom tools md5sum
+#' @importFrom utils tail
+#' @importFrom assertthat
+#' assert_that
+#' is.string
+#' is.flag
+#' noNA
+#'
+#' @export
+#' @family download_functions
+#'
+#' @examples
+#' \dontrun{
+#' # Example download of an archive containing a single zip
+#' download_zenodo(doi = "10.5281/zenodo.1283345")
+#' download_zenodo(doi = "10.5281/zenodo.1283345", quiet = TRUE)
+#' # Example download of an archive containing multiple files
+#' # using parallel download
+#' # (multiple files will be simultaneously downloaded)
+#' download_zenodo(doi = "10.5281/zenodo.1172801", parallel = TRUE)
+#' # Example download of an archive containing a single pdf file
+#' download_zenodo(doi = "10.5281/zenodo.168478")
+#' }
+download_zenodo <- function(doi,
+                            path = ".",
+                            parallel = TRUE,
+                            quiet = FALSE) {
+ assert_that(is.string(doi), is.string(path))
+ assert_that(is.flag(parallel), noNA(parallel), is.flag(quiet), noNA(quiet))
 
+ # check for existence of the folder
+ stopifnot(dir.exists(path))
+
+ record <- str_remove(doi, fixed("10.5281/zenodo."))
+
+ # Retrieve file name by records call
+ base_url <- "https://zenodo.org/api/records/"
+ req <- curl_fetch_memory(paste0(base_url, record))
+ content <- fromJSON(rawToChar(req$content))
+
+ # Calculate total file size
+ totalsize <- sum(content$files$size) %>%
+  human_filesize()
+
+ # extract individual file names and urls
+ file_urls <- content$files$links$self
+ filenames <- basename(content$files$key)
+ destfiles <- file.path(path, filenames)
+
+ # extract check-sum(s)
+ file_md5 <- content$files$checksum
+
+ # download files
+ if (!quiet) {
+  message(
+   "Will download ",
+   (nrfiles <- length(filenames)),
+   " file",
+   ifelse(nrfiles > 1, "s", ""),
+   " (total size: ",
+   totalsize,
+   ") from https://doi.org/",
+   doi,
+   " (",
+   content$metadata$title,
+   "; version: ",
+   ifelse(!is.null(content$metadata$version),
+          content$metadata$version,
+          content$metadata$relations$version[1, 1]
+   ),
+   ")\n"
+  )
+ }
+
+ if (length(file_urls) > 1 && parallel) {
+  curl::multi_download(
+   urls = file_urls,
+   destfiles = destfiles,
+   progress = !quiet
+  )
+ } else {
+  mapply(curl_download,
+         file_urls,
+         destfiles,
+         MoreArgs = list(quiet = quiet)
+  )
+ }
+
+ # check each of the files
+
+ if (!quiet) message("\nVerifying file integrity...\n")
+
+ for (i in seq_along(file_urls)) {
+  filename <- filenames[i]
+  destfile <- destfiles[i]
+  md5 <- unname(md5sum(destfile))
+  zenodo_md5 <- str_split(file_md5[i], ":")[[1]][2]
+  if (identical(md5, zenodo_md5)) {
+   if (!quiet) {
+    message(
+     filename,
+     " was downloaded and its integrity verified (md5sum: ",
+     md5,
+     ")"
+    )
+   }
+  } else {
+   warning(
+    "Incorrect download! md5sum ",
+    md5,
+    " for file",
+    filename,
+    " does not match the Zenodo archived md5sum ",
+    zenodo_md5
+   )
+  }
+ }
+}
+
+
+
+#' Human-readable binary file size
+#'
+#' Takes an integer (referring to number of bytes) and returns an optimally
+#' human-readable
+#' \href{https://en.wikipedia.org/wiki/Binary_prefix}{binary-prefixed}
+#' byte size (KiB, MiB, GiB, TiB, PiB, EiB).
+#' The function is vectorised.
+#'
+#' @author Floris Vanderhaeghe, \email{floris.vanderhaeghe@@inbo.be}
+#'
+#' @param x A positive integer, i.e. the number of bytes (B).
+#' Can be a vector of file sizes.
+#'
+#' @return
+#' A character vector.
+#'
+#' @examples
+#' human_filesize(7845691)
+#' v <- c(12345, 456987745621258)
+#' human_filesize(v)
+#'
+#' @family Helpers
+#'
+#' @export
+#' @importFrom assertthat
+#' assert_that
+#' @importFrom dplyr
+#' %>%
+human_filesize <- function(x) {
+ assert_that(is.numeric(x))
+ assert_that(all(x %% 1 == 0 & x >= 0))
+ magnitude <-
+  log(x, base = 1024) %>%
+  floor() %>%
+  pmin(8)
+ unit <- factor(magnitude,
+                levels = 0:8,
+                labels = c(
+                 "B",
+                 "KiB",
+                 "MiB",
+                 "GiB",
+                 "TiB",
+                 "PiB",
+                 "EiB",
+                 "ZiB",
+                 "YiB"
+                )
+ )
+ size <- (x / 1024^magnitude) %>% round(1)
+ return(paste(size, unit))
+}
 
 
 

@@ -8,6 +8,7 @@ getSetsDB(
   GAlist = NULL,
   feature = NULL,
   featureID = NULL,
+  minsets = NULL,
   upstream = FALSE,
   downstream = FALSE,
   min_combined_score = 700,

@@ -524,14 +524,15 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
 
  if(!is.null(cpra)) {
-  cpra1 <- paste(GAlist$markers[,"chr"],
-                 GAlist$markers[,"pos"],
-                 toupper(GAlist$markers[,"ea"]),
-                 toupper(GAlist$markers[,"nea"]), sep="_")
-  cpra2 <- paste(GAlist$markers[,"chr"],
-                 GAlist$markers[,"pos"],
-                 toupper(GAlist$markers[,"nea"]),
-                 toupper(GAlist$markers[,"ea"]),sep="_")
+  markers <- fread(GAlist$markerfiles, data.table=FALSE)
+  cpra1 <- paste(markers[,"chr"],
+                 markers[,"pos"],
+                 toupper(markers[,"ea"]),
+                 toupper(markers[,"nea"]), sep="_")
+  cpra2 <- paste(markers[,"chr"],
+                 markers[,"pos"],
+                 toupper(markers[,"nea"]),
+                 toupper(markers[,"ea"]),sep="_")
 
   mapped <- cpra1%in%cpra | cpra2%in%cpra
   message("Map markers based on cpra")
