@@ -198,16 +198,18 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
  if(what=="gsets") {
   message("Downloading marker sets")
-  gact:::download_zenodo(doi = "10.5281/zenodo.10462983", path=GAlist$dirs["gsets"])
-  GAlist$gsetsfiles <- list.files(file.path(GAlist$dirs["gsets"]), pattern=".rds")
-  names(GAlist$gsetsfiles) <- gsub(".rds","", GAlist$gsetsfiles)
+  download_zenodo(doi = "10.5281/zenodo.10462983", path=GAlist$dirs["gsets"])
+  gsetsNames <- list.files(file.path(GAlist$dirs["gsets"]), pattern=".rds")
+  GAlist$gsetsfiles <- list.files(file.path(GAlist$dirs["gsets"]), pattern=".rds", full.names=TRUE)
+  names(GAlist$gsetsfiles) <- gsub(".rds","", gsetsNames)
  }
 
  if(what=="gsea") {
   message("Downloading gsea summary statistics")
   download_zenodo(doi = "10.5281/zenodo.10462485", path=GAlist$dirs["gsea"])
-  GAlist$gseafiles <- list.files(file.path(GAlist$dirs["gsea"]), pattern=".rds")
-  names(GAlist$gseafiles) <- gsub(".rds","",GAlist$gseafiles)
+  gseaNames <- list.files(file.path(GAlist$dirs["gsea"]), pattern=".rds")
+  GAlist$gseafiles <- list.files(file.path(GAlist$dirs["gsea"]), pattern=".rds", full.names=TRUE)
+  names(GAlist$gseafiles) <- gsub(".rds","",gseaNames)
  }
 
  if(what=="gstat") {
@@ -217,9 +219,9 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   destfile <- file.path(GAlist$dirs["gstat"],"GWAS_information.csv")
   GAlist$study <- as.list(read.csv2(destfile))
   GAlist$studies <- as.data.frame(GAlist$study)
-  GAlist$studyfiles <- list.files(file.path(GAlist$dirs["gstat"]), pattern=".gz")
-  names(GAlist$studyfiles) <- gsub(".txt.gz","",GAlist$studyfiles)
-
+  GAlist$studyfiles <- list.files(file.path(GAlist$dirs["gstat"]), pattern=".gz", full.names = TRUE)
+  studyfiles <- list.files(file.path(GAlist$dirs["gstat"]), pattern=".gz")
+  names(GAlist$studyfiles) <- gsub(".txt.gz","",studyfiles)
  }
  if(what=="marker") {
   message("Downloading marker information")
@@ -682,7 +684,8 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
 
  GAlist$gsets <- vector(mode = "list", length = length(GAlist$gsetsfiles))
  for(i in 1:length(GAlist$gsetsfiles)) {
-  GAlist$gsets[[i]] <- readRDS(file.path(GAlist$dirs["gsets"],GAlist$gsetsfiles[i]))
+  #GAlist$gsets[[i]] <- readRDS(file.path(GAlist$dirs["gsets"],GAlist$gsetsfiles[i]))
+  GAlist$gsets[[i]] <- readRDS(GAlist$gsetsfiles[i])
  }
  names(GAlist$gsets) <- names(GAlist$gsetsfiles)
  GAlist$gsets <- GAlist$gsets[c("eg2ensg", "ensg2eg", "ensg2sym", "ensp2ensg")]
