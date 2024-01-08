@@ -876,6 +876,9 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  #upstream <- 35
  #downstream <- 10
 
+ markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
+                  data.table=FALSE)
+
  file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.gtf.gz")
  #file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.110.gtf.gz")
  df <- fread(file, data.table=FALSE,skip=1, header=FALSE)
@@ -898,13 +901,13 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  start <- df$start-upstream
  start[start<1] <- 1
  end <- df$end+downstream
- maxpos <- max(GAlist$markers$pos,end)
+ maxpos <- max(markers$pos,end)
  pos <- 1:maxpos
  ensg2rsids <- vector("list", nrow(df))
  for (chr in 1:22) {
   message(paste("Processing chr:",chr))
   rsids <- rep(NA, maxpos)
-  rsids[as.integer(GAlist$markers[GAlist$markers$chr==chr,"pos"])] <- GAlist$markers[GAlist$markers$chr==chr,"rsids"]
+  rsids[as.integer(markers[markers$chr==chr,"pos"])] <- markers[markers$chr==chr,"rsids"]
   for (i in 1:nrow(df)) {
    if(df$chr[i]==chr) {
     grsids <- rsids[start[i]:end[i]]
@@ -920,10 +923,10 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  saveRDS(ensg2rsids, file = setsfile)
 
 
- sets <- mapSetsDB(sets=ensg2rsids, featureID=GAlist$markers$rsids, index=TRUE)
- chr <- sapply(sets, function(x) {unique(GAlist$markers$chr[x])})
- start <- sapply(sets, function(x) {min(GAlist$markers$pos[x])})
- stop <- sapply(sets, function(x) {max(GAlist$markers$pos[x])})
+ sets <- mapSetsDB(sets=ensg2rsids, featureID=markers$rsids, index=TRUE)
+ chr <- sapply(sets, function(x) {unique(markers$chr[x])})
+ start <- sapply(sets, function(x) {min(markers$pos[x])})
+ stop <- sapply(sets, function(x) {max(markers$pos[x])})
  df <- data.frame(EnsemblID=names(sets),chr=chr,start=start,stop=stop)
  saveRDS(df, file = file.path(GAlist$dirs["gsets"], "genesplus_annotation.rds"))
 
@@ -1149,7 +1152,9 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
  stat <- stat[!isdup,]
  rownames(stat) <- stat$marker
 
- marker <- GAlist$markers
+ marker <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
+                 data.table=FALSE)
+
  rownames(marker) <- marker$rsids
 
  #message("Filtering markers based on information in GAlist:")
