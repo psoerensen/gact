@@ -41,7 +41,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
  if(task=="download") {
   GAlist <- createDB(Glist=NULL, version=version, dbdir=dbdir)
 
-  options(download.file.method="libcurl", url.method="libcurl", timeout=600)
+  options(download.file.method="libcurl", url.method="libcurl", timeout=1200)
 
   # Step 2: Download data from database:
   GAlist <- downloadDB(GAlist=GAlist, what="marker")
@@ -219,6 +219,7 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   destfile <- file.path(GAlist$dirs["gstat"],"GWAS_information.csv")
   GAlist$study <- as.list(read.csv2(destfile))
   GAlist$studies <- as.data.frame(GAlist$study)
+  rownames(GAlist$studies) <- GAlist$studies$id
   GAlist$studyfiles <- list.files(file.path(GAlist$dirs["gstat"]), pattern=".gz", full.names = TRUE)
   studyfiles <- list.files(file.path(GAlist$dirs["gstat"]), pattern=".gz")
   names(GAlist$studyfiles) <- gsub(".txt.gz","",studyfiles)
@@ -226,9 +227,10 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
  if(what=="marker") {
   message("Downloading marker information")
   download_zenodo(doi = "10.5281/zenodo.10467174", path=GAlist$dirs["marker"])
-  GAlist$markerfiles <-file.path(GAlist$dirs["marker"],"markers.txt.gz")
-  #GAlist$markers <- fread(GAlist$markerfiles, data.table=FALSE)
-  GAlist$rsids <- GAlist$markers$rsids
+  GAlist$markerfiles <- file.path(GAlist$dirs["marker"],"markers.txt.gz")
+  markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
+                   data.table=FALSE)
+  GAlist$rsids <- markers$rsids
   #GAlist$cpra <- paste(GAlist$markers$chr,
   #                     GAlist$markers$pos,
   #                     GAlist$markers$ea,
@@ -762,28 +764,32 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
 
  # Reactome
  file <- file.path(GAlist$dirs["gsets"],"Ensembl2Reactome.txt")
- reactome <- fread(file, data.table=FALSE, header=FALSE)
- isHSA <- grep("R-HSA",reactome[,2])
- reactome <- reactome[isHSA,]
- reac2ensg <- split(reactome[,1],f=reactome[,2])
- ensg2reac <- split(reactome[,2],f=reactome[,1])
+ if(file.exists(file)) {
+  reactome <- fread(file, data.table=FALSE, header=FALSE)
+  isHSA <- grep("R-HSA",reactome[,2])
+  reactome <- reactome[isHSA,]
+  reac2ensg <- split(reactome[,1],f=reactome[,2])
+  ensg2reac <- split(reactome[,2],f=reactome[,1])
 
- GAlist$gsets$reac2ensg <- reac2ensg
- GAlist$gsets$ensg2reac <- ensg2reac
+  GAlist$gsets$reac2ensg <- reac2ensg
+  GAlist$gsets$ensg2reac <- ensg2reac
 
- saveRDS(reac2ensg,file=file.path(GAlist$dirs["gsets"],"reactome2ensg.rds"))
- saveRDS(ensg2reac,file=file.path(GAlist$dirs["gsets"],"ensg2reactome.rds"))
+  saveRDS(reac2ensg,file=file.path(GAlist$dirs["gsets"],"reactome2ensg.rds"))
+  saveRDS(ensg2reac,file=file.path(GAlist$dirs["gsets"],"ensg2reactome.rds"))
+ }
 
  file <- file.path(GAlist$dirs["gsets"],"ReactomePathways.txt")
- pathway <- fread(file, data.table=FALSE, header=FALSE)
- isHSA <- grep("R-HSA",pathway[,1])
- pathway <- pathway[isHSA,]
- reac2names <- pathway[,2]
- names(reac2names) <- pathway[,1]
+ if(file.exists(file)) {
+  pathway <- fread(file, data.table=FALSE, header=FALSE)
+  isHSA <- grep("R-HSA",pathway[,1])
+  pathway <- pathway[isHSA,]
+  reac2names <- pathway[,2]
+  names(reac2names) <- pathway[,1]
 
- GAlist$gsets$reac2names <- reac2names
+  GAlist$gsets$reac2names <- reac2names
 
- saveRDS(reac2names,file=file.path(GAlist$dirs["gsets"],"reactome2names.rds"))
+  saveRDS(reac2names,file=file.path(GAlist$dirs["gsets"],"reactome2names.rds"))
+ }
 
  # Regulatory elements
  file <- file.path(GAlist$dirs["gsets"],"GRCh38.Regulatory_Build.regulatory_features.gff.gz")
