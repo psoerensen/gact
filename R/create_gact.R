@@ -830,7 +830,7 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  # reg2rsids <- reg2rsids[!empty]
  # setsfile <- file.path(GAlist$dirs["gsets"], "reg2rsids.rds")
  # saveRDS(reg2rsids, file = setsfile)
- #
+
 
  # # Drug databases
  # drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
@@ -879,49 +879,50 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
                   data.table=FALSE)
 
- file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.gtf.gz")
- #file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.110.gtf.gz")
- df <- fread(file, data.table=FALSE,skip=1, header=FALSE)
- colnames(df) <- c("chr","source","type","start","end","score","strand","phase","attributes")
- df <- df[df$type=="gene" & df$source=="ensembl_havana",]
- att <- strsplit(df$attributes, ";")
- att <- lapply(att, function(x){gsub("\"","",x)})
- gene_id <- sapply(att, function(x){ x[grep("gene_id",x)]})
- df$gene_id <- gsub("gene_id ","",gene_id)
- df <- df[,c("gene_id","chr","source", "type", "start", "end","strand")]
- df <- df[!df$chr=="X",]
- df <- df[!df$chr=="Y",]
- df$chr <- as.integer(df$chr)
+ # file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.gtf.gz")
+ # #file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.110.gtf.gz")
+ # df <- fread(file, data.table=FALSE,skip=1, header=FALSE)
+ # colnames(df) <- c("chr","source","type","start","end","score","strand","phase","attributes")
+ # df <- df[df$type=="gene" & df$source=="ensembl_havana",]
+ # att <- strsplit(df$attributes, ";")
+ # att <- lapply(att, function(x){gsub("\"","",x)})
+ # gene_id <- sapply(att, function(x){ x[grep("gene_id",x)]})
+ # df$gene_id <- gsub("gene_id ","",gene_id)
+ # df <- df[,c("gene_id","chr","source", "type", "start", "end","strand")]
+ # df <- df[!df$chr=="X",]
+ # df <- df[!df$chr=="Y",]
+ # df$chr <- as.integer(df$chr)
+ #
+ # upstream <- upstream*1000
+ # downstream <- downstream*1000
+ # ensg2rsids <- vector("list", nrow(df))
+ # ensg2cpra <- vector("list", nrow(df))
+ #
+ # start <- df$start-upstream
+ # start[start<1] <- 1
+ # end <- df$end+downstream
+ # maxpos <- max(markers$pos,end)
+ # pos <- 1:maxpos
+ # ensg2rsids <- vector("list", nrow(df))
+ # for (chr in 1:22) {
+ #  message(paste("Processing chr:",chr))
+ #  rsids <- rep(NA, maxpos)
+ #  rsids[as.integer(markers[markers$chr==chr,"pos"])] <- markers[markers$chr==chr,"rsids"]
+ #  for (i in 1:nrow(df)) {
+ #   if(df$chr[i]==chr) {
+ #    grsids <- rsids[start[i]:end[i]]
+ #    ensg2rsids[[i]] <- grsids[!is.na(grsids)]
+ #   }
+ #  }
+ # }
+ # names(ensg2rsids) <- df$gene_id
+ # empty <- sapply(ensg2rsids, function(x){ identical(x, character(0))})
+ # ensg2rsids <- ensg2rsids[!empty]
+ # #setsfile <- file.path(GAlist$dirs["gsets"], "GRCh38.110.ensg2rsids.rds")
+ # setsfile <- file.path(GAlist$dirs["gsets"], "ensg2rsids.rds")
+ # saveRDS(ensg2rsids, file = setsfile)
 
- upstream <- upstream*1000
- downstream <- downstream*1000
- ensg2rsids <- vector("list", nrow(df))
- ensg2cpra <- vector("list", nrow(df))
-
- start <- df$start-upstream
- start[start<1] <- 1
- end <- df$end+downstream
- maxpos <- max(markers$pos,end)
- pos <- 1:maxpos
- ensg2rsids <- vector("list", nrow(df))
- for (chr in 1:22) {
-  message(paste("Processing chr:",chr))
-  rsids <- rep(NA, maxpos)
-  rsids[as.integer(markers[markers$chr==chr,"pos"])] <- markers[markers$chr==chr,"rsids"]
-  for (i in 1:nrow(df)) {
-   if(df$chr[i]==chr) {
-    grsids <- rsids[start[i]:end[i]]
-    ensg2rsids[[i]] <- grsids[!is.na(grsids)]
-   }
-  }
- }
- names(ensg2rsids) <- df$gene_id
- empty <- sapply(ensg2rsids, function(x){ identical(x, character(0))})
- ensg2rsids <- ensg2rsids[!empty]
- #setsfile <- file.path(GAlist$dirs["gsets"], "GRCh38.110.ensg2rsids.rds")
- setsfile <- file.path(GAlist$dirs["gsets"], "ensg2rsids.rds")
- saveRDS(ensg2rsids, file = setsfile)
-
+ ensg2rsids <- readRDS(file = file.path(GAlist$dirs["gsets"], "ensg2rsids.rds"))
 
  sets <- mapSetsDB(sets=ensg2rsids, featureID=markers$rsids, index=TRUE)
  chr <- sapply(sets, function(x) {unique(markers$chr[x])})
