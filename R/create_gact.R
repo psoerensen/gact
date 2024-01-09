@@ -74,6 +74,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- createSetsDB(GAlist=GAlist)
   #GAlist <- createSetsDB(GAlist=GAlist, what="diseases")
   #GAlist <- createMarkerSetsDB(GAlist=GAlist, what="GO")
+  summaryDB(GAlist=GAlist)
 
  }
  # Step 3: Create marker sets from database:
@@ -2395,6 +2396,100 @@ human_filesize <- function(x) {
 
 
 
+#' @export
+summaryDB <- function(GAlist=NULL) {
+
+
+ ################################################################################
+ # Summarize gsea results
+ ################################################################################
+
+ message("Processing GSEA result")
+ resEUR <- readRDS(file=file.path(GAlist$dirs["gsea"],"res_vegas_eur_filtered.rds"))
+ resEAS <- readRDS(file=file.path(GAlist$dirs["gsea"],"res_vegas_eas_filtered.rds"))
+ resEAS <- na.omit(resEAS)
+ resSAS <- readRDS(file=file.path(GAlist$dirs["gsea"],"res_vegas_sas_filtered.rds"))
+ resSAS <- na.omit(resSAS)
+ genes <- intersect(intersect(rownames(resEUR$Z),rownames(resEAS)),rownames(resSAS))
+
+ Z <- cbind(resEUR$Z[genes,],GWAS7=resEAS[genes,"Z"],GWAS8=resSAS[genes,"Z"])
+ P <- cbind(resEUR$p[genes,],GWAS7=resEAS[genes,"p"],GWAS8=resSAS[genes,"p"])
+
+ saveRDS(Z,file=file.path(GAlist$dirs["gsea"],"Z_vegas_filtered.rds"))
+ saveRDS(P,file=file.path(GAlist$dirs["gsea"],"P_vegas_filtered.rds"))
+
+
+ df <- addAnnotationDB(df=P, hyperlinkEXCEL=TRUE)
+ file.csv <- file.path(GAlist$dirs["gsea"],"summary_vegas_filtered.csv")
+ write.csv2(df,file=file.csv,row.names=FALSE)
+
+ df <- addAnnotationDB(df=P)
+ filename <- file.path(GAlist$dirs["gsea"],"summary_vegas_filtered.txt.gz")
+ fwrite(df,file=filename,row.names=FALSE)
+
+
+ ################################################################################
+ # Summarize gbayes results
+ ################################################################################
+
+
+ message("Processing BLR result")
+ studyIDs <- list.files(file.path(GAlist$dirs["gbayes"]), pattern=".rds")
+ studyIDs <- gsub("fit_blr_pruned_","",studyIDs)
+ studyIDs <- gsub(".rds","",studyIDs)
+ gbayesfiles <- list.files(file.path(GAlist$dirs["gbayes"]), pattern=".rds", full.names=TRUE)
+
+ for (i in 1:length(gbayesfiles)) {
+  fit <- readRDS(file=gbayesfiles[i])
+  fnstat <- file.path(GAlist$dirs["gbayes"], paste0(studyIDs[i],"_stat_BayesC.txt.gz"))
+  fwrite(fit$stat[!fit$stat$bm==0,], file=fnstat)
+  fnpost <- file.path(GAlist$dirs["gbayes"], paste0(studyIDs[i],"_post_BayesC.txt.gz"))
+  fwrite(cbind(fit$post,fit$conv[,-4]), file=fnpost)
+ }
+
+ # Extract gene-marker sets
+ sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genesplus")
+ bm <- dm <- vm <- matrix(0,nrow=length(sets),ncol=length(gbayesfiles))
+ rownames(bm) <- rownames(dm) <- rownames(vm) <- names(sets)
+ colnames(bm) <- colnames(dm) <- colnames(vm) <- studyIDs
+
+ for (i in 1:length(gbayesfiles)) {
+  fit <- readRDS(file=gbayesfiles[i])
+  isets <- mapSets(sets,fit$stat$rsids,index=TRUE)
+  b <- sapply(isets,function(x){sum(abs(fit$stat$bm[x]))})
+  d <- sapply(isets,function(x){sum(abs(fit$stat$dm[x]))})
+  vb <- sapply(isets,function(x){sum(abs(fit$stat$vm[x]))})
+  bm[names(b),i] <- b
+  dm[names(d),i] <- d
+  vm[names(vb),i] <- vb
+ }
+
+ df <- addAnnotationDB(df=bm, hyperlinkEXCEL=TRUE)
+ file.csv <- file.path(GAlist$dirs["gbayes"],"summary_b.csv")
+ write.csv2(df,file=file.csv,row.names=FALSE)
+
+ df <- addAnnotationDB(df=dm, hyperlinkEXCEL=TRUE)
+ file.csv <- file.path(GAlist$dirs["gbayes"],"summary_d.csv")
+ write.csv2(df,file=file.csv,row.names=FALSE)
+
+ df <- addAnnotationDB(df=vm, hyperlinkEXCEL=TRUE)
+ file.csv <- file.path(GAlist$dirs["gbayes"],"summary_vb.csv")
+ write.csv2(df,file=file.csv,row.names=FALSE)
+
+
+ df <- addAnnotationDB(df=bm)
+ filename <- file.path(GAlist$dirs["gbayes"],"summary_b.txt.gz")
+ fwrite(df,file=filename,row.names=FALSE)
+
+ df <- addAnnotationDB(df=dm)
+ filename <- file.path(GAlist$dirs["gbayes"],"summary_d.txt.gz")
+ fwrite(df,file=filename,row.names=FALSE)
+
+ df <- addAnnotationDB(df=vm)
+ filename <- file.path(GAlist$dirs["gbayes"],"summary_vb.txt.gz")
+ fwrite(df,file=filename,row.names=FALSE)
+
+}
 
 
 
