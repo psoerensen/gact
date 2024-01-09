@@ -866,7 +866,7 @@ addAnnotationDB <- function(df=NULL, hyperlinkEXCEL=FALSE) {
   res2hyperlink_opentarget <- paste0("=Hyperlink(",'"',res2hyperlink_opentarget,'"',";",'"',df[,1],'"',")")
   df[,1] <- res2hyperlink_ensembl
   df[,2] <- res2hyperlink_opentarget
-  colnames(df)[1:3] <- c("Ensembl","Open Target","Ensembl ID")
+  colnames(df)[1:3] <- c("Ensembl","Open Target","Ensembl Gene ID")
  }
  return(df)
 }
