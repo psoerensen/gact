@@ -2455,7 +2455,7 @@ summaryDB <- function(GAlist=NULL) {
 
  for (i in 1:length(gbayesfiles)) {
   fit <- readRDS(file=gbayesfiles[i])
-  isets <- mapSets(sets,fit$stat$rsids,index=TRUE)
+  isets <- qgg:::mapSets(sets,fit$stat$rsids,index=TRUE)
   b <- sapply(isets,function(x){sum(abs(fit$stat$bm[x]))})
   d <- sapply(isets,function(x){sum(abs(fit$stat$dm[x]))})
   vb <- sapply(isets,function(x){sum(abs(fit$stat$vm[x]))})
