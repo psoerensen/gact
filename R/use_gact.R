@@ -807,3 +807,66 @@ getLDscoresDB <- function(GAlist=NULL, ancestry="EUR", rsids=NULL) {
  if(!is.null(rsids)) ldscores <- ldscores[names(ldscores)%in%rsids]
  return(ldscores)
 }
+
+
+# Define the function to translate gene symbols to Ensembl IDs
+#' @export
+getGeneInfo <- function(sym=NULL,ensg=NULL) {
+ if(!is.null(sym)) {
+  result <- as.data.frame(t(sapply(sym, function(x){sym2info(x)})))
+ }
+ if(!is.null(ensg)) {
+  result <- as.data.frame(t(sapply(ensg, function(x){ensg2info(x)})))
+ }
+ colnames(result) <- c("Symbol", "Ensembl Gene Id", "Description", "Type", "Chr", "Start", "End")
+ return(result)
+}
+
+sym2info <- function(symbol) {
+ base_url <- "https://rest.ensembl.org"
+ url <- paste0(base_url, "/lookup/symbol/homo_sapiens/", symbol)
+ response <- GET(url = url, content_type("application/json"))
+ gene <- fromJSON(content(response, "text"), flatten = TRUE)
+ if(!is.null(gene$error)) gene_information <- c(symbol, rep(NA, 6))
+ if(is.null(gene$error)) gene_information <- c(symbol, gene$id, gene$description, gene$biotype, gene$seq_region_name, gene$start, gene$end)
+ return(gene_information)
+}
+
+ensg2info <- function(ensg) {
+ base_url <- "https://rest.ensembl.org"
+ url <- paste0(base_url, "/lookup/id/", ensg)
+ response <- GET(url = url, content_type("application/json"))
+ gene <- fromJSON(content(response, "text"), flatten = TRUE)
+ if(!is.null(gene$error)) gene_information <- c(symbol, rep(NA, 6))
+ if(is.null(gene$error)) gene_information <- c(gene$display_name, gene$id, gene$description, gene$biotype, gene$seq_region_name, gene$start, gene$end)
+ return(gene_information)
+}
+
+
+# Add annotation to data frame based on Ensemlb IDs
+#' @export
+addAnnotationDB <- function(df=NULL, hyperlinkEXCEL=FALSE) {
+ annotation <- readRDS(file = file.path(GAlist$dirs["gsets"], "genesplus_annotation.rds"))
+ df <- as.data.frame(df)
+ ensg <- rownames(df)
+ if(is.null(ensg)) stop("Please provide rownames for df (should be EnSembl Ids")
+ df <- cbind(ensg,GAlist$gsets[["ensg2sym"]][ensg], annotation[ensg,-1], df)
+ colnames(df)[1:5] <- c("Ensembl Gene ID","Symbol", "Chr", "Start", "Stop")
+ ensg2sym_list <- lapply(df[,"Symbol"], function(x){
+  unlist(strsplit(x,split=" "))})
+ gsym <- unlist(ensg2sym_list)
+ rws <- rep(1:nrow(df),times=sapply(ensg2sym_list,length))
+ df <- df[rws,]
+ df[,"Symbol"] <- gsym
+ if(hyperlinkEXCEL) {
+  df <- cbind(df[,1],df[,1], df)
+  res2hyperlink_ensembl <- paste0("http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",df[,1])
+  res2hyperlink_opentarget <- paste0("https://platform.opentargets.org/target/",df[,1])
+  res2hyperlink_ensembl <- paste0("=Hyperlink(",'"',res2hyperlink_ensembl,'"',";",'"',df[,1],'"',")")
+  res2hyperlink_opentarget <- paste0("=Hyperlink(",'"',res2hyperlink_opentarget,'"',";",'"',df[,1],'"',")")
+  df[,1] <- res2hyperlink_ensembl
+  df[,2] <- res2hyperlink_opentarget
+  colnames(df)[1:3] <- c("Ensembl","Open Target","Ensembl ID")
+ }
+ return(df)
+}
