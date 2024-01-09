@@ -74,7 +74,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- createSetsDB(GAlist=GAlist)
   #GAlist <- createSetsDB(GAlist=GAlist, what="diseases")
   #GAlist <- createMarkerSetsDB(GAlist=GAlist, what="GO")
-  summaryDB(GAlist=GAlist)
+  #summaryDB(GAlist=GAlist)
 
  }
  # Step 3: Create marker sets from database:
