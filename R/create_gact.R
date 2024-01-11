@@ -841,7 +841,6 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  hgnc <- fread("https://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/hgnc_complete_set.txt", data.table=FALSE)
  hgnc2ensg <- hgnc$ensembl_gene_id
  names(hgnc2ensg) <- tolower(hgnc$hgnc_id)
- str(drug2ensg)
  drug2hgnc <- split( drugdb$gene_concept_id, f=as.factor(drugdb$drug_name) )
  drug2ensg <- lapply(drug2hgnc,function(x){unique(na.omit(hgnc2ensg[x]))})
  str(drug2ensg)
