@@ -833,9 +833,23 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  # saveRDS(reg2rsids, file = setsfile)
 
 
- # # Drug databases
- # drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
- #                 quote = "", data.table = FALSE)
+
+ # Drug databases
+ drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
+                 quote = "\"", data.table = FALSE)
+ #write.csv2(drugdb,file.path(GAlist$dirs["drugdb"], "interactions.csv"))
+ hgnc <- fread("https://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/hgnc_complete_set.txt", data.table=FALSE)
+ hgnc2ensg <- hgnc$ensembl_gene_id
+ names(hgnc2ensg) <- tolower(hgnc$hgnc_id)
+ str(drug2ensg)
+ drug2hgnc <- split( drugdb$gene_concept_id, f=as.factor(drugdb$drug_name) )
+ drug2ensg <- lapply(drug2hgnc,function(x){unique(na.omit(hgnc2ensg[x]))})
+ str(drug2ensg)
+ length(drug2ensg)
+ drug2ensg <- drug2ensg[sapply(drug2ensg,length)>0]
+ length(drug2ensg)
+ saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
+
  #
  # drug2eg <- split( drugdb$entrez_id, f=as.factor(drugdb$drug_name) )
  # drug2eg <- lapply(drug2eg,function(x){as.character(x)})
@@ -849,9 +863,9 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  # #saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
  # saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
  #
- # # Add atc codes
- # GAlist <- downloadDB(GAlist=GAlist, what="atc")
- #
+ # Add atc codes
+ GAlist <- downloadDB(GAlist=GAlist, what="atc")
+
  # string2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"string2ensg.rds"))
  # drug2ensp <- lapply(drug2ensg,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
  # drug2complex2ensg <- lapply(drug2ensp,function(x){na.omit(unlist(string2ensg[x]))})
