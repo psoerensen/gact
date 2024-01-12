@@ -232,10 +232,10 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
                    data.table=FALSE)
   GAlist$rsids <- markers$rsids
-  #GAlist$cpra <- paste(GAlist$markers$chr,
-  #                     GAlist$markers$pos,
-  #                     GAlist$markers$ea,
-  #                     GAlist$markers$nea,sep="_")
+  GAlist$cpra <- paste(markers$chr,
+                       markers$pos,
+                       markers$ea,
+                       markers$nea,sep="_")
  }
  if(what=="ensembl") {
   url <- "https://ftp.ensembl.org/pub/release-109/tsv/homo_sapiens/Homo_sapiens.GRCh38.109.entrez.tsv.gz"
@@ -1125,7 +1125,15 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
  if(!is.data.frame(stat)) stop("stat should be  a data frame")
  if(!is.null(stat$rsids)) rownames(stat) <- stat$rsids
 
- # internal summary statistic column format
+ # Remove rows with missing values
+ stat <- na.omit(stat)
+
+ # Handle zero values in p column
+ stat$p <- as.numeric(stat$p)
+ stat$p[stat$p == 0] <- .Machine$double.xmin
+
+
+ # Internal summary statistic column format
  # data.frame(rsids, chr, pos, a1, a2, af, b, seb, stat, p, n)     (single trait)
  # list(marker=(rsids, chr, pos, a1, a2, af), b, seb, stat, p, n)  (multiple trait)
 
