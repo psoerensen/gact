@@ -1103,7 +1103,7 @@ updateStatDB <- function(GAlist=NULL,
                                         file_stat))
   fwrite(stat, file_stat)
  }
-
+ GAlist$studies <- as.data.frame(GAlist$study)
  return(GAlist)
 }
 
