@@ -601,7 +601,7 @@
    server <- function(input, output, session) {
     # Monitor changes in the text input and update column choices
 
-    options(shiny.maxRequestSize = 100 * 1024^2)
+    options(shiny.maxRequestSize = 5000 * 1024^2)
 
     destfile <- tempfile(fileext=".gz")
 
