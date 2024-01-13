@@ -1240,21 +1240,26 @@ columnStatDB <- function(stat=NULL) {
  isInteger <- types=="integer"
  isNumeric <- types=="numeric"
  isCharacter <- types=="character"
+ isChr <- isPos <- isMarker <- NULL
 
  if(any(isInteger)) {
   nlevs <- sapply(stat[,isInteger],function(x){length(unique(x))})
-  isChr <- col_names[isInteger][nlevs<26]
-  isPos <- col_names[isInteger][nlevs>23]
+  maxVal <- sapply(stat[,isInteger],function(x){max(unique(x))})
+  isChr <- col_names[isInteger][22 <= nlevs & nlevs <= 24]
+  isPos <- col_names[isInteger][maxVal>100000000]
  }
  if(any(isCharacter)) {
   nlevs <- sapply(stat[,isCharacter],function(x){length(unique(x))})
-  isAllele <- col_names[isCharacter][nlevs<5]
+  if(is.null(isChr)) isChr <- col_names[isCharacter][22 <= nlevs & nlevs <= 24]
+  #isAllele <- col_names[isCharacter][nlevs<5]
+  isAllele <- sapply(stat[,isCharacter],function(x){sum(c("A","T","C","G")%in%toupper(unique(x)))==4})
+  isAllele <- col_names[isCharacter][isAllele]
   if(length(isAllele)==1) isEA <- isNEA <- isAllele
   if(length(isAllele)==2) {
    isEA <- isAllele[1]
    isNEA <- isAllele[2]
   }
-  isMarker <- col_names[isCharacter][nlevs>5]
+  isMarker <- col_names[isCharacter][nlevs>10000]
  }
  if(any(isNumeric)) {
   minVal <- sapply(stat[,isNumeric],min, na.rm=TRUE)
@@ -1268,6 +1273,7 @@ columnStatDB <- function(stat=NULL) {
   isNca <- isN[1]
   isNco <- isN[1]
   isN <- isN[1]
+  if(max(maxVal)>100000000) isPos <- col_names[isNumeric][maxVal>100000000 && minVal>0]
   isEAF <- col_names[isNumeric][0<=minVal & maxVal<1 & medianVal>0.1 & medianVal<0.7]
   if(length(isEAF)==0) isEAF <- "Unknown"
   isInfo <- col_names[isNumeric][0.3<minVal & maxVal<=1 & medianVal>0.7]
@@ -1275,6 +1281,9 @@ columnStatDB <- function(stat=NULL) {
  }
  best_guess <- c(isMarker,isChr,isPos, isEA, isNEA, isEAF,
                  isB, isSEB, isP, isN, isNca, isNco, isInfo)
+ #names(best_guess) <- c("marker","chr","pos","ea","nea","eaf",
+ #                      "b","seb","p","n","ncase","ncontrols","info")
+ best_guess <- as.character(na.omit(best_guess))
  best_guess
 }
 
