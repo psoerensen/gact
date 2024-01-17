@@ -1104,6 +1104,7 @@ updateStatDB <- function(GAlist=NULL,
   fwrite(stat, file_stat)
  }
  GAlist$studies <- as.data.frame(GAlist$study)
+ rownames(GAlist$studies) <- GAlist$studies$id
  return(GAlist)
 }
 
