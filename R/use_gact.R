@@ -481,6 +481,14 @@ getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NUL
  if(feature=="DrugGenes") setsfile <- file.path(GAlist$dirs["gsets"],"drugGenes.rds")
  if(feature=="DrugComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"drugComplex.rds")
  if(!is.null(setsfile)) sets <- readRDS(file=setsfile)
+ if(feature==KEGG) {
+  msets <- file.path(GAlist$dirs["gsets"],"ensg2rsids.rds")
+  msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
+  sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
+  sets <- mapSets(sets,names(msets), index=FALSE)
+  sets <- lapply(sets, function(x) {unlist(msets[x])})
+
+ }
  if(feature=="Genes") {
   ensg <- sapply(GAlist$gsets$eg2ensg,function(x){x[1]})
   ensg <- unique(ensg)
@@ -520,6 +528,8 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 
 
 #' @export
+#'
+#' @importFrom msigdbr msigdbr
 #'
 getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
 
