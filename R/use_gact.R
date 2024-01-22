@@ -481,7 +481,7 @@ getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NUL
  if(feature=="DrugGenes") setsfile <- file.path(GAlist$dirs["gsets"],"drugGenes.rds")
  if(feature=="DrugComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"drugComplex.rds")
  if(!is.null(setsfile)) sets <- readRDS(file=setsfile)
- if(feature==KEGG) {
+ if(feature=="KEGG") {
   msets <- file.path(GAlist$dirs["gsets"],"ensg2rsids.rds")
   msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
   sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
