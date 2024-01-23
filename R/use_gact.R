@@ -368,7 +368,6 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
   }
   names(gtexSets) <- tissue
   sets <- gtexSets
-  #return(gtexSets)
  }
 
  if (feature %in% c("GTEx", "GTExV7", "GTExV8")) {
