@@ -387,15 +387,16 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
  if(what=="gtex") {
   options(download.file.method="libcurl", url.method="libcurl", timeout=600)
-  url <- "https://storage.googleapis.com/gtex_analysis_v8/single_tissue_qtl_data/GTEx_Analysis_v8_eQTL.tar"
+  url <- "https://storage.googleapis.com/adult-gtex/bulk-qtl/v7/single-tissue-cis-qtl/GTEx_Analysis_v7_eQTL.tar.gz"
   dbdir <- file.path(GAlist$dbdir, "gtex")
-  if(!dir.exists(dbdir)) dir.create(dbdir)
+  dest <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v7_eQTL.tar")
+  download.file(url=url,dest=dest, mode="wb")
+  untar(tarfile=dest,exdir = dbdir)
+  url <- "https://storage.googleapis.com/adult-gtex/bulk-qtl/v8/single-tissue-cis-qtl/GTEx_Analysis_v8_eQTL.tar"
+  dbdir <- file.path(GAlist$dbdir, "gtex")
   dest <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL.tar")
   download.file(url=url,dest=dest, mode="wb")
   untar(tarfile=dest,exdir = dbdir)
-  dbdir <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL")
-  files <- list.files(dbdir)
-  GAlist$gtexfiles <- files
  }
 
  if(what=="gwascatalog") {
@@ -1976,18 +1977,20 @@ columnStatDB <- function(stat=NULL) {
 #   unzip(dest, exdir=GAlist$dirs["marker"])
 #  }
 #
-#  if(what=="gtex") {
-#   options(download.file.method="libcurl", url.method="libcurl", timeout=600)
-#   url <- "https://storage.googleapis.com/gtex_analysis_v8/single_tissue_qtl_data/GTEx_Analysis_v8_eQTL.tar"
-#   dbdir <- file.path(GAlist$dbdir, "gtex")
-#   if(!dir.exists(dbdir)) dir.create(dbdir)
-#   dest <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL.tar")
-#   download.file(url=url,dest=dest, mode="wb")
-#   untar(tarfile=dest,exdir = dbdir)
-#   dbdir <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL")
-#   files <- list.files(dbdir)
-#   GAlist$gtexfiles <- files
-#  }
+ # if(what=="gtex") {
+ #  options(download.file.method="libcurl", url.method="libcurl", timeout=600)
+ #  url <- "https://storage.googleapis.com/adult-gtex/bulk-qtl/v7/single-tissue-cis-qtl/GTEx_Analysis_v7_eQTL.tar.gz"
+ #  #url <- "https://storage.googleapis.com/gtex_analysis_v8/single_tissue_qtl_data/GTEx_Analysis_v8_eQTL.tar"
+ #  dbdir <- file.path(GAlist$dbdir, "gtex")
+ #  #dest <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL.tar")
+ #  dest <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v7_eQTL.tar")
+ #  download.file(url=url,dest=dest, mode="wb")
+ #  untar(tarfile=dest,exdir = dbdir)
+ #  #dbdir <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL")
+ #  dbdir <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v7_eQTL")
+ #  files <- list.files(dbdir)
+ #  GAlist$gtexfiles <- files
+ # }
 #
 #  if(what=="reactome") {
 #   url_db <- "https://reactome.org/download/current/ReactomePathways.txt"
