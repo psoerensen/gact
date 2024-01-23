@@ -338,26 +338,65 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
   #sets <- lapply(sets,unique)
  }
 
- if(feature=="GTEx") {
+ if(feature%in%c("GTEx","GTExV7","GTExV8")) {
   gtexSets <- NULL
-  dbdir <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL")
+  if(feature=="GTEx") dbdir <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL")
+  if(feature=="GTExV7") dbdir <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v7_eQTL")
+  if(feature=="GTExV8") dbdir <- file.path(GAlist$dbdir, "gtex/GTEx_Analysis_v8_eQTL")
   files <- list.files(dbdir)
   rws <- grep("egenes",files)
   files <- files[rws]
-  tissue <- gsub(".v8.egenes.txt.gz","",files)
+  tissue <- gsub(".v7.egenes.txt.gz","",files)
   for(i in 1:length(files)) {
    df <- fread(file.path(dbdir, files[i]), data.table=FALSE)
    df$gene_id <- substr(df$gene_id,1,15)
    df$variant_id <- gsub("chr","",df$variant_id)
-   df$variant_id <- gsub("_b38","",df$variant_id)
-   #gtexSets <- split(df$variant_id,f=df$gene_id)
-   gtexSets[[i]] <- data.frame(ensg=df$gene_id,cpra=df$variant_id,p=df$qval)
+   df$variant_id <- gsub("_b37","",df$variant_id)
+   if(feature=="GTEx") gtexSets[[i]] <- data.frame(ensg=df$gene_id,
+                                                   rsids=df$rs_id_dbSNP147_GRCh37p13,
+                                                   cpra=df$variant_id,
+                                                   p=df$qval)
+   if(feature=="GTEx7") gtexSets[[i]] <- data.frame(ensg=df$gene_id,
+                                                   rsids=df$rs_id_dbSNP151_GRCh38p7,
+                                                   cpra=df$variant_id,
+                                                   p=df$qval)
+   if(feature=="GTEx8") gtexSets[[i]] <- data.frame(ensg=df$gene_id,
+                                                   rsids=df$rs_id_dbSNP147_GRCh37p13,
+                                                   cpra=df$variant_id,
+                                                   p=df$qval)
    message(paste("Processing file:",files[i]))
   }
   names(gtexSets) <- tissue
   sets <- gtexSets
   #return(gtexSets)
  }
+
+ if (feature %in% c("GTEx", "GTExV7", "GTExV8")) {
+  sets <- list()
+  dbdir_suffix <- if (feature == "GTEx" || feature == "GTExV8") {
+   "gtex/GTEx_Analysis_v8_eQTL"
+  } else if (feature == "GTExV7") {
+   "gtex/GTEx_Analysis_v7_eQTL"
+  }
+
+  dbdir <- file.path(GAlist$dbdir, dbdir_suffix)
+  files <- list.files(dbdir, pattern = "egenes", full.names = TRUE)
+  tissue <- gsub("\\.v[78]\\.egenes\\.txt\\.gz$", "", basename(files))
+
+  for (i in seq_along(files)) {
+   df <- fread(files[i], data.table = FALSE)
+   df$gene_id <- substr(df$gene_id, 1, 15)
+   df$variant_id <- gsub("chr|_b37|_b38", "", df$variant_id)
+   rsid_column <- if (feature == "GTExV7") "rs_id_dbSNP147_GRCh37p13" else "rs_id_dbSNP151_GRCh38p7"
+   sets[[i]] <- data.frame(ensg = df$gene_id,
+                               rsids = df[,rsid_column],
+                               cpra = df$variant_id,
+                               p = df$qval)
+   message(paste("Processing file:", basename(files[i])))
+  }
+  names(sets) <- tissue
+ }
+
 
  if(feature%in%c("GWAScatalog","GWAScatalogPlus")) {
   dbdir <- file.path(GAlist$dbdir, "gwas")
