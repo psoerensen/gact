@@ -2,7 +2,7 @@
 % Please edit documentation in R/use_gact.R
 \name{getSetsDB}
 \alias{getSetsDB}
-\title{Retrieve sets of features from a GAlist object}
+\title{Retrieve Feature Sets from GAlist Object}
 \usage{
 getSetsDB(
   GAlist = NULL,
@@ -18,22 +18,51 @@ getSetsDB(
 \arguments{
 \item{GAlist}{A list object providing information and infrastructure of the gact database.}
 
-\item{feature}{A character string specifying the type of feature set to be
-retrieved. Possible values are "Entres Genes", "Genes", "Proteins", "Gene
-Symbol", "GO", "Pathways", "ProteinComplexes", "ChemicalComplexes",
-"ProteinComplexes2Genes", and "ChemicalComplexes2Genes".}
+\item{feature}{A character string specifying the type of data set to retrieve.
+Valid features include:
+\itemize{
+\item \code{"GO"}: Gene Ontology sets.
+\item \code{"Pathways"}: Pathway sets.
+\item \code{"ProteinComplexes"}: Protein complex sets.
+\item \code{"ChemicalComplexes"}: Chemical complex sets.
+\item \code{"DrugGenes"}: Drug-gene interaction sets.
+\item \code{"DrugATCGenes"}: Drug ATC gene sets.
+\item \code{"DrugComplexes"}: Drug complex sets.
+\item \code{"DiseaseGenes"}: Disease-gene interaction sets.
+\item \code{"DiseaseGenesEXP"}: Experimentally validated disease-gene sets.
+\item \code{"DiseaseGenesKB"}: Knowledge-based disease-gene sets.
+\item \code{"DiseaseGenesTM"}: Text-mined disease-gene sets.
+\item \code{"DiseaseGenesEXPplus"}: Comprehensive experimentally validated disease-gene sets.
+\item \code{"DiseaseGenesKBplus"}: Comprehensive knowledge-based disease-gene sets.
+\item \code{"DiseaseGenesTMplus"}: Comprehensive text-mined disease-gene sets.
+\item \code{"ATC1Genes"}, \code{"ATC2Genes"}, \code{"ATC3Genes"}, \code{"ATC4Genes"}: ATC classification gene sets.
+\item \code{"GTEx"}, \code{"GTExV7"}, \code{"GTExV8"}: GTEx project eQTL sets.
+\item \code{"GWAScatalog"}, \code{"GWAScatalogPlus"}: GWAS catalog sets.
+\item \code{"String"}: STRING database protein interaction sets.
+\item \code{"Stitch"}: STITCH database protein-chemical interaction sets.
+}}
 
-\item{featureID}{A character vector of IDs specifying the specific features to
-be retrieved.}
+\item{featureID}{Optional; a character vector of specific feature IDs to select.}
+
+\item{minsets}{Optional; a numeric value specifying the minimum number of sets to include.}
+
+\item{upstream}{Optional; a logical value indicating whether to include upstream data.}
+
+\item{downstream}{Optional; a logical value indicating whether to include downstream data.}
+
+\item{min_combined_score}{Optional; a numeric value specifying the minimum combined score for inclusion.}
+
+\item{min_interactions}{Optional; a numeric value specifying the minimum number of interactions for inclusion.}
 }
 \value{
 A list of the specified feature sets. If \code{featureID} is not \code{NULL},
 returns only the sets with IDs in \code{featureID}.
 }
 \description{
-The \code{getSetsDB} function retrieves sets of features from a GAlist object. The
-feature sets are specified by the \code{feature} argument, and the specific IDs of
-the features can be filtered using the \code{featureID} argument.
+The \code{getSetsDB} function retrieves sets of features from a \code{GAlist} object based on the specified \code{feature} argument.
+It allows filtering of these feature sets using the \code{featureID} argument. This function is designed to handle a variety of
+feature types, including those related to genomic, proteomic, or pharmacological information. The successful operation
+of this function depends on the structure and content of the \code{GAlist} parameter.
 }
 \examples{
 \dontrun{
