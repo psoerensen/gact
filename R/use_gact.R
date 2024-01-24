@@ -986,10 +986,10 @@ hgtDB <- function(GAlist = NULL, sets = NULL, feature = NULL, featureIDs = NULL,
   # Using the exported function from the qgg package for hypergeometric testing
   hgtestDB(p = 1 - x, sets = sets, threshold = 0.5)
  })
- p <- sapply(hgtResults, function(x) {x$p})
- ef <- sapply(hgtResults, function(x) {x$ef})
- rownames(p) <- rownames(ef) <- names(sets)
+ p <- sapply(hgtResults, function(x) {x[,"P-value"]})
+ ef <- sapply(hgtResults, function(x) {x[,"Enrichment Factor"]})
 
+ rownames(p) <- rownames(ef) <- names(sets)
  if(output=="p") hgtResults <- p
  if(output=="summary") hgtResults <- list(p=p,ef=ef)
 
