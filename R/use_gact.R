@@ -271,19 +271,44 @@ designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeature
  return(W)
 }
 
-#' Retrieve sets of features from a GAlist object
+#' Retrieve Feature Sets from GAlist Object
 #'
-#' The `getSetsDB` function retrieves sets of features from a GAlist object. The
-#' feature sets are specified by the `feature` argument, and the specific IDs of
-#' the features can be filtered using the `featureID` argument.
+#' The `getSetsDB` function retrieves sets of features from a `GAlist` object based on the specified `feature` argument.
+#' It allows filtering of these feature sets using the `featureID` argument. This function is designed to handle a variety of
+#' feature types, including those related to genomic, proteomic, or pharmacological information. The successful operation
+#' of this function depends on the structure and content of the `GAlist` parameter.
 #'
 #' @param GAlist A list object providing information and infrastructure of the gact database.
-#' @param feature A character string specifying the type of feature set to be
-#'   retrieved. Possible values are "Entres Genes", "Genes", "Proteins", "Gene
-#'   Symbol", "GO", "Pathways", "ProteinComplexes", "ChemicalComplexes",
-#'   "ProteinComplexes2Genes", and "ChemicalComplexes2Genes".
-#' @param featureID A character vector of IDs specifying the specific features to
-#'   be retrieved.
+#' @param feature A character string specifying the type of data set to retrieve.
+#'        Valid features include:
+#'        \itemize{
+#'          \item \code{"GO"}: Gene Ontology sets.
+#'          \item \code{"Pathways"}: Pathway sets.
+#'          \item \code{"ProteinComplexes"}: Protein complex sets.
+#'          \item \code{"ChemicalComplexes"}: Chemical complex sets.
+#'          \item \code{"DrugGenes"}: Drug-gene interaction sets.
+#'          \item \code{"DrugATCGenes"}: Drug ATC gene sets.
+#'          \item \code{"DrugComplexes"}: Drug complex sets.
+#'          \item \code{"DiseaseGenes"}: Disease-gene interaction sets.
+#'          \item \code{"DiseaseGenesEXP"}: Experimentally validated disease-gene sets.
+#'          \item \code{"DiseaseGenesKB"}: Knowledge-based disease-gene sets.
+#'          \item \code{"DiseaseGenesTM"}: Text-mined disease-gene sets.
+#'          \item \code{"DiseaseGenesEXPplus"}: Comprehensive experimentally validated disease-gene sets.
+#'          \item \code{"DiseaseGenesKBplus"}: Comprehensive knowledge-based disease-gene sets.
+#'          \item \code{"DiseaseGenesTMplus"}: Comprehensive text-mined disease-gene sets.
+#'          \item \code{"ATC1Genes"}, \code{"ATC2Genes"}, \code{"ATC3Genes"}, \code{"ATC4Genes"}: ATC classification gene sets.
+#'          \item \code{"GTEx"}, \code{"GTExV7"}, \code{"GTExV8"}: GTEx project eQTL sets.
+#'          \item \code{"GWAScatalog"}, \code{"GWAScatalogPlus"}: GWAS catalog sets.
+#'          \item \code{"String"}: STRING database protein interaction sets.
+#'          \item \code{"Stitch"}: STITCH database protein-chemical interaction sets.
+#'        }
+#' @param featureID Optional; a character vector of specific feature IDs to select.
+#' @param minsets Optional; a numeric value specifying the minimum number of sets to include.
+#' @param upstream Optional; a logical value indicating whether to include upstream data.
+#' @param downstream Optional; a logical value indicating whether to include downstream data.
+#' @param min_combined_score Optional; a numeric value specifying the minimum combined score for inclusion.
+#' @param min_interactions Optional; a numeric value specifying the minimum number of interactions for inclusion.
+
 #' @return A list of the specified feature sets. If `featureID` is not `NULL`,
 #'   returns only the sets with IDs in `featureID`.
 #'
@@ -891,6 +916,7 @@ addAnnotationDB <- function(df=NULL, hyperlinkEXCEL=FALSE) {
 
 
 # QQ-plot
+#' @export
 qplot <- function(p=NULL, main = "") {
  mlogObs <- -log10(p)
  m <- length(mlogObs)
@@ -899,5 +925,74 @@ qplot <- function(p=NULL, main = "") {
  plot( y = mlogObs[o], x = mlogExp, col = 2, pch = "+",
        frame.plot = FALSE, main = main, xlab = "Expected -log10(p)", ylab = "Observed -log10(p)")
  abline(a = 0, b = 1)
+}
+
+#' Hypergeometric Test on Gene Sets with Customizable Output
+#'
+#' This function performs a hypergeometric test based on the provided parameters.
+#' It retrieves feature sets from a database, constructs a design matrix, maps these sets,
+#' and then applies a hypergeometric test. The output of the test can be customized
+#' using the `output` argument.
+#'
+#' @param GAlist A list containing gene annotation data. This parameter cannot be NULL.
+#' @param sets A list or other structure containing sets of data for analysis.
+#'        This parameter cannot be NULL.
+#' @param feature A character string specifying the type of feature to be used in the analysis.
+#' @param featureIDs An optional vector of feature IDs to filter the analysis.
+#' @param minsets A numeric value specifying the minimum number of sets to be considered.
+#'        Must be a positive integer. Defaults to 5.
+#' @param output A character string specifying the format of the output.
+#'        Options include "p" for returning only p-values, "summary" for a summary
+#'        including both p-values and effect sizes, or NULL for the default full output.
+#'
+#' @return Depending on the `output` parameter, returns either a matrix of hypergeometric
+#'         test results, a matrix of p-values, or a list with p-values and effect sizes.
+#'
+#' @examples
+#' \dontrun{
+#'   # Example usage for default full output
+#'   hgt_results <- hgtDB(GAlist=myGAlist, sets=mySets, feature="myFeature")
+#'   # Example usage for p-values only
+#'   p_values <- hgtDB(GAlist=myGAlist, sets=mySets, feature="myFeature", output="p")
+#'   # Example usage for summary output
+#'   summary_results <- hgtDB(GAlist=myGAlist, sets=mySets, feature="myFeature", output="summary")
+#' }
+#'
+#' @export
+hgtDB <- function(GAlist = NULL, sets = NULL, feature = NULL, featureIDs = NULL,
+                  minsets = 5, output = NULL) {
+
+ # Check for valid input
+ if (!is.null(minsets) && (!is.numeric(minsets) || minsets < 1)) {
+  stop("minsets must be a positive integer")
+ }
+ # Check for valid 'GAlist'
+ if (is.null(GAlist)) stop("'GAlist' cannot be NULL")
+ # Check for valid 'sets'
+ if (is.null(sets)) stop("'sets' cannot be NULL")
+
+ # Get feature sets from the database
+ featureSets <- getSetsDB(GAlist = GAlist, feature = feature, minsets = minsets)
+ rowids <- unique(unlist(featureSets))
+
+ # Generate the design matrix
+ X <- designMatrix(sets = featureSets, rowids = rowids)
+
+ # Map sets from the database
+ sets <- mapSetsDB(sets = sets, featureID = rownames(X), index = TRUE)
+
+ # Apply hypergeometric test
+ hgtResults <- apply(X, 2, function(x) {
+  # Using the exported function from the qgg package for hypergeometric testing
+  hgTestDB(p = 1 - x, sets = sets, threshold = 0.5)
+ })
+ p <- sapply(hgtResults, function(x) {x$p})
+ ef <- sapply(hgtResults, function(x) {x$ef})
+ rownames(p) <- rownames(ef) <- names(sets)
+
+ if(output=="p") hgtResults <- p
+ if(output=="summary") hgtResults <- list(p=p,ef=ef)
+
+ return(hgtResults)
 }
 
