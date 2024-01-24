@@ -887,3 +887,17 @@ addAnnotationDB <- function(df=NULL, hyperlinkEXCEL=FALSE) {
  }
  return(df)
 }
+
+
+
+# QQ-plot
+qplot <- function(p=NULL, main = "") {
+ mlogObs <- -log10(p)
+ m <- length(mlogObs)
+ o <- order(mlogObs, decreasing = TRUE)
+ mlogExp <- -log10((1:m) / m)
+ plot( y = mlogObs[o], x = mlogExp, col = 2, pch = "+",
+       frame.plot = FALSE, main = main, xlab = "Expected -log10(p)", ylab = "Observed -log10(p)")
+ abline(a = 0, b = 1)
+}
+
