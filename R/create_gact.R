@@ -807,33 +807,37 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  att <- sapply(att, function(x){ x[grep("ID=",x)]})
  att <- strsplit(att, ":")
  df$reg_id <- sapply(att, function(x){x[2]})
- sets <- split(df$reg_id, f=as.factor(df$type))
- saveRDS(sets, file = file.path(GAlist$dirs["gsets"], "regSets.rds"))
+ regSets <- split(df$reg_id, f=as.factor(df$type))
+ saveRDS(regSets, file = file.path(GAlist$dirs["gsets"], "regSets.rds"))
 
- # start <- df$start
- # start[start<1] <- 1
- # end <- df$end
- # maxpos <- max(GAlist$markers$pos,end)
- # pos <- 1:maxpos
- # reg2rsids <- vector("list", nrow(df))
- # for (chr in 1:22) {
- #  message(paste("Processing chr:",chr))
- #  rsids <- rep(NA, maxpos)
- #  rsids[as.integer(GAlist$markers[GAlist$markers$chr==chr,"pos"])] <- GAlist$markers[GAlist$markers$chr==chr,"rsids"]
- #  for (i in 1:nrow(df)) {
- #   if(df$chr[i]==chr) {
- #    grsids <- rsids[start[i]:end[i]]
- #    reg2rsids[[i]] <- grsids[!is.na(grsids)]
- #   }
- #  }
- # }
- # names(reg2rsids) <- df$reg_id
- # empty <- sapply(reg2rsids, function(x){ identical(x, character(0))})
- # reg2rsids <- reg2rsids[!empty]
- # setsfile <- file.path(GAlist$dirs["gsets"], "reg2rsids.rds")
- # saveRDS(reg2rsids, file = setsfile)
+ markers <- fread(GAlist$markerfiles, data.table=FALSE)
 
+ start <- df$start
+ start[start<1] <- 1
+ end <- df$end
+ maxpos <- max(markers$pos,end)
+ pos <- 1:maxpos
+ reg2rsids <- vector("list", nrow(df))
+ for (chr in 1:22) {
+  message(paste("Processing chr:",chr))
+  rsids <- rep(NA, maxpos)
+  rsids[as.integer(markers[markers$chr==chr,"pos"])] <- markers[markers$chr==chr,"rsids"]
+  for (i in 1:nrow(df)) {
+   if(df$chr[i]==chr) {
+    grsids <- rsids[start[i]:end[i]]
+    reg2rsids[[i]] <- grsids[!is.na(grsids)]
+   }
+  }
+ }
+ names(reg2rsids) <- df$reg_id
+ empty <- sapply(reg2rsids, function(x){ identical(x, character(0))})
+ reg2rsids <- reg2rsids[!empty]
+ setsfile <- file.path(GAlist$dirs["gsets"], "reg2rsids.rds")
+ saveRDS(reg2rsids, file = setsfile)
 
+ regSets2rsids <- sapply(regSets, function(x){unique(unlist(reg2rsids[x]))})
+ setsfile <- file.path(GAlist$dirs["gsets"], "regSets2rsids.rds")
+ saveRDS(regSets2rsids, file = setsfile)
 
  # Drug databases
  drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
