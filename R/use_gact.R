@@ -984,7 +984,7 @@ hgtDB <- function(GAlist = NULL, sets = NULL, feature = NULL, featureIDs = NULL,
  # Apply hypergeometric test
  hgtResults <- apply(X, 2, function(x) {
   # Using the exported function from the qgg package for hypergeometric testing
-  hgTestDB(p = 1 - x, sets = sets, threshold = 0.5)
+  hgtestDB(p = 1 - x, sets = sets, threshold = 0.5)
  })
  p <- sapply(hgtResults, function(x) {x$p})
  ef <- sapply(hgtResults, function(x) {x$ef})
