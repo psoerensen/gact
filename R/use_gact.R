@@ -867,34 +867,68 @@ ensg2info <- function(ensg) {
 }
 
 
-# Add annotation to data frame based on Ensemlb IDs
+
+#' Add Annotation to Data Frame
+#'
+#' This function adds annotations to a data frame based on Ensembl gene IDs. It can also create
+#' hyperlinks for viewing in Excel.
+#'
+#' @param df Data frame to which annotations are added.
+#' @param ensg Vector of Ensembl gene IDs, if not provided, it's assumed to be rownames of df.
+#' @param ensr Vector of Ensembl regulatory feature IDs, if not provided, it's assumed to be rownames of df.
+#' @param hyperlinkEXCEL Boolean, if TRUE, adds hyperlinks to the Ensembl website for each gene ID.
+#'
+#' @return Annotated data frame.
 #' @export
-addAnnotationDB <- function(df=NULL, hyperlinkEXCEL=FALSE) {
- annotation <- readRDS(file = file.path(GAlist$dirs["gsets"], "genesplus_annotation.rds"))
- df <- as.data.frame(df)
- ensg <- rownames(df)
- if(is.null(ensg)) stop("Please provide rownames for df (should be EnSembl Ids")
- df <- cbind(ensg,GAlist$gsets[["ensg2sym"]][ensg], annotation[ensg,-1], df)
- colnames(df)[1:5] <- c("Ensembl Gene ID","Symbol", "Chr", "Start", "Stop")
- ensg2sym_list <- lapply(df[,"Symbol"], function(x){
-  unlist(strsplit(x,split=" "))})
- gsym <- unlist(ensg2sym_list)
- rws <- rep(1:nrow(df),times=sapply(ensg2sym_list,length))
- df <- df[rws,]
- df[,"Symbol"] <- gsym
- if(hyperlinkEXCEL) {
-  df <- cbind(df[,1],df[,1], df)
-  res2hyperlink_ensembl <- paste0("http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",df[,1])
-  res2hyperlink_opentarget <- paste0("https://platform.opentargets.org/target/",df[,1])
-  res2hyperlink_ensembl <- paste0("=Hyperlink(",'"',res2hyperlink_ensembl,'"',";",'"',df[,1],'"',")")
-  res2hyperlink_opentarget <- paste0("=Hyperlink(",'"',res2hyperlink_opentarget,'"',";",'"',df[,1],'"',")")
-  df[,1] <- res2hyperlink_ensembl
-  df[,2] <- res2hyperlink_opentarget
-  colnames(df)[1:3] <- c("Ensembl","Open Target","Ensembl Gene ID")
+#'
+addAnnotationDB <- function(df = NULL, ensg = NULL, ensr = NULL,
+                            hyperlinkEXCEL = FALSE) {
+ # Load annotation data
+ annotation <- readRDS(file.path(GAlist$dirs["gsets"], "genesplus_annotation.rds"))
+
+ # Process data frame
+ if (!is.null(df)) {
+  if (is.matrix(df)) df <- as.data.frame(df)
+  ensg <- rownames(df)
+ } else if (!is.null(ensg)) {
+  df <- as.data.frame(ensg, stringsAsFactors = FALSE)
+  rownames(df) <- ensg
+ } else {
+  stop("Please provide rownames for df (should be Ensembl IDs)")
  }
+
+ # Merge data with annotations
+ df <- cbind(ensg, GAlist$gsets[["ensg2sym"]][ensg], annotation[ensg, -1], df)
+ colnames(df)[1:5] <- c("Ensembl Gene ID", "Symbol", "Chr", "Start", "Stop")
+
+ # Split and reformat symbols
+ ensg2sym_list <- lapply(df[,"Symbol"], function(x) unlist(strsplit(x, split = " ")))
+ gsym <- unlist(ensg2sym_list)
+ rws <- rep(1:nrow(df), times = sapply(ensg2sym_list, length))
+ df <- df[rws, ]
+ df[,"Symbol"] <- gsym
+
+ # Add hyperlinks if required
+ if (hyperlinkEXCEL) {
+  df <- addHyperlinks(df)
+ }
+
  return(df)
 }
 
+# Function to add hyperlinks for Excel
+addHyperlinks <- function(df) {
+ df_with_links <- cbind(df[, 1], df[, 1], df)
+ colnames(df_with_links)[1:3] <- c("Ensembl", "Open Target", "Ensembl Gene ID")
+ df_with_links[, "Ensembl"] <- createHyperlink(df_with_links[, "Ensembl"], "http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=")
+ df_with_links[, "Open Target"] <- createHyperlink(df_with_links[, "Open Target"], "https://platform.opentargets.org/target/")
+ return(df_with_links)
+}
+
+# Function to create hyperlink string
+createHyperlink <- function(ids, base_url) {
+ paste0("=HYPERLINK(\"", base_url, ids, "\", \"", ids, "\")")
+}
 
 
 # QQ-plot
@@ -978,3 +1012,38 @@ hgtDB <- function(GAlist = NULL, sets = NULL, feature = NULL, featureIDs = NULL,
  return(hgtResults)
 }
 
+
+
+#' # Add annotation to data frame based on Ensemlb IDs
+#' addAnnotationDB <- function(df=NULL, ensg=NULL, ensr=NULL, hyperlinkEXCEL=FALSE) {
+#'  annotation <- readRDS(file = file.path(GAlist$dirs["gsets"], "genesplus_annotation.rds"))
+#'  if(!is.null(df)) {
+#'   if(is.matrix(df)) df <- as.data.frame(df)
+#'   ensg <- rownames(df)
+#'  }
+#'  if(!is.null(ensg)) {
+#'   df <- as.data.frame(ensg)
+#'   rownames(df) <- ensg
+#'  }
+#'
+#'  if(is.null(ensg)) stop("Please provide rownames for df (should be EnSembl Ids")
+#'  df <- cbind(ensg,GAlist$gsets[["ensg2sym"]][ensg], annotation[ensg,-1], df)
+#'  colnames(df)[1:5] <- c("Ensembl Gene ID","Symbol", "Chr", "Start", "Stop")
+#'  ensg2sym_list <- lapply(df[,"Symbol"], function(x){
+#'   unlist(strsplit(x,split=" "))})
+#'  gsym <- unlist(ensg2sym_list)
+#'  rws <- rep(1:nrow(df),times=sapply(ensg2sym_list,length))
+#'  df <- df[rws,]
+#'  df[,"Symbol"] <- gsym
+#'  if(hyperlinkEXCEL) {
+#'   df <- cbind(df[,1],df[,1], df)
+#'   res2hyperlink_ensembl <- paste0("http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",df[,1])
+#'   res2hyperlink_opentarget <- paste0("https://platform.opentargets.org/target/",df[,1])
+#'   res2hyperlink_ensembl <- paste0("=Hyperlink(",'"',res2hyperlink_ensembl,'"',";",'"',df[,1],'"',")")
+#'   res2hyperlink_opentarget <- paste0("=Hyperlink(",'"',res2hyperlink_opentarget,'"',";",'"',df[,1],'"',")")
+#'   df[,1] <- res2hyperlink_ensembl
+#'   df[,2] <- res2hyperlink_opentarget
+#'   colnames(df)[1:3] <- c("Ensembl","Open Target","Ensembl Gene ID")
+#'  }
+#'  return(df)
+#' }
