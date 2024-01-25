@@ -2,23 +2,32 @@
 % Please edit documentation in R/use_gact.R
 \name{addAnnotationDB}
 \alias{addAnnotationDB}
-\title{Add Annotation to Data Frame}
+\title{Add Annotations to a Data Frame}
 \usage{
-addAnnotationDB(df = NULL, ensg = NULL, ensr = NULL, hyperlinkEXCEL = FALSE)
+addAnnotationDB(
+  df = NULL,
+  ensg = NULL,
+  ensr = NULL,
+  feature = "Genes",
+  hyperlinkEXCEL = FALSE
+)
 }
 \arguments{
-\item{df}{Data frame to which annotations are added.}
+\item{df}{Data frame to which annotations will be added.}
 
-\item{ensg}{Vector of Ensembl gene IDs, if not provided, it's assumed to be rownames of df.}
+\item{ensg}{Vector of Ensembl gene IDs; used if 'feature' is set to "Genes".}
 
-\item{ensr}{Vector of Ensembl regulatory feature IDs, if not provided, it's assumed to be rownames of df.}
+\item{ensr}{Vector of Ensembl regulatory feature IDs; used if 'feature' is set to "Regulatory".}
 
-\item{hyperlinkEXCEL}{Boolean, if TRUE, adds hyperlinks to the Ensembl website for each gene ID.}
+\item{feature}{Type of feature for annotation, either "Genes" or "Regulatory" (default: "Genes").}
+
+\item{hyperlinkEXCEL}{Boolean, if TRUE, adds hyperlinks to the Ensembl website for each feature ID.}
 }
 \value{
-Annotated data frame.
+An annotated data frame with additional columns for Ensembl IDs, symbols, and genomic coordinates.
+If 'hyperlinkEXCEL' is TRUE, the data frame will include Excel hyperlinks.
 }
 \description{
-This function adds annotations to a data frame based on Ensembl gene IDs. It can also create
-hyperlinks for viewing in Excel.
+This function enriches a data frame with annotations based on Ensembl gene or regulatory feature IDs.
+It supports the addition of gene or regulatory annotations and can create hyperlinks for Excel.
 }
