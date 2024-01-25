@@ -927,7 +927,8 @@ addHyperlinks <- function(df) {
 
 # Function to create hyperlink string
 createHyperlink <- function(ids, base_url) {
- paste0("=HYPERLINK(\"", base_url, ids, "\", \"", ids, "\")")
+ paste0("=Hyperlink(",'"',base_url,'"',";",'"',ids,'"',")")
+ #paste0("=HYPERLINK(\"", base_url, ids, "\", \"", ids, "\")")
 }
 
 
