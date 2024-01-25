@@ -866,51 +866,57 @@ ensg2info <- function(ensg) {
  return(gene_information)
 }
 
-
-
-#' Add Annotation to Data Frame
+#' Add Annotations to a Data Frame
 #'
-#' This function adds annotations to a data frame based on Ensembl gene IDs. It can also create
-#' hyperlinks for viewing in Excel.
+#' This function enriches a data frame with annotations based on Ensembl gene or regulatory feature IDs.
+#' It supports the addition of gene or regulatory annotations and can create hyperlinks for Excel.
 #'
-#' @param df Data frame to which annotations are added.
-#' @param ensg Vector of Ensembl gene IDs, if not provided, it's assumed to be rownames of df.
-#' @param ensr Vector of Ensembl regulatory feature IDs, if not provided, it's assumed to be rownames of df.
-#' @param hyperlinkEXCEL Boolean, if TRUE, adds hyperlinks to the Ensembl website for each gene ID.
+#' @param df Data frame to which annotations will be added.
+#' @param ensg Vector of Ensembl gene IDs; used if 'feature' is set to "Genes".
+#' @param ensr Vector of Ensembl regulatory feature IDs; used if 'feature' is set to "Regulatory".
+#' @param feature Type of feature for annotation, either "Genes" or "Regulatory" (default: "Genes").
+#' @param hyperlinkEXCEL Boolean, if TRUE, adds hyperlinks to the Ensembl website for each feature ID.
 #'
-#' @return Annotated data frame.
+#' @return An annotated data frame with additional columns for Ensembl IDs, symbols, and genomic coordinates.
+#'         If 'hyperlinkEXCEL' is TRUE, the data frame will include Excel hyperlinks.
 #' @export
 #'
-addAnnotationDB <- function(df = NULL, ensg = NULL, ensr = NULL,
+addAnnotationDB <- function(df = NULL, ensg = NULL, ensr = NULL, feature="Genes",
                             hyperlinkEXCEL = FALSE) {
+
  # Load annotation data
- annotation <- readRDS(file.path(GAlist$dirs["gsets"], "genesplus_annotation.rds"))
+ if(feature=="Genes") annotation <- readRDS(file.path(GAlist$dirs["gsets"], "genesplus_annotation.rds"))
+ if(feature=="Regulatory") annotation <- readRDS(file.path(GAlist$dirs["gsets"], "regulatory_annotation.rds"))
 
  # Process data frame
  if (!is.null(df)) {
   if (is.matrix(df)) df <- as.data.frame(df)
-  ensg <- rownames(df)
- } else if (!is.null(ensg)) {
-  df <- as.data.frame(ensg, stringsAsFactors = FALSE)
-  rownames(df) <- ensg
- } else {
-  stop("Please provide rownames8 for df (should be Ensembl IDs)")
+  ensid <- rownames(df)
+  if (is.null(ensid)) stop("Please provide rownames for df (should be Ensembl Gene or Regulatory IDs)")
  }
+ if(feature=="Regulatory") {
+  ensr <- ensid
+  if(any(ensr%in%annotation$reg_id)) {
+   df <- cbind(annotation[ensr, ], df)
+  }
+ }
+ if(feature=="Genes") {
+  ensg <- ensid
+  # Merge data with annotations
+  df <- cbind(ensg, GAlist$gsets[["ensg2sym"]][ensg], annotation[ensg, -1], df)
+  colnames(df)[1:5] <- c("Ensembl Gene ID", "Symbol", "Chr", "Start", "Stop")
 
- # Merge data with annotations
- df <- cbind(ensg, GAlist$gsets[["ensg2sym"]][ensg], annotation[ensg, -1], df)
- colnames(df)[1:5] <- c("Ensembl Gene ID", "Symbol", "Chr", "Start", "Stop")
+  # Split and reformat symbols
+  ensg2sym_list <- lapply(df[,"Symbol"], function(x) unlist(strsplit(x, split = " ")))
+  gsym <- unlist(ensg2sym_list)
+  rws <- rep(1:nrow(df), times = sapply(ensg2sym_list, length))
+  df <- df[rws, ]
+  df[,"Symbol"] <- gsym
 
- # Split and reformat symbols
- ensg2sym_list <- lapply(df[,"Symbol"], function(x) unlist(strsplit(x, split = " ")))
- gsym <- unlist(ensg2sym_list)
- rws <- rep(1:nrow(df), times = sapply(ensg2sym_list, length))
- df <- df[rws, ]
- df[,"Symbol"] <- gsym
-
- # Add hyperlinks if required
- if (hyperlinkEXCEL) {
-  df <- addHyperlinks(df)
+  # Add hyperlinks if required
+  if (hyperlinkEXCEL) {
+   df <- addHyperlinks(df)
+  }
  }
 
  return(df)
