@@ -894,7 +894,7 @@ addAnnotationDB <- function(df = NULL, ensg = NULL, ensr = NULL,
   df <- as.data.frame(ensg, stringsAsFactors = FALSE)
   rownames(df) <- ensg
  } else {
-  stop("Please provide rownames for df (should be Ensembl IDs)")
+  stop("Please provide rownames8 for df (should be Ensembl IDs)")
  }
 
  # Merge data with annotations
@@ -927,7 +927,7 @@ addHyperlinks <- function(df) {
 
 # Function to create hyperlink string
 createHyperlink <- function(ids, base_url) {
- paste0("=Hyperlink(",'"',base_url,'"',";",'"',ids,'"',")")
+ paste0("=Hyperlink(",'"',paste0(base_url,ids),'"',";",'"',ids,'"',")")
  #paste0("=HYPERLINK(\"", base_url, ids, "\", \"", ids, "\")")
 }
 
