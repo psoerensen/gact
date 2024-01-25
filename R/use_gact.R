@@ -521,9 +521,11 @@ getMarkerSetsDB <- function(GAlist = NULL, feature = NULL, featureID = NULL,
   gtexsets <- getSetsDB(GAlist=GAlist, feature=feature)
   sets <- sapply(gtexsets, function(x){ x$rsids[x$p<threshold]})
  }
- if(feature%in%c("Regulatory","Promoter", "Enhancer","OCR",
+ if(feature%in%c("Regulatory Categories","Regulatory Regions","Promoter", "Enhancer","OCR",
                  "TF", "CTCF")) {
-  setsfile <- file.path(GAlist$dirs["gsets"], "regSets2rsids.rds")
+  if(feature=="Regulatory Categories") setsfile <- file.path(GAlist$dirs["gsets"], "regSets2rsids.rds")
+  if(feature=="Regulatory Regions") setsfile <- file.path(GAlist$dirs["gsets"], "reg2rsids.rds")
+
   sets <- readRDS(file=setsfile)
  }
 
