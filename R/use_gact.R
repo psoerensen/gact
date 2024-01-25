@@ -231,23 +231,6 @@ getStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
  return(res)
 }
 
-#' #' @export
-#' #'
-#' writeStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
-#'                       studyID=NULL, trait="T2D", threshold=1,
-#'                       format="data.frame", file.csv=NULL, hyperlink=TRUE) {
-#'  stat <- getStat(GAlist=GAlist, feature=feature, featureID=featureID,
-#'                  studyID=studyID, trait=trait, threshold=threshold,
-#'                  format=format, hyperlink=hyperlink)
-#'  write.csv2(stat,file=file.csv,row.names=FALSE)
-#' }
-
-#' @export
-#'
-getStudiesDB <- function(GAlist=NULL) {
- return(as.data.frame(GAlist$study))
-}
-
 #' @export
 #'
 designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeatureID=NULL, scale=FALSE) {
@@ -324,17 +307,10 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
                       upstream=FALSE,downstream=FALSE,
                       min_combined_score=700, min_interactions=5) {
  sets <- NULL
- #if(feature=="Entrez Genes") sets <- GAlist$gsets[[1]]
- #if(feature=="Genes") sets <- GAlist$gsets[[2]]
- #if(feature=="Proteins") sets <- GAlist$gsets[[3]]
- #if(feature=="Gene Symbol") sets <- GAlist$gsets[[4]]
  if(feature=="GO") sets <- readRDS(file=file.path(GAlist$dirs["gsets"],"go.rds"))
  if(feature=="Pathways") sets <- readRDS(file=file.path(GAlist$dirs["gsets"],"reactome2ensg.rds"))
- #if(feature=="Pathways2Genes") sets <- GAlist$gsets[[9]]
  if(feature=="ProteinComplexes") sets <- readRDS(file=file.path(GAlist$dirs["gsets"],"string2ensg.rds"))
  if(feature=="ChemicalComplexes") sets <- readRDS(file=file.path(GAlist$dirs["gsets"],"stitch2ensg.rds"))
- #if(feature=="ProteinComplexes2Genes") sets <- GAlist$gsets[[10]]
- #if(feature=="ChemicalComplexes2Genes") sets <- GAlist$gsets[[11]]
  if(feature=="DrugGenes") sets <- readRDS(file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
  if(feature=="DrugATCGenes") {
   hasATC <- !GAlist$target$ATC=="Unknown"
@@ -360,10 +336,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
   sets <- lapply(atcSets, function(x){
    unlist(drugSets[x])
   })
-  #sets <- lapply(sets,unique)
  }
-
-
  if (feature %in% c("GTEx", "GTExV7", "GTExV8")) {
   sets <- list()
   dbdir_suffix <- if (feature == "GTEx" || feature == "GTExV8") {
@@ -371,11 +344,9 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
   } else if (feature == "GTExV7") {
    "gtex/GTEx_Analysis_v7_eQTL"
   }
-
   dbdir <- file.path(GAlist$dbdir, dbdir_suffix)
   files <- list.files(dbdir, pattern = "egenes", full.names = TRUE)
   tissue <- gsub("\\.v[78]\\.egenes\\.txt\\.gz$", "", basename(files))
-
   for (i in seq_along(files)) {
    df <- fread(files[i], data.table = FALSE)
    df$gene_id <- substr(df$gene_id, 1, 15)
@@ -389,44 +360,65 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
   }
   names(sets) <- tissue
  }
-
-
- if(feature%in%c("GWAScatalog","GWAScatalogPlus")) {
+ if (feature %in% c("GWAScatalog", "GWAScatalogPlus")) {
   dbdir <- file.path(GAlist$dbdir, "gwas")
   gwasfile <- file.path(dbdir, "gwas-catalog-associations_ontology-annotated.tsv")
-  gwas <- fread(gwasfile, data.table=FALSE, quote="")
-  gwasGenes <- split(gwas$SNP_GENE_IDS,f=gwas$MAPPED_TRAIT)
-  gwasGenesUp <- split(gwas$UPSTREAM_GENE_ID,f=gwas$MAPPED_TRAIT)
-  gwasGenesDown <- split(gwas$DOWNSTREAM_GENE_ID,f=gwas$MAPPED_TRAIT)
-  gwasGenes <- lapply(gwasGenes, function(x) {
-   set <- unlist(strsplit(x,split=","))
-   set <- gsub(" ", "",set)
-  })
-  gwasGenesUp <- lapply(gwasGenesUp, function(x) {
-   set <- unlist(strsplit(x,split=","))
-   set <- gsub(" ", "",set)
-  })
-  gwasGenesDown <- lapply(gwasGenesDown, function(x) {
-   set <- unlist(strsplit(x,split=","))
-   set <- gsub(" ", "",set)
-  })
-  if(any(!names(gwasGenes)==names(gwasGenesUp))) stop("Mismatch detected in trait names")
-  if(any(!names(gwasGenes)==names(gwasGenesDown))) stop("Mismatch detected in trait names")
-  #empty <- sapply(gwasGenes, function(x){ any(identical(x, character(0)))})
-  #gwasGenes[empty] <- NULL
-  #empty <- sapply(gwasGenesUp, function(x){ any(identical(x, character(0)))})
-  #gwasGenesUp[empty] <- NULL
-  #empty <- sapply(gwasGenesDown, function(x){ any(identical(x, character(0)))})
-  #gwasGenesDown[empty] <- NULL
-  #gwasGenes <- list(genes=gwasGenes, up=gwasGenesUp, down=gwasGenesDown)
-  if(feature=="GWAScatalogPlus") {
-   for(i in 1:length(gwasGenes)) {
-    gwasGenes[[i]] <- c(gwasGenes[[i]],gwasGenesUp[[i]],gwasGenesDown[[i]])
-   }
+  gwas <- fread(gwasfile, data.table = FALSE, quote = "")
+  processGenes <- function(genes) {
+   genes <- lapply(genes, function(x) {
+    set <- unlist(strsplit(x, split = ","))
+    gsub(" ", "", set)
+   })
+   genes
   }
-  sets <- lapply(gwasGenes,unique)
-  #return(gwasGenes)
+  gwasGenes <- split(gwas$SNP_GENE_IDS, f = gwas$MAPPED_TRAIT)
+  gwasGenesUp <- split(gwas$UPSTREAM_GENE_ID, f = gwas$MAPPED_TRAIT)
+  gwasGenesDown <- split(gwas$DOWNSTREAM_GENE_ID, f = gwas$MAPPED_TRAIT)
+  gwasGenes <- processGenes(gwasGenes)
+  gwasGenesUp <- processGenes(gwasGenesUp)
+  gwasGenesDown <- processGenes(gwasGenesDown)
+  # Check for mismatches in trait names
+  if (any(!names(gwasGenes) == names(gwasGenesUp))) {
+   stop("Mismatch detected in trait names (upstream)")
+  }
+  if (any(!names(gwasGenes) == names(gwasGenesDown))) {
+   stop("Mismatch detected in trait names (downstream)")
+  }
+  # Combine genes if GWAScatalogPlus is selected
+  if (feature == "GWAScatalogPlus") {
+   gwasGenes <- mapply(c, gwasGenes, gwasGenesUp, gwasGenesDown, SIMPLIFY = FALSE)
+  }
+  sets <- lapply(gwasGenes, unique)
  }
+
+ # if(feature%in%c("GWAScatalog","GWAScatalogPlus")) {
+ #  dbdir <- file.path(GAlist$dbdir, "gwas")
+ #  gwasfile <- file.path(dbdir, "gwas-catalog-associations_ontology-annotated.tsv")
+ #  gwas <- fread(gwasfile, data.table=FALSE, quote="")
+ #  gwasGenes <- split(gwas$SNP_GENE_IDS,f=gwas$MAPPED_TRAIT)
+ #  gwasGenesUp <- split(gwas$UPSTREAM_GENE_ID,f=gwas$MAPPED_TRAIT)
+ #  gwasGenesDown <- split(gwas$DOWNSTREAM_GENE_ID,f=gwas$MAPPED_TRAIT)
+ #  gwasGenes <- lapply(gwasGenes, function(x) {
+ #   set <- unlist(strsplit(x,split=","))
+ #   set <- gsub(" ", "",set)
+ #  })
+ #  gwasGenesUp <- lapply(gwasGenesUp, function(x) {
+ #   set <- unlist(strsplit(x,split=","))
+ #   set <- gsub(" ", "",set)
+ #  })
+ #  gwasGenesDown <- lapply(gwasGenesDown, function(x) {
+ #   set <- unlist(strsplit(x,split=","))
+ #   set <- gsub(" ", "",set)
+ #  })
+ #  if(any(!names(gwasGenes)==names(gwasGenesUp))) stop("Mismatch detected in trait names")
+ #  if(any(!names(gwasGenes)==names(gwasGenesDown))) stop("Mismatch detected in trait names")
+ #  if(feature=="GWAScatalogPlus") {
+ #   for(i in 1:length(gwasGenes)) {
+ #    gwasGenes[[i]] <- c(gwasGenes[[i]],gwasGenesUp[[i]],gwasGenesDown[[i]])
+ #   }
+ #  }
+ #  sets <- lapply(gwasGenes,unique)
+ # }
 
  if(feature=="String") {
   file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
@@ -447,8 +439,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
 
  if(!is.null(featureID)) {
   select <- names(sets)%in%featureID
-  if(sum(select)==0) stop("None of the fetureIDs found in sets")
-  #if(any(!select)) message(paste("Some IDs not in data base:",featureID[!select]))
+  if(sum(select)==0) stop("None of the featureIDs found in sets")
   sets <- sets[select]
  }
  mset <- sapply(sets,length)
@@ -480,25 +471,30 @@ getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, min_combined_sco
  return(drugComplex)
 }
 
-
-#' Get Marker Sets from database
+#' Retrieve Marker Sets from Database
 #'
-#' This function retrieves marker sets based on a given feature and feature ID from a file. The feature can be one of the following: Genes, Inter Genes, Gene Symbol, Proteins, Pathways, GO, ProteinComplexes, ChemicalComplexes. The feature ID refers to the ID of the feature for which the marker sets are to be retrieved. The `rsids` argument is optional and refers to a list of SNP IDs for which the corresponding marker sets are to be retrieved.
+#' Retrieves marker sets based on a given feature and feature ID. Supports various features
+#' such as Genes, Entrez Genes, Gene Symbol, Proteins, Pathways, GO, Protein Complexes,
+#' Chemical Complexes, and others. Optionally, can filter by a list of SNP IDs.
 #'
-#' @param GAlist A list object providing information and infrastructure of the gact database.
-#' @param feature A string specifying the type of biological feature for which the marker sets are to be retrieved. The options are: "Genes", "Entrez Genes", "Gene Symbol", "Proteins", "Pathways", "GO", "Protein Complexes", and "Chemical Complexes".
-#' @param featureID The ID of the feature for which the marker sets are to be retrieved.
-#' @param rsids A character vector of rsids to subset the marker sets.
+#' @param GAlist A list object with the gact database infrastructure.
+#' @param feature A string specifying the biological feature type for the marker sets.
+#' @param featureID ID of the feature to retrieve marker sets for.
+#' @param rsids Optional vector of rsids to filter the marker sets.
+#' @param threshold Threshold value for filtering (default is 0.01).
 #'
-#' @return A list of marker sets for the specified feature and feature ID, where each set is a character vector of rsids.
+#' @return A list of marker sets for the specified feature and feature ID, each set
+#'         being a character vector of rsids.
 #'
 #' @examples
 #' \dontrun{
-#' sets <- getMarkerSetsDB(GAlist=GAlist, feature="Genes", featureID=c("ENSG00000165879", "ENSG00000012048"))
+#'   sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes",
+#'                           featureID = c("ENSG00000165879", "ENSG00000012048"))
 #' }
 #' @export
-#'
-getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NULL) {
+getMarkerSetsDB <- function(GAlist = NULL, feature = NULL, featureID = NULL,
+                            rsids = NULL, threshold = 0.01) {
+ if(is.null(feature)) stop("Feature is required")
 
  setsfile <- NULL
  if(feature=="Genesplus") setsfile <- file.path(GAlist$dirs["gsets"],"ensg2rsids.rds")
@@ -513,27 +509,36 @@ getMarkerSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rsids=NUL
  if(feature=="DrugGenes") setsfile <- file.path(GAlist$dirs["gsets"],"drugGenes.rds")
  if(feature=="DrugComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"drugComplex.rds")
  if(!is.null(setsfile)) sets <- readRDS(file=setsfile)
+
  if(feature=="KEGG") {
   msets <- readRDS(file.path(GAlist$dirs["gsets"],"ensg2rsids.rds"))
   msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
   sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
   sets <- mapSets(sets,names(msets), index=FALSE)
   sets <- lapply(sets, function(x) {unlist(msets[x])})
+ }
+ if(feature%in%c("GTEx","GTExV7","GTExV8")) {
+  gtexsets <- getSetsDB(GAlist=GAlist, feature=feature)
+  sets <- sapply(gtexsets, function(x){ x$rsids[x$p<threshold]})
+ }
+ if(feature%in%c("Regulatory","Promoter", "Enhancer","OCR",
+                 "TF", "CTCF")) {
+  setsfile <- file.path(GAlist$dirs["gsets"], "regSets2rsids.rds")
+  sets <- readRDS(file=setsfile)
+ }
 
- }
- if(feature=="Genes") {
-  ensg <- sapply(GAlist$gsets$eg2ensg,function(x){x[1]})
-  ensg <- unique(ensg)
-  inSet <- names(sets)%in%ensg
-  sets <- sets[inSet]
- }
+ # Filter by featureID if provided
  if(!is.null(featureID)) {
-  inSet <- featureID%in%names(sets)
-  if(any(!inSet)) warning(paste("Some IDs not in data base:",featureID[!inSet]))
-  featureID <- featureID[featureID%in%names(sets)]
+  inSet <- featureID %in% names(sets)
+  if(any(!inSet)) warning("Some IDs not in database:", paste(featureID[!inSet], collapse = ", "))
   sets <- sets[featureID]
  }
- if(!is.null(rsids)) sets <- qgg:::mapSets(sets=sets, rsids=rsids, index=FALSE)
+
+ # Filter by rsids if provided
+ if(!is.null(rsids)) {
+  sets <- qgg:::mapSets(sets = sets, rsids = rsids, index = FALSE)
+ }
+
  return(sets)
 }
 
@@ -797,31 +802,6 @@ getInteractionsDB <- function(ids=NULL, species="9606", threshold=900) {
  return(interactions)
 }
 
-
-
-#' #' @export
-#' designMatrix <- function(sets=NULL, values=NULL, featureIDs=NULL, format="sparse") {
-#'  if(format=="sparse") {
-#'   # Compute design matrix for marker sets in sparse format
-#'   is <- qgg::mapSets(sets=sets, rsids=featureIDs, index=TRUE)
-#'   js <- rep(1:length(is),times=sapply(is,length))
-#'   W <- sparseMatrix(unlist(is),as.integer(js),x=rep(1,length(js)))
-#'   indx <- 1:max(sapply(is,max))
-#'   featureIDs <- featureIDs[indx]
-#'   colnames(W) <- names(is)
-#'   rownames(W) <- featureIDs
-#'  }
-#'  if(format=="dense") {
-#'   sets <- qgg:::mapSets(sets=sets,rsids=featureIDs, index=TRUE)
-#'   W <- matrix(0,nrow=length(featureIDs), ncol=length(sets))
-#'   for(i in 1:length(sets)) {
-#'    W[sets[[i]],i] <- 1
-#'   }
-#'   colnames(W) <- names(sets)
-#'   rownames(W) <- featureIDs
-#'  }
-#'  return(W)
-#' }
 
 #' @export
 mapSetsDB <- function(sets = NULL, featureID = NULL, GAlist = NULL, index = TRUE) {

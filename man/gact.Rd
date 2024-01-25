@@ -2,15 +2,9 @@
 % Please edit documentation in R/create_gact.R
 \name{gact}
 \alias{gact}
-\title{Create or download GACT data}
+\title{Create the database Genomic Association of Complex Traits (GACT)}
 \usage{
-gact(
-  GAlist = NULL,
-  version = NULL,
-  task = "download",
-  dbdir = NULL,
-  what = "lite"
-)
+gact(GAlist = NULL, version = NULL, task = "download", dbdir = NULL)
 }
 \arguments{
 \item{GAlist}{A list object providing information and infrastructure of the gact database.}
@@ -20,19 +14,20 @@ gact(
 \item{task}{The task to perform, either "download" or "process". By default "download".}
 
 \item{dbdir}{The directory where the database should be stored, by default the current working directory.}
-
-\item{what}{Specifies the type of data to download, either "lite" or "full". By default "lite".}
 }
 \value{
 A list providing information and infrastructure of the gact database.
 }
 \description{
-The gact function is used to create or download a GACT database with information
-on genomic associations for complex traits. The genomic associations
-include single marker associations linked to genetic markers in a Glist.
-This includes stringent quality control. In addition genomic associations
-linked to different genomic features (e.g. genes, proteins, chemical-complexes,
-protein-complexes, biological pathways) are provided.
+The \code{gact} function is designed for establishing and populating a comprehensive
+database focused on genomic associations with complex traits. This function serves
+two primary roles: infrastructure creation and data acquisition. It facilitates the
+assembly of a structured repository encompassing single marker associations,
+rigorously curated to ensure high-quality data. Beyond individual genetic markers,
+the function integrates a broad spectrum of genomic entities, encompassing genes,
+proteins, and an array of complexes (chemical, protein) as well as various
+biological pathways. This integration aims to provide a holistic view of genomic
+associations and their multifaceted relationships in the context of complex traits.
 }
 \examples{
 \dontrun{

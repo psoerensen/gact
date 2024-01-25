@@ -2,27 +2,39 @@
 % Please edit documentation in R/use_gact.R
 \name{getMarkerSetsDB}
 \alias{getMarkerSetsDB}
-\title{Get Marker Sets from database}
+\title{Retrieve Marker Sets from Database}
 \usage{
-getMarkerSetsDB(GAlist = NULL, feature = NULL, featureID = NULL, rsids = NULL)
+getMarkerSetsDB(
+  GAlist = NULL,
+  feature = NULL,
+  featureID = NULL,
+  rsids = NULL,
+  threshold = 0.01
+)
 }
 \arguments{
-\item{GAlist}{A list object providing information and infrastructure of the gact database.}
+\item{GAlist}{A list object with the gact database infrastructure.}
 
-\item{feature}{A string specifying the type of biological feature for which the marker sets are to be retrieved. The options are: "Genes", "Entrez Genes", "Gene Symbol", "Proteins", "Pathways", "GO", "Protein Complexes", and "Chemical Complexes".}
+\item{feature}{A string specifying the biological feature type for the marker sets.}
 
-\item{featureID}{The ID of the feature for which the marker sets are to be retrieved.}
+\item{featureID}{ID of the feature to retrieve marker sets for.}
 
-\item{rsids}{A character vector of rsids to subset the marker sets.}
+\item{rsids}{Optional vector of rsids to filter the marker sets.}
+
+\item{threshold}{Threshold value for filtering (default is 0.01).}
 }
 \value{
-A list of marker sets for the specified feature and feature ID, where each set is a character vector of rsids.
+A list of marker sets for the specified feature and feature ID, each set
+being a character vector of rsids.
 }
 \description{
-This function retrieves marker sets based on a given feature and feature ID from a file. The feature can be one of the following: Genes, Inter Genes, Gene Symbol, Proteins, Pathways, GO, ProteinComplexes, ChemicalComplexes. The feature ID refers to the ID of the feature for which the marker sets are to be retrieved. The \code{rsids} argument is optional and refers to a list of SNP IDs for which the corresponding marker sets are to be retrieved.
+Retrieves marker sets based on a given feature and feature ID. Supports various features
+such as Genes, Entrez Genes, Gene Symbol, Proteins, Pathways, GO, Protein Complexes,
+Chemical Complexes, and others. Optionally, can filter by a list of SNP IDs.
 }
 \examples{
 \dontrun{
-sets <- getMarkerSetsDB(GAlist=GAlist, feature="Genes", featureID=c("ENSG00000165879", "ENSG00000012048"))
+  sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes",
+                          featureID = c("ENSG00000165879", "ENSG00000012048"))
 }
 }
