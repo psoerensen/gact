@@ -899,6 +899,10 @@ addAnnotationDB <- function(df = NULL, ensg = NULL, ensr = NULL, feature="Genes"
   if(any(ensr%in%annotation$reg_id)) {
    df <- cbind(annotation[ensr, ], df)
   }
+  # Add hyperlinks if required
+  if (hyperlinkEXCEL) {
+   warning("Not possible to add hyperlink for regulatory features")
+  }
  }
  if(feature=="Genes") {
   ensg <- ensid
