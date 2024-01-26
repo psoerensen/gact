@@ -28,10 +28,8 @@
 #' \dontrun{
 #' GAlist <- gact()
 #' }
-
+#'
 #' @importFrom R.utils gzip
-
-
 #' @export
 #'
 gact <- function(GAlist=NULL, version=NULL, task="download",
