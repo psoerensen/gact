@@ -33,4 +33,5 @@ associations and their multifaceted relationships in the context of complex trai
 \dontrun{
 GAlist <- gact()
 }
+
 }
