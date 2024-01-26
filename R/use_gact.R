@@ -491,6 +491,7 @@ getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, min_combined_sco
 #'   sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes",
 #'                           featureID = c("ENSG00000165879", "ENSG00000012048"))
 #' }
+#' @importFrom msigdbr msigdbr
 #' @export
 getMarkerSetsDB <- function(GAlist = NULL, feature = NULL, featureID = NULL,
                             rsids = NULL, threshold = 0.01) {
@@ -564,11 +565,29 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 }
 
 
-
-
-#' @export
+#' Retrieve Marker Statistics from Database
 #'
-#' @importFrom msigdbr msigdbr
+#' This function fetches statistical data for markers from a genomic association database.
+#' It allows filtering based on study IDs and various parameters. Options include fetching
+#' specific statistics like effect sizes, standard errors, p-values, etc., for one or more studies.
+#'
+#' @param GAlist A list object providing information and infrastructure of the genomic association database.
+#' @param studyID A vector of study IDs for which statistics are to be retrieved.
+#' @param what Specifies the type of statistics to retrieve; "all" for all statistics or specific
+#'        types like "rsids", "b", "seb", "eaf", "ea", "nea", "z", "p" (default: "all").
+#' @param format Specifies the format of the output; either "list" or "data.frame" (default: "list").
+#' @param rm.na Boolean indicating whether to remove NA values (default: TRUE).
+#' @param rsids An optional vector of SNP IDs to subset the marker statistics.
+#' @param cpra An optional vector of chromosome-position-ref-alt values to map to marker IDs.
+#'
+#' @return Depending on the 'format' and 'what' parameters, the function returns a list or
+#'         data.frame of the requested marker statistics.
+#'
+#' @examples
+#' \dontrun{
+#'   stats <- getMarkerStatDB(GAlist = GAlist, studyID = "GWAS1")
+#' }
+#' @export
 #'
 getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
 
@@ -892,8 +911,9 @@ addAnnotationDB <- function(df = NULL, ensg = NULL, ensr = NULL, feature="Genes"
  if (!is.null(df)) {
   if (is.matrix(df)) df <- as.data.frame(df)
   ensid <- rownames(df)
-  if (is.null(ensid)) stop("Please provide rownames for df (should be Ensembl Gene or Regulatory IDs)")
+  if (is.null(ensid)) stop("Please provide rownames for df (e.g. Ensembl Gene or Regulatory IDs)")
  }
+
  if(feature=="Regulatory") {
   ensr <- ensid
   if(any(ensr%in%annotation$reg_id)) {
