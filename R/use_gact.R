@@ -254,7 +254,7 @@ designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeature
  return(W)
 }
 
-#' Retrieve Feature Sets from GAlist Object
+#' Retrieve Feature Sets from Database
 #'
 #' The `getSetsDB` function retrieves sets of features from a `GAlist` object based on the specified `feature` argument.
 #' It allows filtering of these feature sets using the `featureID` argument. This function is designed to handle a variety of
@@ -524,8 +524,8 @@ getMarkerSetsDB <- function(GAlist = NULL, feature = NULL, featureID = NULL,
  }
  if(feature%in%c("Regulatory Categories","Regulatory Regions","Promoter", "Enhancer","OCR",
                  "TF", "CTCF")) {
-  if(feature=="Regulatory Categories") setsfile <- file.path(GAlist$dirs["gsets"], "regSets2rsids.rds")
-  if(feature=="Regulatory Regions") setsfile <- file.path(GAlist$dirs["gsets"], "reg2rsids.rds")
+  if(feature=="Regulatory Categories") setsfile <- file.path(GAlist$dirs["gsets"], "reg2rsids.rds")
+  if(feature=="Regulatory Regions") setsfile <- file.path(GAlist$dirs["gsets"], "ensr2rsids.rds")
 
   sets <- readRDS(file=setsfile)
  }
@@ -679,6 +679,108 @@ getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list"
   return(res)
  }
 
+}
+
+#' Get GTEx data
+#'
+#' This function retrieves gene expression data from the GTEx project,
+#' based on the specified GTEx version, tissue type, and RSIDs (if provided).
+#' It supports both GTEx V7 and V8 versions. GTEx downloaded from here:
+#' https://www.gtexportal.org/home/downloads/adult-gtex/qtl
+#'
+#' @param GAlist A list containing the directory path with GTEx data.
+#' @param version A character string specifying the GTEx data version,
+#'        either "V8" or "V7".
+#' @param rsids A vector of RSIDs for which data is to be retrieved.
+#'        If NULL, data for all available RSIDs is retrieved.
+#' @param format A character string specifying the output format,
+#'        either "data.frame" or "list".
+#' @param tissue A vector of tissue names for which data is to be retrieved.
+#' @param tissue A vector of tissue names for which data is to be retrieved.
+#'        Possible tissues include: "Adipose_Subcutaneous", "Adipose_Visceral_Omentum",
+#'        "Adrenal_Gland", "Artery_Aorta", "Artery_Coronary", "Artery_Tibial",
+#'        "Brain_Amygdala", "Brain_Anterior_cingulate_cortex_BA24", "Brain_Caudate_basal_ganglia",
+#'        "Brain_Cerebellar_Hemisphere", "Brain_Cerebellum", "Brain_Cortex",
+#'        "Brain_Frontal_Cortex_BA9", "Brain_Hippocampus", "Brain_Hypothalamus",
+#'        "Brain_Nucleus_accumbens_basal_ganglia", "Brain_Putamen_basal_ganglia",
+#'        "Brain_Spinal_cord_cervical_c-1", "Brain_Substantia_nigra", "Breast_Mammary_Tissue",
+#'        "Cells_Cultured_fibroblasts", "Cells_EBV-transformed_lymphocytes", "Colon_Sigmoid",
+#'        "Colon_Transverse", "Esophagus_Gastroesophageal_Junction", "Esophagus_Mucosa",
+#'        "Esophagus_Muscularis", "Heart_Atrial_Appendage", "Heart_Left_Ventricle",
+#'        "Kidney_Cortex", "Liver", "Lung", "Minor_Salivary_Gland", "Muscle_Skeletal",
+#'        "Nerve_Tibial", "Ovary", "Pancreas", "Pituitary", "Prostate",
+#'        "Skin_Not_Sun_Exposed_Suprapubic", "Skin_Sun_Exposed_Lower_leg",
+#'        "Small_Intestine_Terminal_Ileum", "Spleen", "Stomach", "Testis",
+#'        "Thyroid", "Uterus", "Vagina", "Whole_Blood".
+#'        If NULL, data for all available tissues is retrieved.
+#' @return A list or a data frame (based on the `format` parameter)
+#'         containing gene expression data.
+#' @examples
+#' GAlist <- list(dbdir = "path/to/GTEx/data")
+#' gtx_data <- getGTX(GAlist, version = "V8", tissue = c("Liver", "Heart"))
+#' @export
+getGTX <- function(GAlist = NULL, version = "V8", rsids = NULL,
+                   tissue = NULL, format = "data.frame") {
+ # Initialize an empty list to store results
+ gtx <- list()
+
+ # Define the directory suffix based on the version
+ dbdir_suffix <- if (version == "V8") {
+  "gtex/GTEx_Analysis_v8_eQTL"
+ } else if (version == "V7") {
+  "gtex/GTEx_Analysis_v7_eQTL"
+ } else {
+  stop("Invalid GTEx version. Only 'V7' and 'V8' are supported.")
+ }
+
+ # Construct the directory path
+ dbdir <- file.path(GAlist$dbdir, dbdir_suffix)
+
+ # Get the list of files
+ files <- list.files(dbdir, pattern = "egenes", full.names = TRUE)
+
+ # Extract tissue names from filenames
+ files_tissue <- gsub("\\.v[78]\\.egenes\\.txt\\.gz$", "", basename(files))
+
+ # Filter files by tissue if specified
+ if (!is.null(tissue)) {
+  select <- files_tissue %in% tissue
+  select <- files_tissue %in% tissue
+  if (!any(select)) stop("Some of the selected tissues not in this GTEx version")
+  files <- files[select]
+  tissue <- files_tissue[select]
+ }
+
+ # Process each file
+ for (i in seq_along(files)) {
+  df <- fread(files[i], data.table = FALSE)
+  df$gene_id <- substr(df$gene_id, 1, 15)
+  df$chr <- gsub("chr","",df$chr)
+  df$variant_id <- gsub("chr|_b37|_b38", "", df$variant_id)
+  rsid_column <- if (version == "V7") "rs_id_dbSNP147_GRCh37p13" else "rs_id_dbSNP151_GRCh38p7"
+  gtx[[i]] <- data.frame(tissue = tissue[i],
+                         ensg = df$gene_id,
+                         rsids = df[, rsid_column],
+                         p = df$pval_beta,
+                         q = df$qval)
+  # gtx[[i]] <- data.frame(tissue = tissue[i],
+  #                        ensg = df$gene_id,
+  #                        rsids = df[, rsid_column],
+  #                        chr = df$chr,
+  #                        ref = df$ref,
+  #                        alt = df$alt,
+  #                        maf = df$maf,
+  #                        tss_distance= df$tss_distance,
+  #                        qval = df$qval)
+  message(paste("Processing file:", basename(files[i])))
+ }
+
+ # Combine all data frames if required
+ if (format == "data.frame") {
+  gtx <- do.call(rbind, gtx)
+ }
+
+ return(gtx)
 }
 
 #' @export
