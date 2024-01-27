@@ -626,13 +626,14 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
 
  regSets <- split(df$reg_id, f=as.factor(df$type))
  saveRDS(regSets, file = file.path(GAlist$dirs["gsets"], "regSets.rds"))
+
  markers <- fread(GAlist$markerfiles, data.table=FALSE)
  start <- df$start
  start[start<1] <- 1
  end <- df$end
  maxpos <- max(markers$pos,end)
  pos <- 1:maxpos
- reg2rsids <- vector("list", nrow(df))
+ ensr2rsids <- vector("list", nrow(df))
  for (chr in 1:22) {
   message(paste("Processing chr:",chr))
   rsids <- rep(NA, maxpos)
@@ -640,18 +641,17 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
   for (i in 1:nrow(df)) {
    if(df$chr[i]==chr) {
     grsids <- rsids[start[i]:end[i]]
-    reg2rsids[[i]] <- grsids[!is.na(grsids)]
+    ensr2rsids[[i]] <- grsids[!is.na(grsids)]
    }
   }
  }
- names(reg2rsids) <- df$reg_id
- empty <- sapply(reg2rsids, function(x){ identical(x, character(0))})
- reg2rsids <- reg2rsids[!empty]
- setsfile <- file.path(GAlist$dirs["gsets"], "reg2rsids.rds")
- saveRDS(reg2rsids, file = setsfile)
- regSets2rsids <- sapply(regSets, function(x){unique(unlist(reg2rsids[x]))})
- setsfile <- file.path(GAlist$dirs["gsets"], "regSets2rsids.rds")
- saveRDS(regSets2rsids, file = setsfile)
+ names(ensr2rsids) <- df$reg_id
+ empty <- sapply(ensr2rsids, function(x){ identical(x, character(0))})
+ ensr2rsids <- ensr2rsids[!empty]
+ saveRDS(ensr2rsids, file = file.path(GAlist$dirs["gsets"], "ensr2rsids.rds"))
+
+ reg2rsids <- sapply(regSets, function(x){unique(unlist(ensr2rsids[x]))})
+ saveRDS(reg2rsids, file = file.path(GAlist$dirs["gsets"], "reg2rsids.rds"))
 
  # Drug databases
  drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
