@@ -58,7 +58,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="dgi")
   #GAlist <- downloadDB(GAlist=GAlist, what="gtex")
   #GAlist <- downloadDB(GAlist=GAlist, what="1000G")
-  #GAlist <- downloadDB(GAlist=GAlist, what="diseases")
+  GAlist <- downloadDB(GAlist=GAlist, what="diseases")
   #GAlist <- downloadDB(GAlist=GAlist, what="tiga")
   #GAlist <- downloadDB(GAlist=GAlist, what="pubchem")
   #GAlist <- downloadDB(GAlist=GAlist, what="pharmgkb")
