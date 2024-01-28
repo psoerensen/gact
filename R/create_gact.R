@@ -609,7 +609,7 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
   saveRDS(reac2ensg,file=file.path(GAlist$dirs["gsets"],"reactome2ensg.rds"))
   saveRDS(ensg2reac,file=file.path(GAlist$dirs["gsets"],"ensg2reactome.rds"))
  }
- file <- file.path(GAlist$dirs["gsets"],"ReactomePathways.txt")
+ file  <- file.path(GAlist$dirs["gsets"],"ReactomePathways.txt")
  if(file.exists(file)) {
   pathway <- fread(file, data.table=FALSE, header=FALSE)
   isHSA <- grep("R-HSA",pathway[,1])
@@ -700,6 +700,8 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  ensg2ensr <- ensg2ensr[!empty]
  saveRDS(ensg2ensr, file = file.path(GAlist$dirs["gsets"], "ensg2ensr.rds"))
 
+ # Add atc codes
+ GAlist <- downloadDB(GAlist=GAlist, what="atc")
 
  # Drug databases
  drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
@@ -715,8 +717,6 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  length(drug2ensg)
  saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
 
- # Add atc codes
- GAlist <- downloadDB(GAlist=GAlist, what="atc")
 
  if("string"%in%what) {
 
