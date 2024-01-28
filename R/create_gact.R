@@ -647,7 +647,7 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  #markers <- fread(GAlist$markerfiles, data.table=FALSE)
  markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
                   data.table=FALSE)
-  start <- df$start
+ start <- df$start
  start[start<1] <- 1
  end <- df$end
  maxpos <- max(markers$pos,end)
@@ -669,7 +669,7 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  ensr2rsids <- ensr2rsids[!empty]
  saveRDS(ensr2rsids, file = file.path(GAlist$dirs["gsets"], "ensr2rsids.rds"))
 
- reg2rsids <- sapply(regSets, function(x){unique(unlist(ensr2rsids[x]))})
+ reg2rsids <- sapply(reg2ensr, function(x){unique(unlist(ensr2rsids[x]))})
  saveRDS(reg2rsids, file = file.path(GAlist$dirs["gsets"], "reg2rsids.rds"))
 
  ensg2rsids <- readRDS(file.path(GAlist$dirs["gsets"], "ensg2rsids.rds"))
