@@ -79,7 +79,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- createSetsDB(GAlist=GAlist)
   GAlist <- createMarkerSetsDB(GAlist=GAlist, what="reactome")
   #GAlist <- createMarkerSetsDB(GAlist=GAlist, what="GO")
-  #GAlist <- createMarkerSetsDB(GAlist=GAlist, what="string")
+  GAlist <- createMarkerSetsDB(GAlist=GAlist, what="string")
   #GAlist <- createMarkerSetsDB(GAlist=GAlist, what="stitch")
  }
  return(GAlist)
@@ -700,8 +700,6 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  ensg2ensr <- ensg2ensr[!empty]
  saveRDS(ensg2ensr, file = file.path(GAlist$dirs["gsets"], "ensg2ensr.rds"))
 
- # Add atc codes
- GAlist <- downloadDB(GAlist=GAlist, what="atc")
 
  # Drug databases
  drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
@@ -717,6 +715,8 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  length(drug2ensg)
  saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
 
+ # Add atc codes
+ GAlist <- downloadDB(GAlist=GAlist, what="atc")
 
  if("string"%in%what) {
 
