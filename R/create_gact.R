@@ -565,7 +565,7 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  gwasfile <- file.path(dbdir, "gwas-catalog-associations_ontology-annotated.tsv")
  gwas <- fread(gwasfile, data.table=FALSE, quote="")
  sets <- split(gwas$SNPS,f=gwas$MAPPED_TRAIT)
- saveRDS(sets, file = file.path(GAlist$dirs["gsets"], "gwasSets.rds"))
+ saveRDS(sets, file = file.path(GAlist$dirs["gsets"], "gwas2rsids.rds"))
 
 
  # Pubmed to genes
