@@ -16,25 +16,18 @@ knitr::opts_chunk$set(
 
 The ***gact*** package is designed for establishing and populating a comprehensive database focused on genomic associations with complex traits. This function serves two primary roles: infrastructure creation and data acquisition. It facilitates the assembly of a structured repository encompassing single marker associations, rigorously curated to ensure high-quality data. Beyond individual genetic markers, the function integrates a broad spectrum of genomic entities, encompassing genes, proteins, and an array of complexes (chemical, protein) as well as various biological pathways. This integration aims to provide a holistic view of genomic associations and their multifaceted relationships in the context of complex traits.
 
-**gact** provides an infrastructure for efficient processing of large-scale genetic and phenotypic data including core functions for:  
+**gact** provides an infrastructure for efficient processing of large-scale genomic association data, including core functions for:  
  
-* establishing and populating a database for genomic association
-* downloading and processing a range of biological databased
-* downloading and processing of summary statistics from genome-wide association studies 
-* bioinformatic procedures linking genetic marker to genes, proteins, metabolites, and biological pathways  
-* gene set enrichment analysis   
-  
-**gact** handles large-scale data by taking advantage of:  
-  
-* multi-core processing using [openMP](https://www.openmp.org/)  
-* multithreaded matrix operations implemented in BLAS libraries (e.g. [OpenBLAS](https://www.openblas.net/), [ATLAS](http://math-atlas.sourceforge.net/) or [MKL](https://software.intel.com/en-us/mkl))  
-* fast and memory-efficient batch processing of genotype data stored in binary files (e.g. [PLINK](https://www.cog-genomics.org/plink2) bedfiles)  
-  
+* Establishing and populating a database for genomic association.
+* Downloading and processing a range of biological databases.
+* Downloading and processing summary statistics from genome-wide association studies (GWAS).
+* Conducting bioinformatic procedures to link genetic markers with genes, proteins, metabolites, and biological pathways.
+* Performing gene set enrichment analysis.
+
 
 ### Install
 
-You can install most recent version of `gact` from github:
-
+To install the most recent version of the gact package from GitHub, use the following commands in R:
 ```{r,  eval=FALSE, echo=TRUE}
 library(devtools)
 devtools::install_github("psoerensen/qgg")
