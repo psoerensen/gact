@@ -68,8 +68,11 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
 
   message("Creating full marker sets - this may take some time")
   GAlist <- createSetsDB(GAlist=GAlist)
-  #GAlist <- createSetsDB(GAlist=GAlist, what="diseases")
-  #GAlist <- createMarkerSetsDB(GAlist=GAlist, what="GO")
+  GAlist <- createSetsDB(GAlist=GAlist, what="diseases")
+  GAlist <- createMarkerSetsDB(GAlist=GAlist, what="GO")
+  GAlist <- createMarkerSetsDB(GAlist=GAlist, what="string")
+  GAlist <- createMarkerSetsDB(GAlist=GAlist, what="stitch")
+  GAlist <- createMarkerSetsDB(GAlist=GAlist, what="drug")
   #summaryDB(GAlist=GAlist)
 
  }
@@ -719,27 +722,6 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  # Add atc codes
  GAlist <- downloadDB(GAlist=GAlist, what="atc")
 
- if("string"%in%what) {
-
-  string2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"string2ensg.rds"))
-  drug2ensp <- lapply(drug2ensg,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
-  drug2string2ensg <- lapply(drug2ensp,function(x){na.omit(unlist(string2ensg[x]))})
-  drug2string2ensg <- lapply(drug2string2ensg, function(x){unique(x)})
-  for(i in 1:length(drug2string2ensg)) {
-   drug2string2ensg[[i]] <- unique(c(drug2ensg[[i]], drug2string2ensg[[i]]))
-  }
-  saveRDS(drug2string2ensg,file=file.path(GAlist$dirs["gsets"],"drug2string2ensg.rds"))
-
-  ensg2rsids <- readRDS(file.path(GAlist$dirs["gsets"], "ensg2rsids.rds"))
-
-  drug2rsids <- lapply(drug2ensg,function(x){unique(unlist(ensg2rsids[x]))})
-  drug2rsids <- drug2rsids[!sapply(drug2rsids,is.null)]
-  saveRDS(drug2rsids,file=file.path(GAlist$dirs["gsets"],"drug2rsids.rds"))
-
-  drug2string2rsids <- lapply(drug2string2ensg,function(x){unique(unlist(ensg2rsids[x]))})
-  drug2string2rsids <- drug2string2rsids[!sapply(drug2string2rsids,is.null)]
-  saveRDS(drug2string2rsids,file=file.path(GAlist$dirs["gsets"],"drug2string2rsids.rds"))
- }
 
  if("diseases"%in%what) {
   ensp <- names(GAlist$gsets$ensp2ensg)
@@ -832,6 +814,30 @@ createMarkerSetsDB <- function(GAlist = NULL, what=NULL,
   sets <- sets[!sapply(sets, is.null)]
   saveRDS(sets, file = file.path(GAlist$dirs["gsets"], "stitch2rsids.rds"))
  }
+
+ if("drug"%in%what) {
+
+  drug2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
+  string2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"string2ensg.rds"))
+  drug2ensp <- lapply(drug2ensg,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
+  drug2string2ensg <- lapply(drug2ensp,function(x){na.omit(unlist(string2ensg[x]))})
+  drug2string2ensg <- lapply(drug2string2ensg, function(x){unique(x)})
+  for(i in 1:length(drug2string2ensg)) {
+   drug2string2ensg[[i]] <- unique(c(drug2ensg[[i]], drug2string2ensg[[i]]))
+  }
+  saveRDS(drug2string2ensg,file=file.path(GAlist$dirs["gsets"],"drug2string2ensg.rds"))
+
+  ensg2rsids <- readRDS(file.path(GAlist$dirs["gsets"], "ensg2rsids.rds"))
+
+  drug2rsids <- lapply(drug2ensg,function(x){unique(unlist(ensg2rsids[x]))})
+  drug2rsids <- drug2rsids[!sapply(drug2rsids,is.null)]
+  saveRDS(drug2rsids,file=file.path(GAlist$dirs["gsets"],"drug2rsids.rds"))
+
+  drug2string2rsids <- lapply(drug2string2ensg,function(x){unique(unlist(ensg2rsids[x]))})
+  drug2string2rsids <- drug2string2rsids[!sapply(drug2string2rsids,is.null)]
+  saveRDS(drug2string2rsids,file=file.path(GAlist$dirs["gsets"],"drug2string2rsids.rds"))
+ }
+
  return(GAlist)
 }
 
