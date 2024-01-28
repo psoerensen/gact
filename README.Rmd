@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 The ***gact*** package is designed for establishing and populating a comprehensive database focused on genomic associations with complex traits. This function serves two primary roles: infrastructure creation and data acquisition. It facilitates the assembly of a structured repository encompassing single marker associations, rigorously curated to ensure high-quality data. Beyond individual genetic markers, the function integrates a broad spectrum of genomic entities, encompassing genes, proteins, and an array of complexes (chemical, protein) as well as various biological pathways. This integration aims to provide a holistic view of genomic associations and their multifaceted relationships in the context of complex traits.
 
-**qgg** provides an infrastructure for efficient processing of large-scale genetic and phenotypic data including core functions for:  
+**gact** provides an infrastructure for efficient processing of large-scale genetic and phenotypic data including core functions for:  
  
 * establishing and populating a database for genomic association
 * downloading and processing a range of biological databased
