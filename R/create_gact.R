@@ -59,11 +59,11 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   #GAlist <- downloadDB(GAlist=GAlist, what="gtex")
   #GAlist <- downloadDB(GAlist=GAlist, what="1000G")
   GAlist <- downloadDB(GAlist=GAlist, what="diseases")
+  #GAlist <- downloadDB(GAlist=GAlist, what="atc")
   #GAlist <- downloadDB(GAlist=GAlist, what="tiga")
   #GAlist <- downloadDB(GAlist=GAlist, what="pubchem")
   #GAlist <- downloadDB(GAlist=GAlist, what="pharmgkb")
   #GAlist <- downloadDB(GAlist=GAlist, what="opentargets")
-  #GAlist <- downloadDB(GAlist=GAlist, what="atc")
   #GAlist <- downloadDB(GAlist=GAlist, what="alphamissense")
 
   message("Creating full marker sets - this may take some time")
@@ -110,7 +110,8 @@ createDB <- function(version = NULL, dbdir = NULL) {
 
  # Create database directory structure
  dir.create(dbdir)
- dirnames <- c("glist", "gstat", "gsets", "gsea", "gbayes", "gtex", "gwas", "ldsc", "marker", "drugdb", "download")
+ dirnames <- c("glist", "gstat", "gsets", "gsea", "gbayes", "gtex", "gwas",
+               "ldsc", "marker", "drugdb", "download", "script")
  dirs <- setNames(file.path(dbdir, dirnames), dirnames)
  lapply(dirs, dir.create)
 
@@ -629,8 +630,6 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  df <- fread(file, data.table=FALSE)
  colnames(df) <- c("chr","source","type","start","end","score","strand","phase","attributes")
  df <- df[df$chr%in%as.character(1:22),]
- #df <- df[!df$chr=="X",]
- #df <- df[!df$chr=="Y",]
  df$chr <- as.integer(df$chr)
  df <- df[!is.na(df$chr),]
  att <- strsplit(df$attributes, ";")
