@@ -653,6 +653,39 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  reg2rsids <- sapply(regSets, function(x){unique(unlist(ensr2rsids[x]))})
  saveRDS(reg2rsids, file = file.path(GAlist$dirs["gsets"], "reg2rsids.rds"))
 
+ ensg2rsids <- readRDS(file.path(GAlist$dirs["gsets"], "ensg2rsids.rds"))
+ ensr2rsids <- readRDS(file.path(GAlist$dirs["gsets"], "ensr2rsids.rds"))
+
+ # Create a data frame from ensr2rsids
+ nsets <- sapply(ensr2rsids, length)
+ ensr <- rep(names(ensr2rsids), times = nsets)
+ rsids <- unlist(ensr2rsids, use.names = FALSE)
+ ensr_df <- data.frame(rsids, ensr)
+
+ # Create a data frame from ensg2rsids
+ nsets <- sapply(ensg2rsids, length)
+ ensg <- rep(names(ensg2rsids), times = nsets)
+ rsids <- unlist(ensg2rsids, use.names = FALSE)
+ ensg_df <- data.frame(rsids, ensg)
+
+ # Merge the data frames on rsids
+ merged_df <- merge(ensr_df, ensg_df, by = "rsids")
+
+ # Create the final list structure for ensr2ensg
+ ensr2ensg <- split(merged_df$ensr, merged_df$ensg)
+ ensr2ensg <- lapply(ensr2ensg, unique)
+ empty <- sapply(ensr2ensg, function(x){ identical(x, character(0))})
+ ensr2ensg <- ensr2ensg[!empty]
+ saveRDS(ensr2ensg, file = file.path(GAlist$dirs["gsets"], "ensr2ensg.rds"))
+
+ # Create the final list structure for ensg2ensr
+ ensg2ensr <- split(merged_df$ensg, merged_df$ensr)
+ ensg2ensr <- lapply(ensg2ensr, unique)
+ empty <- sapply(ensg2ensr, function(x){ identical(x, character(0))})
+ ensg2ensr <- ensg2ensr[!empty]
+ saveRDS(ensg2ensr, file = file.path(GAlist$dirs["gsets"], "ensg2ensr.rds"))
+
+
  # Drug databases
  drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
                  quote = "\"", data.table = FALSE)
