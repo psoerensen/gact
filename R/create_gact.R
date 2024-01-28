@@ -638,8 +638,8 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  rownames(df) <- df$reg_id
  saveRDS(df[,c("reg_id", "type", "chr", "start", "end")], file = file.path(GAlist$dirs["gsets"], "regulatory_annotation.rds"))
 
- regSets <- split(df$reg_id, f=as.factor(df$type))
- saveRDS(regSets, file = file.path(GAlist$dirs["gsets"], "regSets.rds"))
+ reg2ensr <- split(df$reg_id, f=as.factor(df$type))
+ saveRDS(reg2ensr, file = file.path(GAlist$dirs["gsets"], "reg2ensr.rds"))
 
  #markers <- fread(GAlist$markerfiles, data.table=FALSE)
  markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
