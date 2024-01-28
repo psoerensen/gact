@@ -430,7 +430,8 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   names(GAlist$atc$name) <- GAlist$atc$code
 
   # Add drug target data frame with ATC information to GAlist
-  drug2ensg <- getSetsDB(GAlist = GAlist, feature = "DrugGenes")
+  drug2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
+  #drug2ensg <- getSetsDB(GAlist = GAlist, feature = "DrugGenes")
   nreps <- sapply(drug2ensg,length)
   drugs <- rep(names(drug2ensg), times=nreps)
   ensg <- unlist(drug2ensg)
