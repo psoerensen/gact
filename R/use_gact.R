@@ -452,7 +452,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
 #' @export
 #'
 getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, min_combined_score=900) {
- drugGenes <- readRDS(file=file.path(GAlist$dirs["gsets"],"drugGenes.rds"))
+ drugGenes <- readRDS(file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
  #file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
  file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v12.0.txt.gz")
  string <- fread(file_string, data.table=FALSE)
@@ -507,8 +507,8 @@ getMarkerSetsDB <- function(GAlist = NULL, feature = NULL, featureID = NULL,
  if(feature=="GO") setsfile <- file.path(GAlist$dirs["gsets"],"go2rsids.rds")
  if(feature=="ProteinComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"string2rsids.rds")
  if(feature=="ChemicalComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"stitch2rsids.rds")
- if(feature=="DrugGenes") setsfile <- file.path(GAlist$dirs["gsets"],"drugGenes.rds")
- if(feature=="DrugComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"drugComplex.rds")
+ if(feature=="DrugGenes") setsfile <- file.path(GAlist$dirs["gsets"],"drug2ensg.rds")
+ if(feature=="DrugComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"drug2string2ensg.rds")
  if(!is.null(setsfile)) sets <- readRDS(file=setsfile)
 
  if(feature=="KEGG") {
