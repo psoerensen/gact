@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-### An R package for creating a database of Genomic Association of Complex Traits
+### An R Package for Creating a Database of Genomic Association of Complex Traits
 
 The ***gact*** package is designed for establishing and populating a
 comprehensive database focused on genomic associations with complex
@@ -15,31 +15,21 @@ as various biological pathways. This integration aims to provide a
 holistic view of genomic associations and their multifaceted
 relationships in the context of complex traits.
 
-**qgg** provides an infrastructure for efficient processing of
-large-scale genetic and phenotypic data including core functions for:
+**gact** provides an infrastructure for efficient processing of
+large-scale genomic association data, including core functions for:
 
-- establishing and populating a database for genomic association
-- downloading and processing a range of biological databased
-- downloading and processing of summary statistics from genome-wide
-  association studies
-- bioinformatic procedures linking genetic marker to genes, proteins,
-  metabolites, and biological pathways  
-- gene set enrichment analysis
+- Establishing and populating a database for genomic association.
+- Downloading and processing a range of biological databases.
+- Downloading and processing summary statistics from genome-wide
+  association studies (GWAS).
+- Conducting bioinformatic procedures to link genetic markers with
+  genes, proteins, metabolites, and biological pathways.
+- Performing gene set enrichment analysis.
 
-**gact** handles large-scale data by taking advantage of:
+### Installation
 
-- multi-core processing using [openMP](https://www.openmp.org/)  
-- multithreaded matrix operations implemented in BLAS libraries
-  (e.g. [OpenBLAS](https://www.openblas.net/),
-  [ATLAS](http://math-atlas.sourceforge.net/) or
-  [MKL](https://software.intel.com/en-us/mkl))  
-- fast and memory-efficient batch processing of genotype data stored in
-  binary files (e.g. [PLINK](https://www.cog-genomics.org/plink2)
-  bedfiles)
-
-### Install
-
-You can install most recent version of `gact` from github:
+To install the most recent version of the gact package from GitHub, use
+the following commands in R:
 
 ``` r
 library(devtools)
