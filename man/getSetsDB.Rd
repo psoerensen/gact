@@ -2,7 +2,7 @@
 % Please edit documentation in R/use_gact.R
 \name{getSetsDB}
 \alias{getSetsDB}
-\title{Retrieve Feature Sets from GAlist Object}
+\title{Retrieve Feature Sets from Database}
 \usage{
 getSetsDB(
   GAlist = NULL,
