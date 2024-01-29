@@ -86,7 +86,7 @@ Vegas gene analysis, Bayesian Linear Regression models):
 [Compute sparse LD matrices for 1000G
 data](Document/Compute_sparseLD_1000G.html)
 
-### Tutorials for various types of genomic analysis using the gact datbase
+### Tutorials for various types of genomic analysis using the gact database
 
 Gene analysis using the VEGAS (Versatile Gene-based Association Study)
 approach using the 1000G LD reference data processed above:  
