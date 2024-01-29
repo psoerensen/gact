@@ -42,28 +42,28 @@ Below is a set of tutorials used for the gact package:
 
 Download and set up the gact database, which is focused on genomic
 associations for complex traits:  
-[Download and install a gact database](Document/Download_install.html)
+[Download and install gact
+database](Document/Download_and_install_gact_database.html)
 
 Processing and preparing genotype data from the 1000 Genomes Project
 (1000G) for different ancestries (European, East Asian, South Asian)
 used for different genomic analysis:  
-[Processing 1000G data](Document/Process_1000G.html)
+[Processing of 1000G data](Document/Process_1000G.html)
 
 Computing sparse Linkage Disequilibrium (LD) matrices for 1000 Genomes
 Project (1000G) data across different ancestries and exploring this
 data:  
-[Compute sparse LD matrices and LD scores for 1000G
+[Compute sparse LD matrices for 1000G
 data](Document/Compute_sparseLD_1000G.html)
 
 Downloading and processing summary statistics from genome-wide
 association studies (GWAS):  
-[Incorpotate genetic association data into
-database](Document/Ingest_new_GWAS_data.html)
+[Incorporate genetic association data into
+database](Document/Download_and_process_gwas.html)
 
 Gene analysis using the VEGAS (Versatile Gene-based Association Study)
-approach using 1000G LD reference data:  
-[Gene analysis using
-VEGAS](Document/Gene_analysis__new_GWAS_data_vegas.html)
+approach using the 1000G LD reference data processed above:  
+[Gene analysis using VEGAS](Document/Gene_analysis_vegas.html)
 
 #### References
 
