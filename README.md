@@ -59,9 +59,8 @@ biological databases including:
   database.
 - `"GWAScatalog"`: GWAS catalog sets from the
   [GWAScatalog](https://www.ebi.ac.uk/gwas/) database.
-- `"Ensembl Regulation"`: Regulatory genomic feature sets from the
-  Ensembl Regulation
-  [Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
+- `"Regulation"`: Regulatory genomic feature sets from the [Ensembl
+  Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
   database.
 
 <br>
