@@ -14,6 +14,8 @@ entities, encompassing genes, proteins, and an array of biological
 complexes (chemical and protein), as well as various biological
 pathways.
 
+<br>
+
 **gact** provides an infrastructure for efficient processing of
 large-scale genomic association data, including core functions for:
 
@@ -27,6 +29,8 @@ large-scale genomic association data, including core functions for:
   models.
 - Performing advanced gene set enrichment analysis utilizing a variety
   of tools and methodologies.
+
+<br>
 
 **gact** constructs gene and genetic marker sets from a range of
 biological databases including:
@@ -60,11 +64,15 @@ biological databases including:
   [Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
   database.
 
+<br>
+
 **gact** is designed to aid in the biological interpretation of genomic
 associations, shedding light on their complex relationships in the
 context of genomic associations of complex traits.
 
 ![](Images/Concept.png)
+
+<br>
 
 ### Installation of the ***gact*** package
 

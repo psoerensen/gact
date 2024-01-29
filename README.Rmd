@@ -16,6 +16,8 @@ knitr::opts_chunk$set(
 
 The ***gact*** package is designed for establishing and populating a comprehensive database focused on genomic associations with complex traits. The package serves two primary functions: infrastructure creation and data acquisition. It facilitates the assembly of a structured repository that includes single marker associations, all rigorously curated to ensure the high quality of data. Beyond individual genetic markers, the package integrates a broad spectrum of genomic entities, encompassing genes, proteins, and an array of biological complexes (chemical and protein), as well as various biological pathways. 
 
+<br>
+
 **gact** provides an infrastructure for efficient processing of large-scale genomic association data, including core functions for:  
  
 * Establishing and populating a database for genomic association.
@@ -25,6 +27,7 @@ The ***gact*** package is designed for establishing and populating a comprehensi
 * Finemapping of genomic regions using Bayesian Linear Regression models.
 * Performing advanced gene set enrichment analysis utilizing a variety of tools and methodologies.
 
+<br>
 
 **gact** constructs gene and genetic marker sets from a range of biological databases including: 
 
@@ -40,6 +43,7 @@ The ***gact*** package is designed for establishing and populating a comprehensi
 - `"GWAScatalog"`: GWAS catalog sets from the [GWAScatalog](https://www.ebi.ac.uk/gwas/) database.
 - `"Ensembl Regulation"`: Regulatory genomic feature sets from the Ensembl Regulation [Regulation](https://www.ensembl.org/info/genome/funcgen/index.html) database.
 
+<br>
 
 **gact** is designed to aid in the biological interpretation of genomic associations, shedding light on their complex relationships in the context of genomic associations of complex traits.
 
@@ -47,6 +51,7 @@ The ***gact*** package is designed for establishing and populating a comprehensi
 
 
 
+<br>
 
 ### Installation of the ***gact*** package
 
