@@ -375,7 +375,7 @@ library(gact)
 library(data.table)
 
 # Load GAlist
-GAlist &lt;- readRDS(file=&quot;/faststorage/project/ukbiobank/projects/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
+GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
 # Download 1000G data (if not allready downloaded)
 GAlist &lt;- downloadDB(GAlist=GAlist, what=&quot;1000G&quot;)
@@ -401,7 +401,7 @@ saveRDS(Glist, file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G.
 ################################################################################
 
 # Load GAlist
-GAlist &lt;- readRDS(file=&quot;/faststorage/project/ukbiobank/projects/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
+GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
 # Marker IDs in database
 rsids &lt;- GAlist$rsids
