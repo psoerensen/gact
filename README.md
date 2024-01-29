@@ -81,7 +81,7 @@ approach using the 1000G LD reference data processed above:
     doi.org/10.1101/2023.09.01.555889
 
 4.  Bai et al. 2024. Evaluation of multiple marker mapping methods using
-    single trait BLR models. *In preparation*
+    single trait Bayesian Linear Regression models. *In preparation*
 
 5.  Gholipourshahraki et al. 2024. Evaluation of Bayesian Linear
     Regression Models for Pathway Prioritization. *In preparation*
