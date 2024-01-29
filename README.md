@@ -31,7 +31,7 @@ large-scale genomic association data, including core functions for:
 - Performing advanced gene set enrichment analysis utilizing a variety
   of tools and methodologies.
 
-### Genetic and genetic marker sets for varios biological database
+### Construct genetic and genetic marker sets from varios biological databases
 
 - `"GO"`: Gene Ontology sets.
 - `"Pathways"`: Pathway sets from the Reactome and KEGG databases.
