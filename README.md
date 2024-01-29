@@ -50,7 +50,7 @@ large-scale genomic association data, including core functions for:
 - `"String"`: STRING database protein interaction sets.
 - `"Stitch"`: STITCH database protein-chemical interaction sets.
 
-### Installation
+### Installation of the ***gact*** package
 
 To install the most recent version of the gact package from GitHub, use
 the following commands in R:
