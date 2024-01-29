@@ -35,6 +35,11 @@ large-scale genomic association data, including core functions for:
 **gact** constructs gene and genetic marker sets from a range of
 biological databases including:
 
+- `"Ensembl"`: Gene, protein, transcript sets from the
+  [Ensembl](https://www.ensembl.org/index.html) database.
+- `"Regulation"`: Regulatory genomic feature sets from the [Ensembl
+  Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
+  database.
 - `"GO"`: Gene Ontology sets from the [GO](https://geneontology.org)
   database.
 - `"Pathways"`: Pathway sets from the [Reactome](https://reactome.org)
@@ -59,9 +64,6 @@ biological databases including:
   database.
 - `"GWAScatalog"`: GWAS catalog sets from the
   [GWAScatalog](https://www.ebi.ac.uk/gwas/) database.
-- `"Regulation"`: Regulatory genomic feature sets from the [Ensembl
-  Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
-  database.
 
 <br>
 
