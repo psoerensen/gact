@@ -14,14 +14,7 @@ knitr::opts_chunk$set(
 
 ### An R Package for Creating a Database of Genomic Association of Complex Traits
 
-The ***gact*** package is designed for establishing and populating a comprehensive database focused on genomic associations with complex traits. 
-
-The package serves two primary functions: infrastructure creation and data acquisition. It facilitates the assembly of a structured repository that includes single marker associations, all rigorously curated to ensure the high quality of data. Beyond individual genetic markers, the package integrates a broad spectrum of genomic entities, encompassing genes, proteins, and an array of biological complexes (chemical and protein), as well as various biological pathways. 
-
-This comprehensive integration is designed to aid in the biological interpretation of genomic associations, shedding light on their complex relationships in the context of genomic associations of complex traits.
-
-![Figure 1](Images/Concept.png)
-
+The ***gact*** package is designed for establishing and populating a comprehensive database focused on genomic associations with complex traits. The package serves two primary functions: infrastructure creation and data acquisition. It facilitates the assembly of a structured repository that includes single marker associations, all rigorously curated to ensure the high quality of data. Beyond individual genetic markers, the package integrates a broad spectrum of genomic entities, encompassing genes, proteins, and an array of biological complexes (chemical and protein), as well as various biological pathways. 
 
 **gact** provides an infrastructure for efficient processing of large-scale genomic association data, including core functions for:  
  
@@ -33,7 +26,8 @@ This comprehensive integration is designed to aid in the biological interpretati
 * Performing advanced gene set enrichment analysis utilizing a variety of tools and methodologies.
 
 
-### Gene and genetic marker sets constructed from a range of biological databases 
+**gact** provides gene and genetic marker sets constructed from a range of biological databases including: 
+
 - `"GO"`: Gene Ontology sets from the [GO](https://geneontology.org) database.
 - `"Pathways"`: Pathway sets from the [Reactome](https://reactome.org) and [KEGG](https://www.genome.jp/kegg/pathway.html) databases.
 - `"ProteinComplexes"`: Protein complex sets from the [STRING](https://string-db.org) database.
@@ -45,6 +39,12 @@ This comprehensive integration is designed to aid in the biological interpretati
 - `"GTEx"`: GTEx project eQTL sets from the [GTEx](https://www.gtexportal.org/home/downloads/adult-gtex/overview) database.
 - `"GWAScatalog"`: GWAS catalog sets from the [GWAScatalog](https://www.ebi.ac.uk/gwas/) database.
 - `"Ensembl Regulation"`: Regulatory genomic feature sets from the Ensembl Regulation [Regulation](https://www.ensembl.org/info/genome/funcgen/index.html) database.
+
+
+This comprehensive integration is designed to aid in the biological interpretation of genomic associations, shedding light on their complex relationships in the context of genomic associations of complex traits.
+
+![](Images/Concept.png)
+
 
 
 

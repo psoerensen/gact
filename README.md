@@ -5,24 +5,14 @@
 
 The ***gact*** package is designed for establishing and populating a
 comprehensive database focused on genomic associations with complex
-traits.
-
-The package serves two primary functions: infrastructure creation and
-data acquisition. It facilitates the assembly of a structured repository
-that includes single marker associations, all rigorously curated to
-ensure the high quality of data. Beyond individual genetic markers, the
-package integrates a broad spectrum of genomic entities, encompassing
-genes, proteins, and an array of biological complexes (chemical and
-protein), as well as various biological pathways.
-
-This comprehensive integration is designed to aid in the biological
-interpretation of genomic associations, shedding light on their complex
-relationships in the context of genomic associations of complex traits.
-
-<figure>
-<img src="Images/Concept.png" alt="Figure 1" />
-<figcaption aria-hidden="true">Figure 1</figcaption>
-</figure>
+traits. The package serves two primary functions: infrastructure
+creation and data acquisition. It facilitates the assembly of a
+structured repository that includes single marker associations, all
+rigorously curated to ensure the high quality of data. Beyond individual
+genetic markers, the package integrates a broad spectrum of genomic
+entities, encompassing genes, proteins, and an array of biological
+complexes (chemical and protein), as well as various biological
+pathways.
 
 **gact** provides an infrastructure for efficient processing of
 large-scale genomic association data, including core functions for:
@@ -38,7 +28,8 @@ large-scale genomic association data, including core functions for:
 - Performing advanced gene set enrichment analysis utilizing a variety
   of tools and methodologies.
 
-### Gene and genetic marker sets constructed from a range of biological databases
+**gact** provides gene and genetic marker sets constructed from a range
+of biological databases including:
 
 - `"GO"`: Gene Ontology sets from the [GO](https://geneontology.org)
   database.
@@ -68,6 +59,12 @@ large-scale genomic association data, including core functions for:
   Ensembl Regulation
   [Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
   database.
+
+This comprehensive integration is designed to aid in the biological
+interpretation of genomic associations, shedding light on their complex
+relationships in the context of genomic associations of complex traits.
+
+![](Images/Concept.png)
 
 ### Installation of the ***gact*** package
 
