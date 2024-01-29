@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-01-15" />
+<meta name="date" content="2024-01-29" />
 
 <title>GACT and QGG Installation, Database Download, and Overview</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">GACT and QGG Installation, Database
 Download, and Overview</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-01-15</h4>
+<h4 class="date">2024-01-29</h4>
 
 </div>
 
@@ -377,102 +377,23 @@ dbdir &lt;- &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb&quot;
 GAlist &lt;- readRDS(file=&quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
 ## GWAS Summary Statistics
-GAlist$studies</code></pre>
-<pre><code>##          id      file trait   type  gender      n ncase ncontrol     neff
-## GWAS1 GWAS1 GWAS1.txt  T2DM binary    both 456236 55927   400309 49071.27
-## GWAS2 GWAS2 GWAS2.txt   CAD binary    both 184305 60801   123504 40743.15
-## GWAS3 GWAS3 GWAS3.txt  T2DM binary    both 933970 80154   853816 73275.12
-## GWAS4 GWAS4 GWAS4.txt  T2DM binary   males 425662 41846   383816 37732.20
-## GWAS5 GWAS5 GWAS5.txt  T2DM binary females 464379 30053   434326 28108.07
-## GWAS6 GWAS6 GWAS6.txt  T2DM binary    both 898130 74124   824006 68006.44
-## GWAS7 GWAS7 GWAS7.txt  T2DM binary    both 283423 56268   227155 45097.11
-## GWAS8 GWAS8 GWAS8.txt  T2DM binary    both  49492 16540    32952 11012.41
-##           reference                                        source
-## GWAS1 PMID:30297969 Mahajan.NatGenet2018b.T2D-noUKBB.European.txt
-## GWAS2 PMID:26343387                      CARDIoGRAMplusC4D.txt.gz
-## GWAS3 PMID:35551307                   DIAMANTE-EUR.sumstat.txt.gz
-## GWAS4 PMID:30297969   Mahajan.NatGenet2018b.T2D.MALE.European.txt
-## GWAS5 PMID:30297969 Mahajan.NatGenet2018b.T2D.FEMALE.European.txt
-## GWAS6 PMID:30297969        Mahajan.NatGenet2018b.T2D.European.txt
-## GWAS7 PMID:35551307                   DIAMANTE-EAS.sumstat.txt.gz
-## GWAS8 PMID:35551307                   DIAMANTE-SAS.sumstat.txt.gz</code></pre>
-<pre class="r"><code>## Accessing the &#39;dirs&#39; Slot
-GAlist$dirs</code></pre>
-<pre><code>##                                                                glist 
-##    &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/glist&quot; 
-##                                                                gstat 
-##    &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gstat&quot; 
-##                                                                gsets 
-##    &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gsets&quot; 
-##                                                                 gsea 
-##     &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gsea&quot; 
-##                                                               gbayes 
-##   &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gbayes&quot; 
-##                                                                 gtex 
-##     &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gtex&quot; 
-##                                                                 gwas 
-##     &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gwas&quot; 
-##                                                                 ldsc 
-##     &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/ldsc&quot; 
-##                                                               marker 
-##   &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/marker&quot; 
-##                                                               drugdb 
-##   &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/drugdb&quot; 
-##                                                             download 
-## &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/download&quot;</code></pre>
-<pre class="r"><code>## Listing Directories and Files
+GAlist$studies
+
+## Accessing the &#39;dirs&#39; Slot
+GAlist$dirs
+
+## Listing Directories and Files
 ### All Directories Recursively
-list.dirs(GAlist$dirs, recursive = TRUE)</code></pre>
-<pre><code>##  [1] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/download&quot;                     
-##  [2] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/drugdb&quot;                       
-##  [3] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gbayes&quot;                       
-##  [4] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/glist&quot;                        
-##  [5] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gsea&quot;                         
-##  [6] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gsets&quot;                        
-##  [7] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gstat&quot;                        
-##  [8] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gtex&quot;                         
-##  [9] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/gwas&quot;                         
-## [10] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/ldsc&quot;                         
-## [11] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/marker&quot;                       
-## [12] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/marker/1000G_EUR_Phase3_plink&quot;
-## [13] &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/marker/ukb&quot;</code></pre>
-<pre class="r"><code>### Files under &#39;marker&#39; Directory
-list.files(GAlist$dirs[&quot;marker&quot;])</code></pre>
-<pre><code>##  [1] &quot;1000G_EUR_Phase3_plink&quot;            &quot;1000G_EUR_Phase3_plink.zip&quot;       
-##  [3] &quot;g1000_afr.bed&quot;                     &quot;g1000_afr.bim&quot;                    
-##  [5] &quot;g1000_afr.fam&quot;                     &quot;g1000_afr.synonyms&quot;               
-##  [7] &quot;g1000_afr.zip&quot;                     &quot;g1000_amr.bed&quot;                    
-##  [9] &quot;g1000_amr.bim&quot;                     &quot;g1000_amr.fam&quot;                    
-## [11] &quot;g1000_amr.synonyms&quot;                &quot;g1000_amr.zip&quot;                    
-## [13] &quot;g1000_eas.bed&quot;                     &quot;g1000_eas.bim&quot;                    
-## [15] &quot;g1000_eas.fam&quot;                     &quot;g1000_eas.synonyms&quot;               
-## [17] &quot;g1000_eas.zip&quot;                     &quot;g1000_eas_filtered.bed&quot;           
-## [19] &quot;g1000_eas_filtered.bim&quot;            &quot;g1000_eas_filtered.fam&quot;           
-## [21] &quot;g1000_eur.bed&quot;                     &quot;g1000_eur.bim&quot;                    
-## [23] &quot;g1000_eur.fam&quot;                     &quot;g1000_eur.synonyms&quot;               
-## [25] &quot;g1000_eur.zip&quot;                     &quot;g1000_eur_filtered.bed&quot;           
-## [27] &quot;g1000_eur_filtered.bim&quot;            &quot;g1000_eur_filtered.fam&quot;           
-## [29] &quot;g1000_sas.bed&quot;                     &quot;g1000_sas.bim&quot;                    
-## [31] &quot;g1000_sas.fam&quot;                     &quot;g1000_sas.synonyms&quot;               
-## [33] &quot;g1000_sas.zip&quot;                     &quot;g1000_sas_filtered.bed&quot;           
-## [35] &quot;g1000_sas_filtered.bim&quot;            &quot;g1000_sas_filtered.fam&quot;           
-## [37] &quot;Glist_1000G.rds&quot;                   &quot;Glist_1000G_eas_filtered.rds&quot;     
-## [39] &quot;Glist_1000G_eur_filtered.rds&quot;      &quot;Glist_1000G_sas_filtered.rds&quot;     
-## [41] &quot;markers.txt.gz&quot;                    &quot;markers_1000G.txt.gz&quot;             
-## [43] &quot;markers_1000G_eas_filtered.txt.gz&quot; &quot;markers_1000G_eur_filtered.txt.gz&quot;
-## [45] &quot;markers_1000G_sas_filtered.txt.gz&quot; &quot;README&quot;                           
-## [47] &quot;ukb&quot;</code></pre>
-<pre class="r"><code>### Files under &#39;gstat&#39; Directory
-list.files(GAlist$dirs[&quot;gstat&quot;])</code></pre>
-<pre><code>## [1] &quot;GWAS_information.csv&quot; &quot;GWAS1.txt.gz&quot;         &quot;GWAS2.txt.gz&quot;        
-## [4] &quot;GWAS3.txt.gz&quot;         &quot;GWAS4.txt.gz&quot;         &quot;GWAS5.txt.gz&quot;        
-## [7] &quot;GWAS6.txt.gz&quot;         &quot;GWAS7.txt.gz&quot;         &quot;GWAS8.txt.gz&quot;</code></pre>
-<pre class="r"><code>### Files under &#39;gsea&#39; Directory
+list.dirs(GAlist$dirs, recursive = TRUE)
+
+### Files under &#39;marker&#39; Directory
+list.files(GAlist$dirs[&quot;marker&quot;])
+
+### Files under &#39;gstat&#39; Directory
+list.files(GAlist$dirs[&quot;gstat&quot;])
+
+### Files under &#39;gsea&#39; Directory
 list.files(GAlist$dirs[&quot;gsea&quot;])</code></pre>
-<pre><code>## [1] &quot;P_vegas_filtered.rds&quot;          &quot;res_vegas_eas_filtered.rds&quot;   
-## [3] &quot;res_vegas_eur_filtered.rds&quot;    &quot;res_vegas_sas_filtered.rds&quot;   
-## [5] &quot;summary_vegas_filtered.csv&quot;    &quot;summary_vegas_filtered.txt.gz&quot;
-## [7] &quot;Z_vegas_filtered.rds&quot;</code></pre>
 
 
 
