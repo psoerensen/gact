@@ -5,15 +5,16 @@
 
 The ***gact*** package is designed for establishing and populating a
 comprehensive database focused on genomic associations with complex
-traits. This function serves two primary roles: infrastructure creation
-and data acquisition. It facilitates the assembly of a structured
-repository encompassing single marker associations, rigorously curated
-to ensure high-quality data. Beyond individual genetic markers, the
-function integrates a broad spectrum of genomic entities, encompassing
-genes, proteins, and an array of biological complexes (chemical,
-protein) as well as various biological pathways. This integration aims
-to provide a holistic view of genomic associations and their
-multifaceted relationships in the context of complex traits.
+traits. The package serves two primary functions: infrastructure
+creation and data acquisition. It facilitates the assembly of a
+structured repository that includes single marker associations, all
+rigorously curated to ensure the high quality of data. Beyond individual
+genetic markers, the package integrates a broad spectrum of genomic
+entities, encompassing genes, proteins, and an array of biological
+complexes (chemical and protein), as well as various biological
+pathways. This comprehensive integration is designed to aid in the
+biological interpretation of genomic associations, shedding light on
+their complex relationships in the context of complex traits.
 
 **gact** provides an infrastructure for efficient processing of
 large-scale genomic association data, including core functions for:
