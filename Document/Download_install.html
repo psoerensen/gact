@@ -13,7 +13,7 @@
 
 <meta name="date" content="2024-01-29" />
 
-<title>GACT and QGG Installation, Database Download, and Overview</title>
+<title>Download and install a gact database</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,8 +350,7 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">GACT and QGG Installation, Database
-Download, and Overview</h1>
+<h1 class="title toc-ignore">Download and install a gact database</h1>
 <h4 class="author">Peter Sørensen</h4>
 <h4 class="date">2024-01-29</h4>
 
@@ -364,23 +363,21 @@ Download, and Overview</h1>
 which is focused on genomic associations for complex traits. The
 tutorial is structured into two main parts: downloading and installing
 the database, and then providing an overview of its contents:</p>
-<pre class="r"><code># Install new version of gact and qgg
-# Make sure you install in a new R session
-# library(devtools)
+<pre class="r"><code># library(devtools)
 # devtools::install_github(&quot;psoerensen/gact&quot;)
 # devtools::install_github(&quot;psoerensen/qgg&quot;)
 
 
 # Download and install gact database
 library(gact)
-dbdir &lt;- &quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb&quot;
-#GAlist &lt;- gact(version=&quot;hsa.0.0.1&quot;, dbdir=dbdir, task=&quot;download&quot;)
-#saveRDS(GAlist, file=&quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
+dbdir &lt;- &quot;C:/Users/gact/&quot;
+GAlist &lt;- gact(version=&quot;hsa.0.0.1&quot;, dbdir=dbdir, task=&quot;download&quot;)
+saveRDS(GAlist, file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
 
 # Overview of database content
 
-GAlist &lt;- readRDS(file=&quot;C:/Users/au223366/Dropbox/Projects/balder/gdtdb/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
+GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
 ## GWAS Summary Statistics
 GAlist$studies
