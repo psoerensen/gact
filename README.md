@@ -74,7 +74,7 @@ context of genomic associations of complex traits.
 
 <br>
 
-### Installation of the ***gact*** package
+### Installation of the gact package
 
 To install the most recent version of the gact package from GitHub, use
 the following commands in R:

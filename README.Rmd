@@ -53,7 +53,7 @@ The ***gact*** package is designed for establishing and populating a comprehensi
 
 <br>
 
-### Installation of the ***gact*** package
+### Installation of the gact package
 
 To install the most recent version of the gact package from GitHub, use the following commands in R:
 ```{r,  eval=FALSE, echo=TRUE}
