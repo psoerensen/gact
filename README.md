@@ -46,10 +46,10 @@ associations for complex traits:
 [Download and install gact
 database](Document/Download_and_install_gact_database.html)
 
-Processing and preparing genotype data from the 1000 Genomes Project
-(1000G) for different ancestries (European, East Asian, South Asian)
-used for different genomic analysis:  
-[Processing of 1000G data](Document/Process_1000G.html)
+Download and process genotype data from the 1000 Genomes Project (1000G)
+for different ancestries (European, East Asian, South Asian) used in
+different genomic analysis:  
+[Download and process of 1000G data](Document/Process_1000G.html)
 
 Computing sparse Linkage Disequilibrium (LD) matrices for 1000 Genomes
 Project (1000G) data across different ancestries and exploring the LD
