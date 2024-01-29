@@ -13,7 +13,7 @@
 
 <meta name="date" content="2024-01-29" />
 
-<title>Add new genetic association data into existing GACT database</title>
+<title>Download and install gact database</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,8 +350,7 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Add new genetic association data into
-existing GACT database</h1>
+<h1 class="title toc-ignore">Download and install gact database</h1>
 <h4 class="author">Peter Sørensen</h4>
 <h4 class="date">2024-01-29</h4>
 
@@ -360,56 +359,43 @@ existing GACT database</h1>
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>This script is designed for incorporating new genetic association
-data into an existing gact database. The example below is for the UK
-Biobank 2021 Glycated Hemoglobin (HbA1c) GWAS data for European
-ancestry.</p>
-<pre class="r"><code># Load libraries
-library(qgg)
+<p>This tutorial is designed to download and set up the gact database,
+which is focused on genomic associations for complex traits. The
+tutorial is structured into two main parts: downloading and installing
+the database, and then providing an overview of its contents:</p>
+<pre class="r"><code># library(devtools)
+# devtools::install_github(&quot;psoerensen/gact&quot;)
+# devtools::install_github(&quot;psoerensen/qgg&quot;)
+
+
+# Download and install gact database
 library(gact)
-library(data.table)
+GAlist &lt;- gact(version=&quot;hsa.0.0.1&quot;, dbdir=&quot;C:/Users/gact&quot;, task=&quot;download&quot;)
+saveRDS(GAlist, file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
 
-# Load GAlist
-GAlist &lt;- readRDS(file=&quot;/faststorage/project/ukbiobank/projects/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
+# Overview of database content
 
+GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
-################################################################################
-# UK Biobank 2021 HbA1c GWAS: European ancestry
-################################################################################
-# link: https://t2d.hugeamp.org/dinspector.html?dataset=SinnottArmstrong2021_HBA1C_EU
+## GWAS Summary Statistics
+GAlist$studies
 
-# Load GWAS data
-fname_stat &lt;- &quot;/faststorage/project/ukbiobank/projects/gact/hsa.0.0.1/download/Glycated_haemoglobin_HbA1c.imp.gz&quot;
-stat &lt;- fread(fname_stat, data.table = FALSE)
-head(stat)
+## Accessing the &#39;dirs&#39; Slot
+GAlist$dirs
 
-# Modify columns according to required format
+## Listing Directories and Files
+### All Directories Recursively
+list.dirs(GAlist$dirs, recursive = TRUE)
 
+### Files under &#39;marker&#39; Directory
+list.files(GAlist$dirs[&quot;marker&quot;])
 
-# Subset and rename columns according to required format
-stat &lt;- stat[, c(&quot;MarkerName&quot;, &quot;#CHROM&quot;, &quot;POS&quot;, &quot;ALT&quot;, &quot;REF&quot;, &quot;Effect&quot;, &quot;StdErr&quot;, &quot;P-value&quot;)]
-colnames(stat) &lt;- c(&quot;marker&quot;, &quot;chr&quot;, &quot;pos&quot;, &quot;ea&quot;, &quot;nea&quot;, &quot;b&quot;, &quot;seb&quot;, &quot;p&quot;)
+### Files under &#39;gstat&#39; Directory
+list.files(GAlist$dirs[&quot;gstat&quot;])
 
-
-# Update database
-GAlist &lt;- updateStatDB(GAlist = GAlist,
-                       stat = stat,
-                       source = &quot;Glycated_haemoglobin_HbA1c.imp&quot;,
-                       trait = &quot;HbA1C&quot;,
-                       type = &quot;quantitative&quot;,
-                       gender = &quot;both&quot;,
-                       ancestry = &quot;EUR&quot;,
-                       build = &quot;GRCh37&quot;,
-                       reference = &quot;PMID:33462484&quot;,
-                       n = 318779,
-                       ncase = 0,
-                       ncontrol = 0,
-                       comments = &quot;Just UK biobank&quot;,
-                       writeStatDB = TRUE)
-
-# Save updated database
-saveRDS(GAlist, file = &quot;/faststorage/project/ukbiobank/projects/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;, compress = FALSE)</code></pre>
+### Files under &#39;gsea&#39; Directory
+list.files(GAlist$dirs[&quot;gsea&quot;])</code></pre>
 </div>
 
 

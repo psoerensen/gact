@@ -365,36 +365,13 @@ and qgg frameworks in R. It is designed to perform gene-based
 association studies for multiple traits across different ancestries,
 specifically European (EUR), East Asian (EAS), and South Asian
 (SAS).</p>
-<p>Script Workflow:</p>
-<p>Library Installation and Setup:</p>
-<p>The script starts with comments for installing gact and qgg packages,
-followed by loading these libraries. It loads the GAlist object, which
-contains structured information about the genomic database. Data
-Preparation and Marker Set Extraction:</p>
-<p>It displays studies within the gact database and extracts gene-marker
-sets using getMarkerSetsDB, focusing on a feature called “Genesplus”.
-VEGAS Analysis for Multiple European Traits:</p>
-<p>The script selects specific European studies and loads corresponding
-1000 Genomes Project data for European ancestry. High-quality genetic
-markers are identified using gfilter. GWAS summary statistics are
-obtained for these studies and used in a VEGAS analysis. The results are
-saved for future reference.</p>
-<p>VEGAS Analysis: Central to the script, VEGAS analysis is used to
-investigate gene-level associations using GWAS summary statistics. Data
-Filtering and Alignment: Critical steps involve filtering for quality
-markers and aligning GWAS data with the 1000 Genomes Project data.
-Ancestry-Specific Analysis: The script demonstrates the flexibility to
-analyze data across different ancestries, adjusting the input data and
-parameters accordingly. This script exemplifies a comprehensive approach
-to gene-based association analysis in genomic studies, utilizing
-sophisticated tools available in the gact and qgg packages to handle
-complex genetic data.</p>
-<pre class="r"><code>library(qgg)
+<pre class="r"><code># Load libraries
+library(qgg)
 library(gact)
 
 
 # Load GAlist with information on gact database
-GAlist &lt;- readRDS(file=&quot;/faststorage/project/ukbiobank/projects/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
+GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
 # Check studies in gact database
 GAlist$studies
@@ -466,8 +443,6 @@ Glist &lt;- readRDS(file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1
 
 # Get GWAS summary statistics from gact database
 stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
-stat$ea &lt;- toupper(stat$ea)
-stat$nea &lt;- toupper(stat$nea)
 
 # Check and align summary statistics based on marker information in Glist
 stat &lt;- checkStat(Glist=Glist, stat=stat)
