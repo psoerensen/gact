@@ -33,22 +33,34 @@ large-scale genomic association data, including core functions for:
 
 ### Construct genetic and genetic marker sets from varios biological databases
 
-- `"GO"`: Gene Ontology sets.
-- `"Pathways"`: Pathway sets from the Reactome and KEGG databases.
-- `"ProteinComplexes"`: Protein complex sets from the STRING database.
-- `"ChemicalComplexes"`: Chemical complex sets from the STITCH database.
-- `"DrugGenes"`: Drug-gene interaction sets the DrugBank database.
-- `"DrugATCGenes"`: Drug ATC gene sets.
-- `"DrugComplexes"`: Drug complex sets combining information from STRING
-  and DrugBank.
-- `"DiseaseGenesEXP"`: Experimentally validated disease-gene sets.
-- `"DiseaseGenesKB"`: Knowledge-based disease-gene sets.
-- `"DiseaseGenesTM"`: Text-mined disease-gene sets.
-- `"GTEx"`: GTEx project eQTL sets.
-- `"GWAScatalog"`: GWAS catalog sets.
-- `"Ensembl Regulation"`: Regulatory genomic feature sets.
-- `"String"`: STRING database protein interaction sets.
-- `"Stitch"`: STITCH database protein-chemical interaction sets.
+- `"GO"`: Gene Ontology sets from the [GO](https://geneontology.org)
+  database.
+- `"Pathways"`: Pathway sets from the [Reactome](https://reactome.org)
+  and [KEGG](https://www.genome.jp/kegg/pathway.html) databases.
+- `"ProteinComplexes"`: Protein complex sets from the
+  [STRING](https://string-db.org) database.
+- `"ChemicalComplexes"`: Chemical complex sets from the
+  [STITCH](https://stitch.embl.de) database.
+- `"DrugGenes"`: Drug-gene interaction sets the
+  [DrugBank](https://go.drugbank.com) database.
+- `"DrugATCGenes"`: Drug ATC gene sets based on the
+  [ATC](https://www.whocc.no/atc_ddd_index/) and
+  [DrugBank](https://go.drugbank.com) databases.
+- `"DrugComplexes"`: Drug complex sets combining information from
+  [STRING](https://string-db.org) and
+  [DrugBank](https://go.drugbank.com).
+- `"DiseaseGenes"`: Disease-gene sets based on experiments, textmining
+  and knowledge base from the
+  [DISEASE](https://diseases.jensenlab.org/Search) database.
+- `"GTEx"`: GTEx project eQTL sets from the
+  [GTEx](https://www.gtexportal.org/home/downloads/adult-gtex/overview)
+  database.
+- `"GWAScatalog"`: GWAS catalog sets from the
+  [GWAScatalog](https://www.ebi.ac.uk/gwas/) database.
+- `"Ensembl Regulation"`: Regulatory genomic feature sets from the
+  Ensembl Regulation [Ensembl
+  Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
+  database.
 
 ### Installation of the ***gact*** package
 
