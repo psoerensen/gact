@@ -20,7 +20,7 @@ The package serves two primary functions: infrastructure creation and data acqui
 
 This comprehensive integration is designed to aid in the biological interpretation of genomic associations, shedding light on their complex relationships in the context of genomic associations of complex traits.
 
-![Linking genetic markers](Images/Concept.png)
+![Figure 1](Images/Concept.png)
 
 
 **gact** provides an infrastructure for efficient processing of large-scale genomic association data, including core functions for:  
@@ -46,7 +46,6 @@ This comprehensive integration is designed to aid in the biological interpretati
 - `"GWAScatalog"`: GWAS catalog sets from the [GWAScatalog](https://www.ebi.ac.uk/gwas/) database.
 - `"Ensembl Regulation"`: Regulatory genomic feature sets from the Ensembl Regulation [Regulation](https://www.ensembl.org/info/genome/funcgen/index.html) database.
 
-![Linking genetic markers](Images/marker_sets.png)
 
 
 ### Installation of the ***gact*** package
