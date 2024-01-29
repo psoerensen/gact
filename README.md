@@ -40,28 +40,28 @@ devtools::install_github("psoerensen/gact")
 
 Below is a set of tutorials used for the gact package:
 
-This tutorial is designed to download and set up the gact database,
-which is focused on genomic associations for complex traits:  
+Download and set up the gact database, which is focused on genomic
+associations for complex traits:  
 [Download and install a gact database](Document/Download_install.html)
 
-This tutorial focuses on processing and preparing genotype data from the
-1000 Genomes Project (1000G) for different ancestries (European, East
-Asian, South Asian):  
+Processing and preparing genotype data from the 1000 Genomes Project
+(1000G) for different ancestries (European, East Asian, South Asian)
+used for different genomic analysis:  
 [Processing 1000G data](Document/Process_1000G.html)
 
-This tutorial focuses on computing sparse Linkage Disequilibrium (LD)
-matrices for 1000 Genomes Project (1000G) data across different
-ancestries and exploring this data:  
+Computing sparse Linkage Disequilibrium (LD) matrices for 1000 Genomes
+Project (1000G) data across different ancestries and exploring this
+data:  
 [Compute sparse LD matrices and LD scores for 1000G
 data](Document/Compute_sparseLD_1000G.html)
 
-This tutorial is designed for incorporating new genetic association data
-into an existing gact database:  
+Downloading and processing summary statistics from genome-wide
+association studies (GWAS):  
 [Incorpotate genetic association data into
-database](Document/Ingest_new_GWAS_data.html)  
-This tutorial is dedicated to gene analysis using the VEGAS (Versatile
-Gene-based Association Study) approach within the context of the gact
-and qgg frameworks in R:  
+database](Document/Ingest_new_GWAS_data.html)
+
+Gene analysis using the VEGAS (Versatile Gene-based Association Study)
+approach using 1000G LD reference data:  
 [Gene analysis using
 VEGAS](Document/Gene_analysis__new_GWAS_data_vegas.html)
 
