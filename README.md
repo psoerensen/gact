@@ -28,8 +28,8 @@ large-scale genomic association data, including core functions for:
 - Performing advanced gene set enrichment analysis utilizing a variety
   of tools and methodologies.
 
-**gact** provides gene and genetic marker sets constructed from a range
-of biological databases including:
+**gact** constructs gene and genetic marker sets from a range of
+biological databases including:
 
 - `"GO"`: Gene Ontology sets from the [GO](https://geneontology.org)
   database.
@@ -60,9 +60,9 @@ of biological databases including:
   [Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
   database.
 
-This comprehensive integration is designed to aid in the biological
-interpretation of genomic associations, shedding light on their complex
-relationships in the context of genomic associations of complex traits.
+**gact** is designed to aid in the biological interpretation of genomic
+associations, shedding light on their complex relationships in the
+context of genomic associations of complex traits.
 
 ![](Images/Concept.png)
 
