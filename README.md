@@ -5,17 +5,24 @@
 
 The ***gact*** package is designed for establishing and populating a
 comprehensive database focused on genomic associations with complex
-traits. The package serves two primary functions: infrastructure
-creation and data acquisition. It facilitates the assembly of a
-structured repository that includes single marker associations, all
-rigorously curated to ensure the high quality of data. Beyond individual
-genetic markers, the package integrates a broad spectrum of genomic
-entities, encompassing genes, proteins, and an array of biological
-complexes (chemical and protein), as well as various biological
-pathways. This comprehensive integration is designed to aid in the
-biological interpretation of genomic associations, shedding light on
-their complex relationships in the context of genomic associations of
-complex traits.
+traits.
+
+The package serves two primary functions: infrastructure creation and
+data acquisition. It facilitates the assembly of a structured repository
+that includes single marker associations, all rigorously curated to
+ensure the high quality of data. Beyond individual genetic markers, the
+package integrates a broad spectrum of genomic entities, encompassing
+genes, proteins, and an array of biological complexes (chemical and
+protein), as well as various biological pathways.
+
+This comprehensive integration is designed to aid in the biological
+interpretation of genomic associations, shedding light on their complex
+relationships in the context of genomic associations of complex traits.
+
+<figure>
+<img src="Images/Concept.png" alt="Linking genetic markers" />
+<figcaption aria-hidden="true">Linking genetic markers</figcaption>
+</figure>
 
 **gact** provides an infrastructure for efficient processing of
 large-scale genomic association data, including core functions for:
@@ -61,6 +68,11 @@ large-scale genomic association data, including core functions for:
   Ensembl Regulation
   [Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
   database.
+
+<figure>
+<img src="Images/marker_sets.png" alt="Linking genetic markers" />
+<figcaption aria-hidden="true">Linking genetic markers</figcaption>
+</figure>
 
 ### Installation of the ***gact*** package
 
