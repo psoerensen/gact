@@ -1,0 +1,50 @@
+---
+title: "Download and install gact database"
+author: "Peter Sørensen"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+This tutorial is designed to download and set up the gact database, which is focused on genomic associations for complex traits. The tutorial is structured into two main parts: downloading and installing the database, and then providing an overview of its contents:   
+
+```{r install_packages, echo=TRUE, eval=FALSE}
+
+# library(devtools)
+# devtools::install_github("psoerensen/gact")
+# devtools::install_github("psoerensen/qgg")
+
+
+# Download and install gact database
+library(gact)
+GAlist <- gact(version="hsa.0.0.1", dbdir="C:/Users/gact", task="download")
+saveRDS(GAlist, file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
+
+
+# Overview of database content
+
+GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
+
+## GWAS Summary Statistics
+GAlist$studies
+
+## Accessing the 'dirs' Slot
+GAlist$dirs
+
+## Listing Directories and Files
+### All Directories Recursively
+list.dirs(GAlist$dirs, recursive = TRUE)
+
+### Files under 'marker' Directory
+list.files(GAlist$dirs["marker"])
+
+### Files under 'gstat' Directory
+list.files(GAlist$dirs["gstat"])
+
+### Files under 'gsea' Directory
+list.files(GAlist$dirs["gsea"])

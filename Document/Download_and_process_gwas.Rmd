@@ -1,0 +1,64 @@
+---
+title: "Download and process GWAS summary statistics for ingestion into existing GACT database"
+author: "Peter Sørensen"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+This script is designed for incorporating new genetic association data into an existing gact database. The example below is for the UK Biobank 2021 Glycated Hemoglobin (HbA1c) GWAS data for European ancestry.
+
+
+```{r all-code, include=TRUE, eval=FALSE}
+# Load libraries
+library(qgg)
+library(gact)
+library(data.table)
+
+
+# Load GAlist with information on gact database
+GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
+
+
+################################################################################
+# UK Biobank 2021 HbA1c GWAS: European ancestry
+################################################################################
+# link: https://t2d.hugeamp.org/dinspector.html?dataset=SinnottArmstrong2021_HBA1C_EU
+
+# Load GWAS data
+fname_stat <- "C:/Users/gact/hsa.0.0.1/download/Glycated_haemoglobin_HbA1c.imp.gz"
+stat <- fread(fname_stat, data.table = FALSE)
+head(stat)
+
+# Modify columns according to required format
+
+
+# Subset and rename columns according to required format
+stat <- stat[, c("MarkerName", "#CHROM", "POS", "ALT", "REF", "Effect", "StdErr", "P-value")]
+colnames(stat) <- c("marker", "chr", "pos", "ea", "nea", "b", "seb", "p")
+
+
+# Update database
+GAlist <- updateStatDB(GAlist = GAlist,
+                       stat = stat,
+                       source = "Glycated_haemoglobin_HbA1c.imp",
+                       trait = "HbA1C",
+                       type = "quantitative",
+                       gender = "both",
+                       ancestry = "EUR",
+                       build = "GRCh37",
+                       reference = "PMID:33462484",
+                       n = 318779,
+                       ncase = 0,
+                       ncontrol = 0,
+                       comments = "Just UK biobank",
+                       writeStatDB = TRUE)
+
+# Save updated database
+saveRDS(GAlist, file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds", compress = FALSE)
+

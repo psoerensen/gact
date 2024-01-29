@@ -1,0 +1,179 @@
+---
+title: "GSEA using BLR model derived gene-level statistics and MAGMA"
+author: "Peter Sørensen"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+This script is designed for advanced gene set analysis, utilizing a variety of tools and methodologies. Its primary focus lies in the integration and assessment of gene-marker sets, along with a detailed exploration of gene-disease associations derived from text mining, knowledge bases, and experimental data. The analysis utilizes gene-marker relationships, gene-level statistics, and gene-disease associations to conduct comprehensive gene set evaluations. This allow an in-depth analysis helping interpreting and validating genomic associations.
+
+```{r all-code, include=TRUE, eval=FALSE}
+# Load libraries
+library(qgg)
+library(gact)
+library(msigdbr)
+library(data.table)
+
+
+# Load GAlist with information on gact database
+GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
+
+
+# Select study
+studyID <- "GWAS2"
+
+# Load BLR result
+stat <- fread(file=file.path(GAlist$dirs["gbayes"],paste0(studyID,"_stat_BayesC.txt.gz")), data.table=FALSE)
+rownames(stat) <- stat$rsids
+
+# Extract gene-marker sets
+msets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genesplus")
+msets <- mapSetsDB(sets=msets,featureID=stat$rsids,index=TRUE)
+
+# Compute gene-level statistics from BLR fit object
+bm_gene_stat <- sapply(msets,function(x){sum(abs(stat$bm[x]))})
+dm_gene_stat <- sapply(msets,function(x){sum(abs(stat$dm[x]))})
+vm_gene_stat <- sapply(msets,function(x){sum(abs(stat$vm[x]))})
+
+# Create data.frame and add annotation
+df <- data.frame(bm=bm_gene_stat, dm=dm_gene_stat, vm=vm_gene_stat)
+df <- addAnnotationDB(df=df)
+head(df)
+
+# Create data.frame, add annotation, hyperlinks and write to file
+df <- data.frame(bm=bm_gene_stat, dm=dm_gene_stat, vm=vm_gene_stat)
+df <- addAnnotationDB(df=df, hyperlinkEXCEL = TRUE)
+head(df)
+file_name <- file.path(GAlist$dirs["gbayes"],paste0(studyID,"_genes_BayesC.csv"))
+write.csv2(df,file=file_name,row.names=FALSE)-
+ 
+# Get gene sets for KEGG pathways from mSigDB
+msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
+gsets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
+gsets <- mapSets(gsets,names(bm_gene_stat), index=FALSE)
+
+# Fit linear model (i.e. MAGMA procedure) using BLR gene-level statistics
+resB <- qgg:::magma(stat=bm_gene_stat, sets=gsets)
+resD <- qgg:::magma(stat=dm_gene_stat, sets=gsets)
+resV <- qgg:::magma(stat=vm_gene_stat, sets=gsets)
+head(resB)
+head(resD)
+head(resV)
+
+################################################################################
+# GSEA in cis-eQTL region derived from GTEx 
+################################################################################
+sets <- getMarkerSetsDB(GAlist = GAlist, feature = "GTExV8", threshold=0.01)
+res <- gsea(stat, sets=sets)
+str(res)
+
+# Fit linear model (i.e. MAGMA procedure) using BLR marker-level statistics
+dm <- stat$dm
+names(dm) <- stat$rsids
+resGTEx <- qgg:::magma(stat=dm, sets=sets)
+head(resGTEx)
+
+
+################################################################################
+# GSEA in regulatory genomic features 
+################################################################################
+sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Regulatory Categories")
+res <- gsea(stat, sets=sets)
+str(res)
+
+# Fit linear model (i.e. MAGMA procedure) using BLR marker-level statistics
+dm <- stat$dm
+names(dm) <- stat$rsids
+resREG <- qgg:::magma(stat=dm, sets=sets)
+head(resREG)
+
+# Compute regulatory-level statistics from BLR fit object
+regsets <- getMarkerSetsDB(GAlist = GAlist, feature = "Regulatory Regions")
+regsets <- mapSetsDB(sets=regsets,featureID=stat$rsids,index=TRUE)
+bm_reg_stat <- sapply(regsets,function(x){sum(abs(stat$bm[x]))})
+dm_reg_stat <- sapply(regsets,function(x){sum(abs(stat$dm[x]))})
+vm_reg_stat <- sapply(regsets,function(x){sum(abs(stat$vm[x]))})
+
+# Top ranking regulatory regions
+head(sort(dm_reg_stat, decreasing=TRUE))
+
+# Create data.frame, add annotation, and write to file
+df <- data.frame(bm=bm_reg_stat, dm=dm_reg_stat, vm=vm_reg_stat)
+df <- addAnnotationDB(df=df, feature="Regulatory")
+head(df)
+file_name <- file.path(GAlist$dirs["gbayes"],paste0(studyID,"_regulatory_BayesC.csv"))
+write.csv2(df,file=file_name,row.names=FALSE)
+
+################################################################################ 
+# GSEA based on gene-diseases association in disease database for each KEGG pathway
+################################################################################
+
+# Get gene sets for feature from mSigDB (KEGG pathways)
+msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
+sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
+
+# Enrichment test based on integrated information
+res <- hgtDB(GAlist = GAlist, sets = sets, feature = "DiseaseGenes", output="p") 
+rws <- c("KEGG_OLFACTORY_TRANSDUCTION", 
+         "KEGG_TYPE_I_DIABETES_MELLITUS", 
+         "KEGG_TYPE_II_DIABETES_MELLITUS",
+         "KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG",
+         "KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS")
+cls <- grep("diabetes", tolower(colnames(res)))
+head(t(res[rws,cls]), 50)
+
+# Enrichment test based on textmining information
+res <- hgtDB(GAlist = GAlist, sets = sets, feature = "DiseaseGenesTMplus", output="p") 
+rws <- c("KEGG_OLFACTORY_TRANSDUCTION", 
+         "KEGG_TYPE_I_DIABETES_MELLITUS", 
+         "KEGG_TYPE_II_DIABETES_MELLITUS",
+         "KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG",
+         "KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS")
+cls <- grep("diabetes", tolower(colnames(res)))
+head(t(res[rws,cls]), 50)
+
+# Enrichment test based on textmining information
+res <- hgtDB(GAlist = GAlist, sets = sets, feature = "DiseaseGenesKBplus", output="p") 
+rws <- c("KEGG_OLFACTORY_TRANSDUCTION", 
+         "KEGG_TYPE_I_DIABETES_MELLITUS", 
+         "KEGG_TYPE_II_DIABETES_MELLITUS",
+         "KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG",
+         "KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS")
+cls <- grep("diabetes", tolower(colnames(res)))
+head(t(res[rws,cls]), 50)
+
+# Enrichment test based on experiment information
+res <- hgtDB(GAlist = GAlist, sets = sets, feature = "DiseaseGenesEXPplus", output="p") 
+rws <- c("KEGG_OLFACTORY_TRANSDUCTION", 
+         "KEGG_TYPE_I_DIABETES_MELLITUS", 
+         "KEGG_TYPE_II_DIABETES_MELLITUS",
+         "KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG",
+         "KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS")
+cls <- grep("diabetes", tolower(colnames(res)))
+head(t(res[rws,cls]), 50)
+
+
+################################################################################
+# GSEA based on gene-diseases association in GWAS catalog for each KEGG pathway
+################################################################################
+
+# Get gene sets for feature from mSigDB (KEGG pathways)
+msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
+sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
+
+# Enrichment test based on integrated information
+res <- hgtDB(GAlist = GAlist, sets = sets, feature = "GWAScatalog", output="p") 
+rws <- c("KEGG_OLFACTORY_TRANSDUCTION", 
+         "KEGG_TYPE_I_DIABETES_MELLITUS", 
+         "KEGG_TYPE_II_DIABETES_MELLITUS",
+         "KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG",
+         "KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS")
+cls <- grep("diabetes", tolower(colnames(res)))
+head(t(res[rws,cls]), 10)
+
