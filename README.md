@@ -14,7 +14,8 @@ entities, encompassing genes, proteins, and an array of biological
 complexes (chemical and protein), as well as various biological
 pathways. This comprehensive integration is designed to aid in the
 biological interpretation of genomic associations, shedding light on
-their complex relationships in the context of complex traits.
+their complex relationships in the context of genomic associations of
+complex traits.
 
 **gact** provides an infrastructure for efficient processing of
 large-scale genomic association data, including core functions for:
@@ -25,7 +26,29 @@ large-scale genomic association data, including core functions for:
   association studies (GWAS).
 - Conducting bioinformatic procedures to link genetic markers with
   genes, proteins, metabolites, and biological pathways.
-- Performing gene set enrichment analysis.
+- Finemapping of genomic regions using Bayesian Linear Regression
+  models.
+- Performing advanced gene set enrichment analysis utilizing a variety
+  of tools and methodologies.
+
+### Genetic and genetic marker sets for varios biological database
+
+- `"GO"`: Gene Ontology sets.
+- `"Pathways"`: Pathway sets from the Reactome and KEGG databases.
+- `"ProteinComplexes"`: Protein complex sets from the STRING database.
+- `"ChemicalComplexes"`: Chemical complex sets from the STITCH database.
+- `"DrugGenes"`: Drug-gene interaction sets the DrugBank database.
+- `"DrugATCGenes"`: Drug ATC gene sets.
+- `"DrugComplexes"`: Drug complex sets combining information from STRING
+  and DrugBank.
+- `"DiseaseGenesEXP"`: Experimentally validated disease-gene sets.
+- `"DiseaseGenesKB"`: Knowledge-based disease-gene sets.
+- `"DiseaseGenesTM"`: Text-mined disease-gene sets.
+- `"GTEx"`: GTEx project eQTL sets.
+- `"GWAScatalog"`: GWAS catalog sets.
+- `"Ensembl Regulation"`: Regulatory genomic feature sets.
+- `"String"`: STRING database protein interaction sets.
+- `"Stitch"`: STITCH database protein-chemical interaction sets.
 
 ### Installation
 
