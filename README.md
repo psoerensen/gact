@@ -80,6 +80,20 @@ derived from VEGAS.
 [Pathway prioritization using
 BLR-MAGMA](Document/Pathway_prioritization_blr_magma.html)
 
+Finemapping of gene regions using single trait Bayesian Linear
+Regression models.  
+[Finemapping of gene regions using BLR
+models](Document/Finemapping_gene_regions_blr.html)
+
+Finemapping of LD regions using single trait Bayesian Linear Regression
+models.  
+[Finemapping of LD regions using BLR
+models](Document/Finemapping_ld_regions_blr.html)
+
+LD score regression for estimating genomic heritability and
+correlations.  
+[LD score regression](Document/LD_score_regression.html)
+
 #### References
 
 1.  Rohde PD, Sørensen IF, Sørensen P. 2020. qgg: an R package for
