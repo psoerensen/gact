@@ -60,7 +60,7 @@ library(devtools)
 devtools::install_github("psoerensen/gact")
 ```
 
-### Tutorials for downloading and installing the database
+### Tutorials for downloading and installing the gact database
 
 Below is a set of tutorials used for the gact package:
 
@@ -86,7 +86,7 @@ Vegas gene analysis, Bayesian Linear Regression models):
 [Compute sparse LD matrices for 1000G
 data](Document/Compute_sparseLD_1000G.html)
 
-### Tutorials for various types of genomic analysis
+### Tutorials for various types of genomic analysis using the gact datbase
 
 Gene analysis using the VEGAS (Versatile Gene-based Association Study)
 approach using the 1000G LD reference data processed above:  
