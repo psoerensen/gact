@@ -44,19 +44,18 @@ This tutorial is designed to download and set up the gact database,
 which is focused on genomic associations for complex traits. The
 tutorial is structured into two main parts: downloading and installing
 the database, and then providing an overview of its contents:  
-[Download and install a gact database](Document/Install.md)
+[Download and install a gact database](Document/Download_install.html)
 
 This tutorial focuses on processing and preparing genotype data from the
 1000 Genomes Project (1000G) for different ancestries (European, East
 Asian, South Asian) using the gact package in R:  
-[Processing 1000G
-data](https://psoerensen.github.io/qgtutorials/1000G-tutorials-for-qgg-package.pdf)
+[Processing 1000G data](Document/Process_1000G.html)
 
 This tutorial focuses on computing sparse Linkage Disequilibrium (LD)
 matrices for 1000 Genomes Project (1000G) data across different
 ancestries and exploring this data:  
 [Compute sparse LD matrices and LD scores for 1000G
-data](https://psoerensen.github.io/qgtutorials/Practicals_human_example.pdf)
+data](Document/Compute_sparseLD_1000G.html)
 
 #### References
 
