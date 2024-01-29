@@ -47,7 +47,7 @@ biological databases including:
 - `"ProteinComplexes"`: Protein complex sets from the
   [STRING](https://string-db.org) database.
 - `"ChemicalComplexes"`: Chemical complex sets from the
-  [STITCH](https://stitch.embl.de) database.
+  [STITCH](http://stitch.embl.de/) database.
 - `"DrugGenes"`: Drug-gene interaction sets the
   [DrugBank](https://go.drugbank.com) database.
 - `"DrugATCGenes"`: Drug ATC gene sets based on the
