@@ -58,8 +58,8 @@ large-scale genomic association data, including core functions for:
 - `"GWAScatalog"`: GWAS catalog sets from the
   [GWAScatalog](https://www.ebi.ac.uk/gwas/) database.
 - `"Ensembl Regulation"`: Regulatory genomic feature sets from the
-  Ensembl Regulation [Ensembl
-  Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
+  Ensembl Regulation
+  [Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
   database.
 
 ### Installation of the ***gact*** package

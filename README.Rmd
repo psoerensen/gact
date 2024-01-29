@@ -38,7 +38,7 @@ The ***gact*** package is designed for establishing and populating a comprehensi
 - `"DiseaseGenes"`: Disease-gene sets based on experiments, textmining and knowledge base from the [DISEASE](https://diseases.jensenlab.org/Search) database.
 - `"GTEx"`: GTEx project eQTL sets from the [GTEx](https://www.gtexportal.org/home/downloads/adult-gtex/overview) database.
 - `"GWAScatalog"`: GWAS catalog sets from the [GWAScatalog](https://www.ebi.ac.uk/gwas/) database.
-- `"Ensembl Regulation"`: Regulatory genomic feature sets from the Ensembl Regulation [Ensembl Regulation](https://www.ensembl.org/info/genome/funcgen/index.html) database.
+- `"Ensembl Regulation"`: Regulatory genomic feature sets from the Ensembl Regulation [Regulation](https://www.ensembl.org/info/genome/funcgen/index.html) database.
 
 
 ### Installation of the ***gact*** package
