@@ -31,7 +31,7 @@ large-scale genomic association data, including core functions for:
 - Performing advanced gene set enrichment analysis utilizing a variety
   of tools and methodologies.
 
-### Gene and genetic marker sets from a range of biological databases
+### Gene and genetic marker sets constructed from a range of biological databases
 
 - `"GO"`: Gene Ontology sets from the [GO](https://geneontology.org)
   database.
