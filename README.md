@@ -44,7 +44,7 @@ This tutorial is designed to download and set up the gact database,
 which is focused on genomic associations for complex traits. The
 tutorial is structured into two main parts: downloading and installing
 the database, and then providing an overview of its contents:  
-[Download and install a gact database](Document/Install.html)
+[Download and install a gact database](Document/Install.md)
 
 This tutorial focuses on processing and preparing genotype data from the
 1000 Genomes Project (1000G) for different ancestries (European, East
