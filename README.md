@@ -58,8 +58,8 @@ data](Document/Compute_sparseLD_1000G.html)
 
 Downloading and processing summary statistics from genome-wide
 association studies (GWAS):  
-[Incorporate genetic association data into
-database](Document/Download_and_process_gwas.html)
+[Download and process new gwas summary
+statistics](Document/Download_and_process_gwas.html)
 
 Gene analysis using the VEGAS (Versatile Gene-based Association Study)
 approach using the 1000G LD reference data processed above:  
