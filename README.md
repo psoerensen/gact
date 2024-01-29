@@ -33,7 +33,7 @@ the following commands in R:
 
 ``` r
 library(devtools)
-devtools::install_github("psoerensen/qgg")
+devtools::install_github("psoerensen/gact")
 ```
 
 ### Tutorials
@@ -44,8 +44,7 @@ This tutorial is designed to download and set up the gact database,
 which is focused on genomic associations for complex traits. The
 tutorial is structured into two main parts: downloading and installing
 the database, and then providing an overview of its contents:  
-[Download and install a gact
-database](https://psoerensen.github.io/qgtutorials/Quick-tutorials-for-qgg-package.pdf)
+[Download and install a gact database](Document/Install.html)
 
 This tutorial focuses on processing and preparing genotype data from the
 1000 Genomes Project (1000G) for different ancestries (European, East
