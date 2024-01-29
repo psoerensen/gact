@@ -74,6 +74,10 @@ Regression) model derived gene-level statistics and MAGMA (Multi-marker
 Analysis of GenoMic Annotation) [Gene set analysis using
 BLR-MAGMA](Document/Gene_set_analysis_blr_magma.html)
 
+Pathway prioritization using a BLR-MAGMA model and gene-level statistics
+derived from VEGAS [Pathway prioritization using
+BLR-MAGMA](Document/Pathway_prioritization_blr_magma.html)
+
 #### References
 
 1.  Rohde PD, Sørensen IF, Sørensen P. 2020. qgg: an R package for
