@@ -16,6 +16,9 @@ knitr::opts_chunk$set(
 
 The R package ***gact*** is designed for establishing and populating a comprehensive database focused on genomic associations with complex traits. The package serves two primary functions: infrastructure creation and data acquisition. It facilitates the assembly of a structured repository that includes single marker associations, all rigorously curated to ensure the high quality of data. Beyond individual genetic markers, the package integrates a broad spectrum of genomic entities, encompassing genes, proteins, and an array of biological complexes (chemical and protein), as well as various biological pathways. It is designed to aid in the biological interpretation of genomic associations, shedding light on their complex relationships in the context of genomic associations of complex traits.
 
+<br>
+
+
 ![](Images/Concept.png)
 <br>
 
