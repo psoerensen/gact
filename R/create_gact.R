@@ -218,6 +218,15 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   destfile <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.110.gtf.gz")
   download.file(url=url, mode = "wb", dest=destfile)
 
+
+  url <- "https://ftp.ensembl.org/pub/grch37/current/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz"
+  destfile <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh37.87.gtf.gz")
+  download.file(url=url, mode = "wb", dest=destfile)
+
+  url <- "https://ftp.ensembl.org/pub/grch37/current/regulation/homo_sapiens/homo_sapiens.GRCh37.Regulatory_Build.regulatory_features.20201218.gff.gz"
+  destfile <- file.path(GAlist$dirs["gsets"],"GRCh37.Regulatory_Build.regulatory_features.gff.gz")
+  download.file(url=url, mode = "wb", dest=destfile)
+
  }
 
  if(what=="pubmed") {
@@ -510,48 +519,60 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
                   data.table=FALSE)
 
- # file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.gtf.gz")
- # #file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.110.gtf.gz")
- # df <- fread(file, data.table=FALSE,skip=1, header=FALSE)
- # colnames(df) <- c("chr","source","type","start","end","score","strand","phase","attributes")
- # df <- df[df$type=="gene" & df$source=="ensembl_havana",]
- # att <- strsplit(df$attributes, ";")
- # att <- lapply(att, function(x){gsub("\"","",x)})
- # gene_id <- sapply(att, function(x){ x[grep("gene_id",x)]})
- # df$gene_id <- gsub("gene_id ","",gene_id)
- # df <- df[,c("gene_id","chr","source", "type", "start", "end","strand")]
- # df <- df[!df$chr=="X",]
- # df <- df[!df$chr=="Y",]
- # df$chr <- as.integer(df$chr)
- #
- # upstream <- upstream*1000
- # downstream <- downstream*1000
- # ensg2rsids <- vector("list", nrow(df))
- # ensg2cpra <- vector("list", nrow(df))
- #
- # start <- df$start-upstream
- # start[start<1] <- 1
- # end <- df$end+downstream
- # maxpos <- max(markers$pos,end)
- # pos <- 1:maxpos
- # ensg2rsids <- vector("list", nrow(df))
- # for (chr in 1:22) {
- #  message(paste("Processing chr:",chr))
- #  rsids <- rep(NA, maxpos)
- #  rsids[as.integer(markers[markers$chr==chr,"pos"])] <- markers[markers$chr==chr,"rsids"]
- #  for (i in 1:nrow(df)) {
- #   if(df$chr[i]==chr) {
- #    grsids <- rsids[start[i]:end[i]]
- #    ensg2rsids[[i]] <- grsids[!is.na(grsids)]
- #   }
- #  }
- # }
- # names(ensg2rsids) <- df$gene_id
- # empty <- sapply(ensg2rsids, function(x){ identical(x, character(0))})
- # ensg2rsids <- ensg2rsids[!empty]
- # #setsfile <- file.path(GAlist$dirs["gsets"], "GRCh38.110.ensg2rsids.rds")
- # setsfile <- file.path(GAlist$dirs["gsets"], "ensg2rsids.rds")
- # saveRDS(ensg2rsids, file = setsfile)
+
+ upstream <- upstream*1000
+ downstream <- downstream*1000
+
+ filesGRC <-  c(file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh37.87.gtf.gz"),
+                file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.gtf.gz"))
+ setsfilesGRC <-  c(file.path(GAlist$dirs["gsets"],"GRCh37.ensg2rsids.rds"),
+                    file.path(GAlist$dirs["gsets"],"GRCh38.ensg2rsids.rds"))
+
+ for (j in seq_along(filesGRC)) {
+  #file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh37.87.gtf.gz")
+  #file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.109.gtf.gz")
+  #file <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.110.gtf.gz")
+  df <- fread(filesGRC[j], data.table=FALSE,skip=1, header=FALSE)
+  colnames(df) <- c("chr","source","type","start","end","score","strand","phase","attributes")
+  df <- df[df$type=="gene" & df$source=="ensembl_havana",]
+  att <- strsplit(df$attributes, ";")
+  att <- lapply(att, function(x){gsub("\"","",x)})
+  gene_id <- sapply(att, function(x){ x[grep("gene_id",x)]})
+  df$gene_id <- gsub("gene_id ","",gene_id)
+  df <- df[,c("gene_id","chr","source", "type", "start", "end","strand")]
+  df <- df[!df$chr=="X",]
+  df <- df[!df$chr=="Y",]
+  df <- df[as.character(df$chr)%in%as.character(1:22),]
+  df$chr <- as.integer(df$chr)
+
+  ensg2rsids <- vector("list", nrow(df))
+  ensg2cpra <- vector("list", nrow(df))
+
+  start <- df$start-upstream
+  start[start<1] <- 1
+  end <- df$end+downstream
+  maxpos <- max(markers$pos,end)
+  pos <- 1:maxpos
+  ensg2rsids <- vector("list", nrow(df))
+  for (chr in 1:22) {
+   message(paste("Processing chr:",chr))
+   rsids <- rep(NA, maxpos)
+   rsids[as.integer(markers[markers$chr==chr,"pos"])] <- markers[markers$chr==chr,"rsids"]
+   for (i in 1:nrow(df)) {
+    if(df$chr[i]==chr) {
+     grsids <- rsids[start[i]:end[i]]
+     ensg2rsids[[i]] <- grsids[!is.na(grsids)]
+    }
+   }
+  }
+  names(ensg2rsids) <- df$gene_id
+  empty <- sapply(ensg2rsids, function(x){ identical(x, character(0))})
+  ensg2rsids <- ensg2rsids[!empty]
+  #setsfile <- file.path(GAlist$dirs["gsets"], "GRCh38.110.ensg2rsids.rds")
+  #setsfile <- file.path(GAlist$dirs["gsets"], "GRCh37.ensg2rsids.rds")
+  #setsfile <- file.path(GAlist$dirs["gsets"], "ensg2rsids.rds")
+  saveRDS(ensg2rsids, file = setsfilesGRC[j])
+ }
 
  ensg2rsids <- readRDS(file = file.path(GAlist$dirs["gsets"], "ensg2rsids.rds"))
  sets <- mapSetsDB(sets=ensg2rsids, featureID=markers$rsids, index=TRUE)
@@ -560,6 +581,23 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  stop <- sapply(sets, function(x) {max(markers$pos[x])})
  df <- data.frame(EnsemblID=names(sets),chr=chr,start=start,stop=stop)
  saveRDS(df, file = file.path(GAlist$dirs["gsets"], "genesplus_annotation.rds"))
+
+ ensg2rsids <- readRDS(file = file.path(GAlist$dirs["gsets"], "GRCh37.ensg2rsids.rds"))
+ sets <- mapSetsDB(sets=ensg2rsids, featureID=markers$rsids, index=TRUE)
+ chr <- sapply(sets, function(x) {unique(markers$chr[x])})
+ start <- sapply(sets, function(x) {min(markers$pos[x])})
+ stop <- sapply(sets, function(x) {max(markers$pos[x])})
+ df <- data.frame(EnsemblID=names(sets),chr=chr,start=start,stop=stop)
+ saveRDS(df, file = file.path(GAlist$dirs["gsets"], "GRCh37_genesplus_annotation.rds"))
+
+ ensg2rsids <- readRDS(file = file.path(GAlist$dirs["gsets"], "GRCh38.ensg2rsids.rds"))
+ sets <- mapSetsDB(sets=ensg2rsids, featureID=markers$rsids, index=TRUE)
+ chr <- sapply(sets, function(x) {unique(markers$chr[x])})
+ start <- sapply(sets, function(x) {min(markers$pos[x])})
+ stop <- sapply(sets, function(x) {max(markers$pos[x])})
+ df <- data.frame(EnsemblID=names(sets),chr=chr,start=start,stop=stop)
+ saveRDS(df, file = file.path(GAlist$dirs["gsets"], "GRCh38_genesplus_annotation.rds"))
+
 
  # GWAS catalog
  dbdir <- file.path(GAlist$dbdir, "gwas")
@@ -626,7 +664,9 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  }
 
  # Regulatory elements
- file <- file.path(GAlist$dirs["gsets"],"GRCh38.Regulatory_Build.regulatory_features.gff.gz")
+ build <- "GRCh37"
+ if(build=="GRCh37") file <- file.path(GAlist$dirs["gsets"],"GRCh37.Regulatory_Build.regulatory_features.gff.gz")
+ if(build=="GRCh38") file <- file.path(GAlist$dirs["gsets"],"GRCh38.Regulatory_Build.regulatory_features.gff.gz")
  df <- fread(file, data.table=FALSE)
  colnames(df) <- c("chr","source","type","start","end","score","strand","phase","attributes")
  df <- df[df$chr%in%as.character(1:22),]
@@ -638,12 +678,16 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  att <- strsplit(att, ":")
  df$reg_id <- sapply(att, function(x){x[2]})
  rownames(df) <- df$reg_id
- saveRDS(df[,c("reg_id", "type", "chr", "start", "end")], file = file.path(GAlist$dirs["gsets"], "regulatory_annotation.rds"))
+ saveRDS(df[,c("reg_id", "type", "chr", "start", "end")],
+         file = file.path(GAlist$dirs["gsets"],"regulatory_annotation.rds"))
+ #file = file.path(GAlist$dirs["gsets"], paste0(build,"_regulatory_annotation.rds")))
 
  reg2ensr <- split(df$reg_id, f=as.factor(df$type))
  saveRDS(reg2ensr, file = file.path(GAlist$dirs["gsets"], "reg2ensr.rds"))
+ #saveRDS(reg2ensr, file = file.path(GAlist$dirs["gsets"], paste0(build,"_reg2ensr.rds")))
 
  #markers <- fread(GAlist$markerfiles, data.table=FALSE)
+ # this is currently build GRC37
  markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
                   data.table=FALSE)
  start <- df$start
