@@ -164,82 +164,23 @@ number NNF20SA0061466)
 5.  Gholipourshahraki et al. 2024. Evaluation of Bayesian Linear
     Regression Models for Pathway Prioritization. *In preparation*
 
-### Need
-
-The genomic research community is accumulating vast quantities of data
-on genomic associations with complex traits at an unprecedented pace.
-The primary challenges are the complexity of biologically interpreting
-genomic data and the absence of a unified repository capable of
-supporting both the storage of diverse genomic information and complex
-bioinformatic analyses. This repository is essential for facilitating
-the interpretation of large-scale genomic association data, bridging the
-gap between data collection and biological understanding.
-
-### Approach
-
-We provide a streamlined solution that enhances research efficiency and
-fosters a deeper biological comprehension of genomic associations,
-addressing both current challenges and enabling future discoveries by
-providing:
-
-- Infrastructure Creation: Establishes an accessible, structured
-  database for genomic data, ensuring ease of organization and access.
-
-- Data Acquisition: Automates the collection and integration of
-  biological databases and GWAS summary statistics, simplifying the
-  assembly of diverse genomic data.
-
-- Bioinformatic Analysis: Offers tools for linking genetic markers to
-  genes, proteins, and pathways, facilitating a deeper genetic
-  understanding of complex traits.
-
-- Advanced Analytical Tools: Supports precise genomic region mapping and
-  enrichment analysis, enhancing the analysis of genetic contributions
-  to complex traits.
-
-### Benefit
-
-Our solution’s benefits collectively enhance the capacity for advanced
-genomic research, making our software a valuable tool for uncovering
-deeper insights into complex traits and driving forward the field of
-genomics.
-
-- Comprehensive Genomic Analysis: Enables detailed studies of complex
-  traits through efficient data processing and analysis tools, allowing
-  for more in-depth research outcomes.
-
-- Streamlined Workflow: Automates data handling, saving considerable
-  time and resources, thus facilitating more ambitious genomic research
-  projects.
-
-- Enhanced Data Quality: Ensures the reliability of research findings
-  through meticulous curation and sophisticated analytical techniques,
-  raising the standard of data integrity.
-
-- Innovative Research Opportunities: Opens the door to groundbreaking
-  studies by integrating diverse bioinformatic tools and methodologies,
-  fostering innovation in genomic research.
-
-### Competition
-
-Compared to other genomic databases and analysis tools, our software
-stands out due to its:
-
-- All-encompassing Approach: It not only compiles an extensive range of
-  genomic data but also provides advanced tools for bioinformatic
-  analysis and interpretation, offering a more holistic solution for
-  genomic research.
-
-- Automation and Efficiency: The package’s ability to automate the
-  downloading, processing, and analysis of complex genomic data sets it
-  apart, enhancing research efficiency.
-
-- Quality and Reliability: Emphasizing rigorous data curation and the
-  use of advanced analytical techniques ensures that the gact package
-  meets the highest standards of data integrity and research validity.
-
-In summary, our software addresses the critical needs of the genomic
-research community by providing an integrated, efficient, and
-high-quality platform for exploring genomic associations with complex
-traits, significantly advancing the potential for discovery and
-innovation in the field.
+<!-- ### Need -->
+<!-- The genomic research community is accumulating vast quantities of data on genomic associations with complex traits at an unprecedented pace. The primary challenges are the complexity of biologically interpreting genomic data and the absence of a unified repository capable of supporting both the storage of diverse genomic information and complex bioinformatic analyses. This repository is essential for facilitating the interpretation of large-scale genomic association data, bridging the gap between data collection and biological understanding. -->
+<!-- ### Approach -->
+<!-- We provide a streamlined solution that enhances research efficiency and fosters a deeper biological comprehension of genomic associations, addressing both current challenges and enabling future discoveries by providing: -->
+<!-- * Infrastructure Creation: Establishes an accessible, structured database for genomic data, ensuring ease of organization and access. -->
+<!-- * Data Acquisition: Automates the collection and integration of biological databases and GWAS summary statistics, simplifying the assembly of diverse genomic data. -->
+<!-- * Bioinformatic Analysis: Offers tools for linking genetic markers to genes, proteins, and pathways, facilitating a deeper genetic understanding of complex traits. -->
+<!-- * Advanced Analytical Tools: Supports precise genomic region mapping and enrichment analysis, enhancing the analysis of genetic contributions to complex traits. -->
+<!-- ### Benefit -->
+<!-- Our solution's benefits collectively enhance the capacity for advanced genomic research, making our software a valuable tool for uncovering deeper insights into complex traits and driving forward the field of genomics. -->
+<!-- * Comprehensive Genomic Analysis: Enables detailed studies of complex traits through efficient data processing and analysis tools, allowing for more in-depth research outcomes. -->
+<!-- * Streamlined Workflow: Automates data handling, saving considerable time and resources, thus facilitating more ambitious genomic research projects. -->
+<!-- * Enhanced Data Quality: Ensures the reliability of research findings through meticulous curation and sophisticated analytical techniques, raising the standard of data integrity. -->
+<!-- * Innovative Research Opportunities: Opens the door to groundbreaking studies by integrating diverse bioinformatic tools and methodologies, fostering innovation in genomic research. -->
+<!-- ### Competition -->
+<!-- Compared to other genomic databases and analysis tools, our software stands out due to its: -->
+<!-- * All-encompassing Approach: It not only compiles an extensive range of genomic data but also provides advanced tools for bioinformatic analysis and interpretation, offering a more holistic solution for genomic research. -->
+<!-- * Automation and Efficiency: The package's ability to automate the downloading, processing, and analysis of complex genomic data sets it apart, enhancing research efficiency. -->
+<!-- * Quality and Reliability: Emphasizing rigorous data curation and the use of advanced analytical techniques ensures that the gact package meets the highest standards of data integrity and research validity. -->
+<!-- In summary, our software addresses the critical needs of the genomic research community by providing an integrated, efficient, and high-quality platform for exploring genomic associations with complex traits, significantly advancing the potential for discovery and innovation in the field. -->
