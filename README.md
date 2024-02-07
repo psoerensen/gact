@@ -142,6 +142,12 @@ LD score regression for estimating genomic heritability and
 correlations.  
 [LD score regression](Document/LD_score_regression.html)
 
+#### Funding
+
+These notes and scripts are prepared in the BALDER project funded by the
+ODIN platform. ODIN is sponsored by the Novo Nordisk Foundation (grant
+number NNF20SA0061466)
+
 #### References
 
 1.  Rohde PD, Sørensen IF, Sørensen P. 2020. qgg: an R package for
