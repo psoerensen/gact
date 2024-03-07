@@ -33,7 +33,7 @@
 #' @export
 #'
 gact <- function(GAlist=NULL, version=NULL, task="download",
-                 dbdir=NULL) {
+                 dbdir=NULL, timeout=1200) {
 
  if(is.null(dbdir)) dbdir <- getwd()
  if(is.null(version)) stop("Please provide database version")
@@ -41,7 +41,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
  if(task=="download") {
   GAlist <- createDB(version=version, dbdir=dbdir)
 
-  options(download.file.method="libcurl", url.method="libcurl", timeout=1200)
+  options(download.file.method="libcurl", url.method="libcurl", timeout=timeout)
 
   # Step 2: Download data from database:
   GAlist <- downloadDB(GAlist=GAlist, what="marker")
