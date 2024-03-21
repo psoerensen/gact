@@ -331,7 +331,7 @@ getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
   if(feature=="ATC2Genes") atcSets <- readRDS(file = file.path(GAlist$dirs["gsets"], "atcSets2.rds"))
   if(feature=="ATC3Genes") atcSets <- readRDS(file = file.path(GAlist$dirs["gsets"], "atcSets3.rds"))
   if(feature=="ATC4Genes") atcSets <- readRDS(file = file.path(GAlist$dirs["gsets"], "atcSets4.rds"))
-  drugSets <- getSetsDB(GAlist = GAlist, feature = "DrugGenes")
+  drugSets <- readRDS(file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
   atcSets <- mapSetsDB(sets=atcSets, featureID=names(drugSets), index=FALSE)
   sets <- lapply(atcSets, function(x){
    unlist(drugSets[x])
