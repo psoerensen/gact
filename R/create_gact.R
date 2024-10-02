@@ -58,6 +58,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="dgi")
   GAlist <- downloadDB(GAlist=GAlist, what="gtex")
   #GAlist <- downloadDB(GAlist=GAlist, what="1000G")
+  #GAlist <- downloadDB(GAlist=GAlist, what="vep")
   GAlist <- downloadDB(GAlist=GAlist, what="diseases")
   #GAlist <- downloadDB(GAlist=GAlist, what="atc")
   #GAlist <- downloadDB(GAlist=GAlist, what="tiga")
@@ -111,7 +112,7 @@ createDB <- function(version = NULL, dbdir = NULL) {
  # Create database directory structure
  dir.create(dbdir)
  dirnames <- c("glist", "gstat", "gsets", "gsea", "gbayes", "gtex", "gwas",
-               "ldsc", "marker", "drugdb", "download", "script")
+               "ldsc", "marker", "drugdb", "download", "script", "vep")
  dirs <- setNames(file.path(dbdir, dirnames), dirnames)
  lapply(dirs, dir.create)
 
@@ -360,6 +361,27 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   unzip(dest, exdir=GAlist$dirs["marker"])
 
  }
+
+ if(what=="vep") {
+  message("Downloading vep files")
+
+  options(download.file.method="libcurl", url.method="libcurl", timeout=3000)
+
+  url <- "https://ftp.ensembl.org/pub/release-112/variation/vep/homo_sapiens_vep_112_GRCh37.tar.gz"
+  dbdir <- file.path(GAlist$dbdir, "vep")
+  if(!dir.exists(dbdir)) dir.create(dbdir)
+  dest <- file.path(GAlist$dbdir, "vep/homo_sapiens_vep_112_GRCh37.tar")
+  download.file(url=url,dest=dest, mode="wb")
+  untar(tarfile=dest,exdir = dbdir)
+ }
+
+ if(what=="clinvar") {
+  message("Downloading files from clinvar")
+  url <- "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz"
+  destfile <- file.path(GAlist$dirs["gsets"],"variant_summary.txt.gz")
+  download.file(url=url, mode = "wb", dest=destfile)
+ }
+
 
  if(what=="gtex") {
   message("Downloading gtex files")

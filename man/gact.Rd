@@ -4,7 +4,13 @@
 \alias{gact}
 \title{Create the database Genomic Association of Complex Traits (GACT)}
 \usage{
-gact(GAlist = NULL, version = NULL, task = "download", dbdir = NULL)
+gact(
+  GAlist = NULL,
+  version = NULL,
+  task = "download",
+  dbdir = NULL,
+  timeout = 1200
+)
 }
 \arguments{
 \item{GAlist}{A list object providing information and infrastructure of the gact database.}

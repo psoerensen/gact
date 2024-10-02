@@ -681,6 +681,131 @@ getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list"
 
 }
 
+#' @export
+#'
+getGWAS <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
+
+  getMarkerStatDB(GAlist=GAlist, studyID=studyID, what=what, format=format, rm.na=rm.na, rsids=rsids, cpra=cpra)
+}
+
+#' Retrieve VEP (Variant Effect Predictor) information for specified genes or rsids.
+#'
+#' This function fetches VEP annotations for either a list of genes (via `ensg`) or specific rsids.
+#' It searches for the corresponding rsids if genes are provided and then extracts VEP data
+#' from chromosome-specific files.
+#'
+#' @param GAlist A list object containing necessary data, including the directory (`dbdir`) where VEP files are located.
+#' @param ensg A character vector of gene Ensembl IDs (e.g., ENSG00000139618) for which rsids should be retrieved and analyzed.
+#' @param enst A character vector of transcript Ensembl IDs (optional, not used in the current function).
+#' @param rsids A character vector of rsids (e.g., rs123) for which VEP annotations should be retrieved.
+#'
+#' @return A data frame containing the VEP annotations for the requested rsids, with columns:
+#' \itemize{
+#'   \item \code{rsids}: The rsid (variant ID).
+#'   \item \code{Location}: The chromosomal location of the variant.
+#'   \item \code{REF_ALLELE}: The reference allele.
+#'   \item \code{Allele}: The alternate allele.
+#'   \item \code{Consequence}: The predicted consequence of the variant.
+#'   \item \code{IMPACT}: The predicted impact of the variant.
+#'   \item \code{SYMBOL}: The gene symbol.
+#'   \item \code{Gene}: The Ensembl gene ID.
+#'   \item \code{Feature_type}: The type of feature (e.g., transcript).
+#'   \item \code{Feature}: The Ensembl transcript ID.
+#'   \item \code{BIOTYPE}: The biotype of the transcript (e.g., protein_coding).
+#'   \item Additional columns for SIFT, PolyPhen, CLIN_SIG, and others.
+#' }
+#'
+#' @details
+#' The function first checks whether rsids are provided directly or need to be retrieved
+#' based on the provided Ensembl gene IDs (`ensg`). It then reads chromosome-specific
+#' VEP files from the provided `GAlist` directory and extracts relevant variant annotations
+#' for the specified rsids. Results are filtered and returned as a data frame.
+#'
+#' @note The VEP files must be located in the `dbdir` of the `GAlist` object, and the files should be named
+#' as `vep01.txt.gz`, `vep02.txt.gz`, ..., corresponding to each chromosome.
+#'
+#' @examples
+#' # Example with Ensembl gene IDs
+#' GAlist <- list(dbdir = "path_to_vep_files")
+#' vep_data <- getVEP(GAlist, ensg = c("ENSG00000139618"))
+#'
+#' # Example with rsids
+#' vep_data <- getVEP(GAlist, rsids = c("rs123", "rs456"))
+#'
+#' @export
+getVEP <- function(GAlist=NULL, ensg=NULL, enst=NULL, rsids=NULL) {
+ rs2vep_list <- list()  # Store data frames temporarily
+
+ # Check if ensg or rsids are provided
+ if(is.null(ensg) && is.null(rsids)) stop("Please provide either 'ensg' or 'rsids' to retrieve VEP data.")
+
+ # Retrieve rsids for genes if ensg is provided
+ if(!is.null(ensg)) {
+  ensgSets <- getMarkerSetsDB(GAlist=GAlist, feature="Genesplus")
+  print(paste("Found information for", sum(ensg %in% names(ensgSets)), "genes in database"))
+  rsids <- unlist(ensgSets[names(ensgSets) %in% ensg])
+  rsids <- unique(rsids)
+  if(length(rsids) == 0) stop("No rsids were found for the provided genes")
+ }
+
+ # Read chromosome-specific VEP files
+ files <- paste0(file.path(GAlist$dbdir, "vep"), "/vep", sprintf("%02d", 1:22), ".txt.gz")
+ for (i in seq_along(files)) {
+  df <- fread(files[i], data.table = FALSE)
+  rws <- df[,"#Uploaded_variation"] %in% rsids
+  rs2vep_list[[i]] <- df[rws, ]
+  print(paste("Finished processing chromosome", i))
+ }
+
+ # Combine all chromosome data into one data frame
+ rs2vep <- do.call(rbind, rs2vep_list)
+
+ # Define columns to retain
+ cls <- c("#Uploaded_variation","Location","REF_ALLELE","Allele","Consequence","IMPACT",
+          "SYMBOL", "Gene", "Feature_type", "Feature", "BIOTYPE", "EXON", "INTRON",
+          "cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons",
+          "DISTANCE", "SYMBOL_SOURCE", "CANONICAL", "SIFT", "PolyPhen", "CLIN_SIG",
+          "LOEUF", "am_class", "am_pathogenicity", "MPC", "CADD_PHRED")
+
+ # Check if the required columns are available and subset
+ available_columns <- colnames(rs2vep)
+ rs2vep <- rs2vep[, cls[cls %in% available_columns], drop = FALSE]
+
+ # Rename the first column to "rsids"
+ colnames(rs2vep)[1] <- "rsids"
+
+ return(rs2vep)
+}
+# Some processing notes on how we obtained the VEP information from Ensembl
+# path <- getwd()
+# gact:::download_zenodo(doi = "10.5281/zenodo.10467174", path=path)
+# markers <- fread(file.path(path,"markers.txt.gz"),data.table=FALSE)
+#
+# for(CHR in 1:22){
+#  tmp <- markers[markers$chr==CHR,]
+#  vcf <- tmp[,c("chr","pos","rsids","ea","nea")]
+#  write.table(vcf, paste0(path,"/markers_chr",CHR,".vcf"), quote=FALSE, col.names=FALSE, row.names=FALSE)
+# }
+#
+# # Upload filerne til VEP, GRCh37
+# #https://grch37.ensembl.org/Homo_sapiens/Tools/VEP
+# # Restrict output to MANE, i.e., MANE_SELECT IS NOT -
+#
+# # Specify the directory containing the .gz files
+# gz_dir <- "path_to_your_gz_files"
+#
+# # List all the .gz files in the directory
+# gz_files <- list.files(file.path(GAlist$dbdir, "vep"), pattern = "\\.gz$", full.names = TRUE)
+#
+#
+# # Specify the output tarball file path
+# tarfile <- file.path(GAlist$dbdir, "vep", "vep.tar.gz")
+#
+# # Combine the .gz files into a tarball
+# tar(tarfile = tarfile, files = gz_files, compression = "gzip")
+
+
+
 #' Get GTEx data
 #'
 #' This function retrieves gene expression data from the GTEx project,
@@ -719,10 +844,20 @@ getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list"
 #' GAlist <- list(dbdir = "path/to/GTEx/data")
 #' gtx_data <- getGTX(GAlist, version = "V8", tissue = c("Liver", "Heart"))
 #' @export
-getGTX <- function(GAlist = NULL, version = "V8", rsids = NULL,
-                   tissue = NULL, format = "data.frame") {
+getGTX <- function(GAlist = NULL, version = "V8", rsids = NULL, ensg=NULL,
+                   tissue = NULL, cls=NULL, format = "data.frame") {
+
  # Initialize an empty list to store results
  gtx <- list()
+
+ if(!is.null(ensg)) {
+  ensgSets <- getMarkerSetsDB(GAlist=GAlist, feature="Genesplus")
+  print(paste("Found information for",sum(ensg%in%names(ensgSets)),"genes in database"))
+  rsids <- unlist(ensgSets[names(ensgSets) %in% ensg])
+  rsids <- unique(rsids)
+  if(length(rsids) == 0) stop("No rsids were found for the provided genes")
+ }
+
 
  # Define the directory suffix based on the version
  dbdir_suffix <- if (version == "V8") {
@@ -748,21 +883,36 @@ getGTX <- function(GAlist = NULL, version = "V8", rsids = NULL,
   select <- files_tissue %in% tissue
   if (!any(select)) stop("Some of the selected tissues not in this GTEx version")
   files <- files[select]
-  tissue <- files_tissue[select]
+  files_tissue <- files_tissue[select]
  }
 
  # Process each file
  for (i in seq_along(files)) {
   df <- fread(files[i], data.table = FALSE)
+  if(i==1) dfcls <- colnames(df)
+  if(i>1) {
+   if(!any(colnames(df)%in%dfcls)) stop("Mismatch between column names in GTEx files")
+  }
   df$gene_id <- substr(df$gene_id, 1, 15)
   df$chr <- gsub("chr","",df$chr)
   df$variant_id <- gsub("chr|_b37|_b38", "", df$variant_id)
   rsid_column <- if (version == "V7") "rs_id_dbSNP147_GRCh37p13" else "rs_id_dbSNP151_GRCh38p7"
-  gtx[[i]] <- data.frame(tissue = tissue[i],
-                         ensg = df$gene_id,
-                         rsids = df[, rsid_column],
-                         p = df$pval_beta,
-                         q = df$qval)
+  if (is.null(cls)) {
+   gtx[[i]] <- data.frame(tissue = files_tissue[i],
+                          ensg = df$gene_id,
+                          rsids = df[, rsid_column],
+                          p = df$pval_beta,
+                          q = df$qval)
+  }
+  if (cls=="all") {
+   rws <- 1:nrow(df)
+   if(!is.null(rsids)) rws <- df[, rsid_column]%in%rsids
+   gtx[[i]] <- cbind(tissue=files_tissue[i], df[rws,])
+   colnames(gtx[[i]])[colnames(gtx[[i]])==rsid_column] <- "rsids"
+   colnames(gtx[[i]])[colnames(gtx[[i]])=="gene_id"] <- "ensg"
+
+  }
+
   # gtx[[i]] <- data.frame(tissue = tissue[i],
   #                        ensg = df$gene_id,
   #                        rsids = df[, rsid_column],
@@ -778,6 +928,10 @@ getGTX <- function(GAlist = NULL, version = "V8", rsids = NULL,
  # Combine all data frames if required
  if (format == "data.frame") {
   gtx <- do.call(rbind, gtx)
+  if(!is.null(ensg)) gtx <- gtx[gtx$ensg%in%ensg,]
+  if(!is.null(rsids)) gtx <- gtx[gtx$rsids%in%rsids,]
+  gtx <- cbind(gtx[,"rsids"], gtx[, colnames(gtx) != "rsids"])
+  colnames(gtx)[1] <- "rsids"
  }
 
  return(gtx)

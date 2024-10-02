@@ -8,7 +8,9 @@ getGTX(
   GAlist = NULL,
   version = "V8",
   rsids = NULL,
+  ensg = NULL,
   tissue = NULL,
+  cls = NULL,
   format = "data.frame"
 )
 }
