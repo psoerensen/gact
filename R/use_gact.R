@@ -42,38 +42,38 @@ getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
                     studyID=NULL, trait=NULL, threshold=0.95,
                     format="list") {
  features <- c("Markers","Genes","Proteins","GO","Pathways",
-               "ProteinComplexes","ChemicalComplexes","Chromosomes")
+               "ProteinComplexes","ChemicalComplexes","Chromosomes", "VEGAS")
  header <- c("Marker ID","Gene ID","Protein ID","GO ID","Pathway ID",
-             "Protein ID","Chemical ID", "Chromosome ID")
+             "Protein ID","Chemical ID", "Chromosome ID", "VEGAS")
  names(header) <- features
  if(!feature%in%features) stop(paste("feature:",feature,"not in database"))
 
- #gseafile <- paste0(GAlist$dirs["gsea"],"ct_gsea",feature,"_gdtdb.rds")
- gseafile <- GAlist$gseafiles[paste0("ct_gsea",feature,"_gdtdb")]
- res <- readRDS(gseafile)
- message(paste("Extract statistics based p-value threshold:",threshold))
- cls5 <- grep("_0.05", colnames(res$stat))
- cls95 <- grep("_0.95", colnames(res$stat))
- cls <- 1:ncol(res$stat)
- if(threshold==0.05) cls <- cls5
- if(threshold==0.95) cls <- cls95
-
- colnames(res$stat) <- gsub("z_","",colnames(res$stat))
- colnames(res$p) <- gsub("z_","",colnames(res$p))
- colnames(res$stat) <- gsub("_0.05","",colnames(res$stat))
- colnames(res$p) <- gsub("_0.05","",colnames(res$p))
- colnames(res$stat) <- gsub("_0.95","",colnames(res$stat))
- colnames(res$p) <- gsub("_0.95","",colnames(res$p))
- res$p[res$stat==0] <- 1
- rws <- rep(TRUE,lenth=nrow(res$stat))
- if(!is.null(featureID)) rws <- rownames(res$stat)%in%featureID
- if(sum(rws)==0) stop("None of featureIDs found in database")
- res$stat <- res$stat[rws,cls]
- res$p <- res$p[rws,cls]
- if(!is.null(studyID)) {
-  res$stat <- res$stat[,colnames(res$stat)%in%studyID]
-  res$p <- res$p[,colnames(res$p)%in%studyID]
- }
+ # #gseafile <- paste0(GAlist$dirs["gsea"],"ct_gsea",feature,"_gdtdb.rds")
+ # gseafile <- GAlist$gseafiles[paste0("ct_gsea",feature,"_gdtdb")]
+ # res <- readRDS(gseafile)
+ # message(paste("Extract statistics based p-value threshold:",threshold))
+ # cls5 <- grep("_0.05", colnames(res$stat))
+ # cls95 <- grep("_0.95", colnames(res$stat))
+ # cls <- 1:ncol(res$stat)
+ # if(threshold==0.05) cls <- cls5
+ # if(threshold==0.95) cls <- cls95
+ #
+ # colnames(res$stat) <- gsub("z_","",colnames(res$stat))
+ # colnames(res$p) <- gsub("z_","",colnames(res$p))
+ # colnames(res$stat) <- gsub("_0.05","",colnames(res$stat))
+ # colnames(res$p) <- gsub("_0.05","",colnames(res$p))
+ # colnames(res$stat) <- gsub("_0.95","",colnames(res$stat))
+ # colnames(res$p) <- gsub("_0.95","",colnames(res$p))
+ # res$p[res$stat==0] <- 1
+ # rws <- rep(TRUE,lenth=nrow(res$stat))
+ # if(!is.null(featureID)) rws <- rownames(res$stat)%in%featureID
+ # if(sum(rws)==0) stop("None of featureIDs found in database")
+ # res$stat <- res$stat[rws,cls]
+ # res$p <- res$p[rws,cls]
+ # if(!is.null(studyID)) {
+ #  res$stat <- res$stat[,colnames(res$stat)%in%studyID]
+ #  res$p <- res$p[,colnames(res$p)%in%studyID]
+ # }
 
  if(format=="data.frame") {
   res <- as.data.frame(res)
@@ -904,7 +904,7 @@ getGTX <- function(GAlist = NULL, version = "V8", rsids = NULL, ensg=NULL,
                           p = df$pval_beta,
                           q = df$qval)
   }
-  if (cls=="all") {
+  if (is.null(cls)) {
    rws <- 1:nrow(df)
    if(!is.null(rsids)) rws <- df[, rsid_column]%in%rsids
    gtx[[i]] <- cbind(tissue=files_tissue[i], df[rws,])
@@ -935,6 +935,99 @@ getGTX <- function(GAlist = NULL, version = "V8", rsids = NULL, ensg=NULL,
  }
 
  return(gtx)
+}
+
+
+#' Get VEGAS Data
+#'
+#' This function retrieves VEGAS (Versatile Gene-based Association Study) Z-score data from the GAlist object, allowing optional filtering by `studyID` and handling of missing values. The function returns a filtered matrix of Z-scores corresponding to the specified `studyID` or all data if no specific study is provided.
+#'
+#' @param GAlist A list object that contains directories and data required for the analysis, including the path to the Z-score data.
+#' @param ensg Not currently used in the function, but can be reserved for future functionality.
+#' @param studyID A character vector of study IDs to filter the Z-scores. Only Z-scores corresponding to these study IDs will be returned. If `NULL`, all studies are returned.
+#' @param rm.na Logical; if `TRUE`, rows with `NA` values will be removed from the data. Defaults to `TRUE`.
+#'
+#' @return A matrix of Z-scores filtered by the provided `studyID` (if given) and cleaned of missing values if `rm.na` is `TRUE`.
+#' @examples
+#' # Assuming GAlist is a valid object with the necessary structure
+#' Z_scores <- getVEGAS(GAlist, studyID = c("study1", "study2"))
+#'
+#' # Get all Z-scores and remove rows with NA values
+#' Z_scores_all <- getVEGAS(GAlist, rm.na = TRUE)
+#'
+#' @export
+getVEGAS <- function(GAlist = NULL, ensg = NULL, studyID = NULL, rm.na = TRUE) {
+ # Read the Z-score matrix from the specified file path in the GAlist object
+ Z <- readRDS(file = file.path(GAlist$dirs["gsea"], "Z_vegas.rds"))
+
+ # If studyID is provided, filter the Z-scores matrix by matching column names
+ if (!is.null(studyID)) {
+  cls <- colnames(Z) %in% studyID
+  if (any(!studyID %in% colnames(Z))) {
+   warning("Some studyIDs not present in the database")
+  }
+  Z <- Z[, cls, drop = FALSE]  # Drop any unwanted columns
+ }
+
+ # If rm.na is TRUE, remove rows with NA values
+ if (rm.na) Z <- na.omit(Z)
+
+ # Return the filtered Z-scores matrix
+ Z
+}
+
+
+#' Retrieve Disease Associations
+#'
+#' This function retrieves disease association data based on protein or gene information from the provided GAlist object. It supports filtering by `ENSP` (protein) or `ENSG` (gene), and can fetch data from multiple sources: Integrated, Experiments, Knowledge, or Textmining datasets.
+#'
+#' @param GAlist A list object that contains directories and data required for the analysis, including disease data files and gene-protein mappings.
+#' @param ensg A character vector of gene IDs (ENSG) to filter the disease data. If not provided, the function will use `ensp` to filter.
+#' @param ensp A character vector of protein IDs (ENSP) to filter the disease data.
+#' @param what A character string specifying the source of disease data. Options are "Integrated" (default), "Experiments", "Knowledge", or "Textmining".
+#'
+#' @return A data frame of disease associations filtered by the provided gene or protein IDs, sorted by the disease score in decreasing order.
+#' @examples
+#' # Assuming GAlist is a valid object with the necessary structure
+#' diseases <- getDISEASES(GAlist, ensg = c("ENSG00000139618"))
+#'
+#' # Retrieve data using protein IDs
+#' diseases_protein <- getDISEASES(GAlist, ensp = c("ENSP00000269305"))
+#'
+#' @export
+getDISEASES <- function(GAlist = NULL, ensg = NULL, ensp = NULL, what = "Integrated") {
+
+ # Determine the file to load based on the 'what' parameter
+ if (what == "Integrated") file <- "human_disease_integrated_full.tsv.gz"
+ if (what == "Experiments") file <- "human_disease_experiments_filtered.tsv.gz"
+ if (what == "Knowledge") file <- "human_disease_knowledge_filtered.tsv.gz"
+ if (what == "Textmining") file <- "human_disease_textmining_filtered.tsv.gz"
+
+ # Read the disease data file
+ df <- fread(file.path(GAlist$dirs["gsets"], file), data.table = FALSE)
+ colnames(df) <- c("ensp", "sym", "DOID", "Disease", "Score")  # Ensure proper column names
+
+ # Filter by protein IDs (ENSP), if provided
+ if (!is.null(ensp)) df <- df[df[,1] %in% ensp, ]
+
+ # Filter by gene IDs (ENSG), if provided
+ if (!is.null(ensg)) {
+  # Get the ENSP entries for the given ENSG IDs
+  ensp <- GAlist$gsets$ensg2ensp[names(GAlist$gsets$ensg2ensp) %in% ensg]
+  ensg2ensp <- do.call(rbind, lapply(names(ensp), function(ensg) {
+   data.frame(ensg = ensg, ensp = ensp[[ensg]], stringsAsFactors = FALSE)
+  }))
+
+  # Filter the disease data by matching ENSP values
+  df <- df[df$ensp %in% unique(unlist(ensp)), ]
+
+  # Merge the gene-protein mapping with the disease data
+  df <- merge(x = ensg2ensp, y = df, by = "ensp", all = FALSE)
+ }
+
+ # Sort the data by the "Score" column in descending order
+ o <- order(df$Score, decreasing = TRUE)
+ df[o, ]  # Return the sorted data frame
 }
 
 #' @export
