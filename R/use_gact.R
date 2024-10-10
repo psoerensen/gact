@@ -1420,15 +1420,15 @@ qplot <- function(p=NULL, main = "") {
 #' @examples
 #' \dontrun{
 #'   # Example usage for default full output
-#'   hgt_results <- hgtDB(GAlist=myGAlist, sets=mySets, feature="myFeature")
+#'   hgt_results <- hgtSets(GAlist=myGAlist, sets=mySets, feature="myFeature")
 #'   # Example usage for p-values only
-#'   p_values <- hgtDB(GAlist=myGAlist, sets=mySets, feature="myFeature", output="p")
+#'   p_values <- hgtSets(GAlist=myGAlist, sets=mySets, feature="myFeature", output="p")
 #'   # Example usage for summary output
-#'   summary_results <- hgtDB(GAlist=myGAlist, sets=mySets, feature="myFeature", output="summary")
+#'   summary_results <- hgtSets(GAlist=myGAlist, sets=mySets, feature="myFeature", output="summary")
 #' }
 #'
 #' @export
-hgtDB <- function(GAlist = NULL, sets = NULL, feature = NULL, featureIDs = NULL,
+hgtSets <- function(GAlist = NULL, sets = NULL, feature = NULL, featureIDs = NULL,
                   minsets = 5, output = NULL) {
 
  # Check for valid input
