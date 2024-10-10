@@ -321,6 +321,25 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   download_zenodo(doi = "10.5281/zenodo.10462421", path=GAlist$dirs["gbayes"])
  }
 
+ if(what=="1000G-LDscores") {
+
+  # This is a gzipped copy of the European LD scores from 1000 Genomes provided by the Alkes Group,
+  # originally available at https://data.broadinstitute.org/alkesgroup/LDSCORE/eur_w_ld_chr.tar.bz2.
+
+  download_zenodo(doi = "10.5281/zenodo.8182036", path=GAlist$dirs["marker"])
+  tarfile <- file.path(GAlist$dirs["marker"],"eur_w_ld_chr.tar.gz")
+  exdir <- file.path(GAlist$dirs["marker"],"ldscores")
+  untar(tarfile=tarfile, exdir = exdir)
+
+  markers <- NULL
+  for ( chr in 1:22) {
+   filename <- file.path(GAlist$dirs["marker"],"ldscores", "eur_w_ld_chr",paste0(chr,".l2.ldscore.gz"))
+   markers <- rbind(markers,fread(filename, data.table=FALSE))
+  }
+  colnames(markers) <- c("chr","rsids","pos","map","eaf", "ldscores")
+  fwrite(markers, file.path(GAlist$dirs["marker"], "markers_1000G_eur_w_ld.txt.gz"))
+
+ }
 
 
  if(what=="1000G") {
@@ -960,8 +979,7 @@ updateStatDB <- function(GAlist=NULL,
                          ncontrol=NULL,
                          reference="unknown",
                          comments="none",
-                         writeStatDB=TRUE,
-                         excludeMAFDIFF=0.05) {
+                         writeStatDB=TRUE) {
 
  # Update study information only - useful if we need to add extra information
  message("Collecting information on external summary statistics")
@@ -1003,7 +1021,10 @@ updateStatDB <- function(GAlist=NULL,
   stat$p <- as.numeric(stat$p)
   stat$p[stat$p==0] <- .Machine$double.xmin
 
-  stat <- qcStatDB(GAlist=GAlist,stat=stat, excludeMAFDIFF=excludeMAFDIFF)
+  stat <- qcStatDB(GAlist=GAlist,stat=stat, excludeMAF=0.5, excludeMAFDIFF=0.5,
+                   excludeINFO=0.8, excludeCGAT=TRUE, excludeINDEL=TRUE,
+                   excludeDUPS=TRUE, excludeMHC=FALSE, excludeMISS=0.05,
+                   excludeHWE=1e-12)
   message(paste("Writing processed summary statistics to internal file:",
                 GAlist$study$file[study_number]))
   file_stat <- GAlist$studyfiles[study_number]
