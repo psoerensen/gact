@@ -1190,10 +1190,14 @@ mapSetsDB <- function(sets = NULL, featureID = NULL, GAlist = NULL, index = TRUE
 }
 
 #' @export
-getLDscoresDB <- function(GAlist=NULL, ancestry="EUR", rsids=NULL) {
- if(ancestry=="EUR") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eur_filtered.txt.gz"), data.table=FALSE)
- if(ancestry=="EAS") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eas_filtered.txt.gz"), data.table=FALSE)
- if(ancestry=="SAS") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_sas_filtered.txt.gz"), data.table=FALSE)
+getLDscoresDB <- function(GAlist=NULL, ancestry="EUR", version="HapMap3", rsids=NULL) {
+ if(ancestry=="EUR" && version=="HapMap3") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eur_hm3.txt.gz"), data.table=FALSE)
+ if(ancestry=="EAS" && version=="HapMap3") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eas_hm3.txt.gz"), data.table=FALSE)
+ if(ancestry=="SAS" && version=="HapMap3") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_sas_hm3.txt.gz"), data.table=FALSE)
+ if(ancestry=="EUR" && version=="1000G") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eur_filtered.txt.gz"), data.table=FALSE)
+ if(ancestry=="EAS" && version=="1000G") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eas_filtered.txt.gz"), data.table=FALSE)
+ if(ancestry=="SAS" && version=="1000G") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_sas_filtered.txt.gz"), data.table=FALSE)
+ if(ancestry=="EUR" && version=="Original") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eur_w_ld.txt.txt.gz"), data.table=FALSE)
  ldscores <- marker[,"ldscores"]
  names(ldscores) <- marker$rsids
  if(!is.null(rsids)) ldscores <- ldscores[names(ldscores)%in%rsids]
