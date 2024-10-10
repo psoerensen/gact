@@ -17,10 +17,10 @@
 #' @examples
 #' \dontrun{
 #'   # Generate gene sets
-#'   sets <- simPathwayDB(GAlist = GAlist, ngenes = 10, ncgenes = 2, nreps = 5)
+#'   sets <- simPathway(GAlist = GAlist, ngenes = 10, ncgenes = 2, nreps = 5)
 #' }
 
-simPathwayDB <- function(GAlist = NULL, mcausal = 500, causal = NULL, ngenes = 10,
+simPathway <- function(GAlist = NULL, mcausal = 500, causal = NULL, ngenes = 10,
                          ncgenes = 2, nreps = 10, format = "markers") {
  # Input validation
  if (is.null(GAlist)) stop("GAlist is required")

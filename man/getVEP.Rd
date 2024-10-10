@@ -4,7 +4,7 @@
 \alias{getVEP}
 \title{Retrieve VEP (Variant Effect Predictor) information for specified genes or rsids.}
 \usage{
-getVEP(GAlist = NULL, ensg = NULL, enst = NULL, rsids = NULL)
+getVEP(GAlist = NULL, ensg = NULL, enst = NULL, ensp = NULL, rsids = NULL)
 }
 \arguments{
 \item{GAlist}{A list object containing necessary data, including the directory (\code{dbdir}) where VEP files are located.}
@@ -12,6 +12,8 @@ getVEP(GAlist = NULL, ensg = NULL, enst = NULL, rsids = NULL)
 \item{ensg}{A character vector of gene Ensembl IDs (e.g., ENSG00000139618) for which rsids should be retrieved and analyzed.}
 
 \item{enst}{A character vector of transcript Ensembl IDs (optional, not used in the current function).}
+
+\item{ensp}{A character vector of protein Ensembl IDs (optional, not used in the current function).}
 
 \item{rsids}{A character vector of rsids (e.g., rs123) for which VEP annotations should be retrieved.}
 }
@@ -35,7 +37,7 @@ A data frame containing the VEP annotations for the requested rsids, with column
 \description{
 This function fetches VEP annotations for either a list of genes (via \code{ensg}) or specific rsids.
 It searches for the corresponding rsids if genes are provided and then extracts VEP data
-from chromosome-specific files.
+from the Ensembl VEP files.
 }
 \details{
 The function first checks whether rsids are provided directly or need to be retrieved

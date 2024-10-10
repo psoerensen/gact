@@ -23,22 +23,22 @@
 #' GAlist <- readRDS(file="GAlist.rds")
 #'
 #' # get marker statistics
-#' stat <- getStatDB(GAlist = GAlist, feature = "Markers", studyID="GWAS1")
+#' stat <- getFeatureStat(GAlist = GAlist, feature = "Markers", studyID="GWAS1")
 #'
 #' # get gene statistics
-#' stat <- getStatDB(GAlist = GAlist, feature = "Genes")
+#' stat <- getFeatureStat(GAlist = GAlist, feature = "Genes")
 #'
 #' # get gene statistics for a specific feature
-#' stat <- getStatDB(GAlist = GAlist, feature = "Genes", featureID = "TP53")
+#' stat <- getFeatureStat(GAlist = GAlist, feature = "Genes", featureID = "TP53")
 #'
 #' # get gene statistics filtered by a threshold
-#' stat <- getStatDB(GAlist = GAlist, feature = "Genes", threshold = 0.05)
+#' stat <- getFeatureStat(GAlist = GAlist, feature = "Genes", threshold = 0.05)
 #' }
 
 
 #' @export
 #'
-getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
+getFeatureStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
                     studyID=NULL, trait=NULL, threshold=0.95,
                     format="list") {
  features <- c("Markers","Genes","Proteins","GO","Pathways",
@@ -107,7 +107,7 @@ getStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
 writeStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
                       studyID=NULL, threshold=0.95,
                       format="data.frame", file.csv=NULL, hyperlink=TRUE) {
- res <- getStatDB(GAlist=GAlist, feature=feature, featureID=featureID,
+ res <- getFeatureStat(GAlist=GAlist, feature=feature, featureID=featureID,
                  studyID=studyID, threshold=threshold,
                  format=format)
  features <- c("Markers","Genes","Proteins","GO","Pathways",
@@ -153,7 +153,7 @@ writeStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
 
 #' @export
 #'
-getStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
+getFeatureStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
                     studyID=NULL, trait="t2d", threshold=1,
                     format="data.frame", hyperlink=FALSE, cls=NULL) {
 
@@ -236,7 +236,7 @@ getStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
 designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeatureID=NULL, scale=FALSE) {
  if(is.null(GAlist)) stop ("Please provide GAlist")
  if(is.null(feature)) stop ("Please provide feature")
- sets <- getSetsDB(GAlist=GAlist, feature=feature)
+ sets <- getFeatureSets(GAlist=GAlist, feature=feature)
  if(!is.null(featureID)) {
   select <- names(sets)%in%featureID
   if(sum(select)==0) stop("None of the fetureIDs found in sets")
@@ -256,7 +256,7 @@ designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeature
 
 #' Retrieve Feature Sets from Database
 #'
-#' The `getSetsDB` function retrieves sets of features from a `GAlist` object based on the specified `feature` argument.
+#' The `getFeatureSets` function retrieves sets of features from a `GAlist` object based on the specified `feature` argument.
 #' It allows filtering of these feature sets using the `featureID` argument. This function is designed to handle a variety of
 #' feature types, including those related to genomic, proteomic, or pharmacological information. The successful operation
 #' of this function depends on the structure and content of the `GAlist` parameter.
@@ -297,13 +297,13 @@ designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeature
 #'
 #' @examples
 #' \dontrun{
-#' sets <- getSetsDB(GAlist, feature="Genes")
-#' getSetsDB(GAlist, feature="Genes", featureID=c("gene1", "gene2"))
+#' sets <- getFeatureSets(GAlist, feature="Genes")
+#' getFeatureSets(GAlist, feature="Genes", featureID=c("gene1", "gene2"))
 #' }
 #'
 #' @export
 #'
-getSetsDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
+getFeatureSets <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NULL,
                       upstream=FALSE,downstream=FALSE,
                       min_combined_score=700, min_interactions=5) {
  sets <- NULL
@@ -488,12 +488,12 @@ getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, min_combined_sco
 #'
 #' @examples
 #' \dontrun{
-#'   sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes",
+#'   sets <- getMarkerSets(GAlist = GAlist, feature = "Genes",
 #'                           featureID = c("ENSG00000165879", "ENSG00000012048"))
 #' }
 #' @importFrom msigdbr msigdbr
 #' @export
-getMarkerSetsDB <- function(GAlist = NULL, feature = NULL, featureID = NULL,
+getMarkerSets <- function(GAlist = NULL, feature = NULL, featureID = NULL,
                             rsids = NULL, threshold = 0.01) {
  if(is.null(feature)) stop("Feature is required")
 
@@ -519,7 +519,7 @@ getMarkerSetsDB <- function(GAlist = NULL, feature = NULL, featureID = NULL,
   sets <- lapply(sets, function(x) {unlist(msets[x])})
  }
  if(feature%in%c("GTEx","GTExV7","GTExV8")) {
-  gtexsets <- getSetsDB(GAlist=GAlist, feature=feature)
+  gtexsets <- getFeatureSets(GAlist=GAlist, feature=feature)
   sets <- sapply(gtexsets, function(x){ x$rsids[x$p<threshold]})
  }
  if(feature%in%c("Regulatory Categories","Regulatory Regions","Promoter", "Enhancer","OCR",
@@ -585,11 +585,11 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 #'
 #' @examples
 #' \dontrun{
-#'   stats <- getMarkerStatDB(GAlist = GAlist, studyID = "GWAS1")
+#'   stats <- getMarkerStat(GAlist = GAlist, studyID = "GWAS1")
 #' }
 #' @export
 #'
-getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
+getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
 
  if(!is.null(cpra)) {
   markers <- fread(GAlist$markerfiles, data.table=FALSE)
@@ -681,22 +681,28 @@ getMarkerStatDB <- function(GAlist=NULL, studyID=NULL, what="all", format="list"
 
 }
 
-#' @export
+#' Retrieve GWAS Results
 #'
+#' This function is a wrapper around `getMarkerStat()` and inherits its documentation. It retrieves GWAS results for a specified study based on the given parameters. Additional parameters can be passed to filter the results.
+#'
+#' @inherit getMarkerStat params return
+#'
+#' @export
 getGWAS <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
 
-  getMarkerStatDB(GAlist=GAlist, studyID=studyID, what=what, format=format, rm.na=rm.na, rsids=rsids, cpra=cpra)
+ getMarkerStat(GAlist=GAlist, studyID=studyID, what=what, format=format, rm.na=rm.na, rsids=rsids, cpra=cpra)
 }
 
 #' Retrieve VEP (Variant Effect Predictor) information for specified genes or rsids.
 #'
 #' This function fetches VEP annotations for either a list of genes (via `ensg`) or specific rsids.
 #' It searches for the corresponding rsids if genes are provided and then extracts VEP data
-#' from chromosome-specific files.
+#' from the Ensembl VEP files.
 #'
 #' @param GAlist A list object containing necessary data, including the directory (`dbdir`) where VEP files are located.
 #' @param ensg A character vector of gene Ensembl IDs (e.g., ENSG00000139618) for which rsids should be retrieved and analyzed.
 #' @param enst A character vector of transcript Ensembl IDs (optional, not used in the current function).
+#' @param ensp A character vector of protein Ensembl IDs (optional, not used in the current function).
 #' @param rsids A character vector of rsids (e.g., rs123) for which VEP annotations should be retrieved.
 #'
 #' @return A data frame containing the VEP annotations for the requested rsids, with columns:
@@ -733,7 +739,7 @@ getGWAS <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=
 #' vep_data <- getVEP(GAlist, rsids = c("rs123", "rs456"))
 #'
 #' @export
-getVEP <- function(GAlist=NULL, ensg=NULL, enst=NULL, rsids=NULL) {
+getVEP <- function(GAlist=NULL, ensg=NULL, enst=NULL, ensp=NULL, rsids=NULL) {
  rs2vep_list <- list()  # Store data frames temporarily
 
  # Check if ensg or rsids are provided
@@ -741,7 +747,7 @@ getVEP <- function(GAlist=NULL, ensg=NULL, enst=NULL, rsids=NULL) {
 
  # Retrieve rsids for genes if ensg is provided
  if(!is.null(ensg)) {
-  ensgSets <- getMarkerSetsDB(GAlist=GAlist, feature="Genesplus")
+  ensgSets <- getMarkerSets(GAlist=GAlist, feature="Genesplus")
   print(paste("Found information for", sum(ensg %in% names(ensgSets)), "genes in database"))
   rsids <- unlist(ensgSets[names(ensgSets) %in% ensg])
   rsids <- unique(rsids)
@@ -851,7 +857,7 @@ getGTX <- function(GAlist = NULL, version = "V8", rsids = NULL, ensg=NULL,
  gtx <- list()
 
  if(!is.null(ensg)) {
-  ensgSets <- getMarkerSetsDB(GAlist=GAlist, feature="Genesplus")
+  ensgSets <- getMarkerSets(GAlist=GAlist, feature="Genesplus")
   print(paste("Found information for",sum(ensg%in%names(ensgSets)),"genes in database"))
   rsids <- unlist(ensgSets[names(ensgSets) %in% ensg])
   rsids <- unique(rsids)
@@ -1189,18 +1195,81 @@ mapSetsDB <- function(sets = NULL, featureID = NULL, GAlist = NULL, index = TRUE
  return(rsSets)
 }
 
+#' Retrieve Linkage Disequilibrium (LD) Scores for Specific Genetic Markers
+#'
+#' This function retrieves LD scores for specified genetic markers based on the population ancestry and version of the reference panel. The function reads in marker files and extracts LD scores, allowing for optional filtering by specific rsIDs.
+#'
+#' @param GAlist A list containing directory paths where marker data is stored. It is assumed that `GAlist$dirs["marker"]` points to the correct directory.
+#' @param ancestry A character string specifying the ancestry population. The options are "EUR" (European), "EAS" (East Asian), or "SAS" (South Asian). Default is "EUR".
+#' @param version A character string specifying the version of the reference panel. The options are "HapMap3", "1000G", or "Original". Default is "HapMap3".
+#' @param rsids An optional character vector of rsIDs to filter the LD scores. If not specified, all LD scores will be returned.
+#'
+#' @return A named vector of LD scores, where the names are rsIDs.
+#'
+#' @details
+#' The function reads in precomputed LD score files for the selected ancestry and version, extracts the LD scores, and returns them as a named vector. If the `rsids` argument is provided, the returned vector will only include LD scores for the specified rsIDs.
+#'
+#' @examples
+#' # Example usage:
+#' GAlist <- list(dirs = c(marker = "/path/to/marker/files"))
+#' ldscores <- getLDscores(GAlist, ancestry = "EUR", version = "HapMap3", rsids = c("rs123", "rs456"))
+#'
 #' @export
-getLDscoresDB <- function(GAlist=NULL, ancestry="EUR", version="HapMap3", rsids=NULL) {
- if(ancestry=="EUR" && version=="HapMap3") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eur_hm3.txt.gz"), data.table=FALSE)
- if(ancestry=="EAS" && version=="HapMap3") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eas_hm3.txt.gz"), data.table=FALSE)
- if(ancestry=="SAS" && version=="HapMap3") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_sas_hm3.txt.gz"), data.table=FALSE)
- if(ancestry=="EUR" && version=="1000G") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eur_filtered.txt.gz"), data.table=FALSE)
- if(ancestry=="EAS" && version=="1000G") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eas_filtered.txt.gz"), data.table=FALSE)
- if(ancestry=="SAS" && version=="1000G") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_sas_filtered.txt.gz"), data.table=FALSE)
- if(ancestry=="EUR" && version=="Original") marker <- fread(file.path(GAlist$dirs["marker"],"markers_1000G_eur_w_ld.txt.txt.gz"), data.table=FALSE)
+#' @export
+getLDscores <- function(GAlist=NULL, ancestry="EUR", version="HapMap3", rsids=NULL) {
+ # Check if GAlist is provided
+ if (is.null(GAlist) || !("marker" %in% names(GAlist$dirs))) {
+  stop("Error: GAlist or GAlist$dirs['marker'] is missing.")
+ }
+
+ # Check if ancestry and version are valid
+ valid_ancestries <- c("EUR", "EAS", "SAS")
+ valid_versions <- c("HapMap3", "1000G", "Original")
+
+ if (!(ancestry %in% valid_ancestries)) {
+  stop("Error: Invalid ancestry. Choose from 'EUR', 'EAS', or 'SAS'.")
+ }
+
+ if (!(version %in% valid_versions)) {
+  stop("Error: Invalid version. Choose from 'HapMap3', '1000G', or 'Original'.")
+ }
+
+ # Define the file path based on ancestry and version
+ file_name <- switch(
+  paste(ancestry, version, sep = "_"),
+  "EUR_HapMap3" = "markers_1000G_eur_hm3.txt.gz",
+  "EAS_HapMap3" = "markers_1000G_eas_hm3.txt.gz",
+  "SAS_HapMap3" = "markers_1000G_sas_hm3.txt.gz",
+  "EUR_1000G" = "markers_1000G_eur_filtered.txt.gz",
+  "EAS_1000G" = "markers_1000G_eas_filtered.txt.gz",
+  "SAS_1000G" = "markers_1000G_sas_filtered.txt.gz",
+  "EUR_Original" = "markers_1000G_eur_w_ld.txt.txt.gz",
+  stop("Error: No marker file found for the selected ancestry and version.")
+ )
+
+ # Read the marker file
+ marker_file_path <- file.path(GAlist$dirs["marker"], file_name)
+
+ if (!file.exists(marker_file_path)) {
+  stop("Error: The marker file does not exist at the specified location.")
+ }
+
+ marker <- fread(marker_file_path, data.table = FALSE)
+
+ # Check if 'ldscores' and 'rsids' columns exist
+ if (!all(c("ldscores", "rsids") %in% colnames(marker))) {
+  stop("Error: The marker file does not contain the required columns 'ldscores' and 'rsids'.")
+ }
+
+ # Extract ldscores and assign rsids as names
  ldscores <- marker[,"ldscores"]
  names(ldscores) <- marker$rsids
- if(!is.null(rsids)) ldscores <- ldscores[names(ldscores)%in%rsids]
+
+ # Filter by rsids if provided
+ if (!is.null(rsids)) {
+  ldscores <- ldscores[names(ldscores) %in% rsids]
+ }
+
  return(ldscores)
 }
 
@@ -1372,7 +1441,7 @@ hgtDB <- function(GAlist = NULL, sets = NULL, feature = NULL, featureIDs = NULL,
  if (is.null(sets)) stop("'sets' cannot be NULL")
 
  # Get feature sets from the database
- featureSets <- getSetsDB(GAlist = GAlist, feature = feature, minsets = minsets)
+ featureSets <- getFeatureSets(GAlist = GAlist, feature = feature, minsets = minsets)
  rowids <- unique(unlist(featureSets))
 
  # Generate the design matrix

@@ -18,8 +18,7 @@ updateStatDB(
   ncontrol = NULL,
   reference = "unknown",
   comments = "none",
-  writeStatDB = TRUE,
-  excludeMAFDIFF = 0.05
+  writeStatDB = TRUE
 )
 }
 \arguments{
