@@ -511,6 +511,11 @@ getMarkerSets <- function(GAlist = NULL, feature = NULL, featureID = NULL,
  if(feature=="DrugComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"drug2string2ensg.rds")
  if(!is.null(setsfile)) sets <- readRDS(file=setsfile)
 
+ if(feature=="Chromosomes") {
+  markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
+                   data.table=FALSE)
+  sets <- split( markers$rsids, f=as.factor(markers$chr) )
+ }
  if(feature=="KEGG") {
   msets <- readRDS(file.path(GAlist$dirs["gsets"],"ensg2rsids.rds"))
   msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
