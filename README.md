@@ -16,10 +16,6 @@ pathways. It is designed to aid in the biological interpretation of
 genomic associations, shedding light on their complex relationships in
 the context of genomic associations of complex traits.
 
-<br>
-
-![](Images/Concept.png) <br>
-
 **gact** provides an infrastructure for efficient processing of
 large-scale genomic association data, including core functions for:
 
@@ -33,6 +29,10 @@ large-scale genomic association data, including core functions for:
   models.
 - Performing advanced gene set enrichment analysis utilizing a variety
   of tools and methodologies.
+
+<br>
+
+![](Images/Concept.png) <br>
 
 <br>
 
