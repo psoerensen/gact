@@ -15,7 +15,7 @@ This script is designed for advanced gene set analysis, utilizing a variety of t
 
 <br>
 
-![](../Images/Bayesian_MAGMA.png)
+![](../Images/Bayesian_MAGMA.png){width=50%}
 
 <br>
 
