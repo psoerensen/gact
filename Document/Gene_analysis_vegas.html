@@ -384,7 +384,6 @@ specifically European (EUR), East Asian (EAS), and South Asian
 library(qgg)
 library(gact)
 
-
 # Load GAlist with information on gact database
 GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
@@ -436,9 +435,7 @@ res &lt;- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)</code></p
 <div id="perform-vegas-gene-analysis-for-multiple-studies-of-european-ancestry" class="section level4">
 <h4>Perform VEGAS gene analysis for multiple studies of European
 ancestry</h4>
-<pre class="r"><code># VEGAS for a multiple traits/studies (EUR)
-
-# Select study
+<pre class="r"><code># Select study
 studyID &lt;- c(&quot;GWAS1&quot;,&quot;GWAS2&quot;)
 
 # Load Glist with information on 1000G (EUR)

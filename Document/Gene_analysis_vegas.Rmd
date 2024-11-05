@@ -22,7 +22,6 @@ This script is dedicated to gene analysis using the VEGAS (Versatile Gene-based 
 library(qgg)
 library(gact)
 
-
 # Load GAlist with information on gact database
 GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
 
@@ -78,9 +77,6 @@ res <- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)
 
 #### Perform VEGAS gene analysis for multiple studies of European ancestry
 ```{r, include=TRUE, eval=FALSE}
-
-# VEGAS for a multiple traits/studies (EUR)
-
 # Select study
 studyID <- c("GWAS1","GWAS2")
 
