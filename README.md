@@ -124,20 +124,19 @@ Analysis of GenoMic Annotation) (Bai et al. 2024).
 [Gene set analysis using
 MAGMA](Document/Gene_set_analysis_blr_magma.html)
 
-Pathway prioritization using a BLR-MAGMA model and gene-level statistics
-derived from VEGAS (Gholipourshahraki et al. 2024).  
+Pathway prioritization using a single and multiple trait Bayesian MAGMA
+models and gene-level statistics derived from VEGAS (Gholipourshahraki
+et al. 2024).  
 [Gene set analysis using Bayesian
 MAGMA](Document/Pathway_prioritization_blr_magma.html)
 
 Finemapping of gene regions using single trait Bayesian Linear
 Regression models (Shrestha et al. 2023).  
-[Finemapping of gene regions using BLR
+[Finemapping of gene and LD regions using BLR
 models](Document/Finemapping_gene_regions_blr.html)
 
-Finemapping of LD regions using single trait Bayesian Linear Regression
-models (Shrestha et al. 2023).  
-[Finemapping of LD regions using BLR
-models](Document/Finemapping_ld_regions_blr.html)
+<!-- Finemapping of LD regions using single trait Bayesian Linear Regression models (Shrestha et al. 2023).     -->
+<!-- [Finemapping of LD regions using BLR models](Document/Finemapping_ld_regions_blr.html)   -->
 
 LD score regression for estimating genomic heritability and
 correlations.  
