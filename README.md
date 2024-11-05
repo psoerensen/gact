@@ -39,38 +39,39 @@ large-scale genomic association data, including core functions for:
 **gact** constructs gene and genetic marker sets from a range of
 biological databases including:
 
-- `"Ensembl"`: Gene, protein, transcript sets from the
+- `"Ensembl"`: Gene, protein, transcript sets derived from the
   [Ensembl](https://www.ensembl.org/index.html) database.
-- `"Regulation"`: Regulatory genomic feature sets from the [Ensembl
+- `"Regulation"`: Regulatory genomic feature sets derived from the
+  [Ensembl
   Regulation](https://www.ensembl.org/info/genome/funcgen/index.html)
   database.
 - `"GO"`: Gene Ontology sets from the [GO](https://geneontology.org)
   database.
 - `"Pathways"`: Pathway sets from the [Reactome](https://reactome.org)
   and [KEGG](https://www.genome.jp/kegg/pathway.html) databases.
-- `"ProteinComplexes"`: Protein complex sets from the
+- `"ProteinComplexes"`: Protein complex sets derived from the
   [STRING](https://string-db.org) database.
-- `"ChemicalComplexes"`: Chemical complex sets from the
+- `"ChemicalComplexes"`: Chemical complex sets derived from the
   [STITCH](http://stitch.embl.de/) database.
 - `"DrugGenes"`: Drug-gene interaction sets the
   [DrugBank](https://go.drugbank.com) database.
 - `"DrugATCGenes"`: Drug ATC gene sets based on the
   [ATC](https://www.whocc.no/atc_ddd_index/) and
   [DrugBank](https://go.drugbank.com) databases.
-- `"DrugComplexes"`: Drug complex sets combining information from
+- `"DrugComplexes"`: Drug gene complex sets combining information from
   [STRING](https://string-db.org) and
   [DrugBank](https://go.drugbank.com).
 - `"DiseaseGenes"`: Disease-gene sets based on experiments, textmining
-  and knowledge base from the
+  and knowledge base derived from the
   [DISEASE](https://diseases.jensenlab.org/Search) database.
-- `"GTEx"`: GTEx project eQTL sets from the
+- `"GTEx"`: GTEx project eQTL sets derived from the
   [GTEx](https://www.gtexportal.org/home/downloads/adult-gtex/overview)
   database.
-- `"GWAScatalog"`: GWAS catalog sets from the
+- `"GWAScatalog"`: GWAS catalog sets derived from the
   [GWAScatalog](https://www.ebi.ac.uk/gwas/) database.
-- `"VEP"`: Variant Effect Predictor sets from the [Ensembl Variant
-  Effect Predictor](https://grch37.ensembl.org/info/docs/tools/vep)
-  database.
+- `"VEP"`: Variant Effect Predictor sets derived from the [Ensembl
+  Variant Effect
+  Predictor](https://grch37.ensembl.org/info/docs/tools/vep) database.
 
 <br>
 
