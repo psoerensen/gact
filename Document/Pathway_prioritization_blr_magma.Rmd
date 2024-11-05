@@ -82,3 +82,4 @@ str(fit)
 head(fit$b)
 head(fit$PIP)
 
+```
