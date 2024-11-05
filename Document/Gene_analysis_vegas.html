@@ -378,8 +378,8 @@ association studies for multiple traits across different ancestries,
 specifically European (EUR), East Asian (EAS), and South Asian
 (SAS).</p>
 <p><br></p>
-<div id="prepare-for-gene-analysis-using-vegas" class="section level4">
-<h4>Prepare for gene analysis using VEGAS</h4>
+<div id="prepare-for-vegas-gene-analysis-shown-below" class="section level4">
+<h4>Prepare for VEGAS gene analysis shown below</h4>
 <pre class="r"><code># Load libraries
 library(qgg)
 library(gact)
@@ -404,9 +404,6 @@ studyID &lt;- &quot;GWAS6&quot;
 # Load Glist with information on 1000G matched to the ancestry of GWAS data
 Glist &lt;- readRDS(file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_eur_filtered.rds&quot;))
 
-# Extract gene-marker sets (include markers 40kb/10kb upstream/downstream)
-markerSets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;Genesplus&quot;)
-
 # Get GWAS summary statistics from gact database
 stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
 
@@ -425,9 +422,6 @@ studyID &lt;- &quot;GWAS7&quot;
 
 # Load Glist with information on 1000G matched to the ancestry of GWAS data
 Glist &lt;- readRDS(file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_eas_filtered.rds&quot;))
-
-# Extract gene-marker sets (include markers 40kb/10kb upstream/downstream)
-markerSets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;Genesplus&quot;)
 
 # Get GWAS summary statistics from gact database
 stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)

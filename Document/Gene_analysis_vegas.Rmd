@@ -16,7 +16,7 @@ This script is dedicated to gene analysis using the VEGAS (Versatile Gene-based 
 
 <br>
 
-#### Prepare for gene analysis using VEGAS
+#### Prepare for VEGAS gene analysis shown below
 ```{r, include=TRUE, eval=FALSE}
 # Load libraries
 library(qgg)
@@ -44,9 +44,6 @@ studyID <- "GWAS6"
 # Load Glist with information on 1000G matched to the ancestry of GWAS data
 Glist <- readRDS(file.path(GAlist$dirs["marker"],"Glist_1000G_eur_filtered.rds"))
 
-# Extract gene-marker sets (include markers 40kb/10kb upstream/downstream)
-markerSets <- getMarkerSets(GAlist = GAlist, feature = "Genesplus")
-
 # Get GWAS summary statistics from gact database
 stat <- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
 
@@ -66,9 +63,6 @@ studyID <- "GWAS7"
 
 # Load Glist with information on 1000G matched to the ancestry of GWAS data
 Glist <- readRDS(file.path(GAlist$dirs["marker"],"Glist_1000G_eas_filtered.rds"))
-
-# Extract gene-marker sets (include markers 40kb/10kb upstream/downstream)
-markerSets <- getMarkerSets(GAlist = GAlist, feature = "Genesplus")
 
 # Get GWAS summary statistics from gact database
 stat <- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
