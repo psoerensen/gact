@@ -132,7 +132,7 @@ MAGMA](Document/Pathway_prioritization_blr_magma.html)
 
 Finemapping of gene and LD regions using single trait Bayesian Linear
 Regression models (Shrestha et al. 2023).  
-[Finemapping of gene and LD regions using BLR
+[Finemapping using BLR
 models](Document/Finemapping_gene_regions_blr.html)
 
 <!-- Finemapping of LD regions using single trait Bayesian Linear Regression models (Shrestha et al. 2023).     -->
