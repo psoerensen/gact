@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 ### An R Package for Creating a Database of Genomic Association of Complex Traits
 
 
-The R package ***gact*** is designed for establishing and populating a comprehensive database focused on genomic associations with complex traits. The package serves two primary functions: infrastructure creation and data acquisition. It facilitates the assembly of a structured repository that includes single marker associations, all rigorously curated to ensure the high quality of data. Beyond individual genetic markers, the package integrates a broad spectrum of genomic entities, encompassing genes, proteins, and an array of biological complexes (chemical and protein), as well as various biological pathways. It is designed to aid in the biological interpretation of genomic associations, shedding light on their complex relationships in the context of genomic associations of complex traits.
+The R package ***gact*** is designed for establishing and populating a comprehensive database focused on genomic associations with complex traits. The package serves two primary functions: infrastructure creation and data acquisition. It facilitates the assembly of a structured repository that includes single marker associations, carefully curated to maintain high data quality. Beyond individual genetic markers, the package integrates a broad spectrum of genomic entities, encompassing genes, proteins, and an array of biological complexes (chemical and protein), as well as various biological pathways. It is designed to aid in the biological interpretation of genomic associations, shedding light on their complex relationships in the context of genomic associations of complex traits.
 
 <br>
 
@@ -49,6 +49,7 @@ The R package ***gact*** is designed for establishing and populating a comprehen
 - `"DiseaseGenes"`: Disease-gene sets based on experiments, textmining and knowledge base from the [DISEASE](https://diseases.jensenlab.org/Search) database.
 - `"GTEx"`: GTEx project eQTL sets from the [GTEx](https://www.gtexportal.org/home/downloads/adult-gtex/overview) database.
 - `"GWAScatalog"`: GWAS catalog sets from the [GWAScatalog](https://www.ebi.ac.uk/gwas/) database.
+- `"VEP"`: Variant Effect Predictor sets from the [Ensembl Variant Effect Predictor](https://grch37.ensembl.org/info/docs/tools/vep) database.
 
 <br>
 
