@@ -122,12 +122,12 @@ Gene set enrichment analysis (GSEA) based on BLR (Bayesian Linear
 Regression) model derived gene-level statistics and MAGMA (Multi-marker
 Analysis of GenoMic Annotation) (Bai et al. 2024).  
 [Gene set analysis using
-BLR-MAGMA](Document/Gene_set_analysis_blr_magma.html)
+MAGMA](Document/Gene_set_analysis_blr_magma.html)
 
 Pathway prioritization using a BLR-MAGMA model and gene-level statistics
 derived from VEGAS (Gholipourshahraki et al. 2024).  
-[Pathway prioritization using
-BLR-MAGMA](Document/Pathway_prioritization_blr_magma.html)
+[Gene set analysis using Bayesian
+MAGMA](Document/Pathway_prioritization_blr_magma.html)
 
 Finemapping of gene regions using single trait Bayesian Linear
 Regression models (Shrestha et al. 2023).  
