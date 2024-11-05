@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-01-29" />
+<meta name="date" content="2024-11-05" />
 
 <title>LD Score regression</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">LD Score regression</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-01-29</h4>
+<h4 class="date">2024-11-05</h4>
 
 </div>
 
@@ -362,8 +362,7 @@ display: none;
 <p>This script demonstrates how to estimate narrow-sense heritability
 and genetic correlation using the LD Score Regression (LDSC) method
 within the context of a gact database. The script makes use of the qgg
-and gact libraries to process and analyze GWAS (Genome-Wide Association
-Studies) summary statistics.</p>
+and gact libraries to process and analyze GWAS summary statistics.</p>
 <pre class="r"><code># Load libraries
 library(qgg)
 library(gact)
@@ -374,28 +373,33 @@ GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quo
 # Check studies in gact database
 GAlist$studies
 
-# Get ldscores
-ldscores &lt;- getLDscoresDB(GAlist=GAlist, ancestry=&quot;EUR&quot;)
+# Select GWAS study IDs
+studyIDs &lt;- c(&quot;GWAS1&quot;,&quot;GWAS2&quot;,&quot;GWAS6&quot;)
 
-# Select study
-studyIDs &lt;- paste0(&quot;GWAS&quot;,c(1:2, 4:6))
+# Get GWAS summary statistics for studyIDs (e.g. z and n) from gact database
+stat &lt;- getMarkerStat(GAlist=GAlist, studyID=studyIDs)
 
-# Get GWAS summary statistics from gact database
-z &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyIDs, what=&quot;z&quot;)
-dim(z)
-
-# Get number of samples for each GWAS study
-n &lt;- GAlist$studies[studyIDs,&quot;neff&quot;]
-names(n) &lt;- studyIDs
+# Get ldscores matched to the ancestry of GWAS data
+ldscores &lt;- getLDscores(GAlist=GAlist, ancestry=&quot;EUR&quot;, version=&quot;1000G&quot;)
 
 # Estimate narrow sense heritability using ldsc
-fit &lt;- ldsc(z=z, ldscores=ldscores, n=n, what=&quot;h2&quot;)
+fit &lt;- ldsc(z=stat$z, n=stat$n, ldscores=ldscores, what=&quot;h2&quot;)
 fit
 
 # Estimate genetic correlation using using ldsc
-fit &lt;- ldsc(z=z, ldscores=ldscores, n=n, what=&quot;rg&quot;)
+fit &lt;- ldsc(z=stat$z, n=stat$n, ldscores=ldscores, what=&quot;rg&quot;)
 fit$h2
-fit$rg</code></pre>
+fit$rg
+
+# Partioning of heritability using chromosome information using standard regression method
+sets &lt;- getMarkerSets(GAlist=GAlist, feature=&quot;Chromosomes&quot;)
+fit &lt;- ldsc(z=stat$z, n=stat$n, ldscores=ldscores, sets=sets, what=&quot;h2&quot;, residual=TRUE)
+fit
+
+# Partioning of heritability using regulatory categories information and a BLR method
+sets &lt;- getMarkerSets(GAlist=GAlist, feature=&quot;Regulatory Categories&quot;)
+fit &lt;- ldsc(z=stat$z, n=stat$n, ldscores=ldscores, sets=sets, what=&quot;h2&quot;, method=&quot;bayesC&quot;, residual=TRUE)
+fit</code></pre>
 </div>
 
 
