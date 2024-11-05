@@ -395,11 +395,10 @@ GAlist$studies
 markerSets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;Genesplus&quot;)</code></pre>
 <p><br></p>
 </div>
-<div id="perform-vegas-gene-analysis-for-a-single-study" class="section level4">
-<h4>Perform VEGAS gene analysis for a single study</h4>
-<pre class="r"><code># VEGAS for a single trait/study (EUR)
-
-# Select study
+<div id="perform-vegas-gene-analysis-for-a-single-study-of-european-ancestry-eur" class="section level4">
+<h4>Perform VEGAS gene analysis for a single study of European ancestry
+(EUR)</h4>
+<pre class="r"><code># Select study
 studyID &lt;- &quot;GWAS6&quot;
 
 # Load Glist with information on 1000G matched to the ancestry of GWAS data
@@ -415,12 +414,13 @@ stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
 stat &lt;- checkStat(Glist=Glist, stat=stat)
 
 # Gene analysis using VEGAS
-res &lt;- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)
-
-
-# VEGAS for a single trait/study (EAS)
-
-# Select study
+res &lt;- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)</code></pre>
+<p><br></p>
+</div>
+<div id="perform-vegas-gene-analysis-for-a-single-study-of-east-asian-ancestry-eas" class="section level4">
+<h4>Perform VEGAS gene analysis for a single study of East Asian
+ancestry (EAS)</h4>
+<pre class="r"><code># Select study
 studyID &lt;- &quot;GWAS7&quot;
 
 # Load Glist with information on 1000G matched to the ancestry of GWAS data
@@ -439,8 +439,9 @@ stat &lt;- checkStat(Glist=Glist, stat=stat)
 res &lt;- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)</code></pre>
 <p><br></p>
 </div>
-<div id="perform-vegas-gene-analysis-for-multiple-studies" class="section level4">
-<h4>Perform VEGAS gene analysis for multiple studies</h4>
+<div id="perform-vegas-gene-analysis-for-multiple-studies-of-european-ancestry" class="section level4">
+<h4>Perform VEGAS gene analysis for multiple studies of European
+ancestry</h4>
 <pre class="r"><code># VEGAS for a multiple traits/studies (EUR)
 
 # Select study

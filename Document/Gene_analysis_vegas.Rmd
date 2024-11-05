@@ -36,12 +36,8 @@ markerSets <- getMarkerSets(GAlist = GAlist, feature = "Genesplus")
 
 <br>
 
-#### Perform VEGAS gene analysis for a single study
+#### Perform VEGAS gene analysis for a single study of European ancestry (EUR)
 ```{r, include=TRUE, eval=FALSE}
-
-
-# VEGAS for a single trait/study (EUR)
-
 # Select study
 studyID <- "GWAS6"
 
@@ -59,10 +55,12 @@ stat <- checkStat(Glist=Glist, stat=stat)
 
 # Gene analysis using VEGAS
 res <- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)
+```
 
+<br>
 
-# VEGAS for a single trait/study (EAS)
-
+#### Perform VEGAS gene analysis for a single study of East Asian ancestry (EAS)
+```{r, include=TRUE, eval=FALSE}
 # Select study
 studyID <- "GWAS7"
 
@@ -84,8 +82,7 @@ res <- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)
 
 <br>
 
-
-#### Perform VEGAS gene analysis for multiple studies
+#### Perform VEGAS gene analysis for multiple studies of European ancestry
 ```{r, include=TRUE, eval=FALSE}
 
 # VEGAS for a multiple traits/studies (EUR)
