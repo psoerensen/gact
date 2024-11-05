@@ -14,8 +14,11 @@ knitr::opts_chunk$set(echo = TRUE)
 This script is designed for advanced gene set analysis, utilizing a variety of tools and methodologies. Its primary focus lies in the integration and assessment of gene-marker sets, along with a detailed exploration of gene-disease associations derived from text mining, knowledge bases, and experimental data. The analysis utilizes gene-marker relationships, gene-level statistics, and gene-disease associations to conduct comprehensive gene set evaluations. This allow an in-depth analysis helping interpreting and validating genomic associations.
 
 <br>
+<div style="text-align: center;">
 
-![](../Images/Bayesian_MAGMA.png){width=50%}
+![](../Images/Bayesian_MAGMA.png){width=75%}
+
+</div>
 
 <br>
 
