@@ -408,29 +408,30 @@ GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quo
 GAlist$studies</code></pre>
 <p><br></p>
 </div>
-<div id="bayesian-magma-gene-set-analysis-for-a-single-trait" class="section level4">
-<h4>Bayesian MAGMA gene set analysis for a single trait</h4>
+<div id="bayesian-magma-gene-set-analysis-for-a-single-trait-t2d-for-eur" class="section level4">
+<h4>Bayesian MAGMA gene set analysis for a single trait (T2D for
+EUR)</h4>
 <pre class="r"><code># Select GWAS study IDs
-studyIDs &lt;- c(&quot;GWAS1&quot;,&quot;GWAS2&quot;)
+studyID &lt;- &quot;GWAS1&quot;
 
 # Get VEGAS gene-level statistics (i.e. z-statistics)
-stat &lt;- getVEGAS(GAlist=GAlist, studyID=studyIDs)
+stat &lt;- getVEGAS(GAlist=GAlist, studyID=studyID)
 head(stat)
 
 # Get gene sets for KEGG pathways
 sets &lt;- getFeatureSets(GAlist = GAlist, feature=&quot;KEGG&quot;, minsets=50)
 
 # Bayesian MAGMA based on single trait BLR model
-fit &lt;- magma(stat=stat[, &quot;GWAS1&quot;,drop=FALSE], sets=sets, method=&quot;bayesC&quot;,
+fit &lt;- magma(stat=stat, sets=sets, method=&quot;bayesC&quot;,
              pi=0.01, nit=5000, nburn=1000)
 head(fit)
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
-fit &lt;- magma(stat=stat[, &quot;GWAS1&quot;,drop=FALSE], sets=sets, type=&quot;joint&quot;)
+fit &lt;- magma(stat=stat, sets=sets, type=&quot;joint&quot;)
 head(fit)
 
 # MAGMA based on linear model using a marginal test for each feature
-fit &lt;- magma(stat=stat[, &quot;GWAS1&quot;,drop=FALSE], sets=sets, type=&quot;marginal&quot;)
+fit &lt;- magma(stat=stat, sets=sets, type=&quot;marginal&quot;)
 head(fit)</code></pre>
 <p><br></p>
 </div>

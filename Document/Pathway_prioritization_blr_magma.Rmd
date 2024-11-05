@@ -42,29 +42,29 @@ GAlist$studies
 
 <br>
 
-#### Bayesian MAGMA gene set analysis for a single trait
+#### Bayesian MAGMA gene set analysis for a single trait (T2D for EUR)
 ```{r, include=TRUE, eval=FALSE}
 # Select GWAS study IDs
-studyIDs <- c("GWAS1","GWAS2")
+studyID <- "GWAS1"
 
 # Get VEGAS gene-level statistics (i.e. z-statistics)
-stat <- getVEGAS(GAlist=GAlist, studyID=studyIDs)
+stat <- getVEGAS(GAlist=GAlist, studyID=studyID)
 head(stat)
 
 # Get gene sets for KEGG pathways
 sets <- getFeatureSets(GAlist = GAlist, feature="KEGG", minsets=50)
 
 # Bayesian MAGMA based on single trait BLR model
-fit <- magma(stat=stat[, "GWAS1",drop=FALSE], sets=sets, method="bayesC",
+fit <- magma(stat=stat, sets=sets, method="bayesC",
              pi=0.01, nit=5000, nburn=1000)
 head(fit)
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
-fit <- magma(stat=stat[, "GWAS1",drop=FALSE], sets=sets, type="joint")
+fit <- magma(stat=stat, sets=sets, type="joint")
 head(fit)
 
 # MAGMA based on linear model using a marginal test for each feature
-fit <- magma(stat=stat[, "GWAS1",drop=FALSE], sets=sets, type="marginal")
+fit <- magma(stat=stat, sets=sets, type="marginal")
 head(fit)
 ```
 
