@@ -11,9 +11,9 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-01-29" />
+<meta name="date" content="2024-11-05" />
 
-<title>Pathway prioritization using a BLR-MAGMA model and gene-level statistics from VEGAS</title>
+<title>Pathway prioritization using a Bayesian MAGMA model and gene-level statistics from VEGAS</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,10 +350,10 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Pathway prioritization using a BLR-MAGMA
-model and gene-level statistics from VEGAS</h1>
+<h1 class="title toc-ignore">Pathway prioritization using a Bayesian
+MAGMA model and gene-level statistics from VEGAS</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-01-29</h4>
+<h4 class="date">2024-11-05</h4>
 
 </div>
 
@@ -372,203 +372,59 @@ associations.</p>
 <pre class="r"><code># Load libraries
 library(qgg)
 library(gact)
-library(msigdbr)
-library(data.table)
 
 
 # Load GAlist with information on gact database
 GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
+# Select GWAS study IDs
+studyIDs &lt;- c(&quot;GWAS1&quot;,&quot;GWAS2&quot;)
 
-# Select studyIDs
-studyIDs &lt;- c(&quot;GWAS2&quot;,&quot;GWAS4&quot;, &quot;GWAS5&quot;, &quot;GWAS6&quot;)
+# Get VEGAS gene-level statistics (i.e. z-statistics)
+stat &lt;- getVEGAS(GAlist=GAlist, studyID=studyIDs)
+head(stat)
 
-# Study information
-GAlist$studies[studyIDs,]
+# Get gene sets for KEGG pathways
+sets &lt;- getFeatureSets(GAlist = GAlist, feature=&quot;KEGG&quot;, minsets=50)
 
 
-# Get VEGAS gene-level statistics
-Z &lt;- readRDS(file=file.path(GAlist$dirs[&quot;gsea&quot;],&quot;Z_vegas.rds&quot;))
-P &lt;- readRDS(file=file.path(GAlist$dirs[&quot;gsea&quot;],&quot;P_vegas.rds&quot;))
-
-# Remove genes/rows with NA&#39;s
-Z &lt;- na.omit(Z[,studyIDs, drop=FALSE])
-P &lt;- na.omit(P[,studyIDs, drop=FALSE])
-
-# Get gene sets for feature from mSigDB (KEGG pathways)
-msigdb &lt;- msigdbr(species = &quot;human&quot;, category = &quot;C2&quot;, subcategory = &quot;CP:KEGG&quot;)
-sets &lt;- split(msigdb$ensembl_gene, f=msigdb$gs_name)
-
-#-------------------------------------------------------------------------------
-# MAGMA based on linear model (default MAGMA method)
-#-------------------------------------------------------------------------------
-studyIDs &lt;- &quot;GWAS6&quot;
-stat &lt;- Z[, studyIDs, drop=FALSE]
-fit &lt;- qgg:::magma(stat=stat, sets=sets, method=&quot;magma&quot;, type=&quot;joint&quot;)
+# MAGMA based on linear model  using a joint test for features (default MAGMA method)
+fit &lt;- magma(stat=stat[, &quot;GWAS1&quot;,drop=FALSE], sets=sets, type=&quot;joint&quot;)
 head(fit)
 
-#-------------------------------------------------------------------------------
-# MAGMA based on blr model (single trait)
-#-------------------------------------------------------------------------------
-studyIDs &lt;- &quot;GWAS6&quot;
-stat &lt;- Z[, studyIDs, drop=FALSE]
-fit &lt;- qgg:::magma(stat=stat, sets=sets, method=&quot;bayesC&quot;,  pi=0.01, nit=1000, nburn=200)
+# MAGMA based on linear model using a marginal test for each feature
+fit &lt;- magma(stat=stat[, &quot;GWAS1&quot;,drop=FALSE], sets=sets, type=&quot;marginal&quot;)
 head(fit)
 
-#-------------------------------------------------------------------------------
-# MAGMA based on blr model (multiple trait for males and females T2D)
-#-------------------------------------------------------------------------------
-studyIDs &lt;- c(&quot;GWAS4&quot;,&quot;GWAS5&quot;)
-stat &lt;- Z[, studyIDs, drop=FALSE]
-fit &lt;- qgg:::magma(stat=stat, sets=sets, method=&quot;bayesC&quot;, pi=0.01, nit=1000, nburn=200)
+# Bayesian MAGMA based on single trait BLR model
+fit &lt;- magma(stat=stat[, &quot;GWAS1&quot;,drop=FALSE], sets=sets, method=&quot;bayesC&quot;,
+             pi=0.01, nit=5000, nburn=1000)
+head(fit)
+
+
+# Bayesian MAGMA based on a multiple trait BLR model
+fit &lt;- magma(stat=stat, sets=sets, method=&quot;bayesC&quot;,
+             pi=0.01, nit=1000, nburn=200)
 str(fit)
-head(fit$b)
 head(fit$PIP)
 
-#-------------------------------------------------------------------------------
 # MAGMA based on blr model (multiple trait for EUR, EAS, SAS T2D)
-#-------------------------------------------------------------------------------
 studyIDs &lt;- c(&quot;GWAS6&quot;,&quot;GWAS7&quot;,&quot;GWAS8&quot;)
-stat &lt;- Z[, studyIDs, drop=FALSE]
-fit &lt;- qgg:::magma(stat=stat, sets=sets, method=&quot;bayesC&quot;, pi=0.01, nit=1000, nburn=200)
+stat &lt;- getVEGAS(GAlist=GAlist, studyID=studyIDs)
+head(stat)
+fit &lt;- magma(stat=stat, sets=sets, method=&quot;bayesC&quot;, pi=0.01, nit=1000, nburn=200)
 str(fit)
 head(fit$b)
 head(fit$PIP)
 
 
-#-------------------------------------------------------------------------------
 # MAGMA based on blr model (multiple trait for a range of T2D related traits)
-#-------------------------------------------------------------------------------
 studyIDs &lt;- c(&quot;GWAS2&quot;, &quot;GWAS6&quot;, &quot;GWAS9&quot;, &quot;GWAS12&quot;,&quot;GWAS13&quot;, &quot;GWAS14&quot;, &quot;GWAS16&quot;,  &quot;GWAS17&quot;, &quot;GWAS24&quot;, &quot;GWAS25&quot;)
-stat &lt;- Z[ ,studyIDs, drop=FALSE]
-fit &lt;- qgg:::magma(stat=stat, sets=sets, method=&quot;bayesC&quot;,  pi=0.01, nit=1000, nburn=200)
+stat &lt;- getVEGAS(GAlist=GAlist, studyID=studyIDs)
+fit &lt;- magma(stat=stat, sets=sets, method=&quot;bayesC&quot;,  pi=0.01, nit=1000, nburn=200)
 str(fit)
 head(fit$b)
-head(fit$PIP)
-
-
-################################################################################
-# Permutation test to evaluate if observed association are random
-################################################################################
-
-# Permutation to evaluate if observed PIP are non-random
-stat &lt;- Z[,&quot;GWAS6&quot;, drop=FALSE]
-stat &lt;- apply(stat,2, function(x){sample(x)})
-rownames(stat) &lt;- rownames(Z)
-fit &lt;- qgg:::magma(stat=stat, sets=sets, method=&quot;bayesC&quot;,  pi=0.01, nit=1000, nburn=200)
-head(fit)
-
-
-################################################################################
-# Compare to other pathway prioritization methods
-################################################################################
-
-studyID &lt;- &quot;GWAS6&quot;
-
-# GSEA based on hypergeometric test
-resTHG &lt;- gsea(stat=P[,studyID],sets=sets,method = &quot;hyperg&quot;, threshold = 1e-8)
-head(resTHG[order(resTHG$p),])
-
-# GSEA using sum of gene test statistics
-resTSUM &lt;- gsea(stat=Z[,studyID]^2,sets=sets, nperm=100000)
-head(resTSUM[order(resTSUM$p),])
-
-# GSEA using MAGMA LM
-resMAGMA_MARG &lt;- qgg:::magma(stat=Z[,studyID], sets=sets, method=&quot;magma&quot;, type=&quot;marginal&quot;)
-resMAGMA_JOINT &lt;- qgg:::magma(stat=Z[,studyID], sets=sets, method=&quot;magma&quot;, type=&quot;joint&quot;)
-rownames(resMAGMA_MARG) &lt;- resMAGMA_MARG$ID
-rownames(resMAGMA_JOINT) &lt;- resMAGMA_JOINT$ID
-head(resMAGMA_MARG)
-head(resMAGMA_JOINT)
-
-# GSEA using MAGMA BLR
-resBLR &lt;- qgg:::magma(stat=Z[,studyID], sets=sets, method=&quot;bayesC&quot;)
-
-# Collect p-values
-pvals &lt;- data.frame(pTHG=resTHG[resBLR$ID,&quot;p&quot;],
-              pTSUM=resTSUM[resBLR$ID,&quot;p&quot;],
-              pMARG=resMAGMA_MARG[resBLR$ID,&quot;p&quot;],
-              pJOINT=resMAGMA_JOINT[resBLR$ID,&quot;p&quot;])
-rownames(pvals) &lt;- resBLR$ID
-df &lt;- data.frame(resBLR,pvals)
-head(df)
-
-pairs(-log10(pvals))
-cor(-log10(pvals))
-
-library(UpSetR)
-threshold &lt;- 0.05
-df &lt;- as.data.frame(apply(pvals&lt;threshold,2,as.numeric))
-rownames(df) &lt;- rownames(pvals)
-head(df)
-upset(data=df, text.scale=2, mainbar.y.label = &quot;Number of associations&quot;,
-      sets.x.label = &quot;N total&quot;, sets=colnames(df),keep.order=T)
-
-df[rowSums(df)==ncol(df),]
-
-################################################################################ 
-# GSEA based on gene-diseases association in disease database for each KEGG pathway
-################################################################################
-
-# Get gene sets for feature from mSigDB (KEGG pathways)
-msigdb &lt;- msigdbr(species = &quot;human&quot;, category = &quot;C2&quot;, subcategory = &quot;CP:KEGG&quot;)
-sets &lt;- split(msigdb$ensembl_gene, f=msigdb$gs_name)
-
-# Enrichment test based on integrated information
-res &lt;- hgtDB(GAlist = GAlist, sets = sets, feature = &quot;DiseaseGenes&quot;, output=&quot;p&quot;) 
-rws &lt;- c(&quot;KEGG_OLFACTORY_TRANSDUCTION&quot;, 
-         &quot;KEGG_TYPE_I_DIABETES_MELLITUS&quot;, 
-         &quot;KEGG_TYPE_II_DIABETES_MELLITUS&quot;,
-         &quot;KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG&quot;,
-         &quot;KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS&quot;)
-cls &lt;- grep(&quot;diabetes&quot;, tolower(colnames(res)))
-head(t(res[rws,cls]), 50)
-
-# Enrichment test based on textmining information
-res &lt;- hgtDB(GAlist = GAlist, sets = sets, feature = &quot;DiseaseGenesTMplus&quot;, output=&quot;p&quot;) 
-rws &lt;- c(&quot;KEGG_OLFACTORY_TRANSDUCTION&quot;, 
-         &quot;KEGG_TYPE_I_DIABETES_MELLITUS&quot;, 
-         &quot;KEGG_TYPE_II_DIABETES_MELLITUS&quot;,
-         &quot;KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG&quot;,
-         &quot;KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS&quot;)
-cls &lt;- grep(&quot;diabetes&quot;, tolower(colnames(res)))
-head(t(res[rws,cls]), 50)
-
-# Enrichment test based on textmining information
-res &lt;- hgtDB(GAlist = GAlist, sets = sets, feature = &quot;DiseaseGenesKBplus&quot;, output=&quot;p&quot;) 
-rws &lt;- c(&quot;KEGG_OLFACTORY_TRANSDUCTION&quot;, 
-         &quot;KEGG_TYPE_I_DIABETES_MELLITUS&quot;, 
-         &quot;KEGG_TYPE_II_DIABETES_MELLITUS&quot;,
-         &quot;KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG&quot;,
-         &quot;KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS&quot;)
-cls &lt;- grep(&quot;diabetes&quot;, tolower(colnames(res)))
-head(t(res[rws,cls]), 50)
-
-# Enrichment test based on experiment information
-res &lt;- hgtDB(GAlist = GAlist, sets = sets, feature = &quot;DiseaseGenesEXPplus&quot;, output=&quot;p&quot;) 
-rws &lt;- c(&quot;KEGG_OLFACTORY_TRANSDUCTION&quot;, 
-         &quot;KEGG_TYPE_I_DIABETES_MELLITUS&quot;, 
-         &quot;KEGG_TYPE_II_DIABETES_MELLITUS&quot;,
-         &quot;KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG&quot;,
-         &quot;KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS&quot;)
-cls &lt;- grep(&quot;diabetes&quot;, tolower(colnames(res)))
-head(t(res[rws,cls]), 50)
-
-
-################################################################################
-# GSEA based on gene-diseases association in GWAS catalog for each KEGG pathway
-################################################################################
-
-
-# Enrichment test based on integrated information
-res &lt;- hgtDB(GAlist = GAlist, sets = sets, feature = &quot;GWAScatalog&quot;, output=&quot;p&quot;) 
-rws &lt;- c(&quot;KEGG_OLFACTORY_TRANSDUCTION&quot;, 
-         &quot;KEGG_TYPE_I_DIABETES_MELLITUS&quot;, 
-         &quot;KEGG_TYPE_II_DIABETES_MELLITUS&quot;,
-         &quot;KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG&quot;,
-         &quot;KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS&quot;)
-cls &lt;- grep(&quot;diabetes&quot;, tolower(colnames(res)))
-head(t(res[rws,cls]), 10)</code></pre>
+head(fit$PIP)</code></pre>
 </div>
 
 

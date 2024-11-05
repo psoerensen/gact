@@ -1,5 +1,5 @@
 ---
-title: "Pathway prioritization using a BLR-MAGMA model and gene-level statistics from VEGAS"
+title: "Pathway prioritization using a Bayesian MAGMA model and gene-level statistics from VEGAS"
 author: "Peter Sørensen"
 date: "`r Sys.Date()`"
 output:
@@ -17,201 +17,57 @@ This script is designed for advanced gene set analysis, utilizing a variety of t
 # Load libraries
 library(qgg)
 library(gact)
-library(msigdbr)
-library(data.table)
 
 
 # Load GAlist with information on gact database
 GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
 
+# Select GWAS study IDs
+studyIDs <- c("GWAS1","GWAS2")
 
-# Select studyIDs
-studyIDs <- c("GWAS2","GWAS4", "GWAS5", "GWAS6")
+# Get VEGAS gene-level statistics (i.e. z-statistics)
+stat <- getVEGAS(GAlist=GAlist, studyID=studyIDs)
+head(stat)
 
-# Study information
-GAlist$studies[studyIDs,]
+# Get gene sets for KEGG pathways
+sets <- getFeatureSets(GAlist = GAlist, feature="KEGG", minsets=50)
 
 
-# Get VEGAS gene-level statistics
-Z <- readRDS(file=file.path(GAlist$dirs["gsea"],"Z_vegas.rds"))
-P <- readRDS(file=file.path(GAlist$dirs["gsea"],"P_vegas.rds"))
-
-# Remove genes/rows with NA's
-Z <- na.omit(Z[,studyIDs, drop=FALSE])
-P <- na.omit(P[,studyIDs, drop=FALSE])
-
-# Get gene sets for feature from mSigDB (KEGG pathways)
-msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
-sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
-
-#-------------------------------------------------------------------------------
-# MAGMA based on linear model (default MAGMA method)
-#-------------------------------------------------------------------------------
-studyIDs <- "GWAS6"
-stat <- Z[, studyIDs, drop=FALSE]
-fit <- qgg:::magma(stat=stat, sets=sets, method="magma", type="joint")
+# MAGMA based on linear model  using a joint test for features (default MAGMA method)
+fit <- magma(stat=stat[, "GWAS1",drop=FALSE], sets=sets, type="joint")
 head(fit)
 
-#-------------------------------------------------------------------------------
-# MAGMA based on blr model (single trait)
-#-------------------------------------------------------------------------------
-studyIDs <- "GWAS6"
-stat <- Z[, studyIDs, drop=FALSE]
-fit <- qgg:::magma(stat=stat, sets=sets, method="bayesC",  pi=0.01, nit=1000, nburn=200)
+# MAGMA based on linear model using a marginal test for each feature
+fit <- magma(stat=stat[, "GWAS1",drop=FALSE], sets=sets, type="marginal")
 head(fit)
 
-#-------------------------------------------------------------------------------
-# MAGMA based on blr model (multiple trait for males and females T2D)
-#-------------------------------------------------------------------------------
-studyIDs <- c("GWAS4","GWAS5")
-stat <- Z[, studyIDs, drop=FALSE]
-fit <- qgg:::magma(stat=stat, sets=sets, method="bayesC", pi=0.01, nit=1000, nburn=200)
+# Bayesian MAGMA based on single trait BLR model
+fit <- magma(stat=stat[, "GWAS1",drop=FALSE], sets=sets, method="bayesC",
+             pi=0.01, nit=5000, nburn=1000)
+head(fit)
+
+
+# Bayesian MAGMA based on a multiple trait BLR model
+fit <- magma(stat=stat, sets=sets, method="bayesC",
+             pi=0.01, nit=1000, nburn=200)
 str(fit)
-head(fit$b)
 head(fit$PIP)
 
-#-------------------------------------------------------------------------------
 # MAGMA based on blr model (multiple trait for EUR, EAS, SAS T2D)
-#-------------------------------------------------------------------------------
 studyIDs <- c("GWAS6","GWAS7","GWAS8")
-stat <- Z[, studyIDs, drop=FALSE]
-fit <- qgg:::magma(stat=stat, sets=sets, method="bayesC", pi=0.01, nit=1000, nburn=200)
+stat <- getVEGAS(GAlist=GAlist, studyID=studyIDs)
+head(stat)
+fit <- magma(stat=stat, sets=sets, method="bayesC", pi=0.01, nit=1000, nburn=200)
 str(fit)
 head(fit$b)
 head(fit$PIP)
 
 
-#-------------------------------------------------------------------------------
 # MAGMA based on blr model (multiple trait for a range of T2D related traits)
-#-------------------------------------------------------------------------------
 studyIDs <- c("GWAS2", "GWAS6", "GWAS9", "GWAS12","GWAS13", "GWAS14", "GWAS16",  "GWAS17", "GWAS24", "GWAS25")
-stat <- Z[ ,studyIDs, drop=FALSE]
-fit <- qgg:::magma(stat=stat, sets=sets, method="bayesC",  pi=0.01, nit=1000, nburn=200)
+stat <- getVEGAS(GAlist=GAlist, studyID=studyIDs)
+fit <- magma(stat=stat, sets=sets, method="bayesC",  pi=0.01, nit=1000, nburn=200)
 str(fit)
 head(fit$b)
 head(fit$PIP)
-
-
-################################################################################
-# Permutation test to evaluate if observed association are random
-################################################################################
-
-# Permutation to evaluate if observed PIP are non-random
-stat <- Z[,"GWAS6", drop=FALSE]
-stat <- apply(stat,2, function(x){sample(x)})
-rownames(stat) <- rownames(Z)
-fit <- qgg:::magma(stat=stat, sets=sets, method="bayesC",  pi=0.01, nit=1000, nburn=200)
-head(fit)
-
-
-################################################################################
-# Compare to other pathway prioritization methods
-################################################################################
-
-studyID <- "GWAS6"
-
-# GSEA based on hypergeometric test
-resTHG <- gsea(stat=P[,studyID],sets=sets,method = "hyperg", threshold = 1e-8)
-head(resTHG[order(resTHG$p),])
-
-# GSEA using sum of gene test statistics
-resTSUM <- gsea(stat=Z[,studyID]^2,sets=sets, nperm=100000)
-head(resTSUM[order(resTSUM$p),])
-
-# GSEA using MAGMA LM
-resMAGMA_MARG <- qgg:::magma(stat=Z[,studyID], sets=sets, method="magma", type="marginal")
-resMAGMA_JOINT <- qgg:::magma(stat=Z[,studyID], sets=sets, method="magma", type="joint")
-rownames(resMAGMA_MARG) <- resMAGMA_MARG$ID
-rownames(resMAGMA_JOINT) <- resMAGMA_JOINT$ID
-head(resMAGMA_MARG)
-head(resMAGMA_JOINT)
-
-# GSEA using MAGMA BLR
-resBLR <- qgg:::magma(stat=Z[,studyID], sets=sets, method="bayesC")
-
-# Collect p-values
-pvals <- data.frame(pTHG=resTHG[resBLR$ID,"p"],
-              pTSUM=resTSUM[resBLR$ID,"p"],
-              pMARG=resMAGMA_MARG[resBLR$ID,"p"],
-              pJOINT=resMAGMA_JOINT[resBLR$ID,"p"])
-rownames(pvals) <- resBLR$ID
-df <- data.frame(resBLR,pvals)
-head(df)
-
-pairs(-log10(pvals))
-cor(-log10(pvals))
-
-library(UpSetR)
-threshold <- 0.05
-df <- as.data.frame(apply(pvals<threshold,2,as.numeric))
-rownames(df) <- rownames(pvals)
-head(df)
-upset(data=df, text.scale=2, mainbar.y.label = "Number of associations",
-      sets.x.label = "N total", sets=colnames(df),keep.order=T)
-
-df[rowSums(df)==ncol(df),]
-
-################################################################################ 
-# GSEA based on gene-diseases association in disease database for each KEGG pathway
-################################################################################
-
-# Get gene sets for feature from mSigDB (KEGG pathways)
-msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
-sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
-
-# Enrichment test based on integrated information
-res <- hgtDB(GAlist = GAlist, sets = sets, feature = "DiseaseGenes", output="p") 
-rws <- c("KEGG_OLFACTORY_TRANSDUCTION", 
-         "KEGG_TYPE_I_DIABETES_MELLITUS", 
-         "KEGG_TYPE_II_DIABETES_MELLITUS",
-         "KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG",
-         "KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS")
-cls <- grep("diabetes", tolower(colnames(res)))
-head(t(res[rws,cls]), 50)
-
-# Enrichment test based on textmining information
-res <- hgtDB(GAlist = GAlist, sets = sets, feature = "DiseaseGenesTMplus", output="p") 
-rws <- c("KEGG_OLFACTORY_TRANSDUCTION", 
-         "KEGG_TYPE_I_DIABETES_MELLITUS", 
-         "KEGG_TYPE_II_DIABETES_MELLITUS",
-         "KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG",
-         "KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS")
-cls <- grep("diabetes", tolower(colnames(res)))
-head(t(res[rws,cls]), 50)
-
-# Enrichment test based on textmining information
-res <- hgtDB(GAlist = GAlist, sets = sets, feature = "DiseaseGenesKBplus", output="p") 
-rws <- c("KEGG_OLFACTORY_TRANSDUCTION", 
-         "KEGG_TYPE_I_DIABETES_MELLITUS", 
-         "KEGG_TYPE_II_DIABETES_MELLITUS",
-         "KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG",
-         "KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS")
-cls <- grep("diabetes", tolower(colnames(res)))
-head(t(res[rws,cls]), 50)
-
-# Enrichment test based on experiment information
-res <- hgtDB(GAlist = GAlist, sets = sets, feature = "DiseaseGenesEXPplus", output="p") 
-rws <- c("KEGG_OLFACTORY_TRANSDUCTION", 
-         "KEGG_TYPE_I_DIABETES_MELLITUS", 
-         "KEGG_TYPE_II_DIABETES_MELLITUS",
-         "KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG",
-         "KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS")
-cls <- grep("diabetes", tolower(colnames(res)))
-head(t(res[rws,cls]), 50)
-
-
-################################################################################
-# GSEA based on gene-diseases association in GWAS catalog for each KEGG pathway
-################################################################################
-
-
-# Enrichment test based on integrated information
-res <- hgtDB(GAlist = GAlist, sets = sets, feature = "GWAScatalog", output="p") 
-rws <- c("KEGG_OLFACTORY_TRANSDUCTION", 
-         "KEGG_TYPE_I_DIABETES_MELLITUS", 
-         "KEGG_TYPE_II_DIABETES_MELLITUS",
-         "KEGG_MATURITY_ONSET_DIABETES_OF_THE_YOUNG",
-         "KEGG_SYSTEMIC_LUPUS_ERYTHEMATOSUS")
-cls <- grep("diabetes", tolower(colnames(res)))
-head(t(res[rws,cls]), 10)
 
