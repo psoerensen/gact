@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-01-29" />
+<meta name="date" content="2024-11-05" />
 
 <title>Compute sparse LD matrices for 1000G</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Compute sparse LD matrices for 1000G</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-01-29</h4>
+<h4 class="date">2024-11-05</h4>
 
 </div>
 
@@ -456,7 +456,7 @@ library(gact)
 library(data.table)
 
 # Load GAlist
-GAlist &lt;- readRDS(file=&quot;/faststorage/project/ukbiobank/projects/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
+GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
 # Marker IDs in database
 rsids &lt;- GAlist$rsids
@@ -511,19 +511,7 @@ Glist &lt;- readRDS(file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1
 
 Glist &lt;- gprep(Glist, task = &quot;sparseld&quot;, msize = 1000, rsids = unlist(Glist$rsids), overwrite = TRUE)
 saveRDS(Glist, file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_sas_filtered.rds&quot;))
-file.remove(Glist$ldfiles)
-
-markers &lt;- data.frame(rsids=unlist(Glist$rsids),
-                      chr=unlist(Glist$chr),
-                      pos=unlist(Glist$pos),
-                      ea=unlist(Glist$a1),
-                      nea=unlist(Glist$a2),
-                      eaf=unlist(Glist$af),
-                      maf=unlist(Glist$maf),
-                      map=unlist(Glist$map),
-                      ldscores=unlist(Glist$ldscores))
-rownames(markers) &lt;- markers$rsids
-fwrite(markers, file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;markers_1000G_sas_filtered.txt.gz&quot;))</code></pre>
+file.remove(Glist$ldfiles)</code></pre>
 </div>
 
 

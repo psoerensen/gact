@@ -109,7 +109,7 @@ library(gact)
 library(data.table)
 
 # Load GAlist
-GAlist <- readRDS(file="/faststorage/project/ukbiobank/projects/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
+GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
 
 # Marker IDs in database
 rsids <- GAlist$rsids
