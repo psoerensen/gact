@@ -408,8 +408,8 @@ GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quo
 GAlist$studies</code></pre>
 <p><br></p>
 </div>
-<div id="bayesian-magma-gene-set-analysis-for-a-single-trait-t2d-for-eur" class="section level4">
-<h4>Bayesian MAGMA gene set analysis for a single trait (T2D for
+<div id="bayesian-magma-gene-set-analysis-for-a-single-trait-t2d-from-eur" class="section level4">
+<h4>Bayesian MAGMA gene set analysis for a single trait (T2D from
 EUR)</h4>
 <pre class="r"><code># Select GWAS study IDs
 studyID &lt;- &quot;GWAS1&quot;
@@ -435,8 +435,8 @@ fit &lt;- magma(stat=stat, sets=sets, type=&quot;marginal&quot;)
 head(fit)</code></pre>
 <p><br></p>
 </div>
-<div id="multiple-trait-bayesian-magma-gene-set-analysis-t2d-and-cad-for-eur" class="section level4">
-<h4>Multiple trait Bayesian MAGMA gene set analysis (T2D and CAD for
+<div id="multiple-trait-bayesian-magma-gene-set-analysis-t2d-and-cad-from-eur" class="section level4">
+<h4>Multiple trait Bayesian MAGMA gene set analysis (T2D and CAD from
 EUR)</h4>
 <pre class="r"><code># Select GWAS study IDs
 studyIDs &lt;- c(&quot;GWAS1&quot;,&quot;GWAS2&quot;)
@@ -455,8 +455,8 @@ str(fit)
 head(fit$PIP)</code></pre>
 <p><br></p>
 </div>
-<div id="multiple-trait-bayesian-magma-gene-set-analysis-t2d-for-eur-eas-and-sas" class="section level4">
-<h4>Multiple trait Bayesian MAGMA gene set analysis (T2D for EUR, EAS
+<div id="multiple-trait-bayesian-magma-gene-set-analysis-t2d-from-eur-eas-and-sas" class="section level4">
+<h4>Multiple trait Bayesian MAGMA gene set analysis (T2D from EUR, EAS
 and SAS)</h4>
 <pre class="r"><code># Select GWAS study IDs
 studyIDs &lt;- c(&quot;GWAS6&quot;,&quot;GWAS7&quot;,&quot;GWAS8&quot;)

@@ -42,7 +42,7 @@ GAlist$studies
 
 <br>
 
-#### Bayesian MAGMA gene set analysis for a single trait (T2D for EUR)
+#### Bayesian MAGMA gene set analysis for a single trait (T2D from EUR)
 ```{r, include=TRUE, eval=FALSE}
 # Select GWAS study IDs
 studyID <- "GWAS1"
@@ -70,7 +70,7 @@ head(fit)
 
 <br>
 
-#### Multiple trait Bayesian MAGMA gene set analysis (T2D and CAD for EUR)
+#### Multiple trait Bayesian MAGMA gene set analysis (T2D and CAD from EUR)
 ```{r, include=TRUE, eval=FALSE}
 # Select GWAS study IDs
 studyIDs <- c("GWAS1","GWAS2")
@@ -91,7 +91,7 @@ head(fit$PIP)
 
 <br>
 
-#### Multiple trait Bayesian MAGMA gene set analysis (T2D for EUR, EAS and SAS)
+#### Multiple trait Bayesian MAGMA gene set analysis (T2D from EUR, EAS and SAS)
 ```{r, include=TRUE, eval=FALSE}
 # Select GWAS study IDs
 studyIDs <- c("GWAS6","GWAS7","GWAS8")
