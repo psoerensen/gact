@@ -382,16 +382,18 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
  }
 
  if(what=="vep") {
-  message("Downloading vep files")
+  #message("Downloading vep files")
+  message("Not implemented yet")
 
-  options(download.file.method="libcurl", url.method="libcurl", timeout=3000)
+  # options(download.file.method="libcurl", url.method="libcurl", timeout=3000)
+  #
+  # url <- "https://ftp.ensembl.org/pub/release-112/variation/vep/homo_sapiens_vep_112_GRCh37.tar.gz"
+  # dbdir <- file.path(GAlist$dbdir, "vep")
+  # if(!dir.exists(dbdir)) dir.create(dbdir)
+  # dest <- file.path(GAlist$dbdir, "vep/homo_sapiens_vep_112_GRCh37.tar")
+  # download.file(url=url,dest=dest, mode="wb")
+  # untar(tarfile=dest,exdir = dbdir)
 
-  url <- "https://ftp.ensembl.org/pub/release-112/variation/vep/homo_sapiens_vep_112_GRCh37.tar.gz"
-  dbdir <- file.path(GAlist$dbdir, "vep")
-  if(!dir.exists(dbdir)) dir.create(dbdir)
-  dest <- file.path(GAlist$dbdir, "vep/homo_sapiens_vep_112_GRCh37.tar")
-  download.file(url=url,dest=dest, mode="wb")
-  untar(tarfile=dest,exdir = dbdir)
  }
 
  if(what=="clinvar") {
@@ -792,7 +794,8 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  # Drug databases
  drugdb <- fread(file.path(GAlist$dirs["drugdb"], "interactions.tsv"),
                  quote = "\"", data.table = FALSE)
- hgnc <- fread("https://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/hgnc_complete_set.txt", data.table=FALSE)
+ #hgnc <- fread("https://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/hgnc_complete_set.txt", data.table=FALSE)
+ hgnc <- fread("https://ftp.ebi.ac.uk/pub/databases/genenames/out_of_date_hgnc/tsv/hgnc_complete_set.txt", data.table=FALSE)
  hgnc2ensg <- hgnc$ensembl_gene_id
  names(hgnc2ensg) <- tolower(hgnc$hgnc_id)
  drug2hgnc <- split( drugdb$gene_concept_id, f=as.factor(drugdb$drug_name) )

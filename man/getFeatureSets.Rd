@@ -22,7 +22,7 @@ getFeatureSets(
 Valid features include:
 \itemize{
 \item \code{"GO"}: Gene Ontology sets.
-\item \code{"Pathways"}: Pathway sets.
+\item \code{"Pathways"}: Reactome pathway sets.
 \item \code{"ProteinComplexes"}: Protein complex sets.
 \item \code{"ChemicalComplexes"}: Chemical complex sets.
 \item \code{"DrugGenes"}: Drug-gene interaction sets.

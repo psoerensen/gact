@@ -814,6 +814,61 @@ getVEP <- function(GAlist=NULL, ensg=NULL, enst=NULL, ensp=NULL, rsids=NULL) {
 #
 # # Combine the .gz files into a tarball
 # tar(tarfile = tarfile, files = gz_files, compression = "gzip")
+#
+# # Get the list of rsIDs from GAlist
+# rsids <- GAlist$rsids
+#
+# # Define the columns to extract
+# cls <- c("#Uploaded_variation", "Allele", "Consequence", "IMPACT",
+#          "Feature_type", "Feature", "BIOTYPE", "STRAND", "SIFT", "PolyPhen", "AF",
+#          "CLIN_SIG", "SOMATIC", "PHENO", "MOTIF_NAME", "MOTIF_SCORE_CHANGE",
+#          "TRANSCRIPTION_FACTORS", "LOEUF", "am_class", "am_pathogenicity", "MPC",
+#          "CADD_PHRED", "CADD_RAW")
+#
+# # Create file paths for all chromosomes
+# files <- file.path(GAlist$dbdir, "vep", paste0("vep", sprintf("%02d", 1:22), ".txt.gz"))
+#
+# # Initialize an empty list to store results
+# rs2vep <- vector("list", length(files))
+#
+# # Loop through each chromosome file and store results in the list
+# for (i in seq_along(files)) {
+#  # Read the file, interpreting "-" as missing values (NA)
+#  df <- fread(files[i], data.table = FALSE, na.strings = c("","-"))
+#
+#  # Filter rows where "#Uploaded_variation" is in rsids
+#  rws <- df[["#Uploaded_variation"]] %in% rsids
+#
+#  # Only store non-empty filtered data frames
+#  if (any(rws)) {
+#   rs2vep[[i]] <- df[rws, cls, drop = FALSE]
+#  }
+#
+#  # Print progress
+#  print(paste("Finished processing chromosome", i))
+# }
+#
+# # Combine all list elements into a single data frame
+# rs2vep <- do.call(rbind, rs2vep)
+# colnames(rs2vep)[1] <- "rsids"
+#
+# colnames(rs2vep) <- tolower(colnames(rs2vep))
+# fwrite(rs2vep, file.path(GAlist$dbdir, "vep","rs2vep.txt.gz"))
+#
+# rs2vep <- fread(file.path(GAlist$dbdir, "vep","rs2vep.txt.gz"), data.table=FALSE)
+#
+#
+# vepcls <- c("allele", "consequence", "impact", "feature_type", "biotype", "strand",
+#             "motif_name", "transcription_factors")
+#
+# vepSets <- lapply(vepcls, function(x) {
+#  sets <- split(rs2vep[["rsids"]], f=rs2vep[[x]])
+#  sapply(sets,unique)
+# })
+# names(vepSets) <- vepcls
+#
+# saveRDS(vepSets, file.path(GAlist$dbdir, "gsets","vepSets.rds"))
+
 
 
 
