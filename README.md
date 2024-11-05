@@ -77,12 +77,13 @@ biological databases including:
 
 ### Installation of the gact package
 
-To install the most recent version of the gact package from GitHub, use
-the following commands in R:
+To install the most recent version of the gact and qgg package from
+GitHub, use the following commands in R:
 
 ``` r
 library(devtools)
 devtools::install_github("psoerensen/gact")
+devtools::install_github("psoerensen/qgg")
 ```
 
 ### Tutorials for downloading and installing the gact database
