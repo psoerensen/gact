@@ -38,6 +38,9 @@ GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
 
 # Check studies in gact database
 GAlist$studies
+
+# Get gene sets for KEGG pathways
+sets <- getFeatureSets(GAlist = GAlist, feature="KEGG", minsets=50)
 ```
 
 <br>
@@ -50,9 +53,6 @@ studyID <- "GWAS1"
 # Get VEGAS gene-level statistics (i.e. z-statistics)
 stat <- getVEGAS(GAlist=GAlist, studyID=studyID)
 head(stat)
-
-# Get gene sets for KEGG pathways
-sets <- getFeatureSets(GAlist = GAlist, feature="KEGG", minsets=50)
 
 # Bayesian MAGMA based on single trait BLR model
 fit <- magma(stat=stat, sets=sets, method="bayesC",
@@ -79,9 +79,6 @@ studyIDs <- c("GWAS1","GWAS2")
 stat <- getVEGAS(GAlist=GAlist, studyID=studyIDs)
 head(stat)
 
-# Get gene sets for KEGG pathways
-sets <- getFeatureSets(GAlist = GAlist, feature="KEGG", minsets=50)
-
 # Bayesian MAGMA based fitting a multiple trait model
 fit <- magma(stat=stat, sets=sets, method="bayesC",
              pi=0.01, nit=1000, nburn=200)
@@ -99,9 +96,6 @@ studyIDs <- c("GWAS6","GWAS7","GWAS8")
 # Get VEGAS gene-level statistics (i.e. z-statistics)
 stat <- getVEGAS(GAlist=GAlist, studyID=studyIDs)
 head(stat)
-
-# Get gene sets for KEGG pathways
-sets <- getFeatureSets(GAlist = GAlist, feature="KEGG", minsets=50)
 
 # Bayesian MAGMA based fitting a multiple trait model
 fit <- magma(stat=stat, sets=sets, method="bayesC", pi=0.01, nit=1000, nburn=200)
