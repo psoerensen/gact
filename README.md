@@ -7,8 +7,8 @@ The R package ***gact*** is designed for establishing and populating a
 comprehensive database focused on genomic associations with complex
 traits. The package serves two primary functions: infrastructure
 creation and data acquisition. It facilitates the assembly of a
-structured repository that includes single marker associations, all
-rigorously curated to ensure the high quality of data. Beyond individual
+structured repository that includes single marker associations,
+carefully curated to maintain high data quality. Beyond individual
 genetic markers, the package integrates a broad spectrum of genomic
 entities, encompassing genes, proteins, and an array of biological
 complexes (chemical and protein), as well as various biological
@@ -68,6 +68,9 @@ biological databases including:
   database.
 - `"GWAScatalog"`: GWAS catalog sets from the
   [GWAScatalog](https://www.ebi.ac.uk/gwas/) database.
+- `"VEP"`: Variant Effect Predictor sets from the [Ensembl Variant
+  Effect Predictor](https://grch37.ensembl.org/info/docs/tools/vep)
+  database.
 
 <br>
 
