@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-01-29" />
+<meta name="date" content="2024-11-05" />
 
 <title>Gene analysis using VEGAS</title>
 
@@ -352,14 +352,26 @@ display: none;
 
 <h1 class="title toc-ignore">Gene analysis using VEGAS</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-01-29</h4>
+<h4 class="date">2024-11-05</h4>
 
 </div>
 
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>This script is dedicated to gene analysis using the VEGAS (Versatile
+<p>Gene analysis using VEGAS (Versatile Gene-based Association Study) is
+a computational method used in genomics to perform gene-based
+association tests by aggregating SNP (single nucleotide polymorphism)
+data within a gene. It was developed to address challenges in
+genome-wide association studies (GWAS), where individual SNP-level
+associations can sometimes lack power to detect genes related to complex
+traits or diseases. VEGAS increases the statistical power by combining
+information from multiple SNPs within a gene and tests the joint
+association of these SNPs with a phenotype. VEGAS is particularly useful
+in studies where individual SNP signals are too weak to reach
+genome-wide significance but may jointly point to gene-level
+associations indicative of genetic risk for complex traits or diseases.
+This script is dedicated to gene analysis using the VEGAS (Versatile
 Gene-based Association Study) approach within the context of the gact
 and qgg frameworks in R. It is designed to perform gene-based
 association studies for multiple traits across different ancestries,
@@ -406,7 +418,7 @@ p &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID,
 dim(p)
 
 # Gene analysis using VEGAS
-res &lt;- qgg:::vegas(Glist=Glist, sets=markerSets, p=p, verbose=TRUE)
+res &lt;- vegas(Glist=Glist, sets=markerSets, p=p, verbose=TRUE)
 saveRDS(res, file=file.path(GAlist$dirs[&quot;gsea&quot;],&quot;vegas_eur_filtered.rds&quot;))
 
 
@@ -427,7 +439,7 @@ stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
 stat &lt;- checkStat(Glist=Glist, stat=stat)
 
 # Gene analysis using VEGAS
-res &lt;- qgg:::vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)
+res &lt;- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)
 saveRDS(res, file=file.path(GAlist$dirs[&quot;gsea&quot;],&quot;vegas_eas_filtered.rds&quot;))
 
 
@@ -448,7 +460,7 @@ stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
 stat &lt;- checkStat(Glist=Glist, stat=stat)
 
 # Gene analysis using VEGAS
-res &lt;- qgg:::vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)
+res &lt;- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)
 saveRDS(res, file=file.path(GAlist$dirs[&quot;gsea&quot;],&quot;vegas_sas_filtered.rds&quot;))</code></pre>
 </div>
 
