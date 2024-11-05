@@ -130,6 +130,11 @@ et al. 2024).
 [Gene set analysis using Bayesian
 MAGMA](Document/Pathway_prioritization_blr_magma.html)
 
+Polygenic Prioritization Scoring using BLR models and gene-level
+statistics derived from VEGAS (work in progress).  
+[Gene ranking using Bayesian
+PoPS](Document/Pathway_prioritization_blr_magma.html)
+
 Finemapping of gene and LD regions using single trait Bayesian Linear
 Regression models (Shrestha et al. 2023).  
 [Finemapping using BLR
