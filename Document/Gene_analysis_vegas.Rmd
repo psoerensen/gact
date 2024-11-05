@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 Gene analysis using VEGAS (Versatile Gene-based Association Study) is a computational method used in genomics to perform gene-based association tests by aggregating SNP (single nucleotide polymorphism) data within a gene. It was developed to address challenges in genome-wide association studies (GWAS), where individual SNP-level associations can sometimes lack power to detect genes related to complex traits or diseases. VEGAS increases the statistical power by combining information from multiple SNPs within a gene and tests the joint association of these SNPs with a phenotype. VEGAS is particularly useful in studies where individual SNP signals are too weak to reach genome-wide significance but may jointly point to gene-level associations indicative of genetic risk for complex traits or diseases.
+
 This script is dedicated to gene analysis using the VEGAS (Versatile Gene-based Association Study) approach within the context of the gact and qgg frameworks in R. It is designed to perform gene-based association studies for multiple traits across different ancestries, specifically European (EUR), East Asian (EAS), and South Asian (SAS).
 
 <br>
