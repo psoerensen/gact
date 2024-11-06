@@ -49,8 +49,7 @@ Glist <- readRDS(file=file.path(GAlist$dirs["marker"],"Glist_1000G.rds"))
 studyID <- "GWAS1"
 
 # Extract GWAS summary statistics for GWAS1
-stat <- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
-
+stat <- getMarkerStat(GAlist=GAlist, studyID=studyID)
 
 # Check and align summary statistics based on marker information in Glist
 stat <- checkStat(Glist=Glist, stat=stat,
@@ -67,6 +66,8 @@ stat <- checkStat(Glist=Glist, stat=stat,
 # Extract gene-marker sets
 sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genesplus")
 
+
+# Select gene regions to finemap
 genes <- c("ENSG00000099204","ENSG00000118972", "ENSG00000145996","ENSG00000140718")
 
 

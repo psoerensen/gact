@@ -17,11 +17,6 @@ Genomic risk scoring using Bayesian Linear Regression (BLR) models is a very fle
 
 Different BLR models can be fitted in the `qgg`-package in the function `gbayes()`, where the argument `method=` specifies which prior marker variance should be used. BLR models can be fitted using individual level genotype and phenotype data or based on GWAS summary statistics and a reference linkage disequilibrium (LD) correlation matrix.
 
-
-<br>
-
-This tutorial focus on fine-mapping using the Bayesian Linear Regression (BLR) model. It processes and analyzes GWAS (Genome-Wide Association Studies) summary statistics and employs fine-mapping on specific gene or genomic regions.
-
 <br>
 
 ```{r all-code, include=TRUE, eval=FALSE}
