@@ -10,7 +10,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction
+## Introduction
 Here we introduce Bayesian MAGMA - a gene-set prioritization approach utilizing Bayesian Linear Regression (BLR) models within the MAGMA gene-set analysis procedure. The figure below presents a schematic overview of the workflow. In the initial step, GWAS summary data for the traits of interest are utilized to compute gene-level Z-scores using the VEGAS (Versatile Gene-Based Association Study) approach ([Gene analysis using VEGAS](Document/Gene_analysis_vegas.html)). Next a design matrix linking genes to gene sets to integrate curated gene sets is constructed. The Bayesian MAGMA model is then fitted using this design matrix of all gene sets as input features (predictors) and the Z-scores as the response variable. This results in a posterior inclusion probability (PIP) for each gene set, which represents the probability that the gene set is included in the model. Gene sets with higher PIPs are given higher priority scores, facilitating the identification of potential biological mechanisms underlying the observed genetic associations. We have also extended, our methodology to a multiple-trait analysis, enabling a comprehensive exploration of gene sets across diverse traits. See details on the statistical model and analyses, the VEGAS approach, and the used data are provided in our accompanying paare provided in the following paper in Gholipourshahraki et al. 2024. 
 
 <br>

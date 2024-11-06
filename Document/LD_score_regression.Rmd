@@ -10,8 +10,12 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction
-This script demonstrates how to estimate narrow-sense heritability and genetic correlation using the LD Score Regression (LDSC) method within the context of a gact database. It includes examples of partitioning of heritability using different annotation sources. The script makes use of the qgg and gact libraries to process and analyze GWAS summary statistics.
+## Introduction
+LD score regression is a statistical method used to estimate the heritability of complex traits and to understand the genetic architecture underlying genome-wide association study (GWAS) results. By analyzing the relationship between linkage disequilibrium (LD) scores (which measure the extent to which SNPs are correlated with nearby genetic variants) and GWAS summary statistics, it separates true polygenic signal from confounding biases like population stratification. This approach helps to quantify the contribution of common genetic variants to trait heritability.
+
+<br>
+
+This script demonstrates how to estimate narrow-sense heritability and genetic correlation using the LD Score Regression (LDSC) method within the context of a gact database. It also includes examples of partitioning of heritability using different annotation sources. The script makes use of the qgg and gact libraries to process and analyze GWAS summary statistics.
 
 ```{r all-code, include=TRUE, eval=FALSE}
 # Load libraries

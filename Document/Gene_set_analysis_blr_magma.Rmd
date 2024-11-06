@@ -10,7 +10,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction
+## Introduction
 The MAGMA (Multi-marker Analysis of Genomic Annotation) approach is a widely used gene set test that leverages a linear regression framework to evaluate gene sets' collective impact on a trait. By aggregating marker-level association statistics within each gene and adjusting for linkage disequilibrium (LD), MAGMA produces gene-level statistics. In the model, gene-level statistics are the dependent variable, while gene sets (indicated by a binary membership matrix) are independent variables. Regression coefficients reveal each gene set's association strength with traits, with significance assessed via standard tests. Gene-level statistics can be computed using $T_{BLR}$ (BLR model-based), $T_{CT}$ (clumping and thresholding), and $T_{SVD}$ (eigenvalue-decomposition of the LD matrix). Workflow of the marker set tests implemented are shown in the figure below. (1) Get GWAS summary statistics data from genotypes and phenotypes. (2) Calculate gene-level statistics using different methods. (3) Create gene sets based on biological gene sets. (4) Design matrix to link genes to gene sets. (5) Combine gene sets and adjusted marker effects for genes to perform gene set test analysis using linear regression models.
 
 <br>
