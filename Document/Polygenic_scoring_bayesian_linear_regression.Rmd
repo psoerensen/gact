@@ -81,38 +81,24 @@ head(fit$conv)
 head(fit$stat)
 ```
 
-## Fit BLR model using a Bayes N prior for the marker variance {.unlisted .unnumbered}
-In the Bayes N approach the prior the marker effect, b, follows a priori a normal distribution with a marker effect variance which is constant across markers:
-```{r,  eval=FALSE, echo=TRUE}
-fitN <- gbayes( stat=stat, Glist=Glist, method="bayesN", nit=1000)
-grsN <- gscore(Glist=Glist, stat=fitN$stat)
-paN <- acc(yobs=y[valid], ypred=grsN[valid,], typeoftrait = "binary")
-paN
-```
+<br>
 
-## Fit BLR model using a Bayes A prior for the marker variance {.unlisted .unnumbered}
-In the Bayes A approach it is assumed that a priori we have some information on the marker variance. For instance, this can be $\sigma_b^2$. Thus, we may attach some importance to this value and use it as prior information for 
-```{r,  eval=FALSE, echo=TRUE}
-fitA <- gbayes( stat=stat, Glist=Glist, method="bayesA", nit=1000)
-grsA <- gscore(Glist=Glist, stat=fitA$stat)
-paA <- acc(yobs=y[valid], ypred=grsA[valid,], typeoftrait = "binary")
-paA
-```
-
-## Fit BLR model using a Bayes C prior for the marker variance {.unlisted .unnumbered}
+#### Fit BLR model using a Bayes C prior for the marker variance {.unlisted .unnumbered}
 In the Bayes C approach the marker effects, b, are a priori assumed to be sampled from a mixture with a point mass at zero and univariate normal distribution conditional on a common marker effect variance:
 ```{r,  eval=FALSE, echo=TRUE}
 fitC <- gbayes( stat=stat, Glist=Glist, method="bayesC", nit=1000)
-grsC <- gscore(Glist=Glist, stat=fitC$stat)
-paC <- acc(yobs=y[valid], ypred=grsC[valid,], typeoftrait = "binary")
+pgsC <- gscore(Glist=Glist, stat=fitC$stat)
+paC <- acc(yobs=y[valid], ypred=pgsC[valid,], typeoftrait = "binary")
 paC
 ```
 
-## Fit BLR model using a Bayes R prior for the marker variance {.unlisted .unnumbered}
+<br>
+
+#### Fit BLR model using a Bayes R prior for the marker variance {.unlisted .unnumbered}
 In the Bayes R approach the marker effects, b, are a priori assumed to be sampled from a mixture with a point mass at zero and univariate normal distributions conditional on a common marker effect variance: 
 ```{r,  eval=FALSE, echo=TRUE}
 fitR <- gbayes( stat=stat, Glist=Glist, method="bayesR", nit=1000)
-grsR <- gscore(Glist=Glist, stat=fitR$stat)
-paR <- acc(yobs=y[valid], ypred=grsR[valid,], typeoftrait = "binary")
+pgsR <- gscore(Glist=Glist, stat=fitR$stat)
+paR <- acc(yobs=y[valid], ypred=pgsR[valid,], typeoftrait = "binary")
 paR
 ```

@@ -448,50 +448,30 @@ head(fit$conv)
 
 # Posterior estimates of marker effects for every fine-mapped region
 head(fit$stat)</code></pre>
-</div>
-<div id="fit-blr-model-using-a-bayes-n-prior-for-the-marker-variance" class="section level2 unlisted unnumbered">
-<h2 class="unlisted unnumbered">Fit BLR model using a Bayes N prior for
-the marker variance</h2>
-<p>In the Bayes N approach the prior the marker effect, b, follows a
-priori a normal distribution with a marker effect variance which is
-constant across markers:</p>
-<pre class="r"><code>fitN &lt;- gbayes( stat=stat, Glist=Glist, method=&quot;bayesN&quot;, nit=1000)
-grsN &lt;- gscore(Glist=Glist, stat=fitN$stat)
-paN &lt;- acc(yobs=y[valid], ypred=grsN[valid,], typeoftrait = &quot;binary&quot;)
-paN</code></pre>
-</div>
-<div id="fit-blr-model-using-a-bayes-a-prior-for-the-marker-variance" class="section level2 unlisted unnumbered">
-<h2 class="unlisted unnumbered">Fit BLR model using a Bayes A prior for
-the marker variance</h2>
-<p>In the Bayes A approach it is assumed that a priori we have some
-information on the marker variance. For instance, this can be <span class="math inline">\(\sigma_b^2\)</span>. Thus, we may attach some
-importance to this value and use it as prior information for</p>
-<pre class="r"><code>fitA &lt;- gbayes( stat=stat, Glist=Glist, method=&quot;bayesA&quot;, nit=1000)
-grsA &lt;- gscore(Glist=Glist, stat=fitA$stat)
-paA &lt;- acc(yobs=y[valid], ypred=grsA[valid,], typeoftrait = &quot;binary&quot;)
-paA</code></pre>
-</div>
-<div id="fit-blr-model-using-a-bayes-c-prior-for-the-marker-variance" class="section level2 unlisted unnumbered">
-<h2 class="unlisted unnumbered">Fit BLR model using a Bayes C prior for
-the marker variance</h2>
+<p><br></p>
+<div id="fit-blr-model-using-a-bayes-c-prior-for-the-marker-variance" class="section level4 unlisted unnumbered">
+<h4 class="unlisted unnumbered">Fit BLR model using a Bayes C prior for
+the marker variance</h4>
 <p>In the Bayes C approach the marker effects, b, are a priori assumed
 to be sampled from a mixture with a point mass at zero and univariate
 normal distribution conditional on a common marker effect variance:</p>
 <pre class="r"><code>fitC &lt;- gbayes( stat=stat, Glist=Glist, method=&quot;bayesC&quot;, nit=1000)
-grsC &lt;- gscore(Glist=Glist, stat=fitC$stat)
-paC &lt;- acc(yobs=y[valid], ypred=grsC[valid,], typeoftrait = &quot;binary&quot;)
+pgsC &lt;- gscore(Glist=Glist, stat=fitC$stat)
+paC &lt;- acc(yobs=y[valid], ypred=pgsC[valid,], typeoftrait = &quot;binary&quot;)
 paC</code></pre>
+<p><br></p>
 </div>
-<div id="fit-blr-model-using-a-bayes-r-prior-for-the-marker-variance" class="section level2 unlisted unnumbered">
-<h2 class="unlisted unnumbered">Fit BLR model using a Bayes R prior for
-the marker variance</h2>
+<div id="fit-blr-model-using-a-bayes-r-prior-for-the-marker-variance" class="section level4 unlisted unnumbered">
+<h4 class="unlisted unnumbered">Fit BLR model using a Bayes R prior for
+the marker variance</h4>
 <p>In the Bayes R approach the marker effects, b, are a priori assumed
 to be sampled from a mixture with a point mass at zero and univariate
 normal distributions conditional on a common marker effect variance:</p>
 <pre class="r"><code>fitR &lt;- gbayes( stat=stat, Glist=Glist, method=&quot;bayesR&quot;, nit=1000)
-grsR &lt;- gscore(Glist=Glist, stat=fitR$stat)
-paR &lt;- acc(yobs=y[valid], ypred=grsR[valid,], typeoftrait = &quot;binary&quot;)
+pgsR &lt;- gscore(Glist=Glist, stat=fitR$stat)
+paR &lt;- acc(yobs=y[valid], ypred=pgsR[valid,], typeoftrait = &quot;binary&quot;)
 paR</code></pre>
+</div>
 </div>
 
 
