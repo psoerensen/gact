@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Introduction
-The challenge of understanding the biological basis of complex traits arises from several factors, including precise detection and quantification of the genetic associations. Statistical fine mapping approaches enhance the precision of genetic associations by addressing the complexities posed by long-range linkage disequilibrium (LD) in genome-wide association studies (GWAS). These complexities consequently arise by leveraging millions of genetic vari-ants in GWAS summary data, thereby increasing the need of intricate fine mapping approaches. Here we present the use of Bayesian linear regression (BLR) models for fine mapping approach using summary data. Allowing joint estimation of variants’ effects while accounting for LD among variants, our BLR models using Gibbs sampling technique, perform regularization and conduct variable selection. The BLR models have been applied in mapping genetic variants, estimating genetic parameters, prediction, but however, to our knowledge, only a few studies have investigated precision and power of the models in fine mapping approach. 
+The challenge of understanding the biological basis of complex traits arises from several factors, including precise detection and quantification of the genetic associations. Statistical finemapping approaches enhance the precision of genetic associations by addressing the complexities posed by long-range linkage disequilibrium (LD) in genome-wide association studies (GWAS). These complexities consequently arise by leveraging millions of genetic variants in GWAS summary data, thereby increasing the need of intricate fine mapping approaches. Here we present the use of Bayesian linear regression (BLR) models for fine mapping approach using summary data. Allowing joint estimation of variants’ effects while accounting for LD among variants, our BLR models using Gibbs sampling technique, perform regularization and conduct variable selection. The BLR models have been applied in mapping genetic variants, estimating genetic parameters, prediction, but however, to our knowledge, only a few studies have investigated precision and power of the models in fine mapping approach. 
 
 <br>
 
@@ -27,6 +27,7 @@ This tutorial focus on fine-mapping using the Bayesian Linear Regression (BLR) m
 
 <br>
 
+#### Prepare input data for finemapping 
 ```{r all-code, include=TRUE, eval=FALSE}
 # Load libraries
 library(qgg)
@@ -62,16 +63,23 @@ stat <- checkStat(Glist=Glist, stat=stat,
                   excludeMHC=FALSE,
                   excludeMISS=0.05,
                   excludeHWE=1e-12)
+```
 
+
+<br>
+
+
+#### Finemapping of gene regions using Bayesian Linear Regression models 
+```{r, include=TRUE, eval=FALSE}
 # Extract gene-marker sets
-sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genesplus")
+sets <- getMarkerSets(GAlist = GAlist, feature = "Genesplus")
 
 
 # Select gene regions to finemap
 genes <- c("ENSG00000099204","ENSG00000118972", "ENSG00000145996","ENSG00000140718")
 
 
-# Fine-mapping using BLR model on selected gene regions
+# Fine-mapping in selected gene regions using a Bayes C prior for the marker variance
 fit <- gmap(Glist=Glist, stat=stat, sets=sets[genes],
             method="bayesC", pi=0.001, h2=0.1)
 
@@ -83,5 +91,13 @@ head(fit$conv)
 
 # Posterior estimates of marker effects for every fine-mapped region
 head(fit$stat)
-```
 
+# Fine-mapping in selected gene regions using a Bayes C prior for the marker variance
+fit <- gmap(Glist=Glist, stat=stat, sets=sets[genes],
+            method="bayesR", pi=0.001, h2=0.1)
+
+head(fit$post)
+head(fit$conv)
+head(fit$stat)
+
+```

@@ -362,11 +362,11 @@ trait Bayesian Linear Regression models</h1>
 <h2>Introduction</h2>
 <p>The challenge of understanding the biological basis of complex traits
 arises from several factors, including precise detection and
-quantification of the genetic associations. Statistical fine mapping
+quantification of the genetic associations. Statistical finemapping
 approaches enhance the precision of genetic associations by addressing
 the complexities posed by long-range linkage disequilibrium (LD) in
 genome-wide association studies (GWAS). These complexities consequently
-arise by leveraging millions of genetic vari-ants in GWAS summary data,
+arise by leveraging millions of genetic variants in GWAS summary data,
 thereby increasing the need of intricate fine mapping approaches. Here
 we present the use of Bayesian linear regression (BLR) models for fine
 mapping approach using summary data. Allowing joint estimation of
@@ -386,6 +386,8 @@ Regression (BLR) model. It processes and analyzes GWAS (Genome-Wide
 Association Studies) summary statistics and employs fine-mapping on
 specific gene or genomic regions.</p>
 <p><br></p>
+<div id="prepare-input-data-for-finemapping" class="section level4">
+<h4>Prepare input data for finemapping</h4>
 <pre class="r"><code># Load libraries
 library(qgg)
 library(gact)
@@ -407,8 +409,7 @@ Glist &lt;- readRDS(file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1
 studyID &lt;- &quot;GWAS1&quot;
 
 # Extract GWAS summary statistics for GWAS1
-stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
-
+stat &lt;- getMarkerStat(GAlist=GAlist, studyID=studyID)
 
 # Check and align summary statistics based on marker information in Glist
 stat &lt;- checkStat(Glist=Glist, stat=stat,
@@ -420,14 +421,21 @@ stat &lt;- checkStat(Glist=Glist, stat=stat,
                   excludeDUPS=TRUE,
                   excludeMHC=FALSE,
                   excludeMISS=0.05,
-                  excludeHWE=1e-12)
+                  excludeHWE=1e-12)</code></pre>
+<p><br></p>
+</div>
+<div id="finemapping-of-gene-regions-using-bayesian-linear-regression-models" class="section level4">
+<h4>Finemapping of gene regions using Bayesian Linear Regression
+models</h4>
+<pre class="r"><code># Extract gene-marker sets
+sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;Genesplus&quot;)
 
-# Extract gene-marker sets
-sets &lt;- getMarkerSetsDB(GAlist = GAlist, feature = &quot;Genesplus&quot;)
 
+# Select gene regions to finemap
 genes &lt;- c(&quot;ENSG00000099204&quot;,&quot;ENSG00000118972&quot;, &quot;ENSG00000145996&quot;,&quot;ENSG00000140718&quot;)
 
-# Fine-mapping using BLR model on selected gene regions
+
+# Fine-mapping in selected gene regions using a Bayes C prior for the marker variance
 fit &lt;- gmap(Glist=Glist, stat=stat, sets=sets[genes],
             method=&quot;bayesC&quot;, pi=0.001, h2=0.1)
 
@@ -438,7 +446,16 @@ head(fit$post)
 head(fit$conv)
 
 # Posterior estimates of marker effects for every fine-mapped region
+head(fit$stat)
+
+# Fine-mapping in selected gene regions using a Bayes C prior for the marker variance
+fit &lt;- gmap(Glist=Glist, stat=stat, sets=sets[genes],
+            method=&quot;bayesR&quot;, pi=0.001, h2=0.1)
+
+head(fit$post)
+head(fit$conv)
 head(fit$stat)</code></pre>
+</div>
 </div>
 
 
