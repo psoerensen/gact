@@ -10,8 +10,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction
+## Introduction
 This tutorial details the process of preparing the Glist for 1000 Genomes (1000G) data. It encompasses a series of steps, including loading essential libraries, downloading data, processing genotype data for various ancestries, and saving the results for future use. 
+
+<br>
 
 ```{r all-code, include=TRUE, eval=FALSE}
 # Load libraries
@@ -158,6 +160,7 @@ Glist <- gprep(study="1000G SAS",
 
 # Save Glist for use later
 saveRDS(Glist, file=file.path(GAlist$dirs["marker"],"Glist_1000G_sas_filtered.rds"))
+```
 
 
 
