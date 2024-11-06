@@ -10,9 +10,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction
-This tutorial focuses on computing sparse Linkage Disequilibrium (LD) matrices for 1000 Genomes Project (1000G) data across different ancestries and exploring this data:   
+## Introduction
+This tutorial focuses on computing sparse Linkage Disequilibrium (LD) matrices for 1000 Genomes Project (1000G) data across different ancestries and exploring this LD data. These sparse LD matrices are essential for various genomic analyses, including LD score regression, VEGAS gene-based testing, and Bayesian linear regression models used for finemapping or genomic scoring.
 
+<br>
 
 ```{r all-code, include=TRUE, eval=FALSE}
 # Load libraries

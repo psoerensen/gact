@@ -10,8 +10,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction
+## Introduction
 This tutorial is designed to download and set up the gact database, which is focused on genomic associations for complex traits. The tutorial is structured into two main parts: downloading and installing the database, and then providing an overview of its contents:   
+
+<br>
 
 ```{r install_packages, echo=TRUE, eval=FALSE}
 

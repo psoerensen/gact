@@ -10,9 +10,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction
-This script is designed for incorporating new genetic association data into an existing gact database. The example below is for the UK Biobank 2021 Glycated Hemoglobin (HbA1c) GWAS data for European ancestry.
+## Introduction
+This tutorial is designed for incorporating new genetic association data into an existing gact database. The example below is for the UK Biobank 2021 Glycated Hemoglobin (HbA1c) GWAS data for European ancestry.
 
+<br>
 
 ```{r all-code, include=TRUE, eval=FALSE}
 # Load libraries

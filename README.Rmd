@@ -88,13 +88,13 @@ Gene analysis using the VEGAS (Versatile Gene-based Association Study) approach 
 [Gene analysis using VEGAS](Document/Gene_analysis_vegas.html)  
 
 Gene set enrichment analysis (GSEA) based on BLR (Bayesian Linear Regression) model derived gene-level statistics and MAGMA (Multi-marker Analysis of GenoMic Annotation) (Bai et al. 2024).   
-[Gene set analysis using MAGMA](Document/Gene_set_analysis_blr_magma.html)  
+[Gene set analysis using MAGMA](Document/Gene_set_analysis__magma.html)  
 
 Pathway prioritization using a single and multiple trait Bayesian MAGMA models and gene-level statistics derived from VEGAS (Gholipourshahraki et al. 2024).   
-[Gene set analysis using Bayesian MAGMA](Document/Pathway_prioritization_blr_magma.html)  
+[Gene set analysis using Bayesian MAGMA](Document/Gene_set_analysis_bayesian_magma.html)  
 
 Polygenic Prioritization Scoring (PoPS) using BLR models and gene-level statistics derived from VEGAS (work in progress).   
-[Gene ranking using PoPS](Document/Pathway_prioritization_blr_magma.html)  
+[Gene ranking using PoPS](Document/Gene_set_analysis_bayesian_magma.html)  
 
 Finemapping of gene and LD regions using single trait Bayesian Linear Regression models (Shrestha et al. 2023).    
 [Finemapping using BLR models](Document/Finemapping_gene_regions_blr.html)  
