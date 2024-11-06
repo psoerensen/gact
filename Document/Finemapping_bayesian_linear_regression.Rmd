@@ -10,8 +10,22 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction
-This script is focusing on fine-mapping using the Bayesian Linear Regression (BLR) model. It processes and analyzes GWAS (Genome-Wide Association Studies) summary statistics and employs fine-mapping on specific gene regions.
+## Introduction
+The challenge of understanding the biological basis of complex traits arises from several factors, including precise detection and quantification of the genetic associations. Statistical fine mapping approaches enhance the precision of genetic associations by addressing the complexities posed by long-range linkage disequilibrium (LD) in genome-wide association studies (GWAS). These complexities consequently arise by leveraging millions of genetic vari-ants in GWAS summary data, thereby increasing the need of intricate fine mapping approaches. Here we present the use of Bayesian linear regression (BLR) models for fine mapping approach using summary data. Allowing joint estimation of variants’ effects while accounting for LD among variants, our BLR models using Gibbs sampling technique, perform regularization and conduct variable selection. The BLR models have been applied in mapping genetic variants, estimating genetic parameters, prediction, but however, to our knowledge, only a few studies have investigated precision and power of the models in fine mapping approach. 
+
+<br>
+
+<div style="text-align: center;">
+
+![](../Images/Picture2.png){width=75%}
+
+</div>
+
+<br>
+
+This tutorial focus on fine-mapping using the Bayesian Linear Regression (BLR) model. It processes and analyzes GWAS (Genome-Wide Association Studies) summary statistics and employs fine-mapping on specific gene or genomic regions.
+
+<br>
 
 ```{r all-code, include=TRUE, eval=FALSE}
 # Load libraries
@@ -57,12 +71,7 @@ genes <- c("ENSG00000099204","ENSG00000118972", "ENSG00000145996","ENSG000001407
 
 # Fine-mapping using BLR model on selected gene regions
 fit <- gmap(Glist=Glist, stat=stat, sets=sets[genes],
-            method="bayesC", pi=0.001, h2=0.1,
-            vb=0.01, ssb_prior=0.01, nub=5,
-            checkConvergence=TRUE, ntrial=3,
-            pruneLD=TRUE, r2=0.95, checkLD=FALSE,
-            nit=1000, nburn=500, verbose=TRUE,
-            updateB=TRUE, updatePi=FALSE, updateG=TRUE, updateE=TRUE)
+            method="bayesC", pi=0.001, h2=0.1)
 
 # Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for every fine-mapped region
 head(fit$post)
@@ -72,7 +81,5 @@ head(fit$conv)
 
 # Posterior estimates of marker effects for every fine-mapped region
 head(fit$stat)
-
-# Save fit object for all genes in directory of choice (here gbayes folder in database)
-saveRDS(fit, file=file.path(GAlist$dirs["gbayes"],"fit_blr_genes_GWAS1.rds"))
+```
 

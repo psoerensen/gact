@@ -11,9 +11,9 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-01-29" />
+<meta name="date" content="2024-11-06" />
 
-<title>Finemapping of gene regions using single trait Bayesian Linear Regression models</title>
+<title>Polygenic Priority Score</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,81 +350,65 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Finemapping of gene regions using single
-trait Bayesian Linear Regression models</h1>
+<h1 class="title toc-ignore">Polygenic Priority Score</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-01-29</h4>
+<h4 class="date">2024-11-06</h4>
 
 </div>
 
 
-<div id="introduction" class="section level1">
-<h1>Introduction</h1>
-<p>This script is focusing on fine-mapping using the Bayesian Linear
-Regression (BLR) model. It processes and analyzes GWAS (Genome-Wide
-Association Studies) summary statistics and employs fine-mapping on
-specific gene regions.</p>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Here we introduce Polygenic Priority Score (PoPS) which is a method
+for prioritizing genes based on polygenic signals from genome-wide
+association studies (GWAS). By integrating GWAS summary statistics with
+functional genomic data, PoPS identifies genes most likely involved in
+complex traits or diseases. This approach leverages the polygenic nature
+of traits, considering many genetic variants across the genome, and
+scores genes based on their likelihood of contributing to the trait.
+PoPS is valuable for focusing research on genes with potential
+biological relevance, facilitating more targeted follow-up studies in
+complex trait genomics.</p>
+<p><br></p>
+<div id="prepare-input-data-for-polygenic-priority-scoring" class="section level4">
+<h4>Prepare input data for Polygenic Priority Scoring</h4>
 <pre class="r"><code># Load libraries
 library(qgg)
 library(gact)
 
-# Load GAlist
+# Load GAlist with information on gact database
 GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
-
 
 # Check studies in gact database
 GAlist$studies
 
-# List BLR results files allready in gact database
-list.files(GAlist$dirs[&quot;gbayes&quot;])
+# Select GWAS study IDs
+studyIDs &lt;- &quot;GWAS1&quot;
 
-# Load Glist with information on 1000G
-Glist &lt;- readRDS(file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G.rds&quot;))
+# Get VEGAS gene-level statistics (i.e. z-statistics)
+stat &lt;- getVEGAS(GAlist=GAlist, studyID=studyIDs)
 
-# Select study
-studyID &lt;- &quot;GWAS1&quot;
+# Get gene sets for Reactome pathways
+sets &lt;- getFeatureSets(GAlist = GAlist, feature = &quot;Pathways&quot;, minsets=50)</code></pre>
+<p><br></p>
+</div>
+<div id="polygenic-priority-scoring-using-different-procedures" class="section level4">
+<h4>Polygenic Priority Scoring using different procedures</h4>
+<pre class="r"><code># POPS based on linear model, thresholding and ridge regression (Original PoPS)
+scoreRR &lt;- pops(stat=stat, sets=sets, method=&quot;rr&quot;,
+              threshold=0.05)
+head(scoreRR)
 
-# Extract GWAS summary statistics for GWAS1
-stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
+# POPS based on linear model and BLR using BayesC prior
+scoreC &lt;- pops(stat=stat, sets=sets, method=&quot;bayesC&quot;,
+             pi=0.001, nit=5000, nburn=1000)
+head(scoreC)
 
-
-# Check and align summary statistics based on marker information in Glist
-stat &lt;- checkStat(Glist=Glist, stat=stat,
-                  excludeMAF=0.05,
-                  excludeMAFDIFF=0.05,
-                  excludeINFO=0.8,
-                  excludeCGAT=TRUE,
-                  excludeINDEL=TRUE,
-                  excludeDUPS=TRUE,
-                  excludeMHC=FALSE,
-                  excludeMISS=0.05,
-                  excludeHWE=1e-12)
-
-# Extract gene-marker sets
-sets &lt;- getMarkerSetsDB(GAlist = GAlist, feature = &quot;Genesplus&quot;)
-
-genes &lt;- c(&quot;ENSG00000099204&quot;,&quot;ENSG00000118972&quot;, &quot;ENSG00000145996&quot;,&quot;ENSG00000140718&quot;)
-
-# Fine-mapping using BLR model on selected gene regions
-fit &lt;- gmap(Glist=Glist, stat=stat, sets=sets[genes],
-            method=&quot;bayesC&quot;, pi=0.001, h2=0.1,
-            vb=0.01, ssb_prior=0.01, nub=5,
-            checkConvergence=TRUE, ntrial=3,
-            pruneLD=TRUE, r2=0.95, checkLD=FALSE,
-            nit=1000, nburn=500, verbose=TRUE,
-            updateB=TRUE, updatePi=FALSE, updateG=TRUE, updateE=TRUE)
-
-# Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for every fine-mapped region
-head(fit$post)
-
-# Convergence statistics for every fine-mapped region
-head(fit$conv)
-
-# Posterior estimates of marker effects for every fine-mapped region
-head(fit$stat)
-
-# Save fit object for all genes in directory of choice (here gbayes folder in database)
-saveRDS(fit, file=file.path(GAlist$dirs[&quot;gbayes&quot;],&quot;fit_blr_genes_GWAS1.rds&quot;))</code></pre>
+# POPS based on linear model and BLR using BayesR prior
+scoreR &lt;- pops(stat=stat, sets=sets, method=&quot;bayesR&quot;,
+             pi=0.001, nit=5000, nburn=1000)
+head(scoreR)</code></pre>
+</div>
 </div>
 
 

@@ -1,0 +1,58 @@
+---
+title: "Polygenic Priority Score"
+author: "Peter Sørensen"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+Here we introduce Polygenic Priority Score (PoPS) which is a method for prioritizing genes based on polygenic signals from genome-wide association studies (GWAS). By integrating GWAS summary statistics with functional genomic data, PoPS identifies genes most likely involved in complex traits or diseases. This approach leverages the polygenic nature of traits, considering many genetic variants across the genome, and scores genes based on their likelihood of contributing to the trait. PoPS is valuable for focusing research on genes with potential biological relevance, facilitating more targeted follow-up studies in complex trait genomics.
+
+<br>
+
+#### Prepare input data for Polygenic Priority Scoring 
+```{r, include=TRUE, eval=FALSE}
+# Load libraries
+library(qgg)
+library(gact)
+
+# Load GAlist with information on gact database
+GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
+
+# Check studies in gact database
+GAlist$studies
+
+# Select GWAS study IDs
+studyIDs <- "GWAS1"
+
+# Get VEGAS gene-level statistics (i.e. z-statistics)
+stat <- getVEGAS(GAlist=GAlist, studyID=studyIDs)
+
+# Get gene sets for Reactome pathways
+sets <- getFeatureSets(GAlist = GAlist, feature = "Pathways", minsets=50)
+```
+
+<br>
+
+#### Polygenic Priority Scoring using different procedures
+```{r, include=TRUE, eval=FALSE}
+# POPS based on linear model, thresholding and ridge regression (Original PoPS)
+scoreRR <- pops(stat=stat, sets=sets, method="rr",
+              threshold=0.05)
+head(scoreRR)
+
+# POPS based on linear model and BLR using BayesC prior
+scoreC <- pops(stat=stat, sets=sets, method="bayesC",
+             pi=0.001, nit=5000, nburn=1000)
+head(scoreC)
+
+# POPS based on linear model and BLR using BayesR prior
+scoreR <- pops(stat=stat, sets=sets, method="bayesR",
+             pi=0.001, nit=5000, nburn=1000)
+head(scoreR)
+```

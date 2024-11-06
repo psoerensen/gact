@@ -131,13 +131,12 @@ MAGMA](Document/Gene_set_analysis_bayesian_magma.html)
 
 Polygenic Prioritization Scoring (PoPS) using BLR models and gene-level
 statistics derived from VEGAS (work in progress).  
-[Gene ranking using
-PoPS](Document/Gene_set_analysis_bayesian_magma.html)
+[Gene ranking using PoPS](Document/Gene_ranking_bayesian_pops.html)
 
 Finemapping of gene and LD regions using single trait Bayesian Linear
 Regression models (Shrestha et al. 2023).  
 [Finemapping using BLR
-models](Document/Finemapping_gene_regions_blr.html)
+models](Document/Finemapping_bayesian_linear_regression.html)
 
 <!-- Finemapping of LD regions using single trait Bayesian Linear Regression models (Shrestha et al. 2023).     -->
 <!-- [Finemapping of LD regions using BLR models](Document/Finemapping_ld_regions_blr.html)   -->
