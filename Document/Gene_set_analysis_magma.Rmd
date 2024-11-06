@@ -36,11 +36,11 @@ library(data.table)
 # Load GAlist with information on gact database
 GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
 
-# Select study
-studyID <- "GWAS2"
+# Select study (note "BLR" refers to BLR derived marker assocation statistics)
+studyID <- "BLR2"
 
 # Get BLR marker-level statistics (i.e. posterior means of b, d and v)
-stat <- getBLR(GAlist=GAlist, studyID=studyID)
+stat <- getMarkerStat(GAlist=GAlist, studyID=studyID)
 head(stat)
 
 # Extract gene-marker sets
