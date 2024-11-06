@@ -139,7 +139,7 @@ Regression models (Shrestha et al. 2023).
 models](Document/Finemapping_bayesian_linear_regression.html)
 
 Polygenic scoring (PGS) using Bayesian Linear Regression models and
-biological pathway information (Rohde et al. 2023).  
+biological pathway information (work in progress).  
 [Polygenic scoring using BLR
 models](Document/Polygenic_scoring_bayesian_linear_regression.html)
 
