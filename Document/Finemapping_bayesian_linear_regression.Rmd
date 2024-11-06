@@ -91,13 +91,4 @@ head(fit$conv)
 
 # Posterior estimates of marker effects for every fine-mapped region
 head(fit$stat)
-
-# Fine-mapping in selected gene regions using a Bayes C prior for the marker variance
-fit <- gmap(Glist=Glist, stat=stat, sets=sets[genes],
-            method="bayesR", pi=0.001, h2=0.1)
-
-head(fit$post)
-head(fit$conv)
-head(fit$stat)
-
 ```
