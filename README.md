@@ -121,7 +121,7 @@ approach using the 1000G LD reference data processed above:
 Gene set enrichment analysis (GSEA) based on BLR (Bayesian Linear
 Regression) model derived gene-level statistics and MAGMA (Multi-marker
 Analysis of GenoMic Annotation) (Bai et al. 2024).  
-[Gene set analysis using MAGMA](Document/Gene_set_analysis__magma.html)
+[Gene set analysis using MAGMA](Document/Gene_set_analysis_magma.html)
 
 Pathway prioritization using a single and multiple trait Bayesian MAGMA
 models and gene-level statistics derived from VEGAS (Gholipourshahraki
