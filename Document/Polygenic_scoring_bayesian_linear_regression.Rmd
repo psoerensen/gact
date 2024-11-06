@@ -1,0 +1,118 @@
+---
+title: "Polygenic scoring (PGS) using Bayesian Linear Regression models and biological pathway information"
+author: "Peter Sørensen"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+Bayesian linear regression models have been proposed as a unified framework for gene mapping, genomic risk scoring, estimation of genetic parameters and effect size distribution. BLR methods use an iterative algorithm for estimating joint marker effects that account for LD and allow for differential shrinkage of marker effects. Estimation of the joint marker effects depend on additional model parameters such as a probability of being causal ($\pi$), an overall marker variance ($\sigma_{b}^2$), and residual variance ($\sigma_e^2$). Estimation of model parameters can be done using MCMC techniques by sampling from fully conditional posterior distributions. 
+
+Genomic risk scoring using Bayesian Linear Regression (BLR) models is a very flexible approach for accounting for the underlying genetic architecture of the traits. It can be implemented using GWAS summary statistics and a reference linkage disequilibrium (LD) correlation matrix. Ideally the summary statistics will correspond to the most powerful GWAS results available on the phenotype under study. In this example, we will use the summary statistics output the ´glma´ function that fit a linear regression model on the quantitative trait. We will use only a subset of the data (training data) in the GWAS and the remaining subset of the data (validation data) to assess the accuracy of the genomic risk scores.   
+
+Different BLR models can be fitted in the `qgg`-package in the function `gbayes()`, where the argument `method=` specifies which prior marker variance should be used. BLR models can be fitted using individual level genotype and phenotype data or based on GWAS summary statistics and a reference linkage disequilibrium (LD) correlation matrix.
+
+
+<br>
+
+This tutorial focus on fine-mapping using the Bayesian Linear Regression (BLR) model. It processes and analyzes GWAS (Genome-Wide Association Studies) summary statistics and employs fine-mapping on specific gene or genomic regions.
+
+<br>
+
+```{r all-code, include=TRUE, eval=FALSE}
+# Load libraries
+library(qgg)
+library(gact)
+
+# Load GAlist
+GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
+
+
+# Check studies in gact database
+GAlist$studies
+
+# List BLR results files allready in gact database
+list.files(GAlist$dirs["gbayes"])
+
+# Load Glist with information on 1000G
+Glist <- readRDS(file=file.path(GAlist$dirs["marker"],"Glist_1000G.rds"))
+
+# Select study
+studyID <- "GWAS1"
+
+# Extract GWAS summary statistics for GWAS1
+stat <- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
+
+
+# Check and align summary statistics based on marker information in Glist
+stat <- checkStat(Glist=Glist, stat=stat,
+                  excludeMAF=0.05,
+                  excludeMAFDIFF=0.05,
+                  excludeINFO=0.8,
+                  excludeCGAT=TRUE,
+                  excludeINDEL=TRUE,
+                  excludeDUPS=TRUE,
+                  excludeMHC=FALSE,
+                  excludeMISS=0.05,
+                  excludeHWE=1e-12)
+
+# Extract gene-marker sets
+sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genesplus")
+
+genes <- c("ENSG00000099204","ENSG00000118972", "ENSG00000145996","ENSG00000140718")
+
+
+# Fine-mapping using BLR model on selected gene regions
+fit <- gmap(Glist=Glist, stat=stat, sets=sets[genes],
+            method="bayesC", pi=0.001, h2=0.1)
+
+# Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for every fine-mapped region
+head(fit$post)
+
+# Convergence statistics for every fine-mapped region
+head(fit$conv)
+
+# Posterior estimates of marker effects for every fine-mapped region
+head(fit$stat)
+```
+
+## Fit BLR model using a Bayes N prior for the marker variance {.unlisted .unnumbered}
+In the Bayes N approach the prior the marker effect, b, follows a priori a normal distribution with a marker effect variance which is constant across markers:
+```{r,  eval=FALSE, echo=TRUE}
+fitN <- gbayes( stat=stat, Glist=Glist, method="bayesN", nit=1000)
+grsN <- gscore(Glist=Glist, stat=fitN$stat)
+paN <- acc(yobs=y[valid], ypred=grsN[valid,], typeoftrait = "binary")
+paN
+```
+
+## Fit BLR model using a Bayes A prior for the marker variance {.unlisted .unnumbered}
+In the Bayes A approach it is assumed that a priori we have some information on the marker variance. For instance, this can be $\sigma_b^2$. Thus, we may attach some importance to this value and use it as prior information for 
+```{r,  eval=FALSE, echo=TRUE}
+fitA <- gbayes( stat=stat, Glist=Glist, method="bayesA", nit=1000)
+grsA <- gscore(Glist=Glist, stat=fitA$stat)
+paA <- acc(yobs=y[valid], ypred=grsA[valid,], typeoftrait = "binary")
+paA
+```
+
+## Fit BLR model using a Bayes C prior for the marker variance {.unlisted .unnumbered}
+In the Bayes C approach the marker effects, b, are a priori assumed to be sampled from a mixture with a point mass at zero and univariate normal distribution conditional on a common marker effect variance:
+```{r,  eval=FALSE, echo=TRUE}
+fitC <- gbayes( stat=stat, Glist=Glist, method="bayesC", nit=1000)
+grsC <- gscore(Glist=Glist, stat=fitC$stat)
+paC <- acc(yobs=y[valid], ypred=grsC[valid,], typeoftrait = "binary")
+paC
+```
+
+## Fit BLR model using a Bayes R prior for the marker variance {.unlisted .unnumbered}
+In the Bayes R approach the marker effects, b, are a priori assumed to be sampled from a mixture with a point mass at zero and univariate normal distributions conditional on a common marker effect variance: 
+```{r,  eval=FALSE, echo=TRUE}
+fitR <- gbayes( stat=stat, Glist=Glist, method="bayesR", nit=1000)
+grsR <- gscore(Glist=Glist, stat=fitR$stat)
+paR <- acc(yobs=y[valid], ypred=grsR[valid,], typeoftrait = "binary")
+paR
+```

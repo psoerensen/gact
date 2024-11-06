@@ -69,6 +69,7 @@ sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Genesplus")
 
 genes <- c("ENSG00000099204","ENSG00000118972", "ENSG00000145996","ENSG00000140718")
 
+
 # Fine-mapping using BLR model on selected gene regions
 fit <- gmap(Glist=Glist, stat=stat, sets=sets[genes],
             method="bayesC", pi=0.001, h2=0.1)
