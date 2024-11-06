@@ -138,6 +138,11 @@ Regression models (Shrestha et al. 2023).
 [Finemapping using BLR
 models](Document/Finemapping_bayesian_linear_regression.html)
 
+Polygenic scoring (PGS) using Bayesian Linear Regression models and
+biological pathway information (Rohde et al. 2023).  
+[Polygenic scoring using BLR
+models](Document/Polygenic_scoring_bayesian_linear_regression.html)
+
 <!-- Finemapping of LD regions using single trait Bayesian Linear Regression models (Shrestha et al. 2023).     -->
 <!-- [Finemapping of LD regions using BLR models](Document/Finemapping_ld_regions_blr.html)   -->
 
