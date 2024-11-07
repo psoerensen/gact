@@ -36,7 +36,6 @@ library(gact)
 # Load GAlist
 GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
 
-
 # Check studies in gact database
 GAlist$studies
 
@@ -65,23 +64,18 @@ stat <- checkStat(Glist=Glist, stat=stat,
                   excludeHWE=1e-12)
 ```
 
-
 <br>
-
 
 #### Finemapping of gene regions using Bayesian Linear Regression models 
 ```{r, include=TRUE, eval=FALSE}
 # Extract gene-marker sets
 sets <- getMarkerSets(GAlist = GAlist, feature = "Genesplus")
 
-
 # Select gene regions to finemap
 genes <- c("ENSG00000099204","ENSG00000118972", "ENSG00000145996","ENSG00000140718")
 
-
-# Fine-mapping in selected gene regions using a Bayes C prior for the marker variance
-fit <- gmap(Glist=Glist, stat=stat, sets=sets[genes],
-            method="bayesC", pi=0.001, h2=0.1)
+# Fine-mapping in selected gene regions using a Bayes R prior for the marker variance
+fit <- gmap(Glist=Glist, stat=stat, sets=sets[genes], method="bayesC", pi=0.001, h2=0.1)
 
 # Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for every fine-mapped region
 head(fit$post)

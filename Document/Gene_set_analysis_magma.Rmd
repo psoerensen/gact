@@ -76,7 +76,7 @@ stat <- getBLR(GAlist=GAlist, studyID=studyID)
 head(stat)
 
 # Extract marker sets derived from eQTLs
-sets <- getMarkerSetsDB(GAlist = GAlist, feature = "GTExV8", threshold=0.01)
+sets <- getMarkerSets(GAlist = GAlist, feature = "GTExV8", threshold=0.01)
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
 fitGTEx <- magma(stat=stat["dm"], sets=sets, type="joint")
@@ -95,7 +95,7 @@ stat <- getBLR(GAlist=GAlist, studyID=studyID)
 head(stat)
 
 # Extract marker sets derived from regulatory genomic features
-sets <- getMarkerSetsDB(GAlist = GAlist, feature = "Regulatory Categories")
+sets <- getMarkerSets(GAlist = GAlist, feature = "Regulatory Categories")
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
 fitREG <- magma(stat=stat["dm"], sets=sets, type="joint")

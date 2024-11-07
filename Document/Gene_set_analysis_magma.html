@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-11-06" />
+<meta name="date" content="2024-11-07" />
 
 <title>GSEA using BLR model derived gene-level statistics and MAGMA</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">GSEA using BLR model derived gene-level
 statistics and MAGMA</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-11-06</h4>
+<h4 class="date">2024-11-07</h4>
 
 </div>
 
@@ -438,7 +438,7 @@ stat &lt;- getBLR(GAlist=GAlist, studyID=studyID)
 head(stat)
 
 # Extract marker sets derived from eQTLs
-sets &lt;- getMarkerSetsDB(GAlist = GAlist, feature = &quot;GTExV8&quot;, threshold=0.01)
+sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;GTExV8&quot;, threshold=0.01)
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
 fitGTEx &lt;- magma(stat=stat[&quot;dm&quot;], sets=sets, type=&quot;joint&quot;)
@@ -456,7 +456,7 @@ stat &lt;- getBLR(GAlist=GAlist, studyID=studyID)
 head(stat)
 
 # Extract marker sets derived from regulatory genomic features
-sets &lt;- getMarkerSetsDB(GAlist = GAlist, feature = &quot;Regulatory Categories&quot;)
+sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;Regulatory Categories&quot;)
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
 fitREG &lt;- magma(stat=stat[&quot;dm&quot;], sets=sets, type=&quot;joint&quot;)
