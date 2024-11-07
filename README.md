@@ -95,11 +95,6 @@ associations for complex traits:
 [Download and install gact
 database](Document/Download_and_install_gact_database.html)
 
-Downloading and processing genome-wide association summary statistic and
-ingest into database:  
-[Download and process new gwas summary
-statistics](Document/Download_and_process_gwas.html)
-
 Download and process genotype data from the 1000 Genomes Project (1000G)
 for different ancestries (European, East Asian, South Asian) used in
 different genomic analysis:  
@@ -111,6 +106,11 @@ data which is used in a number of genomic analysis (LD score regression,
 Vegas gene analysis, Bayesian Linear Regression models):  
 [Compute sparse LD matrices for 1000G
 data](Document/Compute_sparseLD_1000G.html)
+
+Downloading and processing genome-wide association summary statistic and
+ingest into database:  
+[Download and process new gwas summary
+statistics](Document/Download_and_process_gwas.html)
 
 ### Tutorials for various types of genomic analysis using the gact database
 
