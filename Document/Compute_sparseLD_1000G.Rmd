@@ -15,7 +15,7 @@ This tutorial focuses on computing sparse Linkage Disequilibrium (LD) matrices f
 
 <br>
 
-#### Compute Sparse LD matrix and LD scores for EAS
+#### Compute Sparse LD matrix and LD scores for EUR
 ```{r, include=TRUE, eval=FALSE}
 # Load libraries
 library(qgg)
