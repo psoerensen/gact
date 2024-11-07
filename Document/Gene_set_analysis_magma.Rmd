@@ -62,19 +62,21 @@ fitV <- magma(stat=vstat, sets=sets, type="joint")
 head(fitB)
 head(fitD)
 head(fitV)
+
+# Bayesian MAGMA using Bayes R prior for regression effects
+fitB <- magma(stat=bstat, sets=sets, method="bayesR")
+fitD <- magma(stat=dstat, sets=sets, method="bayesR")
+fitV <- magma(stat=vstat, sets=sets, method="bayesR")
+head(fitB)
+head(fitD)
+head(fitV)
+
 ```
 
 <br>
 
 #### MAGMA marker set analysis leveraging GTEx eQTL marker sets 
 ```{r, include=TRUE, eval=FALSE}
-# Select study
-studyID <- "GWAS2"
-
-# Get BLR marker-level statistics (i.e. posterior means of b, d and v)
-stat <- getBLR(GAlist=GAlist, studyID=studyID)
-head(stat)
-
 # Extract marker sets derived from eQTLs
 sets <- getMarkerSets(GAlist = GAlist, feature = "GTExV8", threshold=0.01)
 
@@ -87,13 +89,6 @@ head(fitGTEx)
 
 #### MAGMA marker set analysis leveraging regulatory marker sets from ENSEMBL 
 ```{r, include=TRUE, eval=FALSE}
-# Select study
-studyID <- "GWAS2"
-
-# Get BLR marker-level statistics (i.e. posterior means of b, d and v)
-stat <- getBLR(GAlist=GAlist, studyID=studyID)
-head(stat)
-
 # Extract marker sets derived from regulatory genomic features
 sets <- getMarkerSets(GAlist = GAlist, feature = "Regulatory Categories")
 

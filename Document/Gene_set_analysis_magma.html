@@ -425,19 +425,20 @@ fitD &lt;- magma(stat=dstat, sets=sets, type=&quot;joint&quot;)
 fitV &lt;- magma(stat=vstat, sets=sets, type=&quot;joint&quot;)
 head(fitB)
 head(fitD)
+head(fitV)
+
+# Bayesian MAGMA using Bayes R prior for regression effects
+fitB &lt;- magma(stat=bstat, sets=sets, method=&quot;bayesR&quot;)
+fitD &lt;- magma(stat=dstat, sets=sets, method=&quot;bayesR&quot;)
+fitV &lt;- magma(stat=vstat, sets=sets, method=&quot;bayesR&quot;)
+head(fitB)
+head(fitD)
 head(fitV)</code></pre>
 <p><br></p>
 </div>
 <div id="magma-marker-set-analysis-leveraging-gtex-eqtl-marker-sets" class="section level4">
 <h4>MAGMA marker set analysis leveraging GTEx eQTL marker sets</h4>
-<pre class="r"><code># Select study
-studyID &lt;- &quot;GWAS2&quot;
-
-# Get BLR marker-level statistics (i.e. posterior means of b, d and v)
-stat &lt;- getBLR(GAlist=GAlist, studyID=studyID)
-head(stat)
-
-# Extract marker sets derived from eQTLs
+<pre class="r"><code># Extract marker sets derived from eQTLs
 sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;GTExV8&quot;, threshold=0.01)
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
@@ -448,14 +449,7 @@ head(fitGTEx)</code></pre>
 <div id="magma-marker-set-analysis-leveraging-regulatory-marker-sets-from-ensembl" class="section level4">
 <h4>MAGMA marker set analysis leveraging regulatory marker sets from
 ENSEMBL</h4>
-<pre class="r"><code># Select study
-studyID &lt;- &quot;GWAS2&quot;
-
-# Get BLR marker-level statistics (i.e. posterior means of b, d and v)
-stat &lt;- getBLR(GAlist=GAlist, studyID=studyID)
-head(stat)
-
-# Extract marker sets derived from regulatory genomic features
+<pre class="r"><code># Extract marker sets derived from regulatory genomic features
 sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;Regulatory Categories&quot;)
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)

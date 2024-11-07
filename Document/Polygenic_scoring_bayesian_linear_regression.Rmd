@@ -80,6 +80,7 @@ pgs <- gscore(Glist=Glist, stat=fit$stat)
 head(pgs)
 ```
 
+<br>
 
 #### Fit BLR model using a Bayes R prior and compute pathway specific polygenic scores
 In the Bayes R approach the marker effects, b, are a priori assumed to be sampled from a mixture with a point mass at zero and univariate normal distributions conditional on a common marker effect variance: 
