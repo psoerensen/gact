@@ -131,7 +131,7 @@ writeBED(bedRead=bedfiles,
          rsids=rsids)
 
 # Prepare summary (i.e. Glist) for 1000G genotype data
-Glist <- gprep(study="1000G EAS",
+Glist <- gprep(study="1000G SAS",
                bedfiles=bed_filtered,
                bimfiles=bim_filtered,
                famfiles=fam_filtered)
