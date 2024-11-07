@@ -13,7 +13,7 @@
 
 <meta name="date" content="2024-11-07" />
 
-<title>Polygenic scoring (PGS) using Bayesian Linear Regression models and biological pathway information</title>
+<title>Polygenic scoring (PGS) using summary statistics from PGS catalog and biological pathway information</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,8 +350,8 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Polygenic scoring (PGS) using Bayesian
-Linear Regression models and biological pathway information</h1>
+<h1 class="title toc-ignore">Polygenic scoring (PGS) using summary
+statistics from PGS catalog and biological pathway information</h1>
 <h4 class="author">Peter Sørensen</h4>
 <h4 class="date">2024-11-07</h4>
 
@@ -360,32 +360,18 @@ Linear Regression models and biological pathway information</h1>
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>Bayesian linear regression models have been proposed as a unified
-framework for gene mapping, genomic risk scoring, estimation of genetic
-parameters and effect size distribution. BLR methods use an iterative
-algorithm for estimating joint marker effects that account for LD and
-allow for differential shrinkage of marker effects. Estimation of the
-joint marker effects depend on additional model parameters such as a
-probability of being causal (<span class="math inline">\(\pi\)</span>),
-an overall marker variance (<span class="math inline">\(\sigma_{b}^2\)</span>), and residual variance
-(<span class="math inline">\(\sigma_e^2\)</span>). Estimation of model
-parameters can be done using MCMC techniques by sampling from fully
-conditional posterior distributions.</p>
-<p>Genomic risk scoring using Bayesian Linear Regression (BLR) models is
-a very flexible approach for accounting for the underlying genetic
-architecture of the traits. It can be implemented using GWAS summary
-statistics and a reference linkage disequilibrium (LD) correlation
-matrix. Ideally the summary statistics will correspond to the most
-powerful GWAS results available on the phenotype under study.</p>
-<p>Different BLR models can be fitted in the <code>qgg</code>-package in
-the function <code>gbayes()</code>, where the argument
-<code>method=</code> specifies which prior marker variance should be
-used. BLR models can be fitted using individual level genotype and
-phenotype data or based on GWAS summary statistics and a reference
-linkage disequilibrium (LD) correlation matrix.</p>
+<p>The Polygenic Score (PGS) Catalog is an open database that curates
+polygenic scores (PGS) for various traits and diseases. It provides
+standardized information on PGS development, validation, and
+performance, allowing researchers to access and compare scores across
+studies.</p>
+<p>In this tutorial we show how to download marker summary statistics
+from PGS Catalog, compute polygenic score, and combine it with data from
+gact database.</p>
 <p><br></p>
-<div id="prepare-input-data-for-polygenic-scoring" class="section level4">
-<h4>Prepare input data for polygenic scoring</h4>
+<div id="compute-polygenic-scores-based-on-summary-statistics-from-pgc-catalog" class="section level4">
+<h4>Compute polygenic scores based on summary statistics from PGC
+catalog</h4>
 <pre class="r"><code># Load libraries
 library(qgg)
 library(gact)
@@ -393,65 +379,29 @@ library(gact)
 # Load GAlist
 GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
-# Check studies in gact database
-GAlist$studies
+# Load Glist with information on 1000G matched to the ancestry of GWAS data
+Glist &lt;- readRDS(file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_eas_filtered.rds&quot;))
 
-# List BLR results files allready in gact database
-list.files(GAlist$dirs[&quot;gbayes&quot;])
+# Get marker summary statistics directly from PGS
+stat &lt;- fread(&quot;https://ftp.ebi.ac.uk/pub/databases/spot/pgs/scores/PGS003725/ScoringFiles/PGS003725.txt.gz&quot;,data.table=F, skip=14)
 
-# Load Glist with information on 1000G
-Glist &lt;- readRDS(file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G.rds&quot;))
-
-# Select study
-studyID &lt;- &quot;GWAS1&quot;
-
-# Extract GWAS summary statistics for GWAS1
-stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
+# Check column names, add marker column, and rename columns in stat object
+stat$marker &lt;- paste(stat[,&quot;chr_name&quot;],stat[,&quot;chr_position&quot;],stat[,&quot;effect_allele&quot;],stat[,&quot;other_allele&quot;],sep=&quot;_&quot;)
+stat &lt;- stat[, c(&quot;marker&quot;, &quot;chr_name&quot;, &quot;chr_position&quot;, &quot;effect_allele&quot;, &quot;other_allele&quot;, &quot;effect_weight&quot;)]
+colnames(stat) &lt;- c(&quot;marker&quot;, &quot;chr&quot;, &quot;pos&quot;, &quot;ea&quot;, &quot;nea&quot;, &quot;b&quot;)
 
 # Check and align summary statistics based on marker information in Glist
-stat &lt;- checkStat(Glist=Glist, stat=stat,
-                  excludeMAF=0.05,
-                  excludeMAFDIFF=0.05,
-                  excludeINFO=0.8,
-                  excludeCGAT=TRUE,
-                  excludeINDEL=TRUE,
-                  excludeDUPS=TRUE,
-                  excludeMHC=FALSE,
-                  excludeMISS=0.05,
-                  excludeHWE=1e-12)
+stat &lt;- checkStat(Glist=Glist, stat=stat)
+
+# Compute polygenic scores
+pgs &lt;- gscore(Glist = Glist, stat = stat)
+head(pgs)
 
 # Extract marker sets derived from KEGG pathways
-sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;KEGG&quot;)</code></pre>
-<p><br></p>
-</div>
-<div id="fit-blr-model-using-a-bayes-c-prior-for-the-marker-variance" class="section level4">
-<h4>Fit BLR model using a Bayes C prior for the marker variance</h4>
-<p>In the Bayes C approach the marker effects, b, are a priori assumed
-to be sampled from a mixture with a point mass at zero and univariate
-normal distribution conditional on a common marker effect variance:</p>
-<pre class="r"><code>fit &lt;- gbayes(stat=stat, Glist=Glist, method=&quot;bayesC&quot;, nit=1000)
-pgs &lt;- gscore(Glist=Glist, stat=fit$stat)
-head(pgs)</code></pre>
-<p><br></p>
-</div>
-<div id="fit-blr-model-using-a-bayes-r-prior-for-the-marker-variance" class="section level4">
-<h4>Fit BLR model using a Bayes R prior for the marker variance</h4>
-<p>In the Bayes R approach the marker effects, b, are a priori assumed
-to be sampled from a mixture with a point mass at zero and univariate
-normal distributions conditional on a common marker effect variance:</p>
-<pre class="r"><code>fit &lt;- gbayes(Glist=Glist, stat=stat, method=&quot;bayesR&quot;, nit=5000, nburn=1000)
-pgs &lt;- gscore(Glist=Glist, stat=fit$stat)
-head(pgs)</code></pre>
-<p><br></p>
-</div>
-<div id="fit-blr-model-using-a-bayes-r-prior-and-compute-pathway-specific-polygenic-scores" class="section level4">
-<h4>Fit BLR model using a Bayes R prior and compute pathway specific
-polygenic scores</h4>
-<p>In the Bayes R approach the marker effects, b, are a priori assumed
-to be sampled from a mixture with a point mass at zero and univariate
-normal distributions conditional on a common marker effect variance:</p>
-<pre class="r"><code>fit &lt;- gbayes(Glist=Glist, stat=stat, method=&quot;bayesR&quot;, nit=5000, nburn=1000)
-pgs &lt;- gscore(Glist=Glist, stat=fit$stat, sets=sets)
+sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;KEGG&quot;)
+
+# Compute pathway specific polygenic scores
+pgs &lt;- gscore(Glist=Glist, stat=stat, sets=sets)
 head(pgs)</code></pre>
 </div>
 </div>

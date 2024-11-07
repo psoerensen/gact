@@ -143,8 +143,10 @@ biological pathway information (work in progress).
 [Polygenic scoring using BLR
 models](Document/Polygenic_scoring_bayesian_linear_regression.html)
 
-<!-- Finemapping of LD regions using single trait Bayesian Linear Regression models (Shrestha et al. 2023).     -->
-<!-- [Finemapping of LD regions using BLR models](Document/Finemapping_ld_regions_blr.html)   -->
+Polygenic scoring (PGS) using summary statistics from PGS catalog and
+biological pathway information.  
+[Polygenic scoring using PGS
+Catalog](Document/Polygenic_scoring_pgscatalog.html)
 
 LD score regression for estimating genomic heritability and
 correlations.  

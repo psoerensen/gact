@@ -1,0 +1,53 @@
+---
+title: "Polygenic scoring (PGS) using summary statistics from PGS catalog and biological pathway information"
+author: "Peter Sørensen"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+The Polygenic Score (PGS) Catalog is an open database that curates polygenic scores (PGS) for various traits and diseases. It provides standardized information on PGS development, validation, and performance, allowing researchers to access and compare scores across studies.
+
+In this tutorial we show how to download marker summary statistics from PGS Catalog, compute polygenic score, and combine it with data from gact database.
+
+<br>
+
+#### Compute polygenic scores based on summary statistics from PGC catalog
+```{r, include=TRUE, eval=FALSE}
+# Load libraries
+library(qgg)
+library(gact)
+
+# Load GAlist
+GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
+
+# Load Glist with information on 1000G matched to the ancestry of GWAS data
+Glist <- readRDS(file.path(GAlist$dirs["marker"],"Glist_1000G_eas_filtered.rds"))
+
+# Get marker summary statistics directly from PGS
+stat <- fread("https://ftp.ebi.ac.uk/pub/databases/spot/pgs/scores/PGS003725/ScoringFiles/PGS003725.txt.gz",data.table=F, skip=14)
+
+# Check column names, add marker column, and rename columns in stat object
+stat$marker <- paste(stat[,"chr_name"],stat[,"chr_position"],stat[,"effect_allele"],stat[,"other_allele"],sep="_")
+stat <- stat[, c("marker", "chr_name", "chr_position", "effect_allele", "other_allele", "effect_weight")]
+colnames(stat) <- c("marker", "chr", "pos", "ea", "nea", "b")
+
+# Check and align summary statistics based on marker information in Glist
+stat <- checkStat(Glist=Glist, stat=stat)
+
+# Compute polygenic scores
+pgs <- gscore(Glist = Glist, stat = stat)
+head(pgs)
+
+# Extract marker sets derived from KEGG pathways
+sets <- getMarkerSets(GAlist = GAlist, feature = "KEGG")
+
+# Compute pathway specific polygenic scores
+pgs <- gscore(Glist=Glist, stat=stat, sets=sets)
+head(pgs)
+```
