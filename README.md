@@ -109,7 +109,7 @@ data](Document/Compute_sparseLD_1000G.html)
 
 Downloading and processing genome-wide association summary statistic and
 ingest into database:  
-[Download and process new gwas summary
+[Download and process new GWAS summary
 statistics](Document/Download_and_process_gwas.html)
 
 ### Tutorials for various types of genomic analysis using the gact database
