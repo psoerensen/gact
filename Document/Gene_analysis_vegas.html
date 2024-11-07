@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-11-06" />
+<meta name="date" content="2024-11-07" />
 
 <title>Gene analysis using VEGAS</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Gene analysis using VEGAS</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-11-06</h4>
+<h4 class="date">2024-11-07</h4>
 
 </div>
 
@@ -405,7 +405,7 @@ studyID &lt;- &quot;GWAS6&quot;
 Glist &lt;- readRDS(file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_eur_filtered.rds&quot;))
 
 # Get GWAS summary statistics from gact database
-stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
+stat &lt;- getMarkerStat(GAlist=GAlist, studyID=studyID)
 
 # Check and align summary statistics based on marker information in Glist
 stat &lt;- checkStat(Glist=Glist, stat=stat)
@@ -424,7 +424,7 @@ studyID &lt;- &quot;GWAS7&quot;
 Glist &lt;- readRDS(file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_eas_filtered.rds&quot;))
 
 # Get GWAS summary statistics from gact database
-stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
+stat &lt;- getMarkerStat(GAlist=GAlist, studyID=studyID)
 
 # Check and align summary statistics based on marker information in Glist
 stat &lt;- checkStat(Glist=Glist, stat=stat)
@@ -453,7 +453,7 @@ rsids &lt;- gfilter(Glist = Glist,
                  excludeMHC = FALSE)
 
 # Get GWAS summary statistics from gact database
-p &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID,
+p &lt;- getMarkerStat(GAlist=GAlist, studyID=studyID,
                      what=&quot;p&quot;, rsids=rsids)
 dim(p)
 

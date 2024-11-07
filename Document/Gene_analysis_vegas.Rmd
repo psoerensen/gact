@@ -45,7 +45,7 @@ studyID <- "GWAS6"
 Glist <- readRDS(file.path(GAlist$dirs["marker"],"Glist_1000G_eur_filtered.rds"))
 
 # Get GWAS summary statistics from gact database
-stat <- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
+stat <- getMarkerStat(GAlist=GAlist, studyID=studyID)
 
 # Check and align summary statistics based on marker information in Glist
 stat <- checkStat(Glist=Glist, stat=stat)
@@ -65,7 +65,7 @@ studyID <- "GWAS7"
 Glist <- readRDS(file.path(GAlist$dirs["marker"],"Glist_1000G_eas_filtered.rds"))
 
 # Get GWAS summary statistics from gact database
-stat <- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
+stat <- getMarkerStat(GAlist=GAlist, studyID=studyID)
 
 # Check and align summary statistics based on marker information in Glist
 stat <- checkStat(Glist=Glist, stat=stat)
@@ -95,7 +95,7 @@ rsids <- gfilter(Glist = Glist,
                  excludeMHC = FALSE)
 
 # Get GWAS summary statistics from gact database
-p <- getMarkerStatDB(GAlist=GAlist, studyID=studyID,
+p <- getMarkerStat(GAlist=GAlist, studyID=studyID,
                      what="p", rsids=rsids)
 dim(p)
 
