@@ -17,7 +17,7 @@ The MAGMA (Multi-marker Analysis of Genomic Annotation) approach is a widely use
 
 <div style="text-align: center;">
 
-![](../Images/BLR_VEGAS.png){width=75%}
+![](../Images/BLR_MAGMA.png){width=75%}
 </div>
 
 <br>
