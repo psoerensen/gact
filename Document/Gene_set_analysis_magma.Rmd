@@ -48,9 +48,15 @@ msets <- getMarkerSets(GAlist = GAlist, feature = "Genesplus")
 
 # Compute gene-level statistics from BLR marker-level statistics
 msets <- mapSetsDB(sets=msets,featureID=stat$rsids,index=TRUE)
-bstat <- sapply(msets,function(x){sum(abs(stat$bm[x]))})
-dstat <- sapply(msets,function(x){sum(abs(stat$dm[x]))})
-vstat <- sapply(msets,function(x){sum(abs(stat$vm[x]))})
+
+# posterior mean marker effect
+bstat <- sapply(msets,function(x){sum(abs(stat$bm[x]))}) 
+
+# posterior mean marker inclusion probability
+dstat <- sapply(msets,function(x){sum(abs(stat$dm[x]))}) 
+
+# posterior mean marker variance
+vstat <- sapply(msets,function(x){sum(abs(stat$vm[x]))}) # posterior mean marker variance
 
 # Get gene sets for KEGG pathways
 sets <- getFeatureSets(GAlist = GAlist, feature="KEGG", minsets=50)

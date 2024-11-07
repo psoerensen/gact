@@ -84,21 +84,12 @@ studyID <- c("GWAS1","GWAS2")
 # Load Glist with information on 1000G (EUR)
 Glist <- readRDS(file=file.path(GAlist$dirs["marker"],"Glist_1000G_eur_filtered.rds"))
 
-# Identify high quality genetic markers in 1000G
-rsids <- gfilter(Glist = Glist,
-                 excludeMAF = 0.01,
-                 excludeMISS = 0.05,
-                 excludeCGAT = TRUE,
-                 excludeINDEL = TRUE,
-                 excludeDUPS = TRUE,
-                 excludeHWE = 1e-12,
-                 excludeMHC = FALSE)
-
 # Get GWAS summary statistics from gact database
-p <- getMarkerStat(GAlist=GAlist, studyID=studyID,
-                     what="p", rsids=rsids)
-dim(p)
+stat <- getMarkerStat(GAlist=GAlist, studyID=studyID)
+
+# Check and align summary statistics based on marker information in Glist
+stat <- checkStat(Glist=Glist, stat=stat)
 
 # Gene analysis using VEGAS
-res <- vegas(Glist=Glist, sets=markerSets, p=p, verbose=TRUE)
+res <- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)
 ```
