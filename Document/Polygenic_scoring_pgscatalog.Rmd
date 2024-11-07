@@ -47,7 +47,7 @@ head(pgs)
 # Extract marker sets derived from KEGG pathways
 sets <- getMarkerSets(GAlist = GAlist, feature = "KEGG")
 
-# Compute pathway specific polygenic scores
+# Compute polygenic scores for KEGG pathways
 pgs <- gscore(Glist=Glist, stat=stat, sets=sets)
 head(pgs)
 ```
