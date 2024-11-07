@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Introduction
-The Polygenic Score (PGS) Catalog is an open database that curates polygenic scores (PGS) for various traits and diseases. It provides standardized information on PGS development, validation, and performance, allowing researchers to access and compare scores across studies.
+The Polygenic Score (PGS) Catalog is an open database that curates polygenic scores (PGS) for various traits and diseases ([PGS Catalog](https://www.pgscatalog.org)). It provides standardized information on PGS development, validation, and performance, allowing researchers to access and compare scores across studies.
 
 In this tutorial we show how to download marker summary statistics from PGS Catalog, compute polygenic score, and combine it with data from gact database.
 
