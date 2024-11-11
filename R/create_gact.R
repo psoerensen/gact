@@ -219,12 +219,13 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   destfile <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh38.110.gtf.gz")
   download.file(url=url, mode = "wb", dest=destfile)
 
-
-  url <- "https://ftp.ensembl.org/pub/grch37/current/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz"
+  url <- "https://ftp.ensembl.org/pub/grch37/release-113/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz"
+  #url <- "https://ftp.ensembl.org/pub/grch37/current/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz"
   destfile <- file.path(GAlist$dirs["gsets"],"Homo_sapiens.GRCh37.87.gtf.gz")
   download.file(url=url, mode = "wb", dest=destfile)
 
-  url <- "https://ftp.ensembl.org/pub/grch37/current/regulation/homo_sapiens/homo_sapiens.GRCh37.Regulatory_Build.regulatory_features.20201218.gff.gz"
+  #url <- "https://ftp.ensembl.org/pub/grch37/current/regulation/homo_sapiens/homo_sapiens.GRCh37.Regulatory_Build.regulatory_features.20201218.gff.gz"
+  url <- "https://ftp.ensembl.org/pub/grch37/release-113/regulation/homo_sapiens/homo_sapiens.GRCh37.Regulatory_Build.regulatory_features.20201218.gff.gz"
   destfile <- file.path(GAlist$dirs["gsets"],"GRCh37.Regulatory_Build.regulatory_features.gff.gz")
   download.file(url=url, mode = "wb", dest=destfile)
 
