@@ -350,35 +350,61 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   dest <- file.path(GAlist$dirs["marker"],"1000G_EUR_Phase3_plink.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
 
-  url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_eur.zip"
-  dest <- file.path(GAlist$dirs["marker"],
-                    gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
-  download.file(url=url, mode = "wb", dest=dest)
+  url <- "https://zenodo.org/api/records/14142263"
+  download_zenodo(doi = "10.5281/zenodo.14142263", path=GAlist$dirs["marker"])
+  dest <- file.path(GAlist$dirs["marker"],"g1000_eur.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
 
-  url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_afr.zip"
-  dest <- file.path(GAlist$dirs["marker"],
-                    gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
-  download.file(url=url, mode = "wb", dest=dest)
+  url <- "https://zenodo.org/api/records/14141524"
+  download_zenodo(doi = "10.5281/zenodo.14141524", path=GAlist$dirs["marker"])
+  dest <- file.path(GAlist$dirs["marker"],"g1000_eas.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
 
-  url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_eas.zip"
-  dest <- file.path(GAlist$dirs["marker"],
-                    gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
-  download.file(url=url, mode = "wb", dest=dest)
+  url <- "https://zenodo.org/api/records/14141598"
+  download_zenodo(doi = "10.5281/zenodo.14141598", path=GAlist$dirs["marker"])
+  dest <- file.path(GAlist$dirs["marker"],"g1000_sas.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
 
-  url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_sas.zip"
-  dest <- file.path(GAlist$dirs["marker"],
-                    gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
-  download.file(url=url, mode = "wb", dest=dest)
+  url <- "https://zenodo.org/api/records/14141775"
+  download_zenodo(doi = "10.5281/zenodo.14141775", path=GAlist$dirs["marker"])
+  dest <- file.path(GAlist$dirs["marker"],"g1000_afr.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
 
-  url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_amr.zip"
-  dest <- file.path(GAlist$dirs["marker"],
-                    gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
-  download.file(url=url, mode = "wb", dest=dest)
+  url <- "https://zenodo.org/api/records/14141886"
+  download_zenodo(doi = "10.5281/zenodo.14141886", path=GAlist$dirs["marker"])
+  dest <- file.path(GAlist$dirs["marker"],"g1000_amr.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
+
+
+  #url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_eur.zip"
+  #dest <- file.path(GAlist$dirs["marker"],
+  #                  gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
+  #download.file(url=url, mode = "wb", dest=dest)
+  #unzip(dest, exdir=GAlist$dirs["marker"])
+
+  #url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_afr.zip"
+  #dest <- file.path(GAlist$dirs["marker"],
+  #                  gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
+  #download.file(url=url, mode = "wb", dest=dest)
+  #unzip(dest, exdir=GAlist$dirs["marker"])
+
+  #url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_eas.zip"
+  #dest <- file.path(GAlist$dirs["marker"],
+  #                  gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
+  #download.file(url=url, mode = "wb", dest=dest)
+  #unzip(dest, exdir=GAlist$dirs["marker"])
+
+  #url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_sas.zip"
+  #dest <- file.path(GAlist$dirs["marker"],
+  #                  gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
+  #download.file(url=url, mode = "wb", dest=dest)
+  #unzip(dest, exdir=GAlist$dirs["marker"])
+
+  #url <- "https://ctg.cncr.nl/software/MAGMA/ref_data/g1000_amr.zip"
+  #dest <- file.path(GAlist$dirs["marker"],
+  #                  gsub("https://ctg.cncr.nl/software/MAGMA/ref_data/","",url))
+  #download.file(url=url, mode = "wb", dest=dest)
+  #unzip(dest, exdir=GAlist$dirs["marker"])
 
  }
 
