@@ -75,7 +75,7 @@ sets <- getMarkerSets(GAlist = GAlist, feature = "Genesplus")
 genes <- c("ENSG00000099204","ENSG00000118972", "ENSG00000145996","ENSG00000140718")
 
 # Fine-mapping in selected gene regions using a Bayes R prior for the marker variance
-fit <- gmap(Glist=Glist, stat=stat, sets=sets[genes], method="bayesC", pi=0.001, h2=0.1)
+fit <- gmap(Glist=Glist, stat=stat, sets=sets[genes], method="bayesR", algorithm="mcmc-eigen", eigen_threshold=c(0.995,0.99, 0.95, 0.9), verbose=TRUE)
 
 # Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for every fine-mapped region
 head(fit$post)

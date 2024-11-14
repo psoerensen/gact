@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-11-07" />
+<meta name="date" content="2024-11-14" />
 
 <title>Finemapping of gene regions using single trait Bayesian Linear Regression models</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">Finemapping of gene regions using single
 trait Bayesian Linear Regression models</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-11-07</h4>
+<h4 class="date">2024-11-14</h4>
 
 </div>
 
@@ -433,7 +433,7 @@ sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;Genesplus&quot;)
 genes &lt;- c(&quot;ENSG00000099204&quot;,&quot;ENSG00000118972&quot;, &quot;ENSG00000145996&quot;,&quot;ENSG00000140718&quot;)
 
 # Fine-mapping in selected gene regions using a Bayes R prior for the marker variance
-fit &lt;- gmap(Glist=Glist, stat=stat, sets=sets[genes], method=&quot;bayesC&quot;, pi=0.001, h2=0.1)
+fit &lt;- gmap(Glist=Glist, stat=stat, sets=sets[genes], method=&quot;bayesR&quot;, algorithm=&quot;mcmc-eigen&quot;, eigen_threshold=c(0.995,0.99, 0.95, 0.9), verbose=TRUE)
 
 # Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for every fine-mapped region
 head(fit$post)
