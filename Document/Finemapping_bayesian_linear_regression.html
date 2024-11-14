@@ -401,8 +401,8 @@ GAlist$studies
 # List BLR results files allready in gact database
 list.files(GAlist$dirs[&quot;gbayes&quot;])
 
-# Load Glist with information on 1000G
-Glist &lt;- readRDS(file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G.rds&quot;))
+# Load Glist with information on 1000G matched to the ancestry of GWAS data
+Glist &lt;- readRDS(file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_eur_filtered.rds&quot;))
 
 # Select study
 studyID &lt;- &quot;GWAS1&quot;
