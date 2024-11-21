@@ -1275,8 +1275,7 @@ mapSetsDB <- function(sets = NULL, featureID = NULL, GAlist = NULL, index = TRUE
 #' ldscores <- getLDscores(GAlist, ancestry = "EUR", version = "HapMap3", rsids = c("rs123", "rs456"))
 #'
 #' @export
-#' @export
-getLDscores <- function(GAlist=NULL, ancestry="EUR", version="HapMap3", rsids=NULL) {
+getLDscores <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="HapMap3", rsids=NULL) {
  # Check if GAlist is provided
  if (is.null(GAlist) || !("marker" %in% names(GAlist$dirs))) {
   stop("Error: GAlist or GAlist$dirs['marker'] is missing.")
@@ -1315,7 +1314,7 @@ getLDscores <- function(GAlist=NULL, ancestry="EUR", version="HapMap3", rsids=NU
  }
 
  marker <- fread(marker_file_path, data.table = FALSE)
-
+ if(!is.null(chr)) marker <- marker[marker$chr==chr,]
  # Check if 'ldscores' and 'rsids' columns exist
  if (!all(c("ldscores", "rsids") %in% colnames(marker))) {
   stop("Error: The marker file does not contain the required columns 'ldscores' and 'rsids'.")
