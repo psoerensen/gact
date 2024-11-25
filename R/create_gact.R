@@ -512,23 +512,23 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   names(GAlist$atc$code) <- GAlist$atc$name
   names(GAlist$atc$name) <- GAlist$atc$code
 
-  # Add drug target data frame with ATC information to GAlist
-  drug2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
-  #drug2ensg <- getSetsDB(GAlist = GAlist, feature = "DrugGenes")
-  nreps <- sapply(drug2ensg,length)
-  drugs <- rep(names(drug2ensg), times=nreps)
-  ensg <- unlist(drug2ensg)
-  ensg2drug <- split(drugs, f=as.factor(ensg))
-  df <- data.frame(Drug=drugs, Target=ensg)
-    df$ATC <- rep("Unknown",nrow(df))
-  has_atc <- match(tolower(df$Drug),tolower(GAlist$atc$name))
-  df$ATC[!is.na(has_atc)] <- as.character(GAlist$atc$code[has_atc[!is.na(has_atc)]])
-  GAlist$targets <- df
-  target <- GAlist$targets
-  target <- target[!duplicated(target$Drug),]
-  drug2atc <- target$ATC
-  names(drug2atc) <- target$Drug
-  GAlist$drug2atc <- drug2atc
+  # # Add drug target data frame with ATC information to GAlist
+  # drug2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
+  # #drug2ensg <- getSetsDB(GAlist = GAlist, feature = "DrugGenes")
+  # nreps <- sapply(drug2ensg,length)
+  # drugs <- rep(names(drug2ensg), times=nreps)
+  # ensg <- unlist(drug2ensg)
+  # ensg2drug <- split(drugs, f=as.factor(ensg))
+  # df <- data.frame(Drug=drugs, Target=ensg)
+  #   df$ATC <- rep("Unknown",nrow(df))
+  # has_atc <- match(tolower(df$Drug),tolower(GAlist$atc$name))
+  # df$ATC[!is.na(has_atc)] <- as.character(GAlist$atc$code[has_atc[!is.na(has_atc)]])
+  # GAlist$targets <- df
+  # target <- GAlist$targets
+  # target <- target[!duplicated(target$Drug),]
+  # drug2atc <- target$ATC
+  # names(drug2atc) <- target$Drug
+  # GAlist$drug2atc <- drug2atc
  }
 
  return(GAlist)
@@ -834,7 +834,24 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  saveRDS(drug2ensg,file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
 
  # Add atc codes
- GAlist <- downloadDB(GAlist=GAlist, what="atc")
+ #GAlist <- downloadDB(GAlist=GAlist, what="atc")
+ # Add drug target data frame with ATC information to GAlist
+ drug2ensg <- readRDS(file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
+ #drug2ensg <- getSetsDB(GAlist = GAlist, feature = "DrugGenes")
+ nreps <- sapply(drug2ensg,length)
+ drugs <- rep(names(drug2ensg), times=nreps)
+ ensg <- unlist(drug2ensg)
+ ensg2drug <- split(drugs, f=as.factor(ensg))
+ df <- data.frame(Drug=drugs, Target=ensg)
+ df$ATC <- rep("Unknown",nrow(df))
+ has_atc <- match(tolower(df$Drug),tolower(GAlist$atc$name))
+ df$ATC[!is.na(has_atc)] <- as.character(GAlist$atc$code[has_atc[!is.na(has_atc)]])
+ GAlist$targets <- df
+ target <- GAlist$targets
+ target <- target[!duplicated(target$Drug),]
+ drug2atc <- target$ATC
+ names(drug2atc) <- target$Drug
+ GAlist$drug2atc <- drug2atc
 
 
  if("diseases"%in%what) {
