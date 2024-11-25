@@ -1028,17 +1028,51 @@ getGTX <- function(GAlist = NULL, version = "V8", rsids = NULL, ensg=NULL,
 #'
 #' @export
 getVEGAS <- function(GAlist = NULL, ensg = NULL, studyID = NULL, rm.na = TRUE) {
- # Read the Z-score matrix from the specified file path in the GAlist object
- Z <- readRDS(file = file.path(GAlist$dirs["gsea"], "Z_vegas.rds"))
 
- # If studyID is provided, filter the Z-scores matrix by matching column names
- if (!is.null(studyID)) {
-  cls <- colnames(Z) %in% studyID
-  if (any(!studyID %in% colnames(Z))) {
-   warning("Some studyIDs not present in the database")
+ if (length(studyID) == 1) {
+  # Single study case
+  filename <- file.path(GAlist$dirs["gsea"], paste0(studyID, "_vegas.rds"))
+  if (!file.exists(filename)) stop("Study file does not exist")
+  stat <- readRDS(file = filename)
+  Z <- stat[, "Z", drop = FALSE]  # Drop any unwanted columns
+  names(Z) <- studyID
+ } else {
+  # Multiple study case
+  Z_list <- lapply(studyID, function(id) {
+   filename <- file.path(GAlist$dirs["gsea"], paste0(id, "_vegas.rds"))
+   if (!file.exists(filename)) stop(paste("Study file does not exist for", id))
+   stat <- readRDS(file = filename)
+
+   # Ensure "Z" column exists and extract it
+   if (!"Z" %in% colnames(stat)) stop(paste("Column 'Z' not found in file for", id))
+   Z <- stat[, "Z", drop = FALSE]
+
+   # Assign study ID as column name
+   colnames(Z) <- id
+   return(Z)
+  })
+
+  rnames <- unique(unlist(sapply(Z_list,rownames)))
+  Z <- matrix(NA,nrow=length(rnames),ncol=length(Z_list))
+  rownames(Z) <- rnames
+  colnames(Z) <- studyID
+  for(i in 1:length(studyID)) {
+   Z[rownames(Z_list[[i]]),i] <- Z_list[[i]][,1]
   }
-  Z <- Z[, cls, drop = FALSE]  # Drop any unwanted columns
  }
+
+
+ # # Read the Z-score matrix from the specified file path in the GAlist object
+ # Z <- readRDS(file = file.path(GAlist$dirs["gsea"], "Z_vegas.rds"))
+ #
+ # # If studyID is provided, filter the Z-scores matrix by matching column names
+ # if (!is.null(studyID)) {
+ #  cls <- colnames(Z) %in% studyID
+ #  if (any(!studyID %in% colnames(Z))) {
+ #   warning("Some studyIDs not present in the database")
+ #  }
+ #  Z <- Z[, cls, drop = FALSE]  # Drop any unwanted columns
+ # }
 
  # If rm.na is TRUE, remove rows with NA values
  if (rm.na) Z <- na.omit(Z)
