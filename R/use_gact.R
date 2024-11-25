@@ -326,6 +326,11 @@ getFeatureSets <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NU
  if(feature=="DiseaseGenesKBplus") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_knowledge_full.rds"))
  if(feature=="DiseaseGenesTMplus") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_textmining_full.rds"))
 
+ if(feature=="KEGG") {
+  msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
+  sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
+ }
+
  if(feature%in%c("ATC1Genes","ATC2Genes","ATC3Genes","ATC4Genes")) {
   if(feature=="ATC1Genes") atcSets <- readRDS(file = file.path(GAlist$dirs["gsets"], "atcSets1.rds"))
   if(feature=="ATC2Genes") atcSets <- readRDS(file = file.path(GAlist$dirs["gsets"], "atcSets2.rds"))
