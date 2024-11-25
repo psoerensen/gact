@@ -455,9 +455,10 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   dbdir <- file.path(GAlist$dbdir, "gwas")
   if(!dir.exists(dbdir)) dir.create(dbdir)
   #file_studies <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/2023/04/25/gwas-catalog-studies_ontology-annotated.tsv"
-  file_studies <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/2023/04/25/gwas-catalog-associations_ontology-annotated.tsv"
+  file_studies <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/2023/04/25/gwas-catalog-studies_ontology-annotated.tsv"
   destfile <- file.path(dbdir, "gwas-catalog-studies_ontology-annotated.tsv")
   download.file(file_studies, destfile = destfile, mode = "wb")
+  #file_gwas <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/2023/04/25/gwas-catalog-associations_ontology-annotated.tsv"
   file_gwas <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/2023/04/25/gwas-catalog-associations_ontology-annotated.tsv"
   destfile <- file.path(dbdir, "gwas-catalog-associations_ontology-annotated.tsv")
   download.file(file_gwas, destfile = destfile, mode = "wb")
