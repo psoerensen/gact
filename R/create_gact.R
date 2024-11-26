@@ -51,15 +51,15 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   GAlist <- downloadDB(GAlist=GAlist, what="gbayes")
   GAlist <- downloadDB(GAlist=GAlist, what="gwascatalog")
   GAlist <- downloadDB(GAlist=GAlist, what="ensembl")
-  GAlist <- downloadDB(GAlist=GAlist, what="reactome")
+  #GAlist <- downloadDB(GAlist=GAlist, what="reactome")
   GAlist <- downloadDB(GAlist=GAlist, what="string")
   GAlist <- downloadDB(GAlist=GAlist, what="stitch")
-  GAlist <- downloadDB(GAlist=GAlist, what="pubmed")
+  #GAlist <- downloadDB(GAlist=GAlist, what="pubmed")
   GAlist <- downloadDB(GAlist=GAlist, what="dgi")
   GAlist <- downloadDB(GAlist=GAlist, what="gtex")
   #GAlist <- downloadDB(GAlist=GAlist, what="1000G")
   #GAlist <- downloadDB(GAlist=GAlist, what="vep")
-  GAlist <- downloadDB(GAlist=GAlist, what="diseases")
+  #GAlist <- downloadDB(GAlist=GAlist, what="diseases")
   GAlist <- downloadDB(GAlist=GAlist, what="atc")
   #GAlist <- downloadDB(GAlist=GAlist, what="tiga")
   #GAlist <- downloadDB(GAlist=GAlist, what="pubchem")
@@ -455,11 +455,12 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   dbdir <- file.path(GAlist$dbdir, "gwas")
   if(!dir.exists(dbdir)) dir.create(dbdir)
   #file_studies <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/2023/04/25/gwas-catalog-studies_ontology-annotated.tsv"
-  file_studies <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/2023/04/25/gwas-catalog-studies_ontology-annotated.tsv"
-  destfile <- file.path(dbdir, "gwas-catalog-studies_ontology-annotated.tsv")
+  file_studies <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/latest/gwas-catalog-studies.tsv"
+  destfile <- file.path(dbdir, "gwas-catalog-studies.tsv")
   download.file(file_studies, destfile = destfile, mode = "wb")
   #file_gwas <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/2023/04/25/gwas-catalog-associations_ontology-annotated.tsv"
-  file_gwas <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/2023/04/25/gwas-catalog-associations_ontology-annotated.tsv"
+  file_gwas <- "http://ftp.ebi.ac.uk/pub/databases/gwas/releases/latest/gwas-catalog-associations_ontology-annotated.tsv"
+
   destfile <- file.path(dbdir, "gwas-catalog-associations_ontology-annotated.tsv")
   download.file(file_gwas, destfile = destfile, mode = "wb")
   GAlist$gwasfiles <- c("gwas-catalog-studies_ontology-annotated.tsv","gwas-catalog-associations_ontology-annotated.tsv")
@@ -652,6 +653,7 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  start <- sapply(sets, function(x) {min(markers$pos[x])})
  stop <- sapply(sets, function(x) {max(markers$pos[x])})
  df <- data.frame(EnsemblID=names(sets),chr=chr,start=start,stop=stop)
+ df$length <- df$stop-df$start
  saveRDS(df, file = file.path(GAlist$dirs["gsets"], "genesplus_annotation.rds"))
 
  ensg2rsids <- readRDS(file = file.path(GAlist$dirs["gsets"], "GRCh37.ensg2rsids.rds"))
@@ -660,6 +662,7 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  start <- sapply(sets, function(x) {min(markers$pos[x])})
  stop <- sapply(sets, function(x) {max(markers$pos[x])})
  df <- data.frame(EnsemblID=names(sets),chr=chr,start=start,stop=stop)
+ df$length <- df$stop-df$start
  saveRDS(df, file = file.path(GAlist$dirs["gsets"], "GRCh37_genesplus_annotation.rds"))
 
  ensg2rsids <- readRDS(file = file.path(GAlist$dirs["gsets"], "GRCh38.ensg2rsids.rds"))
@@ -668,6 +671,7 @@ createSetsDB <- function(GAlist = NULL, what="ensembl",
  start <- sapply(sets, function(x) {min(markers$pos[x])})
  stop <- sapply(sets, function(x) {max(markers$pos[x])})
  df <- data.frame(EnsemblID=names(sets),chr=chr,start=start,stop=stop)
+ df$length <- df$stop-df$start
  saveRDS(df, file = file.path(GAlist$dirs["gsets"], "GRCh38_genesplus_annotation.rds"))
 
 
