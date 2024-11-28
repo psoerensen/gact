@@ -78,7 +78,7 @@ getFeatureStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
  if(format=="data.frame") {
   res <- as.data.frame(res)
   if(feature=="Genes") {
-   res <- cbind(rownames(res),GAlist$gsets[["ensg2sym"]][rownames(res)], res)
+   res <- cbind(rownames(res),GAlist$map[["ensg2sym"]][rownames(res)], res)
    colnames(res)[1:2] <- c("Ensembl Gene ID","Symbol")
    ensg2sym_list <- lapply(res[,"Symbol"], function(x){
     unlist(strsplit(x,split=" "))})
@@ -189,11 +189,11 @@ getFeatureStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
 
   if(feature=="Genes") {
    if(!hyperlink) {
-    res <- cbind(rownames(res),GAlist$gsets[["ensg2sym"]][rownames(res)], res)
+    res <- cbind(rownames(res),GAlist$map[["ensg2sym"]][rownames(res)], res)
     colnames(res)[1:2] <- c("Ensembl Gene ID","Symbol")
    }
    if(hyperlink) {
-    res <- cbind(rownames(res),rownames(res),GAlist$gsets[["ensg2sym"]][rownames(res)], res)
+    res <- cbind(rownames(res),rownames(res),GAlist$map[["ensg2sym"]][rownames(res)], res)
     res2hyperlink_ensembl <- paste0("http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",res[,1])
     res2hyperlink_opentarget <- paste0("https://platform.opentargets.org/target/",res[,1])
     colnames(res)[1:3] <- c("Ensembl Gene ID","Open Target","Symbol")
@@ -436,7 +436,7 @@ getFeatureSets <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NU
   file_stitch <- "http://stitch.embl.de/download/protein_chemical.links.v5.0/9606.protein_chemical.links.v5.0.tsv.gz"
   stitch <- fread(file_stitch, data.table=FALSE)
   stitch$protein <- gsub("9606.","",stitch$protein)
-  stitch <- stitch[stitch$protein%in%names(GAlist$gsets$ensp2ensg),]
+  stitch <- stitch[stitch$protein%in%names(GAlist$map$ensp2ensg),]
   stitch  <- stitch[stitch$combined_score>=min_combined_score,]
   stitch <- split( stitch$protein,f=as.factor(stitch$chemical))
   sets  <- stitch[sapply(stitch ,length)>=min_interactions]
@@ -465,9 +465,9 @@ getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, min_combined_sco
  string <- split( string$protein2,f=as.factor(string$protein1))
  string <- string[sapply(string ,length)>=min_interactions]
 
- drug2ensp <- lapply(drugGenes,function(x){na.omit(unlist(GAlist$gsets$ensg2ensp[x]))})
+ drug2ensp <- lapply(drugGenes,function(x){na.omit(unlist(GAlist$map$ensg2ensp[x]))})
  drugComplex <- lapply(drug2ensp,function(x){na.omit(unlist(string[x]))})
- drugComplex <- lapply(drugComplex,function(x){na.omit(unlist(GAlist$gsets$ensp2ensg[x]))})
+ drugComplex <- lapply(drugComplex,function(x){na.omit(unlist(GAlist$map$ensp2ensg[x]))})
  drugComplex <- lapply(drugComplex, function(x){unique(x)})
 
  for(i in 1:length(drugComplex)) {
@@ -599,10 +599,10 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 #' }
 #' @export
 #'
-getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, rsids=NULL, cpra=NULL) {
+getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, adjN=FALSE, maf=NULL, rsids=NULL, cpra=NULL) {
 
  if(!is.null(cpra)) {
-  markers <- fread(GAlist$markerfiles, data.table=FALSE)
+  markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"), data.table=FALSE)
   cpra1 <- paste(markers[,"chr"],
                  markers[,"pos"],
                  toupper(markers[,"ea"]),
@@ -634,6 +634,18 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
    stat$p <- as.numeric(stat$p)
    stat$p[stat$p<.Machine$double.xmin] <- .Machine$double.xmin
    if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],length(stat$b))
+   if (!is.null(maf)) stat <- stat[stat$eaf > maf | 1 - stat$eaf < maf, ]
+   if(adjN) {
+    if(GAlist$studies[study,"type"]=="binary") {
+     neff<-4/((2*stat$eaf*(1-stat$eaf))*stat$seb^2)
+     nca <- GAlist$studies[study,"ncase"]
+     nco <- GAlist$studies[study,"ncontrol"]
+     v<-nca/(nca+nco)
+     tneff<-4*v*(1-v)*(nca+nco)
+     neff<-ifelse(neff > 1.1*tneff, 1.1*tneff, neff)
+     stat$n<-ifelse(neff < 0.5*tneff, 0.5*tneff, neff)
+    }
+   }
    b[stat$rsids,study] <- stat$b
    seb[stat$rsids,study] <- stat$seb
    z[stat$rsids,study] <- stat$b/stat$seb
@@ -655,7 +667,19 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
   stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
   stat$p <- as.numeric(stat$p)
   stat$p[stat$p<.Machine$double.xmin] <- .Machine$double.xmin
+  if (!is.null(maf)) stat <- stat[stat$eaf > maf | 1 - stat$eaf < maf, ]
   if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],nrow(stat))
+  if(adjN) {
+   if(GAlist$studies[study,"type"]=="binary") {
+    neff<-4/((2*stat$eaf*(1-stat$eaf))*stat$seb^2)
+    nca <- GAlist$studies[study,"ncase"]
+    nco <- GAlist$studies[study,"ncontrol"]
+    v<-nca/(nca+nco)
+    tneff<-4*v*(1-v)*(nca+nco)
+    neff<-ifelse(neff > 1.1*tneff, 1.1*tneff, neff)
+    stat$n<-ifelse(neff < 0.5*tneff, 0.5*tneff, neff)
+   }
+  }
   #if(is.null(stat[["z"]])) stat$z <- stat$b/stat$seb
 
   if(!is.null(rsids)) rsids <- rsids[rsids%in%stat$rsids]
@@ -1118,7 +1142,7 @@ getDISEASES <- function(GAlist = NULL, ensg = NULL, ensp = NULL, what = "Integra
  # Filter by gene IDs (ENSG), if provided
  if (!is.null(ensg)) {
   # Get the ENSP entries for the given ENSG IDs
-  ensp <- GAlist$gsets$ensg2ensp[names(GAlist$gsets$ensg2ensp) %in% ensg]
+  ensp <- GAlist$map$ensg2ensp[names(GAlist$map$ensg2ensp) %in% ensg]
   ensg2ensp <- do.call(rbind, lapply(names(ensp), function(ensg) {
    data.frame(ensg = ensg, ensp = ensp[[ensg]], stringsAsFactors = FALSE)
   }))
@@ -1447,7 +1471,7 @@ addAnnotationDB <- function(df = NULL, ensg = NULL, ensr = NULL, feature="Genes"
  if(feature=="Genes") {
   ensg <- ensid
   # Merge data with annotations
-  df <- cbind(ensg, GAlist$gsets[["ensg2sym"]][ensg], annotation[ensg, -1], df)
+  df <- cbind(ensg, GAlist$map[["ensg2sym"]][ensg], annotation[ensg, -1], df)
   colnames(df)[1:5] <- c("Ensembl Gene ID", "Symbol", "Chr", "Start", "Stop")
 
   # Split and reformat symbols
@@ -1578,7 +1602,7 @@ hgtSets <- function(GAlist = NULL, sets = NULL, feature = NULL, featureIDs = NUL
 #'  }
 #'
 #'  if(is.null(ensg)) stop("Please provide rownames for df (should be EnSembl Ids")
-#'  df <- cbind(ensg,GAlist$gsets[["ensg2sym"]][ensg], annotation[ensg,-1], df)
+#'  df <- cbind(ensg,GAlist$map[["ensg2sym"]][ensg], annotation[ensg,-1], df)
 #'  colnames(df)[1:5] <- c("Ensembl Gene ID","Symbol", "Chr", "Start", "Stop")
 #'  ensg2sym_list <- lapply(df[,"Symbol"], function(x){
 #'   unlist(strsplit(x,split=" "))})
