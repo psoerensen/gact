@@ -540,6 +540,14 @@ getMarkerSets <- function(GAlist = NULL, feature = NULL, featureID = NULL,
   sets <- readRDS(file=setsfile)
  }
 
+ if(feature%in%c("sift","polyphen","loeuf", "cadd")) {
+  rs2vep <- readRDS(file.path(GAlist$dirs["gsets"],"rs2vep.rds"))
+  if(length(feature)==1) sets <- setNames(rs2vep[,feature], rownames(rs2vep))
+  if(length(feature)>1) sets <- rs2vep[,feature, drop=FALSE]
+  sets <- na.omit(sets)
+ }
+
+
  # Filter by featureID if provided
  if(!is.null(featureID)) {
   inSet <- featureID %in% names(sets)
