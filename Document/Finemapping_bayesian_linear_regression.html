@@ -480,7 +480,32 @@ head(fit$stat)
 head(fit$cs)
 
 # Bayesian false discovery rate sets for every fine-mapped region
-head(fit$fdr)</code></pre>
+head(fit$fdr)
+
+
+# Compute polygenic scores for finemapped regions
+pgs &lt;- gscore(Glist=Glist, stat=fit$stat)</code></pre>
+<p><br></p>
+</div>
+<div id="finemapping-and-polygenic-scoring-for-ld-regions-using-bayesian-linear-regression-models" class="section level4">
+<h4>Finemapping and polygenic scoring for LD regions using Bayesian
+Linear Regression models</h4>
+<pre class="r"><code># Get LD scores 
+ldscores &lt;- getLDscores(GAlist=GAlist, chr=17, ancestry=&quot;EUR&quot;, version=&quot;1000G&quot;)
+
+# Create LD sets
+sets &lt;- createLDsets(ldscores=ldscores, 
+                           maxsize=3000, msize=100, verbose=TRUE)
+
+# Fine-mapping in LD regions using a Bayes R prior for the marker variance
+fit &lt;- gmap(Glist=Glist, stat=stat, sets=sets, 
+            method=&quot;bayesR&quot;, algorithm=&quot;mcmc-eigen&quot;,
+            nit=5000, nburn=1000, cs_threshold=0.5, cs_r2=0.5,
+            eigen_threshold=c(0.99, 0.97,0.95,0.9), verbose=TRUE)
+
+
+# Compute polygenic scores for fine-mapped regions
+pgs &lt;- gscore(Glist=Glist, stat=fit$stat)</code></pre>
 </div>
 </div>
 
