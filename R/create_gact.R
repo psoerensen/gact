@@ -393,6 +393,38 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
   #message("Downloading vep files")
   message("Not implemented yet")
 
+  # rsids <- GAlist$rsids
+  # rs2vep_list <- list()  # Store data frames temporarily
+  #
+  # # Define columns to retain
+  # cls <- c("#Uploaded_variation", "SIFT", "PolyPhen", "LOEUF", "CADD_PHRED")
+  #
+  # # Read chromosome-specific VEP files
+  # files <- paste0(file.path(GAlist$dbdir, "vep"), "/vep", sprintf("%02d", 1:22), ".txt.gz")
+  # for (i in seq_along(files)) {
+  #  df <- fread(files[i], data.table = FALSE, na.strings = "-")
+  #  rws <- df[,"#Uploaded_variation"] %in% rsids
+  #  df <- df[rws,cls]
+  #  df <- df[!duplicated(df[,1]),]
+  #  rs2vep_list[[i]] <- df
+  #  print(paste("Finished processing chromosome", i))
+  # }
+  #
+  # # Combine all chromosome data into one data frame
+  # rs2vep <- do.call(rbind, rs2vep_list)
+  # colnames(rs2vep) <- c("rsids","sift","polyphen","loeuf","cadd")
+  #
+  # sift <- gsub(".*\\(([^)]+)\\).*", "\\1", rs2vep[,2])
+  # rs2vep[,2] <- as.numeric(sift)
+  #
+  # polyphen <- gsub(".*\\(([^)]+)\\).*", "\\1", rs2vep[,3])
+  # rs2vep[,3] <- as.numeric(polyphen)
+  #
+  # rownames(rs2vep) <- rs2vep$rsids
+  # rs2vep <- rs2vep[,2:5]
+  #
+  # saveRDS(rs2vep, file.path(GAlist$dirs["gsets"],"rs2vep.rds"))
+  #
   # options(download.file.method="libcurl", url.method="libcurl", timeout=3000)
   #
   # url <- "https://ftp.ensembl.org/pub/release-112/variation/vep/homo_sapiens_vep_112_GRCh37.tar.gz"
