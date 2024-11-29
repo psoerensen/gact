@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-11-14" />
+<meta name="date" content="2024-11-29" />
 
 <title>Finemapping of gene regions using single trait Bayesian Linear Regression models</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">Finemapping of gene regions using single
 trait Bayesian Linear Regression models</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-11-14</h4>
+<h4 class="date">2024-11-29</h4>
 
 </div>
 
@@ -442,7 +442,13 @@ head(fit$post)
 head(fit$conv)
 
 # Posterior estimates of marker effects for every fine-mapped region
-head(fit$stat)</code></pre>
+head(fit$stat)
+
+# Credible sets for every fine-mapped region
+head(fit$cs)
+
+# Bayesian false discovery rate sets for every fine-mapped region
+head(fit$fdr)</code></pre>
 </div>
 </div>
 

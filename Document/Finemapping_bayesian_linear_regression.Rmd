@@ -85,4 +85,10 @@ head(fit$conv)
 
 # Posterior estimates of marker effects for every fine-mapped region
 head(fit$stat)
+
+# Credible sets for every fine-mapped region
+head(fit$cs)
+
+# Bayesian false discovery rate sets for every fine-mapped region
+head(fit$fdr)
 ```
