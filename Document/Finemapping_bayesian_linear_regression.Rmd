@@ -92,3 +92,37 @@ head(fit$cs)
 # Bayesian false discovery rate sets for every fine-mapped region
 head(fit$fdr)
 ```
+
+<br>
+
+#### Finemapping of LD regions using Bayesian Linear Regression models 
+```{r, include=TRUE, eval=FALSE}
+
+# Get LD scores 
+ldscores <- getLDscores(GAlist=GAlist, chr=17, ancestry="EUR", version="1000G")
+
+# Create LD sets
+sets <- createLDsets(ldscores=ldscores, 
+                           maxsize=3000, msize=100, verbose=TRUE)
+
+# Fine-mapping in LD regions using a Bayes R prior for the marker variance
+fit <- gmap(Glist=Glist, stat=stat, sets=sets, 
+            method="bayesR", algorithm="mcmc-eigen",
+            nit=5000, nburn=1000, cs_threshold=0.5, cs_r2=0.5,
+            eigen_threshold=c(0.99, 0.97,0.95,0.9), verbose=TRUE)
+
+# Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for every fine-mapped region
+head(fit$post)
+
+# Convergence statistics for every fine-mapped region
+head(fit$conv)
+
+# Posterior estimates of marker effects for every fine-mapped region
+head(fit$stat)
+
+# Credible sets for every fine-mapped region
+head(fit$cs)
+
+# Bayesian false discovery rate sets for every fine-mapped region
+head(fit$fdr)
+```
