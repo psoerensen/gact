@@ -1343,10 +1343,11 @@ mapSetsDB <- function(sets = NULL, featureID = NULL, GAlist = NULL, index = TRUE
 #' @examples
 #' # Example usage:
 #' GAlist <- list(dirs = c(marker = "/path/to/marker/files"))
-#' ldscores <- getLDscores(GAlist, ancestry = "EUR", version = "HapMap3", rsids = c("rs123", "rs456"))
+#' ldscores <- getLDscoresDB(GAlist, ancestry = "EUR", version = "HapMap3", rsids = c("rs123", "rs456"))
 #'
 #' @export
-getLDscores <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="HapMap3", rsids=NULL) {
+#'
+getLDscoresDB <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="HapMap3", rsids=NULL) {
  # Check if GAlist is provided
  if (is.null(GAlist) || !("marker" %in% names(GAlist$dirs))) {
   stop("Error: GAlist or GAlist$dirs['marker'] is missing.")
