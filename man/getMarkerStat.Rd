@@ -10,6 +10,8 @@ getMarkerStat(
   what = "all",
   format = "list",
   rm.na = TRUE,
+  adjN = FALSE,
+  maf = NULL,
   rsids = NULL,
   cpra = NULL
 )
