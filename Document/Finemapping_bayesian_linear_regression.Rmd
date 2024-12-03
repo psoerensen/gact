@@ -99,7 +99,7 @@ head(fit$fdr)
 ```{r, include=TRUE, eval=FALSE}
 
 # Get LD scores 
-ldscores <- getLDscores(GAlist=GAlist, chr=17, ancestry="EUR", version="1000G")
+ldscores <- getLDscores(Glist=Glist, chr=17)
 
 # Create LD sets
 sets <- createLDsets(ldscores=ldscores, 
@@ -139,7 +139,7 @@ pgs <- gscore(Glist=Glist, stat=fit$stat)
 ```{r, include=TRUE, eval=FALSE}
 
 # Get LD scores 
-ldscores <- getLDscores(GAlist=GAlist, chr=17, ancestry="EUR", version="1000G")
+ldscores <- getLDscores(Glist=Glist, chr=17)
 
 # Create LD sets
 sets <- createLDsets(ldscores=ldscores, 
