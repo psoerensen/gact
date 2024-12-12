@@ -47,7 +47,7 @@ head(stat)
 msets <- getMarkerSets(GAlist = GAlist, feature = "Genesplus")
 
 # Compute gene-level statistics from BLR marker-level statistics
-msets <- mapSetsDB(sets=msets,featureID=stat$rsids,index=TRUE)
+msets <- mapSets(sets=msets,rsids=stat$rsids,index=TRUE)
 
 # posterior mean marker effect
 bstat <- sapply(msets,function(x){sum(abs(stat$bm[x]))}) 
