@@ -407,16 +407,16 @@ rsids &lt;- gfilter(Glist = Glist, excludeMAF = 0.05, excludeMISS = 0.05,
                  excludeCGAT = TRUE, excludeINDEL = TRUE, excludeDUPS = TRUE, excludeHWE = 1e-12,
                  excludeMHC = FALSE)
 
-# Compute sparse LD (this may take some time if R is not linked to openblas, atlas or MKL)
+# Compute sparse LD using filtered markers (may take some time if R is not linked to openblas, atlas or MKL)
 Glist &lt;- gprep(Glist, task = &quot;sparseld&quot;, msize = 1000, 
                rsids = rsids, 
                ldfiles = &quot;C:/Users/Projects/Examples/human.ld&quot;,
                overwrite = TRUE)
 
-# Simulate phenotype
+# Simulate phenotype using filtered markers
 sim &lt;- gsim(Glist=Glist, rsids=rsids)
 
-# Create sets surrounding each index SNPs
+# Create marker sets surrounding each index SNPs
 sets &lt;- createMarkerSets(Glist=Glist, rsids=sim$causal)
 
 # Linear model analyses and single marker association test
