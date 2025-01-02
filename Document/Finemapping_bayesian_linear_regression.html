@@ -535,12 +535,17 @@ rsids &lt;- gfilter(Glist = Glist, excludeMAF = 0.05, excludeMISS = 0.05,
                  excludeCGAT = TRUE, excludeINDEL = TRUE, excludeDUPS = TRUE, excludeHWE = 1e-12,
                  excludeMHC = FALSE)
 
+# Compute sparse LD (this may take some time if R is not linked to openblas, atlas or MKL)
+Glist &lt;- gprep(Glist, task = &quot;sparseld&quot;, msize = 1000, 
+               rsids = rsids, 
+               ldfiles = &quot;C:/Users/Projects/Examples/human.ld&quot;,
+               overwrite = TRUE)
+
 # Simulate phenotype
 sim &lt;- gsim(Glist=Glist, rsids=rsids)
 
 # Create sets surrounding each index SNPs
 sets &lt;- createMarkerSets(Glist=Glist, rsids=sim$causal)
-
 
 # Linear model analyses and single marker association test
 stat &lt;- glma(y=sim$y,Glist = Glist, rsids=rsids)</code></pre>
@@ -568,13 +573,7 @@ head(fit$cs)</code></pre>
 </div>
 <div id="region-wide-fine-mapping-using-simulated-data" class="section level5">
 <h5>Region-wide fine-mapping using simulated data</h5>
-<pre class="r"><code># Compute sparse LD (this may take some time if R is not linked to openblas, atlas or MKL)
-Glist &lt;- gprep(Glist, task = &quot;sparseld&quot;, msize = 1000, 
-               rsids = rsids, 
-               ldfiles = &quot;C:/Users/Projects/Examples/human.ld&quot;,
-               overwrite = TRUE)
-
-# Fine-mapping using genome-wide approach using a Bayes C prior for the marker variance
+<pre class="r"><code># Fine-mapping using genome-wide approach using a Bayes C prior for the marker variance
 fit &lt;- gbayes(Glist=Glist, stat=stat, method=&quot;bayesC&quot;, 
             algorithm=&quot;mcmc&quot;, verbose=TRUE)
 
