@@ -380,8 +380,8 @@ using the Bayesian Linear Regression (BLR) model. It processes and
 analyzes GWAS (Genome-Wide Association Studies) summary statistics and
 employs fine-mapping on specific gene or genomic regions.</p>
 <p><br></p>
-<div id="simulate-data-prepare-genotype-data-and-compute-summary-statistics" class="section level4">
-<h4>Simulate data, prepare genotype data, and compute summary
+<div id="simulate-data-prepare-genotype-data-and-compute-gwas-summary-statistics" class="section level4">
+<h4>Simulate data, prepare genotype data, and compute GWAS summary
 statistics</h4>
 <pre class="r"><code>library(qgg)
 
@@ -396,7 +396,7 @@ download.file(url = url, destfile = &quot;human.bim&quot;)
 url &lt;- &quot;https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/human.fam&quot;
 download.file(url = url, destfile = &quot;human.fam&quot;)
 
-# Prepare Glist
+# Prepare Glist with information on genotypes stored in PLINK files
 Glist &lt;- gprep(study = &quot;Simulation&quot;, 
                bedfiles = &quot;C:/Users/Projects/Examples/human.bed&quot;, 
                bimfiles = &quot;C:/Users/Projects/Examples/human.bim&quot;,
@@ -419,7 +419,7 @@ sim &lt;- gsim(Glist=Glist, rsids=rsids)
 # Create marker sets surrounding each index SNPs
 sets &lt;- createMarkerSets(Glist=Glist, rsids=sim$causal)
 
-# Linear model analyses and single marker association test
+# Single marker regression analyses to get summary statistics
 stat &lt;- glma(y=sim$y,Glist = Glist, rsids=rsids)</code></pre>
 <p><br></p>
 <div id="region-wide-finemapping-using-simulated-data" class="section level5">

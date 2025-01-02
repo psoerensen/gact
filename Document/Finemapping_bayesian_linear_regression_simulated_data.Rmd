@@ -16,7 +16,7 @@ The challenge of understanding the biological basis of complex traits arises fro
 <br>
 
 
-#### Simulate data, prepare genotype data, and compute summary statistics 
+#### Simulate data, prepare genotype data, and compute GWAS summary statistics 
 ```{r, include=TRUE, eval=FALSE}
 library(qgg)
 
@@ -31,7 +31,7 @@ download.file(url = url, destfile = "human.bim")
 url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/human.fam"
 download.file(url = url, destfile = "human.fam")
 
-# Prepare Glist
+# Prepare Glist with information on genotypes stored in PLINK files
 Glist <- gprep(study = "Simulation", 
                bedfiles = "C:/Users/Projects/Examples/human.bed", 
                bimfiles = "C:/Users/Projects/Examples/human.bim",
@@ -54,7 +54,7 @@ sim <- gsim(Glist=Glist, rsids=rsids)
 # Create marker sets surrounding each index SNPs
 sets <- createMarkerSets(Glist=Glist, rsids=sim$causal)
 
-# Linear model analyses and single marker association test
+# Single marker regression analyses to get summary statistics
 stat <- glma(y=sim$y,Glist = Glist, rsids=rsids)
 ```
 
