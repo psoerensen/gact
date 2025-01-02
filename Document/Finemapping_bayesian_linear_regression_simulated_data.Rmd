@@ -16,7 +16,7 @@ This tutorial focus on fine-mapping using the Bayesian Linear Regression (BLR) m
 <br>
 
 
-#### Simulate data, prepare genotype data, and compute GWAS summary statistics 
+#### Prepare genotype data, simulate phenotypes, and compute GWAS summary statistics 
 ```{r, include=TRUE, eval=FALSE}
 library(qgg)
 
