@@ -391,7 +391,7 @@ Glist &lt;- gprep(study = &quot;Simulation&quot;,
                bimfiles = &quot;C:/Users/Projects/Examples/human.bim&quot;,
                famfiles = &quot;C:/Users/Projects/Examples/human.fam&quot;)
 
-# Filter markers
+# Filter markers with predefined thresholds for MAF, missingness, etc.
 rsids &lt;- gfilter(Glist = Glist, excludeMAF = 0.05, excludeMISS = 0.05,
                  excludeCGAT = TRUE, excludeINDEL = TRUE, excludeDUPS = TRUE, excludeHWE = 1e-12,
                  excludeMHC = FALSE)
