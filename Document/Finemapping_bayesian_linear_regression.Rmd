@@ -1,5 +1,5 @@
 ---
-title: "Finemapping of gene regions using single trait Bayesian Linear Regression models"
+title: "Finemapping of genomic regions using single trait Bayesian Linear Regression models"
 author: "Peter Sørensen"
 date: "`r Sys.Date()`"
 output:
@@ -154,5 +154,98 @@ fit <- gmap(Glist=Glist, stat=stat, sets=sets,
 
 # Compute polygenic scores for fine-mapped regions
 pgs <- gscore(Glist=Glist, stat=fit$stat)
+
+```
+
+
+<br>
+
+#### Examples of region-wide or genome-wide finemapping using simulated data 
+```{r, include=TRUE, eval=FALSE}
+library(qgg)
+
+# Set working directory
+setwd("C:/Users/Projects/Examples")
+
+# Download simulated genotype data
+url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/human.bed"
+download.file(url = url, mode = "wb", destfile = "human.bed")
+url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/human.bim"
+download.file(url = url, destfile = "human.bim")
+url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/human.fam"
+download.file(url = url, destfile = "human.fam")
+
+# Prepare Glist
+Glist <- gprep(study = "Simulation", 
+               bedfiles = "C:/Users/Projects/Examples/human.bed", 
+               bimfiles = "C:/Users/Projects/Examples/human.bim",
+               famfiles = "C:/Users/Projects/Examples/human.fam")
+
+# Filter markers
+rsids <- gfilter(Glist = Glist, excludeMAF = 0.05, excludeMISS = 0.05,
+                 excludeCGAT = TRUE, excludeINDEL = TRUE, excludeDUPS = TRUE, excludeHWE = 1e-12,
+                 excludeMHC = FALSE)
+
+# Simulate phenotype
+sim <- gsim(Glist=Glist, rsids=rsids)
+
+# Create sets surrounding each index SNPs
+sets <- createMarkerSets(Glist=Glist, rsids=sim$causal)
+
+
+# Linear model analyses and single marker association test
+stat <- glma(y=sim$y,Glist = Glist, rsids=rsids)
+```
+
+<br>
+
+##### Examples of region-wide or genome-wide finemapping using simulated data 
+```{r, include=TRUE, eval=FALSE}
+
+# Fine-mapping in selected genome regions using a Bayes C prior for the marker variance
+fit <- gmap(Glist=Glist, stat=stat, sets=sets, method="bayesC", 
+            algorithm="mcmc", output="full",verbose=TRUE)
+
+
+# Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for every fine-mapped region
+head(fit$post)
+
+# Convergence statistics for every fine-mapped region
+head(fit$conv)
+
+# Posterior estimates of marker effects for every fine-mapped region
+head(fit$stat)
+
+# Credible sets for every fine-mapped region
+head(fit$cs)
+```
+
+<br>
+
+##### Region-wide fine-mapping using simulated data 
+```{r, include=TRUE, eval=FALSE}
+
+# Compute sparse LD (this may take some time if R is not linked to openblas, atlas or MKL)
+Glist <- gprep(Glist, task = "sparseld", msize = 1000, 
+               rsids = rsids, 
+               ldfiles = "C:/Users/Projects/Examples/human.ld",
+               overwrite = TRUE)
+
+# Fine-mapping using genome-wide approach using a Bayes C prior for the marker variance
+fit <- gbayes(Glist=Glist, stat=stat, method="bayesC", 
+            algorithm="mcmc", verbose=TRUE)
+
+# Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for chromosomes in Glist
+head(fit$post)
+
+# Convergence statistics for chromosomes in Glist
+head(fit$conv)
+
+# Posterior estimates of marker effects for chromosomes in Glist
+head(fit$stat)
+
+# Credible sets for every fine-mapped region defined by sets
+fit$cs <- getCredibleSets(Glist=Glist, fit=fit, sets=sets)
+head(fit$cs)
 
 ```
