@@ -417,7 +417,7 @@ Glist &lt;- gprep(Glist, task = &quot;sparseld&quot;, msize = 1000,
 sim &lt;- gsim(Glist=Glist, rsids=rsids)
 
 # Create marker sets surrounding each index SNPs
-sets &lt;- createMarkerSets(Glist=Glist, rsids=sim$causal)
+sets &lt;- createMarkerSets(Glist=Glist, rsids=sim$causal, upstream=1000, downstream=1000)
 
 # Single marker regression analyses to get summary statistics
 stat &lt;- glma(y=sim$y,Glist = Glist, rsids=rsids)</code></pre>
