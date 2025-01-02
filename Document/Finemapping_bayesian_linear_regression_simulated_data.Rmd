@@ -16,7 +16,7 @@ This tutorial focus on fine-mapping using the Bayesian Linear Regression (BLR) m
 <br>
 
 
-#### Prepare genotype data, simulate phenotypes, and compute GWAS summary statistics 
+#### Prepare simulated data used in fine-mapping examples 
 ```{r, include=TRUE, eval=FALSE}
 library(qgg)
 
@@ -54,13 +54,13 @@ sim <- gsim(Glist=Glist, rsids=rsids)
 # Create marker sets surrounding each index SNPs
 sets <- createMarkerSets(Glist=Glist, rsids=sim$causal, upstream=1000, downstream=1000)
 
-# Single marker regression analyses to get summary statistics
+# Perform single marker regression analyses to get summary statistics
 stat <- glma(y=sim$y,Glist = Glist, rsids=rsids)
 ```
 
 <br>
 
-##### Region-wide finemapping using simulated data 
+##### Region-wide fine-mapping using simulated data 
 ```{r, include=TRUE, eval=FALSE}
 
 # Fine-mapping in selected genome regions using a Bayes C prior for the marker variance
@@ -86,7 +86,7 @@ head(fit$cs)
 ##### Genome-wide fine-mapping using simulated data 
 ```{r, include=TRUE, eval=FALSE}
 
-# Fine-mapping using genome-wide approach using a Bayes C prior for the marker variance
+# Fine-mapping across all chromosomes using a Bayes C prior for the marker variance
 fit <- gbayes(Glist=Glist, stat=stat, method="bayesC", 
             algorithm="mcmc", verbose=TRUE)
 

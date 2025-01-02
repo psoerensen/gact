@@ -369,9 +369,8 @@ data. Allowing joint estimation of variants’ effects while accounting
 for LD among variants, our BLR models using Gibbs sampling technique,
 perform regularization and conduct variable selection.</p>
 <p><br></p>
-<div id="prepare-genotype-data-simulate-phenotypes-and-compute-gwas-summary-statistics" class="section level4">
-<h4>Prepare genotype data, simulate phenotypes, and compute GWAS summary
-statistics</h4>
+<div id="prepare-simulated-data-used-in-fine-mapping-examples" class="section level4">
+<h4>Prepare simulated data used in fine-mapping examples</h4>
 <pre class="r"><code>library(qgg)
 
 # Set working directory
@@ -408,11 +407,11 @@ sim &lt;- gsim(Glist=Glist, rsids=rsids)
 # Create marker sets surrounding each index SNPs
 sets &lt;- createMarkerSets(Glist=Glist, rsids=sim$causal, upstream=1000, downstream=1000)
 
-# Single marker regression analyses to get summary statistics
+# Perform single marker regression analyses to get summary statistics
 stat &lt;- glma(y=sim$y,Glist = Glist, rsids=rsids)</code></pre>
 <p><br></p>
-<div id="region-wide-finemapping-using-simulated-data" class="section level5">
-<h5>Region-wide finemapping using simulated data</h5>
+<div id="region-wide-fine-mapping-using-simulated-data" class="section level5">
+<h5>Region-wide fine-mapping using simulated data</h5>
 <pre class="r"><code># Fine-mapping in selected genome regions using a Bayes C prior for the marker variance
 fit &lt;- gmap(Glist=Glist, stat=stat, sets=sets, method=&quot;bayesC&quot;, 
             algorithm=&quot;mcmc&quot;, output=&quot;full&quot;,verbose=TRUE)
@@ -433,7 +432,7 @@ head(fit$cs)</code></pre>
 </div>
 <div id="genome-wide-fine-mapping-using-simulated-data" class="section level5">
 <h5>Genome-wide fine-mapping using simulated data</h5>
-<pre class="r"><code># Fine-mapping using genome-wide approach using a Bayes C prior for the marker variance
+<pre class="r"><code># Fine-mapping across all chromosomes using a Bayes C prior for the marker variance
 fit &lt;- gbayes(Glist=Glist, stat=stat, method=&quot;bayesC&quot;, 
             algorithm=&quot;mcmc&quot;, verbose=TRUE)
 
