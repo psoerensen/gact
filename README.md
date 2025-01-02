@@ -135,12 +135,12 @@ statistics derived from VEGAS (work in progress).
 
 Finemapping with single trait Bayesian Linear Regression models and
 simulated data (Shrestha et al. 2023).  
-[Finemapping using BLR models and simulated
+[Finemapping using BLR models on simulated
 data](Document/Finemapping_bayesian_linear_regression_simulated_data.html)
 
 Finemapping of gene and LD regions using single trait Bayesian Linear
 Regression models (Shrestha et al. 2023).  
-[Finemapping using BLR models and real
+[Finemapping using BLR models on real
 data](Document/Finemapping_bayesian_linear_regression_real_data.html)
 
 Polygenic scoring (PGS) using Bayesian Linear Regression models and
