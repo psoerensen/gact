@@ -16,7 +16,7 @@ The challenge of understanding the biological basis of complex traits arises fro
 <br>
 
 
-#### Simulate data, prepare genotype data, and compute summary statistics used in the examples 
+#### Simulate data, prepare genotype data, and compute summary statistics 
 ```{r, include=TRUE, eval=FALSE}
 library(qgg)
 
