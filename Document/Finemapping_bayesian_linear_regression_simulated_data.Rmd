@@ -1,5 +1,5 @@
 ---
-title: "Fine-mapping with single trait Bayesian Linear Regression models on simulated sata"
+title: "Fine-mapping with single trait Bayesian Linear Regression models on simulated data"
 author: "Peter Sørensen"
 date: "`r Sys.Date()`"
 output:
