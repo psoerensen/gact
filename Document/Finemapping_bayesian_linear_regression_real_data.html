@@ -13,7 +13,7 @@
 
 <meta name="date" content="2025-01-02" />
 
-<title>Finemapping of genomic regions using single trait Bayesian Linear Regression models</title>
+<title>Fine-mapping with single trait Bayesian Linear Regression models using external GWAS summary statistics and 1000G reference LD</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,8 +350,9 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Finemapping of genomic regions using single
-trait Bayesian Linear Regression models</h1>
+<h1 class="title toc-ignore">Fine-mapping with single trait Bayesian
+Linear Regression models using external GWAS summary statistics and
+1000G reference LD</h1>
 <h4 class="author">Peter Sørensen</h4>
 <h4 class="date">2025-01-02</h4>
 
@@ -506,90 +507,6 @@ fit &lt;- gmap(Glist=Glist, stat=stat, sets=sets,
 
 # Compute polygenic scores for fine-mapped regions
 pgs &lt;- gscore(Glist=Glist, stat=fit$stat)</code></pre>
-<p><br></p>
-</div>
-<div id="examples-of-region-wide-or-genome-wide-finemapping-using-simulated-data" class="section level4">
-<h4>Examples of region-wide or genome-wide finemapping using simulated
-data</h4>
-<pre class="r"><code>library(qgg)
-
-# Set working directory
-setwd(&quot;C:/Users/Projects/Examples&quot;)
-
-# Download simulated genotype data
-url &lt;- &quot;https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/human.bed&quot;
-download.file(url = url, mode = &quot;wb&quot;, destfile = &quot;human.bed&quot;)
-url &lt;- &quot;https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/human.bim&quot;
-download.file(url = url, destfile = &quot;human.bim&quot;)
-url &lt;- &quot;https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/human.fam&quot;
-download.file(url = url, destfile = &quot;human.fam&quot;)
-
-# Prepare Glist
-Glist &lt;- gprep(study = &quot;Simulation&quot;, 
-               bedfiles = &quot;C:/Users/Projects/Examples/human.bed&quot;, 
-               bimfiles = &quot;C:/Users/Projects/Examples/human.bim&quot;,
-               famfiles = &quot;C:/Users/Projects/Examples/human.fam&quot;)
-
-# Filter markers
-rsids &lt;- gfilter(Glist = Glist, excludeMAF = 0.05, excludeMISS = 0.05,
-                 excludeCGAT = TRUE, excludeINDEL = TRUE, excludeDUPS = TRUE, excludeHWE = 1e-12,
-                 excludeMHC = FALSE)
-
-# Compute sparse LD (this may take some time if R is not linked to openblas, atlas or MKL)
-Glist &lt;- gprep(Glist, task = &quot;sparseld&quot;, msize = 1000, 
-               rsids = rsids, 
-               ldfiles = &quot;C:/Users/Projects/Examples/human.ld&quot;,
-               overwrite = TRUE)
-
-# Simulate phenotype
-sim &lt;- gsim(Glist=Glist, rsids=rsids)
-
-# Create sets surrounding each index SNPs
-sets &lt;- createMarkerSets(Glist=Glist, rsids=sim$causal)
-
-# Linear model analyses and single marker association test
-stat &lt;- glma(y=sim$y,Glist = Glist, rsids=rsids)</code></pre>
-<p><br></p>
-<div id="examples-of-region-wide-or-genome-wide-finemapping-using-simulated-data-1" class="section level5">
-<h5>Examples of region-wide or genome-wide finemapping using simulated
-data</h5>
-<pre class="r"><code># Fine-mapping in selected genome regions using a Bayes C prior for the marker variance
-fit &lt;- gmap(Glist=Glist, stat=stat, sets=sets, method=&quot;bayesC&quot;, 
-            algorithm=&quot;mcmc&quot;, output=&quot;full&quot;,verbose=TRUE)
-
-
-# Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for every fine-mapped region
-head(fit$post)
-
-# Convergence statistics for every fine-mapped region
-head(fit$conv)
-
-# Posterior estimates of marker effects for every fine-mapped region
-head(fit$stat)
-
-# Credible sets for every fine-mapped region
-head(fit$cs)</code></pre>
-<p><br></p>
-</div>
-<div id="region-wide-fine-mapping-using-simulated-data" class="section level5">
-<h5>Region-wide fine-mapping using simulated data</h5>
-<pre class="r"><code># Fine-mapping using genome-wide approach using a Bayes C prior for the marker variance
-fit &lt;- gbayes(Glist=Glist, stat=stat, method=&quot;bayesC&quot;, 
-            algorithm=&quot;mcmc&quot;, verbose=TRUE)
-
-# Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for chromosomes in Glist
-head(fit$post)
-
-# Convergence statistics for chromosomes in Glist
-head(fit$conv)
-
-# Posterior estimates of marker effects for chromosomes in Glist
-head(fit$stat)
-
-# Credible sets for every fine-mapped region defined by sets
-fit$cs &lt;- getCredibleSets(Glist=Glist, fit=fit, sets=sets)
-head(fit$cs)</code></pre>
-</div>
 </div>
 </div>
 
