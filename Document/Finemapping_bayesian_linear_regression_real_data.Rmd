@@ -99,7 +99,7 @@ head(fit$fdr)
 ```{r, include=TRUE, eval=FALSE}
 
 # Get LD scores 
-ldscores <- getLDscores(Glist=Glist, chr=17)
+ldscores <- getLDscoresDB(GAlist=GAlist, chr=17, ancestry="EUR", version="1000G")
 
 # Create LD sets
 sets <- createLDsets(ldscores=ldscores, 

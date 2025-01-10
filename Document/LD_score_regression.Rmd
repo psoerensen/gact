@@ -35,7 +35,7 @@ studyIDs <- c("GWAS1","GWAS2","GWAS6")
 stat <- getMarkerStat(GAlist=GAlist, studyID=studyIDs)
 
 # Get ldscores matched to the ancestry of GWAS data
-ldscores <- getLDscores(GAlist=GAlist, ancestry="EUR", version="1000G")
+ldscores <- getLDscoresDB(GAlist=GAlist, ancestry="EUR", version="1000G")
 
 # Estimate narrow sense heritability using ldsc
 fit <- ldsc(z=stat$z, n=stat$n, ldscores=ldscores, what="h2")
