@@ -1123,7 +1123,7 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
                      excludeHWE=1e-12) {
 
  # we use cpra to link sumstats and Glist
- cpra <- as.vector(fread(file = file.path(GAlist$dirs["marker"], "cpra.txt"), data.table=FALSE))[[1]]
+ cpra <- as.vector(fread(file = file.path(GAlist$dirs["marker"], "cpra.txt"), header=FALSE, data.table=FALSE))[[1]]
  #cpra <- GAlist$cpra
  rsids <- GAlist$rsids
 
