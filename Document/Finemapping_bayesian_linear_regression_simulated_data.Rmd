@@ -18,7 +18,9 @@ This tutorial focus on fine-mapping using the Bayesian Linear Regression (BLR) m
 
 #### Prepare simulated data used in fine-mapping examples 
 ```{r, include=TRUE, eval=FALSE}
-library(qgg)
+#library(qgg)
+library(devtools)
+devtools::install_github("psoerensen/qgg")
 
 # Set working directory
 setwd("C:/Users/Projects/Examples")

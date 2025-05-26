@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-01-29" />
+<meta name="date" content="2025-05-26" />
 
 <title>Finemapping of ld regions using single trait Bayesian Linear Regression models</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">Finemapping of ld regions using single
 trait Bayesian Linear Regression models</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-01-29</h4>
+<h4 class="date">2025-05-26</h4>
 
 </div>
 
@@ -365,7 +365,8 @@ Regression (BLR) model. It processes and analyzes GWAS (Genome-Wide
 Association Studies) summary statistics and employs fine-mapping on
 specific ld regions.</p>
 <pre class="r"><code># Load libraries
-library(qgg)
+library(devtools)
+devtools::install_github(&quot;psoerensen/qgg&quot;)
 library(gact)
 library(data.table)
 

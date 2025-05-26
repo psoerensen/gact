@@ -15,7 +15,8 @@ This script is focusing on fine-mapping using the Bayesian Linear Regression (BL
 
 ```{r all-code, include=TRUE, eval=FALSE}
 # Load libraries
-library(qgg)
+library(devtools)
+devtools::install_github("psoerensen/qgg")
 library(gact)
 library(data.table)
 
