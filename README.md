@@ -165,23 +165,31 @@ number NNF20SA0061466)
 
 #### References
 
-1.  Rohde PD, Sørensen IF, Sørensen P. 2020. qgg: an R package for
-    large-scale quantitative genetic analyses. *Bioinformatics* 36:8.
+1.  Rohde PD, Sørensen IF, Sørensen P. qgg: an R package for large-scale
+    quantitative genetic analyses. *Bioinformatics* 36:8 (2020).
     doi.org/10.1093/bioinformatics/btz955
 
-2.  Rohde PD, Sørensen IF, Sørensen P. 2023. Expanded utility of the R
+2.  Rohde PD, Sørensen IF, Sørensen P. Expanded utility of the R
     package, qgg, with applications within genomic medicine.
-    *Bioinformatics* 39:11. doi.org/10.1093/bioinformatics/btad656
+    *Bioinformatics* 39:11 (2023).
+    doi.org/10.1093/bioinformatics/btad656
 
-3.  Shrestha et al. 2023. Evaluation of Bayesian Linear Regression
-    Models as a Fine Mapping Tool. *Submitted*
+3.  Shrestha et al. Evaluation of Bayesian Linear Regression Models as a
+    Fine Mapping Tool. *Submitted* (2024)
     doi.org/10.1101/2023.09.01.555889
 
-4.  Bai et al. 2024. Evaluation of multiple marker mapping methods using
-    single trait Bayesian Linear Regression models. *In preparation*
+4.  Bai et al. Evaluation of multiple marker mapping methods using
+    single trait Bayesian Linear Regression models. *BMC Genomics*
+    25:1236 (2024). doi.org/10.1186/s12864-024-11026-2
 
-5.  Gholipourshahraki et al. 2024. Evaluation of Bayesian Linear
-    Regression Models for Pathway Prioritization. *In preparation*
+5.  Gholipourshahraki et al. Evaluation of Bayesian Linear Regression
+    Models for Pathway Prioritization. *PLOS Genetics* 20(11) e1011463
+    (2025). doi.org/10.1371/journal.pgen.1011463.
+
+6.  Kunkel et al. Improving polygenic prediction from summary data by
+    learning patterns of effect sharing across multiple phenotypes.
+    *Plos Genetics* 21 (1), e1011519 (2025).
+    <https://doi.org/10.1371/journal.pgen.1011519>.
 
 <!-- ### Need -->
 <!-- The genomic research community is accumulating vast quantities of data on genomic associations with complex traits at an unprecedented pace. The primary challenges are the complexity of biologically interpreting genomic data and the absence of a unified repository capable of supporting both the storage of diverse genomic information and complex bioinformatic analyses. This repository is essential for facilitating the interpretation of large-scale genomic association data, bridging the gap between data collection and biological understanding. -->
