@@ -1066,7 +1066,7 @@ getVEGAS <- function(GAlist = NULL, ensg = NULL, studyID = NULL, rm.na = TRUE) {
   filename <- file.path(GAlist$dirs["gsea"], paste0(studyID, "_vegas.rds"))
   if (!file.exists(filename)) stop("Study file does not exist")
   stat <- readRDS(file = filename)
-  Z <- stat[, "Z", drop = FALSE]  # Drop any unwanted columns
+  Z <- stat[, "z", drop = FALSE]  # Drop any unwanted columns
   names(Z) <- studyID
  } else {
   # Multiple study case
@@ -1076,8 +1076,8 @@ getVEGAS <- function(GAlist = NULL, ensg = NULL, studyID = NULL, rm.na = TRUE) {
    stat <- readRDS(file = filename)
 
    # Ensure "Z" column exists and extract it
-   if (!"Z" %in% colnames(stat)) stop(paste("Column 'Z' not found in file for", id))
-   Z <- stat[, "Z", drop = FALSE]
+   if (!"z" %in% colnames(stat)) stop(paste("Column 'Z' not found in file for", id))
+   Z <- stat[, "z", drop = FALSE]
 
    # Assign study ID as column name
    colnames(Z) <- id
