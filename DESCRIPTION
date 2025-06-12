@@ -7,6 +7,7 @@ Authors@R:
 Description: Infrastructure for creating and using genomic association statistics for complex traits and diseases.
 License: `use_mit_license()`
 Encoding: UTF-8
-Imports: XML, data.table, RCurl, DT, shiny, R.utils
+Imports: data.table, DT, shiny, R.utils
+Suggests: XML, RCurl
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
