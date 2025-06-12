@@ -641,7 +641,7 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
    stat$p <- as.numeric(stat$p)
    stat$p[stat$p<.Machine$double.xmin] <- .Machine$double.xmin
-   if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],length(stat$b))
+   if(is.null(stat[["n"]])) stat$n <- rep(as.numeric(GAlist$study$neff[study]),length(stat$b))
    if (!is.null(maf)) stat <- stat[stat$eaf > maf | 1 - stat$eaf < maf, ]
    if(adjN) {
     if(GAlist$studies[study,"type"]=="binary") {
