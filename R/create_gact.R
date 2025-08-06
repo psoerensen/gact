@@ -33,7 +33,7 @@
 #' @export
 #'
 gact <- function(GAlist=NULL, version=NULL, task="download",
-                 dbdir=NULL, timeout=1200) {
+                 dbdir=NULL, timeout=3000) {
 
  if(is.null(dbdir)) dbdir <- getwd()
  if(is.null(version)) stop("Please provide database version")
@@ -151,7 +151,7 @@ createDB <- function(version = NULL, dbdir = NULL) {
 #' @export
 downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_interactions=5) {
 
- options(download.file.method="libcurl", url.method="libcurl", timeout=600)
+ #options(download.file.method="libcurl", url.method="libcurl", timeout=600)
  if(is.null(what)) stop("Please specify what to download e.g. what=gsets")
 
  if(what=="annotation") {
