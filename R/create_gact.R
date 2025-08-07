@@ -190,7 +190,7 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
  if(what=="marker") {
   message("Downloading marker information")
-  download_zenodo(doi = "10.5281/zenodo.10462385", path=GAlist$dirs["marker"])
+  download_zenodo(doi = "10.5281/zenodo.10462385", path=GAlist$dirs["marker"], parallel = FALSE)
   markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
                    data.table=FALSE)
   GAlist$rsids <- markers$rsids
@@ -331,7 +331,7 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
  if(what=="gbayes") {
   message("Downloading gbayes files")
-  download_zenodo(doi = "10.5281/zenodo.10462421", path=GAlist$dirs["gbayes"])
+  download_zenodo(doi = "10.5281/zenodo.10462421", path=GAlist$dirs["gbayes"], parallel = FALSE)
  }
 
  # if(what=="1000G-LDscores") {
@@ -357,27 +357,27 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
  if(what=="1000G") {
   message("Downloading 1000G files")
-  download_zenodo(doi = "10.5281/zenodo.10462403", path=GAlist$dirs["marker"])
+  download_zenodo(doi = "10.5281/zenodo.10462403", path=GAlist$dirs["marker"], parallel = FALSE)
   dest <- file.path(GAlist$dirs["marker"],"1000G_EUR_Phase3_plink.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
 
-  download_zenodo(doi = "10.5281/zenodo.14141438", path=GAlist$dirs["marker"])
+  download_zenodo(doi = "10.5281/zenodo.14141438", path=GAlist$dirs["marker"], parallel = FALSE)
   dest <- file.path(GAlist$dirs["marker"],"g1000_eur.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
 
-  download_zenodo(doi = "10.5281/zenodo.14141523", path=GAlist$dirs["marker"])
+  download_zenodo(doi = "10.5281/zenodo.14141523", path=GAlist$dirs["marker"], parallel = FALSE)
   dest <- file.path(GAlist$dirs["marker"],"g1000_eas.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
 
-  download_zenodo(doi = "10.5281/zenodo.14141597", path=GAlist$dirs["marker"])
+  download_zenodo(doi = "10.5281/zenodo.14141597", path=GAlist$dirs["marker"], parallel = FALSE)
   dest <- file.path(GAlist$dirs["marker"],"g1000_sas.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
 
-  download_zenodo(doi = "10.5281/zenodo.14141774", path=GAlist$dirs["marker"])
+  download_zenodo(doi = "10.5281/zenodo.14141774", path=GAlist$dirs["marker"], parallel = FALSE)
   dest <- file.path(GAlist$dirs["marker"],"g1000_afr.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
 
-  download_zenodo(doi = "10.5281/zenodo.14141885", path=GAlist$dirs["marker"])
+  download_zenodo(doi = "10.5281/zenodo.14141885", path=GAlist$dirs["marker"], parallel = FALSE)
   dest <- file.path(GAlist$dirs["marker"],"g1000_amr.zip")
   unzip(dest, exdir=GAlist$dirs["marker"])
 
