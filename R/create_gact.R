@@ -1312,46 +1312,110 @@ columnStatDB <- function(stat=NULL) {
 #' @importFrom utils tail
 #' @importFrom assertthat assert_that is.string is.flag noNA
 #' @noRd
+download_zenodo <- function(doi, path = ".", parallel = FALSE, quiet = FALSE, max_tries = 3) {
+ if (!requireNamespace("assertthat", quietly = TRUE)) stop("Please install the 'assertthat' package.")
+ if (!requireNamespace("stringr", quietly = TRUE)) stop("Please install the 'stringr' package.")
+ if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Please install the 'jsonlite' package.")
+ if (!requireNamespace("curl", quietly = TRUE)) stop("Please install the 'curl' package.")
 
-download_zenodo <- function(doi, path = ".", parallel = TRUE, quiet = FALSE) {
- # Validate input arguments
- assert_that(is.string(doi), is.string(path))
- assert_that(is.flag(parallel), noNA(parallel), is.flag(quiet), noNA(quiet))
-
- # Ensure the directory exists
+ assertthat::assert_that(assertthat::is.string(doi), assertthat::is.string(path))
+ assertthat::assert_that(assertthat::is.flag(parallel), !is.na(parallel))
+ assertthat::assert_that(assertthat::is.flag(quiet), !is.na(quiet))
  stopifnot(dir.exists(path))
 
- # Remove DOI prefix and fetch record details from Zenodo
- record_id <- str_remove(doi, "10.5281/zenodo.")
+ record_id <- sub("10\\.5281/zenodo\\.", "", doi)
  zenodo_api_url <- paste0("https://zenodo.org/api/records/", record_id)
- response <- curl_fetch_memory(zenodo_api_url)
- content <- fromJSON(rawToChar(response$content))
+ response <- curl::curl_fetch_memory(zenodo_api_url)
+ content <- jsonlite::fromJSON(rawToChar(response$content))
 
- # Extract file information
  file_urls <- content$files$links$self
  filenames <- basename(content$files$key)
  destfiles <- file.path(path, filenames)
- file_md5s <- content$files$checksum
+ file_md5s <- vapply(strsplit(content$files$checksum, ":"), function(x) x[2], character(1))
+ file_sizes <- content$files$size
 
-
- # Calculate total file size and number of files
- total_size <- sum(content$files$size)
+ total_size <- sum(file_sizes)
  num_files <- length(filenames)
 
-  # Download files (either in parallel or sequentially)
- if (parallel && length(file_urls) > 1) {
-  curl::multi_download(urls = file_urls, destfiles = destfiles, progress = !quiet)
- } else {
-  mapply(curl_download, file_urls, destfiles, MoreArgs = list(quiet = quiet))
+ message("Zenodo record contains ", num_files, " file(s), total size: ",
+         format(structure(total_size, class = "object_size")), "\n")
+
+ # Internal retry-safe download
+ safe_download <- function(url, destfile, quiet, expected_md5) {
+  for (try in seq_len(max_tries)) {
+   try({
+    curl::curl_download(url, destfile, quiet = quiet)
+    md5 <- tolower(trimws(unname(tools::md5sum(destfile))))
+    if (identical(md5, expected_md5)) {
+     if (!quiet) message(basename(destfile), " ✔ OK (md5: ", md5, ")")
+     return(TRUE)
+    }
+   }, silent = TRUE)
+
+   if (file.exists(destfile)) file.remove(destfile)
+   if (!quiet) message("Retrying ", basename(destfile), " (attempt ", try, " of ", max_tries, ")")
+   Sys.sleep(2 ^ try)  # exponential backoff
+  }
+  stop("ownload failed after ", max_tries, " attempts: ", basename(destfile))
  }
 
- # Verify file integrity
- if (!quiet) message("\nVerifying file integrity...\n")
- for (i in seq_along(file_urls)) {
-  expected_md5 <- str_split(file_md5s[i], ":")[[1]][2]
-  verify_file_integrity(filenames[i], destfiles[i], expected_md5, quiet)
+ # Download files
+ if (parallel && length(file_urls) > 1) {
+  message("Downloading in parallel...")
+
+  # Parallel may not be robust — use safe fallback per file
+  for (i in seq_along(file_urls)) {
+   safe_download(file_urls[i], destfiles[i], quiet, file_md5s[i])
+  }
+
+ } else {
+  message("Downloading sequentially...")
+  for (i in seq_along(file_urls)) {
+   safe_download(file_urls[i], destfiles[i], quiet, file_md5s[i])
+  }
  }
+
+ message("\n✅ All files downloaded and verified successfully.")
 }
+# download_zenodo <- function(doi, path = ".", parallel = FALSE, quiet = FALSE) {
+#  # Validate input arguments
+#  assert_that(is.string(doi), is.string(path))
+#  assert_that(is.flag(parallel), noNA(parallel), is.flag(quiet), noNA(quiet))
+#
+#  # Ensure the directory exists
+#  stopifnot(dir.exists(path))
+#
+#  # Remove DOI prefix and fetch record details from Zenodo
+#  record_id <- str_remove(doi, "10.5281/zenodo.")
+#  zenodo_api_url <- paste0("https://zenodo.org/api/records/", record_id)
+#  response <- curl_fetch_memory(zenodo_api_url)
+#  content <- fromJSON(rawToChar(response$content))
+#
+#  # Extract file information
+#  file_urls <- content$files$links$self
+#  filenames <- basename(content$files$key)
+#  destfiles <- file.path(path, filenames)
+#  file_md5s <- content$files$checksum
+#
+#
+#  # Calculate total file size and number of files
+#  total_size <- sum(content$files$size)
+#  num_files <- length(filenames)
+#
+#   # Download files (either in parallel or sequentially)
+#  if (parallel && length(file_urls) > 1) {
+#   curl::multi_download(urls = file_urls, destfiles = destfiles, progress = !quiet)
+#  } else {
+#   mapply(curl_download, file_urls, destfiles, MoreArgs = list(quiet = quiet))
+#  }
+#
+#  # Verify file integrity
+#  if (!quiet) message("\nVerifying file integrity...\n")
+#  for (i in seq_along(file_urls)) {
+#   expected_md5 <- str_split(file_md5s[i], ":")[[1]][2]
+#   verify_file_integrity(filenames[i], destfiles[i], expected_md5, quiet)
+#  }
+# }
 
 #' Verify the integrity of a downloaded file
 #'
