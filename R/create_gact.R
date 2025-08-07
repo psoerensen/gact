@@ -1347,7 +1347,7 @@ download_zenodo <- function(doi, path = ".", parallel = FALSE, quiet = FALSE, ma
     curl::curl_download(url, destfile, quiet = quiet)
     md5 <- tolower(trimws(unname(tools::md5sum(destfile))))
     if (identical(md5, expected_md5)) {
-     if (!quiet) message(basename(destfile), " ✔ OK (md5: ", md5, ")")
+     if (!quiet) message(basename(destfile), "OK (md5: ", md5, ")")
      return(TRUE)
     }
    }, silent = TRUE)
@@ -1375,7 +1375,7 @@ download_zenodo <- function(doi, path = ".", parallel = FALSE, quiet = FALSE, ma
   }
  }
 
- message("\n✅ All files downloaded and verified successfully.")
+ message("\n All files downloaded and verified successfully.")
 }
 # download_zenodo <- function(doi, path = ".", parallel = FALSE, quiet = FALSE) {
 #  # Validate input arguments
