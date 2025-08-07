@@ -1313,17 +1313,16 @@ columnStatDB <- function(stat=NULL) {
 #' @importFrom assertthat assert_that is.string is.flag noNA
 #' @noRd
 download_zenodo <- function(doi, path = ".", parallel = FALSE, quiet = FALSE, max_tries = 3) {
- if (!requireNamespace("assertthat", quietly = TRUE)) stop("Please install the 'assertthat' package.")
- if (!requireNamespace("stringr", quietly = TRUE)) stop("Please install the 'stringr' package.")
  if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Please install the 'jsonlite' package.")
  if (!requireNamespace("curl", quietly = TRUE)) stop("Please install the 'curl' package.")
 
- assertthat::assert_that(assertthat::is.string(doi), assertthat::is.string(path))
- assertthat::assert_that(assertthat::is.flag(parallel), !is.na(parallel))
- assertthat::assert_that(assertthat::is.flag(quiet), !is.na(quiet))
- stopifnot(dir.exists(path))
+ if (!is.character(doi) || length(doi) != 1) stop("Argument 'doi' must be a single character string.")
+ if (!is.character(path) || length(path) != 1) stop("Argument 'path' must be a single character string.")
+ if (!dir.exists(path)) stop("Directory does not exist: ", path)
+ if (!is.logical(parallel) || length(parallel) != 1) stop("'parallel' must be TRUE or FALSE.")
+ if (!is.logical(quiet) || length(quiet) != 1) stop("'quiet' must be TRUE or FALSE.")
 
- record_id <- sub("10\\.5281/zenodo\\.", "", doi)
+ record_id <- sub("^10\\.5281/zenodo\\.", "", doi)
  zenodo_api_url <- paste0("https://zenodo.org/api/records/", record_id)
  response <- curl::curl_fetch_memory(zenodo_api_url)
  content <- jsonlite::fromJSON(rawToChar(response$content))
@@ -1340,43 +1339,38 @@ download_zenodo <- function(doi, path = ".", parallel = FALSE, quiet = FALSE, ma
  message("Zenodo record contains ", num_files, " file(s), total size: ",
          format(structure(total_size, class = "object_size")), "\n")
 
- # Internal retry-safe download
- safe_download <- function(url, destfile, quiet, expected_md5) {
-  for (try in seq_len(max_tries)) {
+ safe_download <- function(url, destfile, expected_md5, quiet) {
+  for (i in seq_len(max_tries)) {
    try({
     curl::curl_download(url, destfile, quiet = quiet)
     md5 <- tolower(trimws(unname(tools::md5sum(destfile))))
     if (identical(md5, expected_md5)) {
-     if (!quiet) message(basename(destfile), "OK (md5: ", md5, ")")
+     if (!quiet) message(basename(destfile), " download complete and verified (md5: ", md5, ")")
      return(TRUE)
     }
    }, silent = TRUE)
-
    if (file.exists(destfile)) file.remove(destfile)
-   if (!quiet) message("Retrying ", basename(destfile), " (attempt ", try, " of ", max_tries, ")")
-   Sys.sleep(2 ^ try)  # exponential backoff
+   if (!quiet) message("Retrying ", basename(destfile), " (attempt ", i, " of ", max_tries, ")")
+   Sys.sleep(2 ^ i)
   }
-  stop("ownload failed after ", max_tries, " attempts: ", basename(destfile))
+  stop("Download failed after ", max_tries, " attempts: ", basename(destfile))
  }
 
- # Download files
  if (parallel && length(file_urls) > 1) {
   message("Downloading in parallel...")
-
-  # Parallel may not be robust — use safe fallback per file
   for (i in seq_along(file_urls)) {
-   safe_download(file_urls[i], destfiles[i], quiet, file_md5s[i])
+   safe_download(file_urls[i], destfiles[i], file_md5s[i], quiet)
   }
-
  } else {
   message("Downloading sequentially...")
   for (i in seq_along(file_urls)) {
-   safe_download(file_urls[i], destfiles[i], quiet, file_md5s[i])
+   safe_download(file_urls[i], destfiles[i], file_md5s[i], quiet)
   }
  }
 
- message("\n All files downloaded and verified successfully.")
+ message("\nAll files downloaded and verified successfully.")
 }
+
 # download_zenodo <- function(doi, path = ".", parallel = FALSE, quiet = FALSE) {
 #  # Validate input arguments
 #  assert_that(is.string(doi), is.string(path))
