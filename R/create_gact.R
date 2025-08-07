@@ -156,7 +156,7 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
  if(what=="annotation") {
   message("Downloading annotation sets")
-  download_zenodo(doi = "10.5281/zenodo.14234857", path=GAlist$dirs["gsets"])
+  download_zenodo(doi = "10.5281/zenodo.14234857", path=GAlist$dirs["gsets"], parallel = FALSE)
   dest <- file.path(GAlist$dirs["gsets"],"hsa.0.0.1.zip")
   Sys.sleep(1)
   unzip(dest, exdir=GAlist$dirs["gsets"])
@@ -173,12 +173,12 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
 
  if(what=="gsea") {
   message("Downloading gsea summary statistics")
-  download_zenodo(doi = "10.5281/zenodo.10462484", path=GAlist$dirs["gsea"])
+  download_zenodo(doi = "10.5281/zenodo.10462484", path=GAlist$dirs["gsea"], parallel = FALSE)
  }
 
  if(what=="gstat") {
   message("Downloading GWAS summary statistics")
-  download_zenodo(doi = "10.5281/zenodo.10462495", path=GAlist$dirs["gstat"])
+  download_zenodo(doi = "10.5281/zenodo.10462495", path=GAlist$dirs["gstat"], parallel = FALSE)
   destfile <- file.path(GAlist$dirs["gstat"],"GWAS_information.csv")
   GAlist$study <- as.list(read.csv2(destfile))
   GAlist$studies <- as.data.frame(GAlist$study)
