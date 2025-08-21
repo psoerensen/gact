@@ -198,7 +198,7 @@ downloadDB <- function(GAlist=NULL, what=NULL, min_combined_score=900,  min_inte
                 markers$pos,
                 markers$ea,
                 markers$nea,sep="_")
-  fwrite(data.frame(cpra = cpra),
+  fwrite(data.frame(cpra = cpra), col.names = FALSE,
          file = file.path(GAlist$dirs["marker"], "cpra.txt"))
  }
 
@@ -1124,7 +1124,7 @@ qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.0
 
  # we use cpra to link sumstats and Glist
  cpra <- as.vector(fread(file = file.path(GAlist$dirs["marker"], "cpra.txt"), header=FALSE, data.table=FALSE))[[1]]
- #cpra <- GAlist$cpra
+ if(cpra[1]=="cpra") cpra <- cpra[-1]    # this is a fix
  rsids <- GAlist$rsids
 
  # stat is a data.frame
