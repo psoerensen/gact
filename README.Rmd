@@ -55,6 +55,10 @@ The R package ***gact*** is designed for establishing and populating a comprehen
 <br>
 
 
+### Slides presenting the gact database
+
+[Slides](Document/workshop_slides.html)  
+
 
 
 ### Installation of the gact package

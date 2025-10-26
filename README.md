@@ -75,6 +75,10 @@ biological databases including:
 
 <br>
 
+### Slides presenting the gact database
+
+[Slides](Document/workshop_slides.html)
+
 ### Installation of the gact package
 
 To install the most recent version of the gact and qgg package from
