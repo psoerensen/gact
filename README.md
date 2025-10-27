@@ -75,9 +75,18 @@ biological databases including:
 
 <br>
 
-### Slides presenting the gact database
+### Workshop and Course Materials
 
-[Slides](Document/workshop_slides.html)
+**Workshop:**  
+*From Integrative Genomics to Polygenic Risk Scoring* — presented at the
+**9th Annual Danish Bioinformatics Conference**.  
+[**Workshop Slides**](Document/workshop_slides.html)
+
+**Course:**  
+*Bayesian Linear Regression* — theoretical notes, lecture slides, and
+practical R examples.  
+[**Course
+Materials**](https://psoerensen.github.io/bayesian-linear-regression/)
 
 ### Installation of the gact package
 
