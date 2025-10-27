@@ -58,8 +58,10 @@ The R package ***gact*** is designed for establishing and populating a comprehen
 ### Workshop and Course Materials
 
 **Workshop:**  
-*From Integrative Genomics to Polygenic Risk Scoring* — presented at the **9th Annual Danish Bioinformatics Conference**.  
-[**Workshop Slides**](Document/workshop_slides.html)
+*From Integrative Genomics to Polygenic Risk Scoring* — presented at the [**9th Annual Danish Bioinformatics Conference**](https://eventsignup.ku.dk/9danishbioinfconference).  
+
+- [**Workshop Slides (HTML)**](Document/workshop_slides.html)  
+- [**Demonstration Slides (PDF)**](Document/workshop_slides.pdf)
 
 **Course:**  
 *Bayesian Linear Regression* — theoretical notes, lecture slides, and practical R examples.  

@@ -79,8 +79,11 @@ biological databases including:
 
 **Workshop:**  
 *From Integrative Genomics to Polygenic Risk Scoring* — presented at the
-**9th Annual Danish Bioinformatics Conference**.  
-[**Workshop Slides**](Document/workshop_slides.html)
+[**9th Annual Danish Bioinformatics
+Conference**](https://eventsignup.ku.dk/9danishbioinfconference).
+
+- [**Workshop Slides (HTML)**](Document/workshop_slides.html)  
+- [**Demonstration Slides (PDF)**](Document/workshop_slides.pdf)
 
 **Course:**  
 *Bayesian Linear Regression* — theoretical notes, lecture slides, and
