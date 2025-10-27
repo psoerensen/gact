@@ -75,22 +75,6 @@ biological databases including:
 
 <br>
 
-### Workshop and Course Materials
-
-**Workshop:**  
-*From Integrative Genomics to Polygenic Risk Scoring* — presented at the
-[**9th Annual Danish Bioinformatics
-Conference**](https://eventsignup.ku.dk/9danishbioinfconference).
-
-- [**Workshop Slides (HTML)**](Document/workshop_slides.html)  
-- [**Demonstration Slides (PDF)**](Document/workshop_slides.pdf)
-
-**Course:**  
-*Bayesian Linear Regression* — theoretical notes, lecture slides, and
-practical R examples.  
-[**Course
-Materials**](https://psoerensen.github.io/bayesian-linear-regression/)
-
 ### Installation of the gact package
 
 To install the most recent version of the gact and qgg package from
@@ -172,6 +156,22 @@ Catalog](Document/Polygenic_scoring_pgscatalog.html)
 LD score regression for estimating genomic heritability and
 correlations.  
 [LD score regression](Document/LD_score_regression.html)
+
+### Workshop and Course Materials
+
+**Workshop:**  
+*From Integrative Genomics to Polygenic Risk Scoring* — presented at the
+[**9th Annual Danish Bioinformatics
+Conference**](https://eventsignup.ku.dk/9danishbioinfconference).
+
+- [**Workshop Slides (HTML)**](Document/workshop_slides.html)  
+- [**Demonstration Slides (PDF)**](Document/workshop_slides.pdf)
+
+**Course:**  
+*Bayesian Linear Regression* — theoretical notes, lecture slides, and
+practical R examples.  
+[**Course
+Materials**](https://psoerensen.github.io/bayesian-linear-regression/)
 
 #### Funding
 
