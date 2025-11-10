@@ -609,6 +609,30 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 #'
 getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, adjN=FALSE, maf=NULL, rsids=NULL, cpra=NULL) {
 
+ if (substring(studyID[1], 1, 3) == "BLR") {
+
+  # --- Basic checks ---
+  if (length(studyID) == 0)
+   stop("studyID' is empty. Please provide a valid study ID.")
+
+  if (length(studyID) > 1)
+   stop("Only one study is supported for BLR summary statistics.")
+
+  # --- Build file path ---
+  file_path <- file.path(GAlist$dirs["gbayes"], paste0(studyID[1], ".rds"))
+
+  # --- Check existence ---
+  if (!file.exists(file_path))
+   stop("File not found: ", file_path,
+        "\nMake sure the BLR results were downloaded or generated.")
+
+  # --- Read and return ---
+  stat <- readRDS(file_path)
+  stat <- stat$stat
+  rownames(stat) <- stat$rsids
+  return(stat)
+ }
+
  if(!is.null(cpra)) {
   markers <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"), data.table=FALSE)
   cpra1 <- paste(markers[,"chr"],
@@ -1066,6 +1090,7 @@ getVEGAS <- function(GAlist = NULL, ensg = NULL, studyID = NULL, rm.na = TRUE) {
   filename <- file.path(GAlist$dirs["gsea"], paste0(studyID, "_vegas.rds"))
   if (!file.exists(filename)) stop("Study file does not exist")
   stat <- readRDS(file = filename)
+  colnames(stat) <- tolower(colnames(stat))
   Z <- stat[, "z", drop = FALSE]  # Drop any unwanted columns
   names(Z) <- studyID
  } else {
@@ -1074,6 +1099,7 @@ getVEGAS <- function(GAlist = NULL, ensg = NULL, studyID = NULL, rm.na = TRUE) {
    filename <- file.path(GAlist$dirs["gsea"], paste0(id, "_vegas.rds"))
    if (!file.exists(filename)) stop(paste("Study file does not exist for", id))
    stat <- readRDS(file = filename)
+   colnames(stat) <- tolower(colnames(stat))
 
    # Ensure "Z" column exists and extract it
    if (!"z" %in% colnames(stat)) stop(paste("Column 'Z' not found in file for", id))

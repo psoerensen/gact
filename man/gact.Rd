@@ -9,7 +9,7 @@ gact(
   version = NULL,
   task = "download",
   dbdir = NULL,
-  timeout = 1200
+  timeout = 3000
 )
 }
 \arguments{
