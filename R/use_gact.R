@@ -523,7 +523,12 @@ getMarkerSets <- function(GAlist = NULL, feature = NULL, featureID = NULL,
  }
  if(feature=="KEGG") {
   msets <- readRDS(file.path(GAlist$dirs["gsets"],"ensg2rsids.rds"))
-  msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
+  #msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
+  if ("collection" %in% names(formals(msigdbr))) {
+   msigdb <- msigdbr(species = "human", collection = "C2", subcollection = "CP:KEGG")
+  } else {
+   msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
+  }
   sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
   sets <- mapSets(sets,names(msets), index=FALSE)
   sets <- lapply(sets, function(x) {unlist(msets[x])})
