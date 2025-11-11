@@ -327,7 +327,13 @@ getFeatureSets <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NU
  if(feature=="DiseaseGenesTMplus") sets <- readRDS(file = file.path(GAlist$dirs["gsets"],"disease2ensg_human_disease_textmining_full.rds"))
 
  if(feature=="KEGG") {
-  msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
+  #msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
+  if ("collection" %in% names(formals(msigdbr))) {
+   msigdb <- msigdbr( species = "human", collection = "C2",
+                      subcollection = "CP:KEGG_LEGACY"
+   )  } else {
+    msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG_LEGACY")
+   }
   sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
  }
 
@@ -525,9 +531,10 @@ getMarkerSets <- function(GAlist = NULL, feature = NULL, featureID = NULL,
   msets <- readRDS(file.path(GAlist$dirs["gsets"],"ensg2rsids.rds"))
   #msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
   if ("collection" %in% names(formals(msigdbr))) {
-   msigdb <- msigdbr(species = "human", collection = "C2", subcollection = "CP:KEGG")
-  } else {
-   msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG")
+   msigdb <- msigdbr( species = "human", collection = "C2",
+    subcollection = "CP:KEGG_LEGACY"
+   )  } else {
+   msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG_LEGACY")
   }
   sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
   sets <- mapSets(sets,names(msets), index=FALSE)
