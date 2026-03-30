@@ -83,3 +83,31 @@ test_that("ingestStatDB stops on low-confidence required mappings in strict mode
     "Low-confidence required mappings"
   )
 })
+
+test_that("alias dictionary boosts schema mapping", {
+  stat <- data.frame(
+    chromosome_name = c(1, 1, 2, 2),
+    base_pair_location = c(101, 102, 201, 202),
+    effect_allele = c("A", "C", "A", "G"),
+    other_allele = c("G", "T", "C", "A"),
+    p_value = c(0.1, 0.2, 0.01, 0.9),
+    stringsAsFactors = FALSE
+  )
+
+  alias_dict <- list(
+    version = 1,
+    fields = list(
+      chr = list(aliases = c("chromosomename"), regex = character(0)),
+      pos = list(aliases = c("basepairlocation"), regex = character(0)),
+      ea = list(aliases = c("effectallele"), regex = character(0)),
+      nea = list(aliases = c("otherallele"), regex = character(0)),
+      p = list(aliases = c("pvalue"), regex = character(0))
+    )
+  )
+
+  out <- detectStatSchema(stat, alias_dict = alias_dict)
+  expect_equal(out$mapping[["chr"]], "chromosome_name")
+  expect_equal(out$mapping[["pos"]], "base_pair_location")
+  expect_equal(out$mapping[["p"]], "p_value")
+  expect_true(length(out$alias_hits[["chr"]]) > 0)
+})

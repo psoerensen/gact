@@ -1,3 +1,90 @@
+#' Read GWAS alias dictionary from YAML
+#'
+#' @param path Optional path to YAML file. If `NULL`, uses
+#'   `inst/extdata/gwas_aliases.yml` from the package.
+#' @param must_exist Logical; if `TRUE`, throws an error when file is missing.
+#' @return A normalized alias dictionary list.
+#' @keywords internal
+read_aliases_yaml <- function(path = NULL, must_exist = TRUE) {
+  if (is.null(path)) {
+    path <- system.file("extdata", "gwas_aliases.yml", package = "gact")
+  }
+
+  if (!nzchar(path) || !file.exists(path)) {
+    if (must_exist) stop("Alias YAML not found: ", path)
+    return(NULL)
+  }
+
+  if (!requireNamespace("yaml", quietly = TRUE)) {
+    stop("Package 'yaml' is required to read alias dictionaries.")
+  }
+
+  x <- yaml::read_yaml(path)
+  if (is.null(x$fields) || !is.list(x$fields)) {
+    stop("Alias YAML must contain a top-level 'fields:' list.")
+  }
+
+  clean_name <- function(z) tolower(gsub("[^a-z0-9]", "", as.character(z)))
+  `%||%` <- function(a, b) if (is.null(a)) b else a
+
+  out <- list(version = x$version %||% NA, fields = list())
+  for (fld in names(x$fields)) {
+    node <- x$fields[[fld]]
+    aliases <- unique(clean_name(node$aliases %||% character(0)))
+    aliases <- aliases[nzchar(aliases)]
+    regex <- unique(as.character(node$regex %||% character(0)))
+    out$fields[[fld]] <- list(aliases = aliases, regex = regex)
+  }
+  out
+}
+
+#' Apply alias dictionary to column names and return alias score matrix
+#'
+#' @param col_names Character vector of column names from incoming data.
+#' @param alias_dict Alias dictionary from [read_aliases_yaml()].
+#' @param fields Canonical fields to score.
+#' @return A list with `score` matrix (`field x column`) and `hits`.
+#' @keywords internal
+apply_alias_dictionary <- function(col_names, alias_dict, fields) {
+  clean_name <- function(z) tolower(gsub("[^a-z0-9]", "", as.character(z)))
+  clean_cols <- clean_name(col_names)
+
+  score <- matrix(0, nrow = length(fields), ncol = length(col_names),
+                  dimnames = list(fields, col_names))
+  hits <- setNames(vector("list", length(fields)), fields)
+
+  if (is.null(alias_dict) || is.null(alias_dict$fields)) {
+    return(list(score = score, hits = hits))
+  }
+
+  for (f in fields) {
+    fnode <- alias_dict$fields[[f]]
+    if (is.null(fnode)) next
+
+    alias_hits <- rep(FALSE, length(clean_cols))
+    regex_hits <- rep(FALSE, length(clean_cols))
+
+    if (length(fnode$aliases)) alias_hits <- clean_cols %in% fnode$aliases
+
+    if (length(fnode$regex)) {
+      regex_hits <- vapply(col_names, function(nm) {
+        any(vapply(fnode$regex, function(rx) {
+          grepl(rx, nm, ignore.case = TRUE, perl = TRUE)
+        }, logical(1)))
+      }, logical(1))
+    }
+
+    sc <- numeric(length(col_names))
+    sc[alias_hits] <- pmax(sc[alias_hits], 1.0)
+    sc[regex_hits] <- pmax(sc[regex_hits], 0.7)
+
+    score[f, ] <- sc
+    hits[[f]] <- col_names[alias_hits | regex_hits]
+  }
+
+  list(score = score, hits = hits)
+}
+
 #' Detect GWAS summary-statistics schema using column names and values
 #'
 #' Scores candidate columns for canonical GWAS fields and returns a mapping
@@ -8,11 +95,18 @@
 #'
 #' @param stat A `data.frame` containing summary statistics.
 #' @param sample_n Optional integer; number of rows to sample for detection.
+#' @param alias_path Optional path to alias YAML. Defaults to package extdata file.
+#' @param alias_dict Optional pre-loaded alias dictionary from [read_aliases_yaml()].
+#' @param w_name Weight for name-pattern score.
+#' @param w_value Weight for value-distribution score.
+#' @param w_alias Weight for alias-dictionary score.
 #' @return A list with elements `mapping`, `confidence`, `candidates`,
-#'   `warnings`, and `details`.
+#'   `warnings`, `details`, and `alias_hits`.
 #' @export
 
-detectStatSchema <- function(stat, sample_n = 100000) {
+detectStatSchema <- function(stat, sample_n = 100000,
+                             alias_path = NULL, alias_dict = NULL,
+                             w_name = 0.45, w_value = 0.30, w_alias = 0.25) {
   if (is.null(stat)) stop("`stat` is NULL")
   if (!is.data.frame(stat)) stat <- as.data.frame(stat)
   if (!nrow(stat)) stop("`stat` has zero rows")
@@ -139,10 +233,23 @@ detectStatSchema <- function(stat, sample_n = 100000) {
   score_tbl <- matrix(0, nrow = length(fields), ncol = length(col_names),
                       dimnames = list(fields, col_names))
 
+  if (is.null(alias_dict)) {
+    alias_dict <- tryCatch(
+      read_aliases_yaml(path = alias_path, must_exist = FALSE),
+      error = function(e) NULL
+    )
+  }
+  alias_res <- apply_alias_dictionary(col_names = col_names,
+                                      alias_dict = alias_dict,
+                                      fields = fields)
+  alias_score_tbl <- alias_res$score
+
   for (f in fields) {
     nscore <- score_name(f)
     vscore <- vapply(value_scores, function(v) v[[f]], numeric(1))
-    score_tbl[f, ] <- 0.65 * nscore + 0.35 * pmin(vscore, 1.25)
+    score_tbl[f, ] <- w_name * nscore +
+      w_value * pmin(vscore, 1.25) +
+      w_alias * alias_score_tbl[f, ]
   }
 
   pick_best <- function(field, exclude = character()) {
@@ -195,6 +302,7 @@ detectStatSchema <- function(stat, sample_n = 100000) {
     mapping = mapping,
     confidence = confidence,
     candidates = candidates,
+    alias_hits = alias_res$hits,
     warnings = unique(warnings),
     details = as.data.frame(t(score_tbl), stringsAsFactors = FALSE)
   )
