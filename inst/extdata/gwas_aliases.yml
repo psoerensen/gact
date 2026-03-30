@@ -1,0 +1,53 @@
+version: 1
+fields:
+  marker:
+    aliases: [rsid, rsids, snp, snpid, marker, id, variant_id, variantid]
+    regex: ["^rs[0-9]+$"]
+
+  chr:
+    aliases: [chr, chrom, chromosome, chromid, ch]
+    regex: ["^chr(om)?$"]
+
+  pos:
+    aliases: [pos, bp, position, base_pair_location, basepairlocation, bppos]
+    regex: ["^(bp|pos|position)$"]
+
+  ea:
+    aliases: [ea, a1, effect_allele, effectallele, alt, allele1, tested_allele]
+    regex: []
+
+  nea:
+    aliases: [nea, a2, other_allele, othereallele, non_effect_allele, ref, allele2]
+    regex: []
+
+  eaf:
+    aliases: [eaf, effect_allele_frequency, effectallelefrequency, af, alt_af, freq, maf]
+    regex: []
+
+  b:
+    aliases: [b, beta, effect, effect_size, estimate, beta_hat, es, log_or, logodds]
+    regex: ["^or$", "^odds_ratio$"]
+
+  seb:
+    aliases: [se, seb, standard_error, standarderror, sebeta, stderr, std_err]
+    regex: []
+
+  p:
+    aliases: [p, pval, pvalue, p_value, p.value, pv]
+    regex: ["^lp$", "^neglog10p$", "^mlogp$"]
+
+  n:
+    aliases: [n, ns, n_total, ntotal, total_n, sample_size, samplesize, neff]
+    regex: []
+
+  ncase:
+    aliases: [ncase, n_case, cases, n_cases, case_n, nc]
+    regex: []
+
+  ncontrol:
+    aliases: [ncontrol, n_control, controls, n_controls, control_n, nco]
+    regex: []
+
+  info:
+    aliases: [info, info_score, infoscore, imputation_info, imp_info, rsq, mach_r2]
+    regex: []
