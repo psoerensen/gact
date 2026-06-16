@@ -1,53 +1,226 @@
 version: 1
+
 fields:
+
   marker:
-    aliases: [rsid, rsids, snp, snpid, marker, id, variant_id, variantid]
-    regex: ["^rs[0-9]+$"]
+    aliases:
+      - rsid
+      - rsids
+      - snp
+      - snpid
+      - snp_id
+      - marker
+      - markername
+      - id
+      - variant
+      - variant_id
+      - variantid
+      - rs_number
+    regex:
+      - "^rs[0-9]+$"
 
   chr:
-    aliases: [chr, chrom, chromosome, chromid, ch]
-    regex: ["^chr(om)?$"]
+    aliases:
+      - chr
+      - "#chr"
+      - chrom
+      - chromosome
+      - chromid
+      - ch
+      - chr_name
+      - chromosome_name
+    regex:
+      - "^chr(om)?$"
 
   pos:
-    aliases: [pos, bp, position, base_pair_location, basepairlocation, bppos]
-    regex: ["^(bp|pos|position)$"]
+    aliases:
+      - pos
+      - bp
+      - position
+      - base_pair_location
+      - basepairlocation
+      - bppos
+      - bp_position
+      - pos_hg19
+      - pos_hg38
+      - position_b37
+    regex:
+      - "^(bp|pos|position)$"
 
   ea:
-    aliases: [ea, a1, effect_allele, effectallele, alt, allele1, tested_allele]
+    aliases:
+      - ea
+      - a1
+      - effect_allele
+      - effectallele
+      - effectAllele
+      - alt
+      - alt_allele
+      - allele1
+      - tested_allele
+      - testedAllele
     regex: []
 
   nea:
-    aliases: [nea, a2, other_allele, othereallele, non_effect_allele, ref, allele2]
+    aliases:
+      - nea
+      - a2
+      - other_allele
+      - otherAllele
+      - othereallele
+      - non_effect_allele
+      - ref
+      - ref_allele
+      - allele2
     regex: []
 
   eaf:
-    aliases: [eaf, effect_allele_frequency, effectallelefrequency, af, alt_af, freq, maf]
+    aliases:
+      - eaf
+      - effect_allele_frequency
+      - effectallelefrequency
+      - af
+      - alt_af
+      - alt_freq
+      - effect_af
+      - af_alt
+      - freq
+      - freq1
     regex: []
 
   b:
-    aliases: [b, beta, effect, effect_size, estimate, beta_hat, es, log_or, logodds]
-    regex: ["^or$", "^odds_ratio$"]
+    aliases:
+      - b
+      - beta
+      - effect
+      - effect_size
+      - estimate
+      - estimate_beta
+      - beta_hat
+      - beta_coefficient
+      - es
+      - log_or
+      - logodds
+    regex:
+      - "^or$"
+      - "^odds_ratio$"
+      - "^oddsratio$"
 
   seb:
-    aliases: [se, seb, standard_error, standarderror, sebeta, stderr, std_err]
+    aliases:
+      - se
+      - seb
+      - standard_error
+      - standarderror
+      - sebeta
+      - stderr
+      - std_err
+      - se_beta
+      - se_effect
+      - stderr_beta
     regex: []
 
   p:
-    aliases: [p, pval, pvalue, p_value, p.value, pv]
-    regex: ["^lp$", "^neglog10p$", "^mlogp$"]
+    aliases:
+      - p
+      - pval
+      - pvalue
+      - p_value
+      - p.value
+      - pv
+      - pval_nominal
+      - pvalue_nominal
+      - p_score
+      - p_bolt_lmm
+      - p_saige
+    regex:
+      - "^lp$"
+      - "^neglog10p$"
+      - "^mlogp$"
+      - "^minus_log10_p$"
 
   n:
-    aliases: [n, ns, n_total, ntotal, total_n, sample_size, samplesize, neff]
+    aliases:
+      - n
+      - ns
+      - n_total
+      - ntotal
+      - total_n
+      - sample_size
+      - samplesize
+      - neff
+      - n_eff
+      - n_samples
+      - n_analyzed
     regex: []
 
   ncase:
-    aliases: [ncase, n_case, cases, n_cases, case_n, nc]
+    aliases:
+      - ncase
+      - n_case
+      - cases
+      - n_cases
+      - case_n
+      - nc
+      - n_cases_total
     regex: []
 
   ncontrol:
-    aliases: [ncontrol, n_control, controls, n_controls, control_n, nco]
+    aliases:
+      - ncontrol
+      - n_control
+      - controls
+      - n_controls
+      - control_n
+      - nco
+      - n_controls_total
     regex: []
 
   info:
-    aliases: [info, info_score, infoscore, imputation_info, imp_info, rsq, mach_r2]
+    aliases:
+      - info
+      - info_score
+      - infoscore
+      - imputation_info
+      - imp_info
+      - impute_info
+      - info_metric
+      - rsq
+      - mach_r2
+      - r2
+      - rsq_impute
+    regex: []
+
+  z:
+    aliases:
+      - z
+      - zscore
+      - z_score
+      - zstat
+    regex: []
+
+  direction:
+    aliases:
+      - direction
+      - dir
+    regex: []
+
+  qual:
+    aliases:
+      - qual
+      - quality
+      - imputation_quality
+    regex: []
+
+  study:
+    aliases:
+      - study
+      - cohort
+      - dataset
+    regex: []
+
+  variant_type:
+    aliases:
+      - variant_type
+      - snp_type
     regex: []

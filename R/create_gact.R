@@ -141,7 +141,7 @@ createDB <- function(version = NULL, dbdir = NULL) {
  dir.create(dbdir, recursive = TRUE)
  dirnames <- c(
   "glist", "gstat", "gsets", "gsea", "gbayes", "gtex", "gwas", "ldsc",
-  "marker", "drugdb", "download", "script", "vep",
+  "marker", "drugdb", "download", "script", "vep", "recipes",
   # optional resources
   "ensembl", "string", "stitch", "reactome", "dgi", "gwascatalog", "diseases"
  )
@@ -880,8 +880,10 @@ removeStatDB <- function(GAlist,studyID=NULL) {
 #' @param source Source of the summary statistics
 #' @param trait Trait being studied
 #' @param type Type of trait (binary or quantitative)
+#' @param category Category of trait (complex, biomarker)
+#' @param efo Experimental Factor Ontology (complex, biomarker)
 #' @param gender Gender of study participants
-#' @param ancestry Ancestry of study participants
+#' @param ancestry Ancestry of study participants (EUR, AFR, ,,,,, Mixed)
 #' @param build Genome build used in the study
 #' @param n Sample size
 #' @param ncase Number of cases
@@ -896,9 +898,11 @@ removeStatDB <- function(GAlist,studyID=NULL) {
 #'
 updateStatDB <- function(GAlist=NULL,
                          stat=NULL,
-                         source=NULL,
+                         source="unknown",
                          trait="unknown",
                          type="unknown",
+                         category="unknown",
+                         efo="unknown",
                          gender="unknown",
                          ancestry="unknown",
                          build="unknown",
@@ -907,6 +911,7 @@ updateStatDB <- function(GAlist=NULL,
                          ncontrol=NULL,
                          reference="unknown",
                          comments="none",
+                         recipe=NULL,
                          writeStatDB=TRUE) {
 
  # Update study information only - useful if we need to add extra information
@@ -920,11 +925,14 @@ updateStatDB <- function(GAlist=NULL,
  existing_nums <- as.integer(gsub("\\D", "", existing_ids))
  next_id_num <- ifelse(length(existing_nums) == 0, 1, max(existing_nums, na.rm = TRUE) + 1)
  studyID <- paste0("GWAS", next_id_num)
+ recipeID <- paste0("REC", next_id_num)
 
  GAlist$study$id[study_number] <- studyID
  GAlist$study$file[study_number] <- paste0(studyID,".txt")
  GAlist$study$trait[study_number] <- trait
  GAlist$study$type[study_number] <- type
+ GAlist$study$category[study_number] <- category
+ GAlist$study$efo[study_number] <- efo
  GAlist$study$gender[study_number] <- gender
  GAlist$study$ancestry[study_number] <- ancestry
  GAlist$study$build[study_number] <- build
@@ -933,13 +941,31 @@ updateStatDB <- function(GAlist=NULL,
  GAlist$study$ncontrol[study_number] <- ncontrol
  GAlist$study$comments[study_number] <- comments
 
- if(type=="binary") {
-  ntotal <- ncase + ncontrol
-  pcase <- ncase/(ncase+ncontrol)
-  GAlist$study$neff[study_number] <- ntotal*pcase*(1-pcase)
- }
- if(type=="quantitative") GAlist$study$neff[study_number] <- n
+ # After studyID creation
+ GAlist$study$created_at[study_number] <- Sys.time()
+ # Optional recipe hook
+ GAlist$study$recipeID[study_number] <- recipeID
 
+ #if(type=="binary") {
+ # ntotal <- ncase + ncontrol
+ # pcase <- ncase/(ncase+ncontrol)
+ # GAlist$study$neff[study_number] <- ntotal*pcase*(1-pcase)
+ #}
+ #if(type=="quantitative") GAlist$study$neff[study_number] <- n
+ if(type == "binary" && !is.null(ncase) && !is.null(ncontrol) &&
+    !is.na(ncase) && !is.na(ncontrol)) {
+
+  ntotal <- ncase + ncontrol
+  pcase <- ncase / ntotal
+  GAlist$study$neff[study_number] <- ntotal * pcase * (1 - pcase)
+
+ } else if(type == "quantitative") {
+
+  GAlist$study$neff[study_number] <- n
+
+ } else {
+  GAlist$study$neff[study_number] <- NA
+ }
  GAlist$study$reference[study_number] <- reference
  GAlist$study$source[study_number] <- source
 
@@ -953,7 +979,15 @@ updateStatDB <- function(GAlist=NULL,
  if(writeStatDB) {
   message("Perform quality control of external summary statistics")
 
-  if(any(!sapply(stat, class)[c("eaf", "b", "seb", "p")]%in%"numeric")) warning("Column classes wrong")
+  #if(any(!sapply(stat, class)[c("eaf", "b", "seb", "p")]%in%"numeric")) warning("Column classes wrong")
+  required <- c("eaf","b","seb","p")
+  missing <- setdiff(required, names(stat))
+  if(length(missing) > 0) {
+   stop(paste("Missing required columns:", paste(missing, collapse=", ")))
+  }
+  if(any(!sapply(stat[required], is.numeric))) {
+   warning("Some required columns are not numeric")
+  }
   stat$p <- as.numeric(stat$p)
   stat$p[stat$p==0] <- .Machine$double.xmin
 
@@ -967,134 +1001,315 @@ updateStatDB <- function(GAlist=NULL,
   if(file.exists(file_stat)) stop(paste("GWAS summary statistics file already exists:",
                                         file_stat))
   fwrite(stat, file_stat, col.names=TRUE)
+  if (!is.null(recipe)) {
+   recipe$qc <- attr(stat, "qc_metrics")
+   recipe_path <- file.path(
+    GAlist$dirs["gstat"],
+    paste0(recipeID, ".json")
+   )
+   jsonlite::write_json(
+    recipe,
+    recipe_path,
+    auto_unbox = TRUE,
+    pretty = TRUE
+   )
+   GAlist$study$recipe_file[study_number] <- basename(recipe_path)
+  }
+  GAlist$study$checksum[study_number] <- unname(tools::md5sum(file_stat))
  }
  GAlist$studies <- as.data.frame(GAlist$study)
  rownames(GAlist$studies) <- GAlist$studies$id
  return(GAlist)
 }
 
+
 #' @export
 #'
-qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.05,
-                     excludeINFO=0.8, excludeCGAT=TRUE, excludeINDEL=TRUE,
-                     excludeDUPS=TRUE, excludeMHC=FALSE, excludeMISS=0.05,
-                     excludeHWE=1e-12) {
+# qcStatDB <- function(GAlist=NULL, stat=NULL, excludeMAF=0.01, excludeMAFDIFF=0.05,
+#                      excludeINFO=0.8, excludeCGAT=TRUE, excludeINDEL=TRUE,
+#                      excludeDUPS=TRUE, excludeMHC=FALSE, excludeMISS=0.05,
+#                      excludeHWE=1e-12) {
+#
+#  # we use cpra to link sumstats and Glist
+#  cpra <- as.vector(fread(file = file.path(GAlist$dirs["marker"], "cpra.txt.gz"), header=FALSE, data.table=FALSE))[[1]]
+#  if(cpra[1]=="cpra") cpra <- cpra[-1]    # this is a fix
+#  rsids <- GAlist$rsids
+#
+#  # stat is a data.frame
+#  if(!is.data.frame(stat)) stop("stat should be  a data frame")
+#  if(!is.null(stat$rsids)) rownames(stat) <- stat$rsids
+#
+#  if (!"chr" %in% names(stat) || !"pos" %in% names(stat))
+#   stop("Input `stat` must contain 'chr' and 'pos' columns for mapping.")
+#
+#
+#  # Remove rows with missing values
+#  stat <- na.omit(stat)
+#
+#  # Handle zero values in p column
+#  stat$p <- as.numeric(stat$p)
+#  stat$p[stat$p == 0] <- .Machine$double.xmin
+#
+#
+#  # Internal summary statistic column format
+#  # data.frame(rsids, chr, pos, a1, a2, af, b, seb, stat, p, n)     (single trait)
+#  # list(marker=(rsids, chr, pos, a1, a2, af), b, seb, stat, p, n)  (multiple trait)
+#
+#  fm_internal <- c("marker","chr","pos","ea","nea","eaf","b","seb","p","n")
+#
+#  format <- "unknown"
+#
+#  if(all(fm_internal%in%colnames(stat))) format <- "internal"
+#  #if(all(fm_internal[1:9]%in%colnames(stat))) format <- "internal"
+#  if(all(fm_internal[1:5]%in%colnames(stat))) format <- "internal"
+#
+#  if(format=="unknown") {
+#   message("Column headings for stat object not found")
+#   message("Column headings for stat object should be:")
+#   print(fm_internal)
+#   stop("please revised your stat object accordingly")
+#  }
+#
+#  cpra1 <- paste(stat[,"chr"],stat[,"pos"],toupper(stat[,"ea"]),toupper(stat[,"nea"]),sep="_")
+#  cpra2 <- paste(stat[,"chr"],stat[,"pos"],toupper(stat[,"nea"]),toupper(stat[,"ea"]),sep="_")
+#
+#  mapped <- cpra1%in%cpra | cpra2%in%cpra
+#  message("Map markers based on cpra")
+#  message(paste("Number of markers in stat mapped to marker ids in GAlist:",sum(mapped)))
+#  message(paste("Number of markers in stat not mapped to marker ids in GAlist:",sum(!mapped)))
+#
+#  stat <- stat[mapped,]
+#  cpra1 <- cpra1[mapped]
+#  cpra2 <- cpra2[mapped]
+#  rws1 <- match(cpra1,cpra)
+#  rws2 <- match(cpra2,cpra)
+#
+#  stat$marker[!is.na(rws1)] <- rsids[rws1[!is.na(rws1)]]
+#  stat$marker[!is.na(rws2)] <- rsids[rws2[!is.na(rws2)]]
+#
+#  isdup <- duplicated(stat$marker)
+#  if(any(isdup)) message("Removing markers with duplicated ids")
+#  if(any(isdup)) message(paste("Number of markers duplicated in stat:",sum(isdup)))
+#  stat <- stat[!isdup,]
+#  rownames(stat) <- stat$marker
+#
+#  marker <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
+#                  data.table=FALSE)
+#
+#  rownames(marker) <- marker$rsids
+#
+#  #message("Filtering markers based on information in GAlist:")
+#  #message("")
+#
+#  #message("Filtering markers based on information in stat:")
+#  #message("")
+#
+#  if(!is.null(stat$marker)) marker_in_stat <- marker$rsids%in%stat$marker
+#  message(paste("Number of markers in stat also found in bimfiles:", sum(marker_in_stat)))
+#  message("")
+#  if(sum(marker_in_stat)==0) stop("No marker ids found in bimfiles")
+#
+#  # align marker and stat object
+#  marker <- marker[marker_in_stat,]
+#  stat <- stat[marker$rsids,]
+#
+#  aligned <- stat$ea==marker$ea
+#  message(paste("Number of effect alleles aligned with first allele in bimfiles:", sum(aligned)))
+#  message(paste("Number of effect alleles not aligned with first allele in bimfiles:", sum(!aligned)))
+#  message("")
+#
+#  #original
+#  effect <- stat[,"b"]
+#  effect_allele <- stat[,"ea"]
+#  non_effect_allele <- stat[,"nea"]
+#  if(!is.null(stat$eaf)) effect_allele_freq <- stat[,"eaf"]
+#
+#  # flip is not aligned
+#  stat[!aligned,"b"] <- -effect[!aligned]
+#  stat[!aligned,"ea"] <- non_effect_allele[!aligned]
+#  stat[!aligned,"nea"] <- effect_allele[!aligned]
+#  if(!is.null(stat$eaf)) stat[!aligned,"eaf"] <- 1-effect_allele_freq[!aligned]
+#
+#  if(is.null(stat$eaf)) {
+#   message("No effect allele frequency (eaf) provided - using eaf in database")
+#   stat$eaf <- marker$eaf
+#  }
+#
+#
+#  # exclude based on maf
+#  excludeMAFDIFF <- abs(marker$eaf-stat$eaf) > excludeMAFDIFF
+#  message(paste("Number of markers excluded by large difference between MAF difference:", sum(excludeMAFDIFF)))
+#  message("")
+#  stat <- stat[!excludeMAFDIFF,]
+#  marker <- marker[!excludeMAFDIFF,]
+#
+#  if(is.null(stat$n)) stat$n <- neff(seb=stat$seb,af=stat$eaf)
+#  colnames(stat)[1] <- "rsids"
+#  return(stat)
+# }
+qcStatDB <- function(GAlist = NULL,
+                     stat = NULL,
+                     excludeMAF = 0.01,
+                     excludeMAFDIFF = 0.05,
+                     excludeINFO = 0.8,
+                     excludeCGAT = TRUE,
+                     excludeINDEL = TRUE,
+                     excludeDUPS = TRUE,
+                     excludeMHC = FALSE,
+                     excludeMISS = 0.05,
+                     excludeHWE = 1e-12,
+                     return_metrics = TRUE) {
 
- # we use cpra to link sumstats and Glist
- cpra <- as.vector(fread(file = file.path(GAlist$dirs["marker"], "cpra.txt.gz"), header=FALSE, data.table=FALSE))[[1]]
- if(cpra[1]=="cpra") cpra <- cpra[-1]    # this is a fix
+ # -----------------------------
+ # Load reference
+ # -----------------------------
+ cpra <- data.table::fread(
+  file.path(GAlist$dirs["marker"], "cpra.txt.gz"),
+  header = FALSE
+ )[[1]]
+
+ if (cpra[1] == "cpra") cpra <- cpra[-1]
+
  rsids <- GAlist$rsids
 
- # stat is a data.frame
- if(!is.data.frame(stat)) stop("stat should be  a data frame")
- if(!is.null(stat$rsids)) rownames(stat) <- stat$rsids
+ # -----------------------------
+ # Validate input
+ # -----------------------------
+ if (!is.data.frame(stat)) stop("stat must be a data.frame")
 
- if (!"chr" %in% names(stat) || !"pos" %in% names(stat))
-  stop("Input `stat` must contain 'chr' and 'pos' columns for mapping.")
+ required <- c("chr","pos","ea","nea","p")
+ missing <- setdiff(required, names(stat))
+ if (length(missing)) {
+  stop("Missing required columns: ", paste(missing, collapse = ", "))
+ }
 
+ # -----------------------------
+ # Remove NA only for required fields
+ # -----------------------------
+ stat <- stat[complete.cases(stat[, required]), ]
 
- # Remove rows with missing values
- stat <- na.omit(stat)
-
- # Handle zero values in p column
+ # fix p-values
  stat$p <- as.numeric(stat$p)
  stat$p[stat$p == 0] <- .Machine$double.xmin
 
+ # -----------------------------
+ # Build CPRA keys
+ # -----------------------------
+ cpra1 <- paste(stat$chr, stat$pos,
+                toupper(stat$ea),
+                toupper(stat$nea), sep = "_")
 
- # Internal summary statistic column format
- # data.frame(rsids, chr, pos, a1, a2, af, b, seb, stat, p, n)     (single trait)
- # list(marker=(rsids, chr, pos, a1, a2, af), b, seb, stat, p, n)  (multiple trait)
+ cpra2 <- paste(stat$chr, stat$pos,
+                toupper(stat$nea),
+                toupper(stat$ea), sep = "_")
 
- fm_internal <- c("marker","chr","pos","ea","nea","eaf","b","seb","p","n")
+ mapped <- cpra1 %in% cpra | cpra2 %in% cpra
 
- format <- "unknown"
+ message("Mapped markers: ", sum(mapped))
+ message("Unmapped markers: ", sum(!mapped))
 
- if(all(fm_internal%in%colnames(stat))) format <- "internal"
- #if(all(fm_internal[1:9]%in%colnames(stat))) format <- "internal"
- if(all(fm_internal[1:5]%in%colnames(stat))) format <- "internal"
-
- if(format=="unknown") {
-  message("Column headings for stat object not found")
-  message("Column headings for stat object should be:")
-  print(fm_internal)
-  stop("please revised your stat object accordingly")
- }
-
- cpra1 <- paste(stat[,"chr"],stat[,"pos"],toupper(stat[,"ea"]),toupper(stat[,"nea"]),sep="_")
- cpra2 <- paste(stat[,"chr"],stat[,"pos"],toupper(stat[,"nea"]),toupper(stat[,"ea"]),sep="_")
-
- mapped <- cpra1%in%cpra | cpra2%in%cpra
- message("Map markers based on cpra")
- message(paste("Number of markers in stat mapped to marker ids in GAlist:",sum(mapped)))
- message(paste("Number of markers in stat not mapped to marker ids in GAlist:",sum(!mapped)))
-
- stat <- stat[mapped,]
+ stat <- stat[mapped, ]
  cpra1 <- cpra1[mapped]
  cpra2 <- cpra2[mapped]
- rws1 <- match(cpra1,cpra)
- rws2 <- match(cpra2,cpra)
+
+ # -----------------------------
+ # Assign marker IDs
+ # -----------------------------
+ rws1 <- match(cpra1, cpra)
+ rws2 <- match(cpra2, cpra)
+
+ stat$marker <- NA_character_
 
  stat$marker[!is.na(rws1)] <- rsids[rws1[!is.na(rws1)]]
  stat$marker[!is.na(rws2)] <- rsids[rws2[!is.na(rws2)]]
 
+ # -----------------------------
+ # Remove duplicates
+ # -----------------------------
  isdup <- duplicated(stat$marker)
- if(any(isdup)) message("Removing markers with duplicated ids")
- if(any(isdup)) message(paste("Number of markers duplicated in stat:",sum(isdup)))
- stat <- stat[!isdup,]
+
+ if (any(isdup)) {
+  message("Removing duplicated markers: ", sum(isdup))
+  stat <- stat[!isdup, ]
+ }
+
  rownames(stat) <- stat$marker
 
- marker <- fread(file.path(GAlist$dirs["marker"],"markers.txt.gz"),
-                 data.table=FALSE)
+ # -----------------------------
+ # Load marker reference
+ # -----------------------------
+ marker <- data.table::fread(
+  file.path(GAlist$dirs["marker"], "markers.txt.gz"),
+  data.table = FALSE
+ )
 
  rownames(marker) <- marker$rsids
 
- #message("Filtering markers based on information in GAlist:")
- #message("")
+ # align
+ marker <- marker[stat$marker, ]
+ stat   <- stat[marker$rsids, ]
 
- #message("Filtering markers based on information in stat:")
- #message("")
+ # -----------------------------
+ # Allele alignment
+ # -----------------------------
+ aligned <- stat$ea == marker$ea
 
- if(!is.null(stat$marker)) marker_in_stat <- marker$rsids%in%stat$marker
- message(paste("Number of markers in stat also found in bimfiles:", sum(marker_in_stat)))
- message("")
- if(sum(marker_in_stat)==0) stop("No marker ids found in bimfiles")
+ message("Aligned:", sum(aligned))
+ message("Flipped:", sum(!aligned))
 
- # align marker and stat object
- marker <- marker[marker_in_stat,]
- stat <- stat[marker$rsids,]
+ if (!all(aligned)) {
 
- aligned <- stat$ea==marker$ea
- message(paste("Number of effect alleles aligned with first allele in bimfiles:", sum(aligned)))
- message(paste("Number of effect alleles not aligned with first allele in bimfiles:", sum(!aligned)))
- message("")
+  stat$b[!aligned] <- -stat$b[!aligned]
 
- #original
- effect <- stat[,"b"]
- effect_allele <- stat[,"ea"]
- non_effect_allele <- stat[,"nea"]
- if(!is.null(stat$eaf)) effect_allele_freq <- stat[,"eaf"]
+  tmp_ea <- stat$ea
+  stat$ea[!aligned]  <- stat$nea[!aligned]
+  stat$nea[!aligned] <- tmp_ea[!aligned]
 
- # flip is not aligned
- stat[!aligned,"b"] <- -effect[!aligned]
- stat[!aligned,"ea"] <- non_effect_allele[!aligned]
- stat[!aligned,"nea"] <- effect_allele[!aligned]
- if(!is.null(stat$eaf)) stat[!aligned,"eaf"] <- 1-effect_allele_freq[!aligned]
+  if (!is.null(stat$eaf)) {
+   stat$eaf[!aligned] <- 1 - stat$eaf[!aligned]
+  }
+ }
 
- if(is.null(stat$eaf)) {
-  message("No effect allele frequency (eaf) provided - using eaf in database")
+ # -----------------------------
+ # Fill missing EAF
+ # -----------------------------
+ if (is.null(stat$eaf)) {
+  message("Using reference EAF")
   stat$eaf <- marker$eaf
  }
 
+ # -----------------------------
+ # MAF difference filter (FIXED)
+ # -----------------------------
+ maf_diff_flag <- abs(marker$eaf - stat$eaf) > excludeMAFDIFF
 
- # exclude based on maf
- excludeMAFDIFF <- abs(marker$eaf-stat$eaf) > excludeMAFDIFF
- message(paste("Number of markers excluded by large difference between MAF difference:", sum(excludeMAFDIFF)))
- message("")
- stat <- stat[!excludeMAFDIFF,]
- marker <- marker[!excludeMAFDIFF,]
+ message("Excluded by MAF diff:", sum(maf_diff_flag))
 
- if(is.null(stat$n)) stat$n <- neff(seb=stat$seb,af=stat$eaf)
- colnames(stat)[1] <- "rsids"
+ stat <- stat[!maf_diff_flag, ]
+ marker <- marker[!maf_diff_flag, ]
+
+ # -----------------------------
+ # Ensure sample size
+ # -----------------------------
+ if (is.null(stat$n) && !is.null(stat$seb)) {
+  stat$n <- neff(seb = stat$seb, af = stat$eaf)
+ }
+
+ # -----------------------------
+ # Metrics
+ # -----------------------------
+ metrics <- list(
+  n_input = length(mapped),
+  n_mapped = sum(mapped),
+  n_final = nrow(stat),
+  n_flipped = sum(!aligned),
+  n_removed_maf = sum(maf_diff_flag)
+ )
+
+ if (return_metrics) {
+  attr(stat, "qc_metrics") <- metrics
+ }
+
  return(stat)
 }
 

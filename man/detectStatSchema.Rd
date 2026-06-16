@@ -4,16 +4,34 @@
 \alias{detectStatSchema}
 \title{Detect GWAS summary-statistics schema using column names and values}
 \usage{
-detectStatSchema(stat, sample_n = 1e+05)
+detectStatSchema(
+  stat,
+  sample_n = 1e+05,
+  alias_path = NULL,
+  alias_dict = NULL,
+  w_name = 0.45,
+  w_value = 0.3,
+  w_alias = 0.25
+)
 }
 \arguments{
 \item{stat}{A \code{data.frame} containing summary statistics.}
 
 \item{sample_n}{Optional integer; number of rows to sample for detection.}
+
+\item{alias_path}{Optional path to alias YAML. Defaults to package extdata file.}
+
+\item{alias_dict}{Optional pre-loaded alias dictionary from \code{\link[=read_aliases_yaml]{read_aliases_yaml()}}.}
+
+\item{w_name}{Weight for name-pattern score.}
+
+\item{w_value}{Weight for value-distribution score.}
+
+\item{w_alias}{Weight for alias-dictionary score.}
 }
 \value{
 A list with elements \code{mapping}, \code{confidence}, \code{candidates},
-\code{warnings}, and \code{details}.
+\code{warnings}, \code{details}, and \code{alias_hits}.
 }
 \description{
 Scores candidate columns for canonical GWAS fields and returns a mapping

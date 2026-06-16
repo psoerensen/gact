@@ -7,9 +7,11 @@
 updateStatDB(
   GAlist = NULL,
   stat = NULL,
-  source = NULL,
+  source = "unknown",
   trait = "unknown",
   type = "unknown",
+  category = "unknown",
+  efo = "unknown",
   gender = "unknown",
   ancestry = "unknown",
   build = "unknown",
@@ -18,6 +20,7 @@ updateStatDB(
   ncontrol = NULL,
   reference = "unknown",
   comments = "none",
+  recipe = NULL,
   writeStatDB = TRUE
 )
 }
@@ -32,9 +35,13 @@ updateStatDB(
 
 \item{type}{Type of trait (binary or quantitative)}
 
+\item{category}{Category of trait (complex, biomarker)}
+
+\item{efo}{Experimental Factor Ontology (complex, biomarker)}
+
 \item{gender}{Gender of study participants}
 
-\item{ancestry}{Ancestry of study participants}
+\item{ancestry}{Ancestry of study participants (EUR, AFR, ,,,,, Mixed)}
 
 \item{build}{Genome build used in the study}
 
