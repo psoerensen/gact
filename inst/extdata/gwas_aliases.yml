@@ -139,9 +139,9 @@ fields:
       - "^mlogp$"
       - "^minus_log10_p$"
 
-  n:
+  "n":
     aliases:
-      - n
+      - "n"
       - ns
       - n_total
       - ntotal

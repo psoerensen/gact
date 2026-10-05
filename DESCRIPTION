@@ -1,13 +1,13 @@
 Package: gact
-Title: Genomic Assocation of Complex Traits
+Title: Genomic Association of Complex Traits
 Version: 0.0.0.1
 Authors@R: 
-    person("Peter", "Soerensen", , "pso@r-qgg.org", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    person("Peter", "Soerensen", , "pso@r-qgg.org", role = c("aut", "cre"))
 Description: Infrastructure for creating and using genomic association statistics for complex traits and diseases.
-License: `use_mit_license()`
+License: MIT + file LICENSE
 Encoding: UTF-8
-Imports: data.table, DT, shiny, R.utils, msigdbr
+Imports: data.table, DT, shiny, R.utils, msigdbr, assertthat, curl,
+    jsonlite, stringr
 Suggests: XML, RCurl, testthat (>= 3.0.0), yaml
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

@@ -1,6 +1,6 @@
 scoreTemplateMatch <- function(colnames, template_mapping) {
 
- clean <- function(x) tolower(gsub("[^a-z0-9]", "", x))
+ clean <- function(x) tolower(gsub("[^a-z0-9]", "", x, ignore.case = TRUE))
  cols <- clean(colnames)
 
  score <- 0
@@ -56,7 +56,7 @@ resolveTemplateMapping <- function(stat, template) {
  tpl <- getTemplateMapping(template)
  cols <- colnames(stat)
 
- clean <- function(x) tolower(gsub("[^a-z0-9]", "", x))
+ clean <- function(x) tolower(gsub("[^a-z0-9]", "", x, ignore.case = TRUE))
  clean_cols <- clean(cols)
 
  mapping <- setNames(vector("list", length(tpl)), names(tpl))
@@ -645,7 +645,7 @@ read_aliases_yaml <- function(path = NULL, must_exist = TRUE) {
     stop("Alias YAML must contain a top-level 'fields:' list.")
   }
 
-  clean_name <- function(z) tolower(gsub("[^a-z0-9]", "", as.character(z)))
+  clean_name <- function(z) tolower(gsub("[^a-z0-9]", "", as.character(z), ignore.case = TRUE))
   `%||%` <- function(a, b) if (is.null(a)) b else a
 
   out <- list(version = x$version %||% NA, fields = list())
@@ -667,7 +667,7 @@ read_aliases_yaml <- function(path = NULL, must_exist = TRUE) {
 #' @return A list with `score` matrix (`field x column`) and `hits`.
 #' @keywords internal
 apply_alias_dictionary <- function(col_names, alias_dict, fields) {
-  clean_name <- function(z) tolower(gsub("[^a-z0-9]", "", as.character(z)))
+  clean_name <- function(z) tolower(gsub("[^a-z0-9]", "", as.character(z), ignore.case = TRUE))
   clean_cols <- clean_name(col_names)
 
   score <- matrix(0, nrow = length(fields), ncol = length(col_names),
@@ -691,7 +691,7 @@ apply_alias_dictionary <- function(col_names, alias_dict, fields) {
       regex_hits <- vapply(col_names, function(nm) {
         any(vapply(fnode$regex, function(rx) {
           #grepl(rx, nm, ignore.case = TRUE, perl = TRUE)
-         clean_nm <- tolower(gsub("[^a-z0-9]", "", nm))
+         clean_nm <- tolower(gsub("[^a-z0-9]", "", nm, ignore.case = TRUE))
          grepl(rx, clean_nm, perl = TRUE)
         }, logical(1)))
       }, logical(1))
@@ -740,7 +740,7 @@ detectStatSchema <- function(stat, sample_n = 100000,
  }
 
  col_names <- colnames(stat)
- clean_names <- tolower(gsub("[^a-z0-9]", "", col_names))
+ clean_names <- tolower(gsub("[^a-z0-9]", "", col_names, ignore.case = TRUE))
 
  # ---- FIX 1: load alias_dict BEFORE use ----
  if (is.null(alias_dict)) {
@@ -906,10 +906,15 @@ detectStatSchema <- function(stat, sample_n = 100000,
   top <- scores[ord[1]]
   second <- if (length(ord) > 1) scores[ord[2]] else NA_real_
 
+  if (!is.finite(top)) {
+   return(list(best = NA_character_, confidence = 0,
+               candidates = character(0), ambiguous = FALSE))
+  }
+
   # ---- FIX 6: tie-breaking ----
   if (!is.na(second) && top == second) {
-   alias_bonus <- alias_score_tbl[field, ord]
-   ord <- ord[order(alias_bonus[ord], decreasing = TRUE)]
+   alias_bonus <- alias_score_tbl[field, ]
+   ord <- order(scores, alias_bonus, decreasing = TRUE)
   }
 
   best <- names(scores)[ord[1]]
@@ -1222,7 +1227,7 @@ normalizeStatSchema <- function(stat,
  canon <- c("marker", "chr", "pos", "ea", "nea", "eaf", "b", "seb", "p", "n", "ncase", "ncontrol", "info")
 
  for (nm in canon) {
-  src <- mapping[[nm]]
+  src <- if (nm %in% names(mapping)) mapping[[nm]] else NULL
   if (!is.null(src) && !is.na(src) && src %in% colnames(out)) {
    out[[nm]] <- out[[src]]
   }

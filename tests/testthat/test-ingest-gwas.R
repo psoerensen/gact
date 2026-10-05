@@ -1,4 +1,5 @@
 test_that("detectStatSchema identifies common GWAS columns", {
+  set.seed(20261005)
   stat <- data.frame(
     SNP = paste0("rs", 1:100),
     CHR = rep(1:2, each = 50),
@@ -20,6 +21,9 @@ test_that("detectStatSchema identifies common GWAS columns", {
   expect_equal(out$mapping[["ea"]], "A1")
   expect_equal(out$mapping[["nea"]], "A2")
   expect_equal(out$mapping[["p"]], "P")
+  expect_equal(out$mapping[["marker"]], "SNP")
+  expect_equal(out$mapping[["seb"]], "SE")
+  expect_equal(out$mapping[["n"]], "N")
 })
 
 test_that("normalizeStatSchema normalizes key fields", {

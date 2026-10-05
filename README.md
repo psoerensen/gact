@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-### An R Package for Creating a Database of Genomic Association of Complex Traits
+### An R Package for Creating a Database of Genomic Associations of Complex Traits
 
 The R package ***gact*** is designed for establishing and populating a
 comprehensive database focused on genomic associations with complex
@@ -156,6 +156,32 @@ Catalog](Document/Polygenic_scoring_pgscatalog.html)
 LD score regression for estimating genomic heritability and
 correlations.  
 [LD score regression](Document/LD_score_regression.html)
+
+### Workflow requirements and interpretation
+
+Use a genetic reference panel matched to the GWAS ancestry and genome
+build. The default database uses GRCh37; summary statistics from another
+build require coordinate conversion and checks of marker identity and
+allele orientation before ingestion. Review the mappings returned by
+`detectStatSchema()` and provide an explicit schema when a required
+field is ambiguous. `normalizeStatSchema()` and `validateStatSchema()`
+support checking the resulting canonical fields before writing to the
+database.
+
+The analysis tutorials use qgg implementations. BLR-MAGMA in these
+tutorials is the Bayesian gene-set workflow; it is distinct from running
+the standalone MAGMA executable. PoPS prioritizes genes and does not
+produce individual polygenic scores. Fine-mapping and polygenic-scoring
+examples have different inputs and model controls; retain the arguments
+and diagnostics for each run. Successful execution alone does not
+establish MCMC convergence.
+
+Reference preparation, LD computation, model fitting, and scoring have
+separate resource requirements. Check disk and memory capacity before
+computing genome-wide LD. Runtime depends on marker counts, reference
+sample size, model settings, and thread limits. Measurements of a
+tutorial example do not establish completion of every analysis reported
+in a manuscript.
 
 ### Workshop and Course Materials
 
