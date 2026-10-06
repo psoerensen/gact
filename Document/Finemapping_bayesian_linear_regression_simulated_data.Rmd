@@ -106,3 +106,70 @@ fit$cs <- getCredibleSets(Glist=Glist, fit=fit, sets=sets)
 head(fit$cs)
 
 ```
+
+## The same marker sets with standalone gsuite R packages
+
+The original qgg examples above remain the reference workflow. Development
+installations of gbase, gmap and gbayes provide familiar calls on the same
+statistics and marker sets. Use statistics from these selected BED people
+when enabling regional residual-variance learning.
+
+```{r standalone-finemapping, include=TRUE, eval=FALSE}
+# Reuse stat and sets from the simulation above; no new phenotype is simulated.
+# This tutorial's BIM has negative genetic-map entries. Preserve the original
+# and make a separate validated metadata copy (physical coordinates unchanged).
+source_bim <- "C:/Users/Projects/Examples/human.bim"
+validated_bim <- "C:/Users/Projects/Examples/human-validated-map.bim"
+if (file.exists(validated_bim)) stop("Choose a new validated BIM filename")
+bim <- read.table(source_bim, stringsAsFactors=FALSE)
+bim[!is.finite(bim[[3]]) | bim[[3]] < 0, 3] <- 0
+write.table(bim, validated_bim, quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+Gstandalone <- gbase::gprep(
+  bedfiles="C:/Users/Projects/Examples/human.bed", bimfiles=validated_bim,
+  famfiles="C:/Users/Projects/Examples/human.fam", rsids=stat$rsids)
+Gstandalone$assembly <- "simulated-human-tutorial"
+
+regional <- gmap::gmap(Glist=Gstandalone, stat=stat, sets=sets,
+  method="bayesC", algorithm="mcmc", nit=1000, nburn=100,
+  seed=10, output="full", verbose=TRUE)
+head(regional$stat) # bm: posterior mean, dm: PIP
+head(regional$post) # regional ve, derived vg, vb, pi, summed pip
+head(regional$conv) # native R-hat/ESS/MCSE and diagnostic statuses
+regional$cs        # named marginal-PIP groups
+regional$timings   # per-region LD, preparation and sampling times
+
+# Genome-wide regression reuses stored sparse LD. Its preparation is separate
+# from fitting; use the same 1000-marker window and zero cutoff as above.
+Gstandalone <- gbase::gprep(Gstandalone, task="sparseld",
+  out_prefix="C:/Users/Projects/Examples/human-standalone-ld",
+  max_distance_bp=0, max_distance_variants=1000, r2=0, nthreads=1)
+genome <- gbayes::gbayes(Glist=Gstandalone, stat=stat,
+  method="bayesC", algorithm="mcmc", nit=100, nburn=0,
+  seed=10, verbose=TRUE)
+head(genome$stat)
+genome$post
+genome$conv
+genome$cs <- gmap::getCredibleSets(Glist=Gstandalone, fit=genome, sets=sets)
+genome$cs
+```
+
+Dense regional MCMC computes full LD in memory using R's configured BLAS and
+requires positive-definite LD; it performs no truncation or PSD repair.
+`algorithm="mcmc-eigen"` preserves the explicit sparse-LD eigen route.
+`gbase::mapSets()` and `gbase::getLD()` expose marker membership and full
+regional correlation. The standalone grouping helper reproduces qgg CS2/CS3
+ordering and strict LD-squared cutoffs without depending on qgg at runtime.
+Marginal-PIP groups are not component credible sets with guaranteed coverage.
+
+The familiar fields retain native meanings: genome-wide `bm` uses standardized
+genotype/phenotype units, `post` has familiar summary rows and `conv` reports
+native R-hat/ESS/MCSE rather than Geweke z scores. `post$vg` averages retained
+joint-effect genetic variance and `post$pip` sums marker PIPs; no independent
+genetic-variance hyperparameter draw is added. The `mcmc` reference-LD residual
+adjustment defaults to .9. Both standalone BayesC/BayesR interfaces accept
+`mcmc-eigen`; genome-wide fitting requires verified exhaustive Glist LD blocks
+from `gbase::define_ld_blocks()` and uses retained-space residual normalization.
+The 1000-marker sliding-window resource above must be given a valid block
+partition before selecting that route. Single-chain fits are provisional. Reusing the same data and
+iteration counts does not make the two implementations identical.
