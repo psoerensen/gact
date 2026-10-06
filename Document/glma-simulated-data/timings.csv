@@ -1,0 +1,4 @@
+"method","native_glma","threads","individuals","markers","chromosomes","analysis_seconds","process_seconds","process_cpu_seconds","peak_resident_MiB","sampled_peak_private_MiB"
+"Linear regression","0.1.0",4,5000,37991,22,1.64,7.8912668,9.359375,153.359375,951.41015625
+"Prior-selected LOCO","0.1.0",4,5000,37991,22,124.12,129.18288,163.640625,391.7890625,1189.91015625
+"Gaussian LOCO","0.1.1",4,5000,37991,22,57,59.7374078,86.765625,386.109375,1185.203125

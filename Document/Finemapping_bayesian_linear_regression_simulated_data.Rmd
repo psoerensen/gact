@@ -16,6 +16,8 @@ This tutorial focus on fine-mapping using the Bayesian Linear Regression (BLR) m
 <br>
 
 
+For individual-level regression and chromosome-excluded mixed-model association on this panel, see the [glma analysis tutorial](Glma_linear_and_mixed_models_simulated_data.html), including the frozen phenotype, results, timings and memory measurements.
+
 #### Prepare simulated data used in fine-mapping examples 
 ```{r, include=TRUE, eval=FALSE}
 #library(qgg)
