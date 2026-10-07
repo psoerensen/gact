@@ -29,7 +29,7 @@ prepare regional projections once, then reuses them for fitting.
 Use the database and filtered EUR reference from the
 [sparse-LD example](Compute_sparseLD_1000G.html). gact supplies the harmonized
 statistics and sample sizes; Glist already contains the LD scores.
-The short interfaces below require gcorr 0.1.7 or later.
+The short interfaces below require gcorr 0.1.8 or later.
 
 ```{r prepare}
 library(gact)
@@ -102,33 +102,14 @@ correlations do not. Other annotations need their corresponding tagging scores.
 
 ## Regional HESS and rho-HESS
 
-HESS additionally needs the BED reference and a named list of independent
-LD-region marker sets (`regions`). See the [regional preparation guide](https://psoerensen.github.io/gtools/gsuite/docs/summary-statistic-analysis.html#regional-methods).
-Retrieve allele-labelled frames for this step; HESS checks and aligns them to
-the BED reference itself.
+Use Glist with independent LD regions already prepared by
+`gprep(task="eigen", sets=sets)`, and Z oriented to its reference alleles.
+HESS uses the saved regions and samples, projecting both traits together.
+The defaults assume no sample overlap.
 
 ```{r hess}
-library(gbase)
-
-# Convert an older qgg descriptor using its existing BED files if needed.
-if (!inherits(Glist, "gs_genotypes"))
-  Glist <- gprep(bedfiles=Glist$bedfiles, bimfiles=Glist$bimfiles,
-    famfiles=Glist$famfiles)
-
-ids <- intersect(rownames(stat$z), rownames(stat$n))
-ids <- intersect(ids, unlist(Glist$rsids, use.names=FALSE))
-stat_hess <- setNames(lapply(c("GWAS1", "GWAS2"), function(id)
-  getMarkerStat(GAlist=GAlist, studyID=id, rsids=ids)), c("GWAS1", "GWAS2"))
-
-# regions contains the marker names for each independent LD region.
-regions <- readRDS("path/to/EUR_LD_region_marker_sets.rds")
-projection <- gcorr_prepare_hess(stat_hess, Glist, regions=regions, nthreads=4)
-fit_hess <- gcorr_fit_hess(projection,
-  shared_sample_size=0, phenotypic_correlation=0)
-fit_hess$estimates[fit_hess$estimates$component == "total", ]
-
-# Reuse the same moments for one trait, without recomputing eigenvectors.
-fit_t2d <- gcorr_fit_hess(projection, "GWAS1")
+fit <- gcorr(Glist, stat, method="hess", nthreads=4)
+fit$estimates
 ```
 
 For these data, raw CAD HESS heritability is poorly determined and the genetic
