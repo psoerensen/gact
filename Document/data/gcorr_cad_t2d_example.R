@@ -1,5 +1,5 @@
 # Reuse the existing gact database, BED reference and stored LD scores.
-# Requires compatible development installations of gbase and gcorr 0.1.1.
+# Requires compatible development installations of gbase and gcorr.
 prepare_gcorr_cad_t2d <- function(GAlist, Glist, partition_file,
                                 study_ids=c('GWAS1','GWAS2'),
                                 common_study_ids=c('GWAS1','GWAS2','GWAS6')) {
@@ -19,6 +19,11 @@ prepare_gcorr_cad_t2d <- function(GAlist, Glist, partition_file,
     names(scores) <- score_ids
   } else {
     scores <- gact::getLDscoresDB(GAlist=GAlist,ancestry='EUR',version='1000G')
+  }
+  # Convert an existing qgg descriptor using the same physical reference files.
+  if (!inherits(Glist,'gs_genotypes')) {
+    Glist <- gbase::gprep(bedfiles=Glist$bedfiles,bimfiles=Glist$bimfiles,
+      famfiles=Glist$famfiles)
   }
   ids <- unlist(Glist$rsids,use.names=FALSE)
   chr <- as.character(unlist(Glist$chr,use.names=FALSE))

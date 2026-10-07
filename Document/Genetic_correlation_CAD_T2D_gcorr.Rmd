@@ -1,13 +1,9 @@
 ---
-title: "CAD and T2D genetic correlation with gcorr"
+title: "Genetic correlation with gcorr"
 author: "Peter Sørensen"
 date: "7 October 2026"
 output:
-  html_document:
-    toc: true
-    toc_depth: 2
-    toc_float: true
-    self_contained: true
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -15,44 +11,27 @@ knitr::opts_chunk$set(echo=TRUE, eval=FALSE)
 ```
 
 <style>
-.gcorr-table { overflow-x: auto; margin: 1.2em 0 1.6em; }
-.gcorr-table table { width: 100%; min-width: 520px; margin-bottom: 0;
-  font-variant-numeric: tabular-nums; }
-.gcorr-table thead th { border-bottom: 2px solid #bac5cf; background: #f3f6f8; }
-.gcorr-table th, .gcorr-table td { padding: 10px 12px !important; }
-.gcorr-table th:first-child, .gcorr-table td:first-child { text-align: left; }
-.gcorr-table th:not(:first-child), .gcorr-table td:not(:first-child) {
-  text-align: right; white-space: nowrap; }
-.gcorr-table tbody tr:nth-child(even) { background: #f8fafb; }
-.gcorr-table tbody tr:last-child td { border-bottom: 1px solid #d5dce2; }
-@media (max-width: 600px) {
-  .gcorr-table { font-size: 13px; }
-  .gcorr-table th, .gcorr-table td { padding: 8px !important; }
-}
+table { width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 12px !important; }
+thead { background: #f3f6f8; }
+tbody tr:nth-child(even) { background: #f8fafb; }
 </style>
 
-This example uses the **standalone gcorr R package** to estimate heritability
-and genetic correlation for type 2 diabetes (T2D) and coronary artery disease
-(CAD). It shows three workflows:
+## Introduction
 
-- Genome-wide LDSC, GNOVA and SumHer using stored LD scores.
-- Chromosome-level analysis using named marker sets.
-- Regional HESS/rho-HESS using shared projections from BED genotypes.
+This example estimates heritability and genetic correlation for type 2 diabetes
+(GWAS1) and coronary artery disease (GWAS2) using **gcorr** and a gact database.
+LDSC, GNOVA and SumHer reuse stored LD scores. HESS uses the BED reference to
+prepare regional projections once, then reuses them for fitting.
 
-The database and EUR reference are reused throughout. Stored LD scores are
-sufficient for the first two workflows. HESS processes one region at a time,
-so it does not require storing genome-wide LD matrices or eigenvectors.
+## Prepare the data
 
-## Prepare the inputs
+Use the database and filtered EUR reference from the
+[sparse-LD example](Compute_sparseLD_1000G.html).
+The preparation helper aligns alleles, reuses the stored scores and keeps the
+same marker selection and extracted `stat$n` as the website examples.
 
-Start from the database descriptor and filtered EUR reference used in the
-[sparse-LD example](Compute_sparseLD_1000G.html). The reference contains
-503 people and uses GRCh37 coordinates. Use compatible gbase and gcorr
-installations; these examples use **gcorr R 0.1.5 and native 0.1.4**.
-Chromosome sets use compact integer membership throughout fitting. See the
-[standalone installation guide](https://psoerensen.github.io/gtools/gsuite/docs/source-package-repository.html).
-
-```{r packages-and-reference}
+```{r prepare}
 library(gact)
 library(gbase)
 library(gcorr)
@@ -60,87 +39,43 @@ library(gcorr)
 GAlist <- readRDS("path/to/GAlist_hsa.0.0.1.rds")
 Glist <- readRDS("path/to/Glist_1000G_eur_filtered.rds")
 
-# Convert a qgg descriptor using the same genotype files, if needed.
-if (!inherits(Glist, "gs_genotypes")) {
-  Glist <- gbase::gprep(
-    bedfiles=Glist$bedfiles, bimfiles=Glist$bimfiles, famfiles=Glist$famfiles)
-}
-```
-
-The small helpers below align summary statistics, reference alleles and stored
-LD scores, and define the EUR regions. They use `Glist$ldscores` when available,
-otherwise the existing scores in the gact database.
-
-```{r workflow-helpers}
-work <- file.path(path.expand("~"), "gact-gcorr-example")
-dir.create(work, recursive=TRUE, showWarnings=FALSE)
+# Load the preparation helper and EUR region boundaries.
 base <- "https://psoerensen.github.io/gact/Document/data/"
-files <- c("EUR-fourier-ac125e47.bed", "gcorr_cad_t2d_example.R",
-           "gcorr_set_scores.R")
-for (name in files) {
-  destination <- file.path(work, name)
-  if (!file.exists(destination)) {
-    download.file(paste0(base, name), destination, mode="wb")
-  }
-}
-source(file.path(work, "gcorr_cad_t2d_example.R"))
-source(file.path(work, "gcorr_set_scores.R"))
+source(paste0(base, "gcorr_cad_t2d_example.R"))
+regions_file <- tempfile(fileext=".bed")
+download.file(paste0(base, "EUR-fourier-ac125e47.bed"), regions_file)
+input <- prepare_gcorr_cad_t2d(GAlist, Glist, regions_file)
+rm(GAlist, Glist)
 
-input <- prepare_gcorr_cad_t2d(
-  GAlist, Glist, file.path(work, "EUR-fourier-ac125e47.bed"))
-
-# The remaining analyses use the prepared inputs.
-rm(GAlist)
-invisible(gc())
+stat <- input$statistics
+ldscores <- input$ldscores
+blocks <- input$blocks
 ```
 
-Here, **GWAS1 is T2D** ([Mahajan et al., 2018](https://pubmed.ncbi.nlm.nih.gov/30297969/))
-and **GWAS2 is CAD** ([Nikpay et al., 2015](https://pubmed.ncbi.nlm.nih.gov/26343387/)).
-The helper keeps the common GWAS1/GWAS2/GWAS6 marker mask used by the website;
-GWAS6 contributes only to marker availability. This leaves **7,221,923 markers**
-in **1,702 regions**, with no additional genotype QC filter.
+## Genome-wide heritability and genetic correlation
 
-Keep the extracted **`stat$n`**. In this database it is approximately 49,071
-for T2D and 40,743 for CAD, using the binary-study information size
-`Ncase*Ncontrol/(Ncase+Ncontrol)`. The estimates below use that convention;
-they have not been transformed to liability-scale heritability. CAD includes
-multiple ancestries, so the EUR reference is an approximation.
-
-## Genome-wide analysis with stored LD scores
-
-LDSC estimates the marginal and cross-trait intercepts. GNOVA uses the fitted
-LDSC cross intercept. The SumHer example uses an **illustrative equal-marker
-baseline**, with the ordinary scores as its architecture; a different
-architecture requires the corresponding tagging scores.
-
-```{r genome-wide-fits}
-fit_ldsc <- gcorr_ldsc(
-  input$statistics, input$ldscores, input$blocks,
+```{r genome-wide}
+# LD score regression.
+fit_ldsc <- gcorr_ldsc(stat, ldscores, blocks,
   marker_count=input$reference_marker_count,
-  marginal_intercept="free",
-  maximum_chi_square=max(
-    .001 * max(vapply(input$statistics, function(x) max(x$n), numeric(1))), 80))
-
-fit_gnova <- gcorr_gnova(
-  input$statistics, input$blocks, input$ldscores,
-  overlap_intercepts=fit_ldsc$matrices$ldsc_intercept)
-
-architecture <- matrix(
-  unname(input$ldscores), ncol=1,
-  dimnames=list(names(input$ldscores), "baseline"))
-fit_sumher <- gcorr_sumher(
-  input$statistics, architecture,
-  c(baseline=input$reference_marker_count), input$ldscores, input$blocks,
-  reference_sample_size=input$Glist$n, inflation="multiplicative")
-
+  marginal_intercept="free", maximum_chi_square=80)
 fit_ldsc$estimates
+
+# GNOVA, using the LDSC cross-trait intercept.
+fit_gnova <- gcorr_gnova(stat, blocks, ldscores,
+  overlap_intercepts=fit_ldsc$matrices$ldsc_intercept)
 fit_gnova$estimates
+
+# SumHer with an equal-marker baseline.
+architecture <- matrix(unname(ldscores), ncol=1,
+  dimnames=list(names(ldscores), "baseline"))
+fit_sumher <- gcorr_sumher(stat, architecture,
+  c(baseline=input$reference_marker_count), ldscores, blocks,
+  reference_sample_size=input$Glist$n, inflation="multiplicative")
 fit_sumher$estimates
 ```
 
-The observed results are shown as **estimate ± standard error**.
-
-<div class="gcorr-table">
+Results are estimate ± standard error:
 
 | Method | T2D h² | CAD h² | Genetic correlation |
 | :--- | ---: | ---: | ---: |
@@ -148,176 +83,66 @@ The observed results are shown as **estimate ± standard error**.
 | GNOVA | 0.498 ± 0.028 | 0.111 ± 0.019 | 0.604 ± 0.059 |
 | SumHer baseline | 0.488 ± 0.029 | 0.362 ± 0.023 | 0.387 ± 0.027 |
 
-</div>
-
-LDSC and this SumHer baseline give very similar genetic correlations and T2D
-heritabilities. CAD heritability differs more, particularly for GNOVA, which
-uses a unit marginal noise baseline while the other two fits estimate
-intercepts or scalings. These are examples conditional on the supplied
-statistics, reference and model assumptions.
+The SumHer baseline is illustrative. GNOVA uses a unit marginal noise baseline;
+LDSC and this SumHer fit estimate intercepts or scalings.
 
 ## Chromosomes as marker sets
 
-Define each chromosome as a named set of marker IDs and fit the sets jointly.
-Chromosomes allow us to reuse the ordinary LD scores, assuming negligible LD
-between chromosomes. Other annotations with LD across set boundaries require
-annotation-specific LD scores.
+Define each chromosome as a set of marker names. These disjoint sets can reuse
+the ordinary LD scores, assuming negligible LD between chromosomes.
 
-```{r chromosome-sets}
-first <- input$statistics[[1]]
-sets <- split(first$rsids, paste0("chr", first$chr))
-sets <- sets[paste0("chr", 1:22)]
+```{r chromosomes}
+sets <- split(stat[[1]]$rsids, paste0("chr", stat[[1]]$chr))
+counts <- lengths(sets)
+scores <- gcorr_set_scores(stat[[1]]$rsids, ldscores, sets)
+overlap <- diag(as.numeric(counts))
+dimnames(overlap) <- list(names(sets), names(sets))
 
-set_input <- prepare_gcorr_set_scores(
-  first$rsids, input$ldscores, sets, marker_counts=lengths(sets))
-fit_sets <- gcorr_ldsc_partitioned(
-  input$statistics, set_input$annotation_ld_scores, input$ldscores,
-  set_input$annotation_sums, input$blocks,
-  annotation_overlap=set_input$annotation_overlap,
-  reference_sample_size=input$Glist$n,
-  reference_marker_count=set_input$reference_marker_count,
-  corrected=FALSE, marginal_intercept="free", overlap_intercept=0)
-
+fit_sets <- gcorr_ldsc_partitioned(stat, scores, ldscores, counts, blocks,
+  annotation_overlap=overlap, reference_sample_size=input$Glist$n,
+  reference_marker_count=sum(counts),
+  marginal_intercept="free", overlap_intercept=0)
 head(fit_sets$estimates)
-fit_sets$matrices$category_genetic_covariance
-fit_sets$matrices$category_genetic_correlation
 ```
 
-This example assumes no shared CAD/T2D participants and fixes the cross-trait
-intercept to zero. That also excludes a cross-trait confounding intercept,
-so its totals can differ from the freely estimated genome-wide fit.
-
-The first five chromosomes and the joint-model total illustrate the output
-(estimate ± standard error):
-
-<div class="gcorr-table">
-
-| Set | T2D h² | CAD h² | Genetic correlation |
-| :--- | ---: | ---: | ---: |
-| chr1 | 0.0325 ± 0.0056 | 0.0287 ± 0.0041 | 0.607 ± 0.087 |
-| chr2 | 0.0420 ± 0.0080 | 0.0330 ± 0.0048 | 0.467 ± 0.085 |
-| chr3 | 0.0419 ± 0.0063 | 0.0213 ± 0.0050 | 0.651 ± 0.068 |
-| chr4 | 0.0264 ± 0.0055 | 0.0133 ± 0.0038 | 0.642 ± 0.159 |
-| chr5 | 0.0252 ± 0.0065 | 0.0113 ± 0.0023 | 0.583 ± 0.169 |
-| **All 22 chromosomes** | **0.506 ± 0.029** | **0.324 ± 0.021** | **0.568 ± 0.026** |
-
-</div>
-
-Set heritabilities and covariances sum to the joint-model total; correlations
-do not. Some chromosome correlations are imprecise, and three raw ratios
-exceed one. The plot retains these estimates and their approximate 95% intervals.
-
-![Heritability and genetic correlation across all 22 chromosome sets](data/gcorr-chromosome-set-results.png)
+Here the cross-trait intercept is fixed to zero, assuming no sample overlap or
+cross-trait confounding. Heritabilities and covariances sum across sets;
+correlations do not. Other annotations need their corresponding tagging scores.
 
 ## Regional HESS and rho-HESS
 
-For regional analysis, prepare the projections once for all supplied traits.
-gcorr reads each region from the BED reference, shares its decomposition across
-traits, and retains compact moments for fitting. Large matrices and
-eigenvectors are discarded after each region.
+```{r hess}
+# Prepare all regions for both traits. No LD/eigenvector files are saved.
+projection <- gcorr_prepare_hess(stat, input$Glist,
+  regions=input$regions, nthreads=4)
 
-Start with chromosome 22 to check the workflow:
-
-```{r chromosome-pilot}
-regions22 <- input$regions[grepl("^chr22_", names(input$regions))]
-projection22 <- gcorr_prepare_hess(
-  input$statistics, input$Glist, regions=regions22, nthreads=4)
-
-fit22 <- gcorr_fit_hess(
-  projection22, c("GWAS1", "GWAS2"),
-  shared_sample_size=0, phenotypic_correlation=0)
-head(fit22$estimates)
-```
-
-The pilot's total describes a chromosome-only model. For genome-wide totals,
-prepare all regions together so the joint correction covers the whole genome:
-
-```{r genome-hess}
-projection <- gcorr_prepare_hess(
-  input$statistics, input$Glist, regions=input$regions, nthreads=4)
-
-fit_hess <- gcorr_fit_hess(
-  projection, c("GWAS1", "GWAS2"),
+# Fit heritability and genetic correlation from the prepared moments.
+fit_hess <- gcorr_fit_hess(projection,
   shared_sample_size=0, phenotypic_correlation=0)
 fit_hess$estimates[fit_hess$estimates$component == "total", ]
 
-# Fit a single prepared trait without recomputing LD or eigenvectors.
+# Fit one trait using the same preparation.
 fit_t2d <- gcorr_fit_hess(projection, "GWAS1")
 ```
 
-The automatic rank budget selects at most 11 components per region for these
-genome-wide inputs. Truncation improves conditioning but discards signal.
-Inspect `projection$rank_policy` and `fit_hess$diagnostics$conditioning` when
-applying this workflow to other data. To reuse it in a later session, save the
-compact object with `saveRDS(projection, "hess-projection.rds")`.
+For these data, raw CAD HESS heritability is poorly determined and the genetic
+correlation exceeds one; that ratio is not interpretable as a biological
+correlation. The estimates use the database's sample-size convention and are
+not liability-scale heritabilities. Genomic-control adjustments remain
+sensitivity analyses. See the [gcorr guide](https://psoerensen.github.io/gtools/gsuite/docs/summary-statistic-analysis.html)
+for these options and assumptions.
 
-### Interpret the HESS results
+## Time and memory
 
-At the original Z scale, CAD heritability is close to zero and poorly
-determined, giving a genetic-correlation ratio above one. This ratio cannot
-be interpreted as a biological correlation.
+Recorded on an Intel Core i7-1365U with 16 GB RAM. Memory is the whole R process's
+resident peak with the required analysis inputs loaded; data preparation,
+loading and saving are outside the timed step. HESS preparation uses four threads.
 
-The CAD paper reports genomic control at cohort and final meta-analysis
-levels. We can illustrate sensitivity to its final factor of 1.18 using the
-same saved moments:
-
-```{r hess-sensitivity}
-fit_sensitivity <- gcorr_fit_hess(
-  projection, c("GWAS1", "GWAS2"),
-  shared_sample_size=0, phenotypic_correlation=0,
-  genomic_control=c(GWAS1=1, GWAS2=1.18),
-  genomic_control_provenance=c(
-    GWAS1="Unchanged T2D Z scale",
-    GWAS2=paste("Sensitivity: final CAD meta-analysis factor 1.18;",
-                "earlier cohort corrections have not been reconstructed")))
-fit_sensitivity$estimates[
-  fit_sensitivity$estimates$component == "total", ]
-```
-
-<div class="gcorr-table">
-
-| HESS input scale | T2D h² | CAD h² | Genetic correlation |
-| :--- | ---: | ---: | ---: |
-| Original | 0.274 ± 0.018 | 0.013 ± 0.028 | 1.221 ± 0.333* |
-| Partial CAD adjustment | 0.274 ± 0.018 | 0.168 ± 0.024 | 0.371 ± 0.021 |
-
-</div>
-
-\*The out-of-range ratio has only a descriptive jackknife SE.
-The partial adjustment is a **sensitivity analysis**, conditional on the stored
-release using that final correction. Earlier cohort corrections remain
-unresolved. It is not a validated full correction. The current HESS default
-uses the original software variance equations for h²/covariance and a regional
-jackknife for genome-wide correlation.
-
-## Observed time and memory
-
-These examples were rerun with **gcorr R 0.1.5/native 0.1.4**, R 4.4.1,
-Windows 11, an Intel Core i7-1365U and 16 GB RAM. Each step used a separate
-R process, with no concurrent builds or analyses. The native OpenMP maximum
-was four; HESS decoding and matrix products used four threads. Input loading and output saving
-are excluded from the times.
-
-Memory is resident memory for the **entire R process**, sampled every 200 ms.
-“Before” is measured after loading the required inputs and garbage collection;
-“Peak” is the maximum during that step. Both include marker metadata and
-statistics. These workers do not load `GAlist`. The chromosome row includes
-matching sets to integer indices and fitting with compact scores.
-
-<div class="gcorr-table">
-
-| Step | Time | Before (GiB) | Peak (GiB) |
-| :--- | ---: | ---: | ---: |
-| LDSC fit | 9.3 s | 1.53 | 3.02 |
-| GNOVA fit | 6.4 s | 1.54 | 3.09 |
-| SumHer baseline fit | 12.9 s | 1.58 | 3.53 |
-| Chromosome sets and fit | 29.9 s | 1.60 | 3.27 |
-| HESS preparation | 15 min 21 s | 2.34 | 5.76 |
-| HESS pair fit: original scale | 4.0 s | 0.12 | 0.38 |
-| HESS pair fit: partial adjustment | 3.4 s | 0.12 | 0.43 |
-
-</div>
-
-HESS prepares the regional projections once. Both pair fits above reuse these
-new projections. Resident memory excludes paged allocations; it is a process
-measurement, not the size of the numerical solver alone.
+| Step | Time | Peak resident memory |
+| :--- | ---: | ---: |
+| LDSC | 9.3 s | 3.02 GiB |
+| GNOVA | 6.4 s | 3.09 GiB |
+| SumHer baseline | 12.9 s | 3.53 GiB |
+| Chromosome sets and fit | 29.9 s | 3.27 GiB |
+| HESS preparation | 18 min 49 s | 3.18 GiB |
+| HESS pair fit from prepared moments | 3.3–3.6 s | 0.43 GiB |
