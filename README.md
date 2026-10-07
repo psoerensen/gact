@@ -205,6 +205,12 @@ LD score regression for estimating genomic heritability and
 correlations.  
 [LD score regression](Document/LD_score_regression.html)
 
+CAD/T2D genetic correlation with standalone gcorr: stored LD scores,
+regional HESS/rho-HESS, timing and memory.
+
+[Genetic correlation with
+gcorr](Document/Genetic_correlation_CAD_T2D_gcorr.html)
+
 ### Workflow requirements and interpretation
 
 Use a genetic reference panel matched to the GWAS ancestry and genome
@@ -216,13 +222,14 @@ field is ambiguous. `normalizeStatSchema()` and `validateStatSchema()`
 support checking the resulting canonical fields before writing to the
 database.
 
-The analysis tutorials use qgg implementations. BLR-MAGMA in these
-tutorials is the Bayesian gene-set workflow; it is distinct from running
-the standalone MAGMA executable. PoPS prioritizes genes and does not
-produce individual polygenic scores. Fine-mapping and polygenic-scoring
-examples have different inputs and model controls; retain the arguments
-and diagnostics for each run. Successful execution alone does not
-establish MCMC convergence.
+Most analysis tutorials use qgg implementations; the glma and gcorr
+tutorials identify their standalone gsuite packages explicitly.
+BLR-MAGMA in these tutorials is the Bayesian gene-set workflow; it is
+distinct from running the standalone MAGMA executable. PoPS prioritizes
+genes and does not produce individual polygenic scores. Fine-mapping and
+polygenic-scoring examples have different inputs and model controls;
+retain the arguments and diagnostics for each run. Successful execution
+alone does not establish MCMC convergence.
 
 Reference preparation, LD computation, model fitting, and scoring have
 separate resource requirements. Check disk and memory capacity before

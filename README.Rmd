@@ -153,6 +153,11 @@ Polygenic scoring (PGS) using summary statistics from PGS catalog and biological
 LD score regression for estimating genomic heritability and correlations.    
 [LD score regression](Document/LD_score_regression.html)  
 
+CAD/T2D genetic correlation with standalone gcorr: stored LD scores,
+regional HESS/rho-HESS, timing and memory.
+
+[Genetic correlation with gcorr](Document/Genetic_correlation_CAD_T2D_gcorr.html)
+
 
 ### Workflow requirements and interpretation
 
@@ -164,7 +169,9 @@ explicit schema when a required field is ambiguous. `normalizeStatSchema()` and
 `validateStatSchema()` support checking the resulting canonical fields before
 writing to the database.
 
-The analysis tutorials use qgg implementations. BLR-MAGMA in these tutorials is
+Most analysis tutorials use qgg implementations; the glma and gcorr tutorials
+identify their standalone gsuite packages explicitly. BLR-MAGMA in these
+tutorials is
 the Bayesian gene-set workflow; it is distinct from running the standalone
 MAGMA executable. PoPS prioritizes genes and does not produce individual
 polygenic scores. Fine-mapping and polygenic-scoring examples have different

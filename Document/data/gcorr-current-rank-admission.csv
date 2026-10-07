@@ -1,0 +1,5 @@
+"trait","sample_size","retained_rank","correction_denominator","analysis"
+"GWAS1",49071.2732949614,1200,0.975545774148004,"gcorr_chr22"
+"GWAS2",40743.1524049809,1200,0.970547198015701,"gcorr_chr22"
+"GWAS1",49071.2732949614,33971,0.30772124465154,"gcorr_genome"
+"GWAS2",40743.1524049809,33971,0.166215719826161,"gcorr_genome"
