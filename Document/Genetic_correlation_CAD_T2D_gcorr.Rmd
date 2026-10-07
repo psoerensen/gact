@@ -27,55 +27,53 @@ prepare regional projections once, then reuses them for fitting.
 ## Prepare the data
 
 Use the database and filtered EUR reference from the
-[sparse-LD example](Compute_sparseLD_1000G.html).
-The preparation helper aligns alleles, reuses the stored scores and keeps the
-same marker selection and extracted `stat$n` as the website examples.
+[sparse-LD example](Compute_sparseLD_1000G.html). gact supplies the harmonized
+statistics and sample sizes; Glist already contains the LD scores.
+The short interfaces below require gcorr 0.1.7 or later.
 
 ```{r prepare}
 library(gact)
-library(gbase)
 library(gcorr)
 
 GAlist <- readRDS("path/to/GAlist_hsa.0.0.1.rds")
 Glist <- readRDS("path/to/Glist_1000G_eur_filtered.rds")
 
-# Load the preparation helper and EUR region boundaries.
-base <- "https://psoerensen.github.io/gact/Document/data/"
-source(paste0(base, "gcorr_cad_t2d_example.R"))
-regions_file <- tempfile(fileext=".bed")
-download.file(paste0(base, "EUR-fourier-ac125e47.bed"), regions_file)
-input <- prepare_gcorr_cad_t2d(GAlist, Glist, regions_file)
-rm(GAlist, Glist)
+studyIDs <- c("GWAS1", "GWAS2", "GWAS6")
+stat <- getMarkerStat(GAlist=GAlist, studyID=studyIDs)
 
-stat <- input$statistics
-ldscores <- input$ldscores
-blocks <- input$blocks
+# Keep the common three-study marker selection; fit T2D and CAD.
+stat <- list(z=stat$z[, 1:2, drop=FALSE],
+             n=stat$n[, 1:2, drop=FALSE])
 ```
 
 ## Genome-wide heritability and genetic correlation
 
 ```{r genome-wide}
-# LD score regression.
-fit_ldsc <- gcorr_ldsc(stat, ldscores, blocks,
-  marker_count=input$reference_marker_count,
-  marginal_intercept="free", maximum_chi_square=80)
+fit_ldsc <- gcorr(Glist, stat, method="ldsc")
 fit_ldsc$estimates
 
-# GNOVA, using the LDSC cross-trait intercept.
-fit_gnova <- gcorr_gnova(stat, blocks, ldscores,
-  overlap_intercepts=fit_ldsc$matrices$ldsc_intercept)
+fit_gnova <- gcorr(Glist, stat, method="gnova")
 fit_gnova$estimates
 
-# SumHer with an equal-marker baseline.
-architecture <- matrix(unname(ldscores), ncol=1,
-  dimnames=list(names(ldscores), "baseline"))
-fit_sumher <- gcorr_sumher(stat, architecture,
-  c(baseline=input$reference_marker_count), ldscores, blocks,
-  reference_sample_size=input$Glist$n, inflation="multiplicative")
+fit_sumher <- gcorr(Glist, stat, method="sumher")
 fit_sumher$estimates
 ```
 
-Results are estimate ± standard error:
+The wrapper matches marker names, reuses stored scores and supplies delete
+blocks. LDSC estimates intercepts and excludes squared Z above 80. GNOVA uses
+the LDSC cross-trait intercept by default; SumHer uses an equal-marker baseline
+with multiplicative scaling. The extracted `stat$n` is unchanged.
+
+For LDSC, scores can also be retrieved directly from gact:
+
+```{r direct-ldsc}
+ldscores <- getLDscoresDB(GAlist=GAlist, ancestry="EUR", version="1000G")
+fit <- gcorr::ldsc(z=stat$z, n=stat$n, ldscores=ldscores, what="rg")
+fit$rg
+```
+
+The direct interface leaves squared-Z filtering optional. Recorded example
+results, with the cutoff of 80, are estimate ± standard error:
 
 | Method | T2D h² | CAD h² | Genetic correlation |
 | :--- | ---: | ---: | ---: |
@@ -92,16 +90,9 @@ Define each chromosome as a set of marker names. These disjoint sets can reuse
 the ordinary LD scores, assuming negligible LD between chromosomes.
 
 ```{r chromosomes}
-sets <- split(stat[[1]]$rsids, paste0("chr", stat[[1]]$chr))
-counts <- lengths(sets)
-scores <- gcorr_set_scores(stat[[1]]$rsids, ldscores, sets)
-overlap <- diag(as.numeric(counts))
-dimnames(overlap) <- list(names(sets), names(sets))
-
-fit_sets <- gcorr_ldsc_partitioned(stat, scores, ldscores, counts, blocks,
-  annotation_overlap=overlap, reference_sample_size=input$Glist$n,
-  reference_marker_count=sum(counts),
-  marginal_intercept="free", overlap_intercept=0)
+sets <- getMarkerSets(GAlist=GAlist, feature="Chromosomes")
+fit_sets <- gcorr(Glist, stat, sets=sets, method="ldsc",
+  set_model="grouped", overlap_intercept=0)
 head(fit_sets$estimates)
 ```
 
@@ -111,17 +102,32 @@ correlations do not. Other annotations need their corresponding tagging scores.
 
 ## Regional HESS and rho-HESS
 
-```{r hess}
-# Prepare all regions for both traits. No LD/eigenvector files are saved.
-projection <- gcorr_prepare_hess(stat, input$Glist,
-  regions=input$regions, nthreads=4)
+HESS additionally needs the BED reference and a named list of independent
+LD-region marker sets (`regions`). See the [regional preparation guide](https://psoerensen.github.io/gtools/gsuite/docs/summary-statistic-analysis.html#regional-methods).
+Retrieve allele-labelled frames for this step; HESS checks and aligns them to
+the BED reference itself.
 
-# Fit heritability and genetic correlation from the prepared moments.
+```{r hess}
+library(gbase)
+
+# Convert an older qgg descriptor using its existing BED files if needed.
+if (!inherits(Glist, "gs_genotypes"))
+  Glist <- gprep(bedfiles=Glist$bedfiles, bimfiles=Glist$bimfiles,
+    famfiles=Glist$famfiles)
+
+ids <- intersect(rownames(stat$z), rownames(stat$n))
+ids <- intersect(ids, unlist(Glist$rsids, use.names=FALSE))
+stat_hess <- setNames(lapply(c("GWAS1", "GWAS2"), function(id)
+  getMarkerStat(GAlist=GAlist, studyID=id, rsids=ids)), c("GWAS1", "GWAS2"))
+
+# regions contains the marker names for each independent LD region.
+regions <- readRDS("path/to/EUR_LD_region_marker_sets.rds")
+projection <- gcorr_prepare_hess(stat_hess, Glist, regions=regions, nthreads=4)
 fit_hess <- gcorr_fit_hess(projection,
   shared_sample_size=0, phenotypic_correlation=0)
 fit_hess$estimates[fit_hess$estimates$component == "total", ]
 
-# Fit one trait using the same preparation.
+# Reuse the same moments for one trait, without recomputing eigenvectors.
 fit_t2d <- gcorr_fit_hess(projection, "GWAS1")
 ```
 
@@ -136,7 +142,9 @@ for these options and assumptions.
 
 Recorded on an Intel Core i7-1365U with 16 GB RAM. Memory is the whole R process's
 resident peak with the required analysis inputs loaded; data preparation,
-loading and saving are outside the timed step. HESS preparation uses four threads.
+loading and saving are outside the timed step. These timings measure the numerical
+fits; a GNOVA workflow call also estimates its LDSC intercept unless one is
+supplied. HESS preparation uses four threads.
 
 | Step | Time | Peak resident memory |
 | :--- | ---: | ---: |
