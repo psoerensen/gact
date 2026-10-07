@@ -27,32 +27,35 @@ The recorded analysis uses 5,000 individuals, 37,991 filtered markers on
 
 ## Prepare the data
 
-Use the `human.bed`, `human.bim` and `human.fam` files from the fine-mapping
-example and compatible installations of [gbase and glma](https://psoerensen.github.io/gtools/gsuite/docs/source-package-repository.html).
-The code below loads the supplied phenotype and filtered marker list.
-This panel has negative genetic-map entries, so create a corrected BIM copy
-and keep the original file.
+Choose an existing working directory. Download the simulated PLINK files,
+prepare Glist and apply the usual marker filters. Use gbase 0.1.1 or later and
+a compatible [glma installation](https://psoerensen.github.io/gtools/gsuite/docs/source-package-repository.html).
+The example supplies a BIM file with 13 invalid genetic-map values corrected;
+marker identities, positions, alleles and BED genotypes are unchanged.
 
 ```{r prepare}
 library(gbase)
 library(glma)
 
-work <- "path/to/simulated-human-data"
+setwd("C:/Users/Projects/Examples")
+url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/"
 base <- "https://psoerensen.github.io/gact/Document/glma-simulated-data/"
 
-# Correct the genetic-map column in a separate metadata file.
-bim <- read.table(file.path(work, "human.bim"), stringsAsFactors=FALSE)
-bim[!is.finite(bim[[3]]) | bim[[3]] < 0, 3] <- 0
-validated_bim <- file.path(work, "human-validated-map.bim")
-write.table(bim, validated_bim, quote=FALSE, row.names=FALSE, col.names=FALSE)
+# Download the simulated genotype data.
+download.file(paste0(url, "human.bed"), "human.bed", mode="wb")
+download.file(paste0(base, "human.bim"), "human.bim")
+download.file(paste0(url, "human.fam"), "human.fam")
 
-selected <- readLines(paste0(base, "selected-markers.txt"))
+# Prepare Glist and filter markers.
+Glist <- gprep(study="Simulation", bedfiles="human.bed",
+  bimfiles="human.bim", famfiles="human.fam")
+rsids <- gfilter(Glist, maf=0.05, missing=0.05, hwe=1e-12,
+  ambiguous=TRUE, indels=TRUE, mhc=FALSE)
+Glist <- gprep(study="Simulation", bedfiles="human.bed", rsids=rsids)
+
+# Load the example phenotype.
 phenotypes <- read.csv(paste0(base, "example-phenotypes.csv"),
   colClasses=c("character", "numeric"))
-
-Glist <- gprep(study="gact simulated-human example",
-  bedfiles=file.path(work, "human.bed"), bimfiles=validated_bim,
-  famfiles=file.path(work, "human.fam"), rsids=selected)
 y <- setNames(phenotypes$phenotype, phenotypes$id)
 ```
 
@@ -99,27 +102,15 @@ calibration and complete source-package qualification remain open.
 
 ## Several genetic background components
 
-Supply a named list of disjoint marker sets. Each set gets a variance component;
-unassigned markers form an automatic `background` component. For this simulation,
-put the windows around the known causal markers into one group:
+Supply each chromosome as a named marker set. The model fits one variance
+component per chromosome:
 
 ```{r components}
-markers <- unlist(Glist$rsids, use.names=FALSE)
-chromosome <- unlist(Glist$chr, use.names=FALSE)
-position <- unlist(Glist$pos, use.names=FALSE)
-causal <- readLines(paste0(base, "causal-markers.txt"))
-at <- match(causal, markers)
-stopifnot(!anyNA(at))
-
-in_regions <- rep(FALSE, length(markers))
-for (i in at) in_regions <- in_regions |
-  (chromosome==chromosome[i] & abs(position-position[i])<=1000000)
-sets <- list(candidate_regions=markers[in_regions])
+sets <- getChromosomeSets(Glist)
 
 components <- glma(y, Glist, sets=sets,
   method="infinitesimal_loco", threads=4)
 components$fit$components
-components$fit$loco_components
 
 component_prior <- glma(y, Glist, sets=sets,
   method="prior_selected_loco", threads=4)

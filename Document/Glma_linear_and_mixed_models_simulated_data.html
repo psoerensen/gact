@@ -375,31 +375,34 @@ causal markers.</p>
 </div>
 <div id="prepare-the-data" class="section level2">
 <h2>Prepare the data</h2>
-<p>Use the <code>human.bed</code>, <code>human.bim</code> and
-<code>human.fam</code> files from the fine-mapping example and
-compatible installations of <a href="https://psoerensen.github.io/gtools/gsuite/docs/source-package-repository.html">gbase
-and glma</a>. The code below loads the supplied phenotype and filtered
-marker list. This panel has negative genetic-map entries, so create a
-corrected BIM copy and keep the original file.</p>
+<p>Choose an existing working directory. Download the simulated PLINK
+files, prepare Glist and apply the usual marker filters. Use gbase 0.1.1
+or later and a compatible <a href="https://psoerensen.github.io/gtools/gsuite/docs/source-package-repository.html">glma
+installation</a>. The example supplies a BIM file with 13 invalid
+genetic-map values corrected; marker identities, positions, alleles and
+BED genotypes are unchanged.</p>
 <pre class="r"><code>library(gbase)
 library(glma)
 
-work &lt;- &quot;path/to/simulated-human-data&quot;
+setwd(&quot;C:/Users/Projects/Examples&quot;)
+url &lt;- &quot;https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/&quot;
 base &lt;- &quot;https://psoerensen.github.io/gact/Document/glma-simulated-data/&quot;
 
-# Correct the genetic-map column in a separate metadata file.
-bim &lt;- read.table(file.path(work, &quot;human.bim&quot;), stringsAsFactors=FALSE)
-bim[!is.finite(bim[[3]]) | bim[[3]] &lt; 0, 3] &lt;- 0
-validated_bim &lt;- file.path(work, &quot;human-validated-map.bim&quot;)
-write.table(bim, validated_bim, quote=FALSE, row.names=FALSE, col.names=FALSE)
+# Download the simulated genotype data.
+download.file(paste0(url, &quot;human.bed&quot;), &quot;human.bed&quot;, mode=&quot;wb&quot;)
+download.file(paste0(base, &quot;human.bim&quot;), &quot;human.bim&quot;)
+download.file(paste0(url, &quot;human.fam&quot;), &quot;human.fam&quot;)
 
-selected &lt;- readLines(paste0(base, &quot;selected-markers.txt&quot;))
+# Prepare Glist and filter markers.
+Glist &lt;- gprep(study=&quot;Simulation&quot;, bedfiles=&quot;human.bed&quot;,
+  bimfiles=&quot;human.bim&quot;, famfiles=&quot;human.fam&quot;)
+rsids &lt;- gfilter(Glist, maf=0.05, missing=0.05, hwe=1e-12,
+  ambiguous=TRUE, indels=TRUE, mhc=FALSE)
+Glist &lt;- gprep(study=&quot;Simulation&quot;, bedfiles=&quot;human.bed&quot;, rsids=rsids)
+
+# Load the example phenotype.
 phenotypes &lt;- read.csv(paste0(base, &quot;example-phenotypes.csv&quot;),
   colClasses=c(&quot;character&quot;, &quot;numeric&quot;))
-
-Glist &lt;- gprep(study=&quot;gact simulated-human example&quot;,
-  bedfiles=file.path(work, &quot;human.bed&quot;), bimfiles=validated_bim,
-  famfiles=file.path(work, &quot;human.fam&quot;), rsids=selected)
 y &lt;- setNames(phenotypes$phenotype, phenotypes$id)</code></pre>
 <p>Named phenotypes are aligned to the Glist individuals. The package
 adds an intercept; optional fixed covariates can be supplied as
@@ -447,26 +450,13 @@ open.</p>
 </div>
 <div id="several-genetic-background-components" class="section level2">
 <h2>Several genetic background components</h2>
-<p>Supply a named list of disjoint marker sets. Each set gets a variance
-component; unassigned markers form an automatic <code>background</code>
-component. For this simulation, put the windows around the known causal
-markers into one group:</p>
-<pre class="r"><code>markers &lt;- unlist(Glist$rsids, use.names=FALSE)
-chromosome &lt;- unlist(Glist$chr, use.names=FALSE)
-position &lt;- unlist(Glist$pos, use.names=FALSE)
-causal &lt;- readLines(paste0(base, &quot;causal-markers.txt&quot;))
-at &lt;- match(causal, markers)
-stopifnot(!anyNA(at))
-
-in_regions &lt;- rep(FALSE, length(markers))
-for (i in at) in_regions &lt;- in_regions |
-  (chromosome==chromosome[i] &amp; abs(position-position[i])&lt;=1000000)
-sets &lt;- list(candidate_regions=markers[in_regions])
+<p>Supply each chromosome as a named marker set. The model fits one
+variance component per chromosome:</p>
+<pre class="r"><code>sets &lt;- getChromosomeSets(Glist)
 
 components &lt;- glma(y, Glist, sets=sets,
   method=&quot;infinitesimal_loco&quot;, threads=4)
 components$fit$components
-components$fit$loco_components
 
 component_prior &lt;- glma(y, Glist, sets=sets,
   method=&quot;prior_selected_loco&quot;, threads=4)
