@@ -32,7 +32,7 @@ install_gsuite <- function(packages = c("gbase", "gbayes", "gcorr", "glma",
   current <- function(package) {
     nzchar(system.file(package = package, lib.loc = lib)) &&
       utils::packageVersion(package, lib.loc = lib) >=
-        package_version(if (package == "gbase") "0.1.2" else if (package == "gcorr") "0.1.9" else "0.1.1")
+        package_version(if (package == "gbase") "0.1.3" else if (package == "gcorr") "0.1.9" else if (package == "glma") "0.1.2" else "0.1.1")
   }
   needed <- packages[!vapply(packages, current, logical(1))]
   if (length(needed)) utils::install.packages(needed, lib = lib, repos = repos, ...)

@@ -25,7 +25,8 @@ getMarkerSets(
 }
 \value{
 A list of marker sets for the specified feature and feature ID, each set
-being a character vector of rsids.
+being a character vector of rsids. When rsids is supplied, repeated members
+and empty sets are removed.
 }
 \description{
 Retrieves marker sets based on a given feature and feature ID. Supports various features

@@ -17,6 +17,10 @@ This script is dedicated to gene analysis using the VEGAS (Versatile Gene-based 
 
 <br>
 
+The database provides aligned marker statistics and gene annotations. `checkStat()`
+applies the selected QC filters; `getMarkerSets()` selects available markers.
+The existing Glist is reused, and VEGAS selects the required statistic rows internally.
+
 #### Prepare for VEGAS gene analysis shown below
 ```{r, include=TRUE, eval=FALSE}
 # Load libraries
@@ -30,8 +34,6 @@ GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
 # Check studies in gact database
 GAlist$studies
 
-# Extract gene-marker sets (include markers 40kb/10kb upstream/downstream)
-markerSets <- getMarkerSets(GAlist = GAlist, feature = "Genesplus")
 ```
 
 
@@ -51,18 +53,12 @@ stat <- getMarkerStat(GAlist=GAlist, studyID=studyID)
 # Check and align summary statistics based on marker information in Glist
 stat <- checkStat(Glist=Glist, stat=stat)
 
-# Match the sets to the checked markers and prepare regional eigenvalues.
-ids <- if (is.data.frame(stat)) stat$rsids else Reduce(intersect, lapply(stat, `[[`, "rsids"))
-sets <- mapSets(lapply(markerSets, unique), rsids=ids, index=FALSE)
-sets <- sets[lengths(sets)>0]
-Glist <- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
-  bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=unique(unlist(sets, use.names=FALSE)))
+# Get gene sets for the available checked markers.
+sets <- getMarkerSets(GAlist=GAlist, feature="Genesplus", rsids=stat$rsids)
+
+# Prepare regional eigenvalues and fit VEGAS.
 Glist <- gprep(Glist, task="eigen", sets=sets, nthreads=4)
-order <- unlist(Glist$rsids, use.names=FALSE)
-if (is.data.frame(stat)) stat <- stat[match(order, stat$rsids), ]
-else stat <- lapply(stat, function(x) x[match(order, x$rsids), ])
-# Gene analysis using VEGAS
-res <- vegas(Glist=Glist, sets=sets, stat=stat, verbose=TRUE)
+res <- vegas(Glist=Glist, stat=stat)
 ```
 
 <br>
@@ -81,18 +77,12 @@ stat <- getMarkerStat(GAlist=GAlist, studyID=studyID)
 # Check and align summary statistics based on marker information in Glist
 stat <- checkStat(Glist=Glist, stat=stat)
 
-# Match the sets to the checked markers and prepare regional eigenvalues.
-ids <- if (is.data.frame(stat)) stat$rsids else Reduce(intersect, lapply(stat, `[[`, "rsids"))
-sets <- mapSets(lapply(markerSets, unique), rsids=ids, index=FALSE)
-sets <- sets[lengths(sets)>0]
-Glist <- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
-  bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=unique(unlist(sets, use.names=FALSE)))
+# Get gene sets for the available checked markers.
+sets <- getMarkerSets(GAlist=GAlist, feature="Genesplus", rsids=stat$rsids)
+
+# Prepare regional eigenvalues and fit VEGAS.
 Glist <- gprep(Glist, task="eigen", sets=sets, nthreads=4)
-order <- unlist(Glist$rsids, use.names=FALSE)
-if (is.data.frame(stat)) stat <- stat[match(order, stat$rsids), ]
-else stat <- lapply(stat, function(x) x[match(order, x$rsids), ])
-# Gene analysis using VEGAS
-res <- vegas(Glist=Glist, sets=sets, stat=stat, verbose=TRUE)
+res <- vegas(Glist=Glist, stat=stat)
 ```
 
 <br>
@@ -109,16 +99,11 @@ Glist <- readRDS(file=file.path(GAlist$dirs["marker"],"Glist_1000G_eur_filtered.
 stat <- setNames(lapply(studyID, function(id)
   checkStat(Glist=Glist, stat=getMarkerStat(GAlist=GAlist, studyID=id))), studyID)
 
-# Match the sets to the checked markers and prepare regional eigenvalues.
-ids <- if (is.data.frame(stat)) stat$rsids else Reduce(intersect, lapply(stat, `[[`, "rsids"))
-sets <- mapSets(lapply(markerSets, unique), rsids=ids, index=FALSE)
-sets <- sets[lengths(sets)>0]
-Glist <- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
-  bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=unique(unlist(sets, use.names=FALSE)))
+# Get gene sets for markers available in both checked studies.
+rsids <- Reduce(intersect, lapply(stat, `[[`, "rsids"))
+sets <- getMarkerSets(GAlist=GAlist, feature="Genesplus", rsids=rsids)
+
+# Prepare eigenvalues once for both traits and fit VEGAS.
 Glist <- gprep(Glist, task="eigen", sets=sets, nthreads=4)
-order <- unlist(Glist$rsids, use.names=FALSE)
-if (is.data.frame(stat)) stat <- stat[match(order, stat$rsids), ]
-else stat <- lapply(stat, function(x) x[match(order, x$rsids), ])
-# Gene analysis using VEGAS
-res <- vegas(Glist=Glist, sets=sets, stat=stat, verbose=TRUE)
+res <- vegas(Glist=Glist, stat=stat)
 ```

@@ -495,7 +495,8 @@ getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, min_combined_sco
 #' @param threshold Threshold value for filtering (default is 0.01).
 #'
 #' @return A list of marker sets for the specified feature and feature ID, each set
-#'         being a character vector of rsids.
+#'         being a character vector of rsids. When rsids is supplied,
+#'         repeated members and empty sets are removed.
 #'
 #' @examples
 #' \dontrun{
@@ -570,6 +571,8 @@ getMarkerSets <- function(GAlist = NULL, feature = NULL, featureID = NULL,
  # Filter by rsids if provided
  if(!is.null(rsids)) {
   sets <- gbase::mapSets(sets = sets, rsids = rsids, index = FALSE)
+  sets <- lapply(sets, unique)
+  sets <- sets[lengths(sets) > 0L]
  }
 
  return(sets)
@@ -606,7 +609,8 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 #' @param what Specifies the type of statistics to retrieve; "all" for all statistics or specific
 #'        types like "rsids", "b", "seb", "eaf", "ea", "nea", "z", "p" (default: "all").
 #' @param format Specifies the format of the output; either "list" or "data.frame" (default: "list").
-#' @param rm.na Boolean indicating whether to remove NA values (default: TRUE).
+#' @param rm.na Remove NA rows (default TRUE). FALSE retains the requested database
+#'   backbone, including gaps, and attaches marker identity for reference checking.
 #' @param rsids An optional vector of SNP IDs to subset the marker statistics.
 #' @param cpra An optional vector of chromosome-position-ref-alt values to map to marker IDs.
 #'
@@ -621,6 +625,9 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 #'
 getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", rm.na=TRUE, adjN=FALSE, maf=NULL, rsids=NULL, cpra=NULL) {
 
+ if(is.null(studyID)) studyID <- GAlist$study$id
+ if(!length(studyID) || anyNA(studyID)) stop("Provide nonempty study IDs.")
+ finish <- function(x) .gact_summary_metadata(x, GAlist, studyID, alleles=!rm.na)
  if (substring(studyID[1], 1, 3) == "BLR") {
 
   # --- Basic checks ---
@@ -642,7 +649,7 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
   stat <- readRDS(file_path)
   stat <- stat$stat
   rownames(stat) <- stat$rsids
-  return(stat)
+  return(finish(stat))
  }
 
  if(!is.null(cpra)) {
@@ -697,11 +704,14 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
    n[stat$rsids,study] <- stat$n
   }
   if(!is.null(rsids)) rsids <- rsids[rsids%in%GAlist$rsids]
-  if(is.null(rsids)) rsids <- stat$rsids[stat$rsids%in%GAlist$rsids]
+  if(is.null(rsids)) rsids <- if(!rm.na) GAlist$rsids else stat$rsids[stat$rsids%in%GAlist$rsids]
   rsids <- match(rsids,GAlist$rsids)
-  if(rm.na) return(list(b=na.omit(b[rsids,]),seb=na.omit(seb[rsids,]),z=na.omit(z[rsids,]),
-                        p=na.omit(p[rsids,]), n=na.omit(n[rsids,]) ))
-  if(!rm.na) return(list(b=b[rsids,],seb=seb[rsids,],z=z[rsids,],p=p[rsids,],n=n[rsids,] ))
+  out <- lapply(list(b=b,seb=seb,z=z,p=p,n=n), function(x) {
+   x <- x[rsids,,drop=FALSE]
+   if(rm.na) x <- na.omit(x)
+   x
+  })
+  return(finish(out))
  }
 
  if(format=="data.frame" && what=="all") {
@@ -724,14 +734,14 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
     stat$n<-ifelse(neff < 0.5*tneff, 0.5*tneff, neff)
    }
   }
-  #if(is.null(stat[["z"]])) stat$z <- stat$b/stat$seb
-
-  if(!is.null(rsids)) rsids <- rsids[rsids%in%stat$rsids]
-  if(is.null(rsids)) rsids <- stat$rsids
-
-  rsids <- match(rsids,stat$rsids)
-  if(rm.na) return(na.omit(stat[rsids,]))
-  if(!rm.na) return(na.omit(stat[rsids,]))
+  if(!rm.na && is.null(stat[["z"]])) stat$z <- stat$b/stat$seb
+  if(!is.null(rsids)) rsids <- rsids[rsids%in%GAlist$rsids]
+  if(is.null(rsids)) rsids <- if(rm.na) stat$rsids else GAlist$rsids
+  out <- stat[match(rsids,stat$rsids),,drop=FALSE]
+  out$rsids <- rsids
+  rownames(out) <- rsids
+  if(rm.na) out <- na.omit(out)
+  return(finish(out))
  }
 
  if(what%in%c("rsids","b","seb","eaf","ea","nea","z","p")) {
@@ -748,15 +758,47 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
    if(!what=="z") res[stat$rsids,study] <- stat[,what]
   }
   if(!is.null(rsids)) rsids <- rsids[rsids%in%GAlist$rsids]
-  if(is.null(rsids)) rsids <- stat$rsids[stat$rsids%in%GAlist$rsids]
+  if(is.null(rsids)) rsids <- if(!rm.na) GAlist$rsids else stat$rsids[stat$rsids%in%GAlist$rsids]
   rsids <- match(rsids,GAlist$rsids)
 
-  if(rm.na) res <- na.omit(res[rsids,])
-  if(!rm.na) res <- res[rsids,]
+  if(rm.na) res <- na.omit(res[rsids,,drop=FALSE])
+  if(!rm.na) res <- res[rsids,,drop=FALSE]
   if(what=="rsids") res <- res[,1]
-  return(res)
+  return(finish(res))
  }
 
+}
+
+.gact_summary_metadata <- function(stat, GAlist, studyID, alleles=FALSE) {
+ at <- match(studyID, GAlist$study$id)
+ ancestry <- GAlist$study$ancestry[at]
+ if(!is.null(ancestry) && length(ancestry)==length(studyID) && !anyNA(ancestry)) {
+  aliases <- c(EUROPEAN="EUR", AFRICAN="AFR", "EAST ASIAN"="EAS", "SOUTH ASIAN"="SAS")
+  ancestry <- toupper(trimws(ancestry))
+  known <- ancestry%in%names(aliases)
+  ancestry[known] <- aliases[ancestry[known]]
+  attr(stat,"ancestry") <- setNames(ancestry,studyID)
+ }
+ attr(stat,"study_id") <- studyID
+ if(!alleles || (!is.data.frame(stat) && !is.matrix(stat) && !is.list(stat))) return(stat)
+ ids <- if(is.data.frame(stat)) stat$rsids else if(is.list(stat)) rownames(stat$z) else rownames(stat)
+ directory <- GAlist$dirs["marker"]
+ if(length(directory)!=1L || is.na(directory)) return(stat)
+ file <- file.path(directory,"markers.txt.gz")
+ if(!file.exists(file)) return(stat)
+ identity <- data.table::fread(file, select=c("rsids","chr","pos","ea","nea"), data.table=FALSE)
+ identity <- identity[match(ids,identity$rsids),,drop=FALSE]
+ identity$rsids <- ids
+ if(is.data.frame(stat)) {
+  for(name in c("chr","pos","ea","nea")) {
+   if(is.null(stat[[name]])) stat[[name]] <- identity[[name]]
+   else {
+    missing <- is.na(stat[[name]])
+    stat[[name]][missing] <- identity[[name]][missing]
+   }
+  }
+ } else attr(stat,"marker_alleles") <- identity
+ stat
 }
 
 #' Retrieve GWAS Results

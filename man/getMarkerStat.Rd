@@ -26,7 +26,7 @@ types like "rsids", "b", "seb", "eaf", "ea", "nea", "z", "p" (default: "all").}
 
 \item{format}{Specifies the format of the output; either "list" or "data.frame" (default: "list").}
 
-\item{rm.na}{Boolean indicating whether to remove NA values (default: TRUE).}
+\item{rm.na}{Remove missing rows (default TRUE). FALSE retains the requested database backbone, including unreported markers, for imputation.}
 
 \item{rsids}{An optional vector of SNP IDs to subset the marker statistics.}
 
@@ -46,3 +46,7 @@ specific statistics like effect sizes, standard errors, p-values, etc., for one 
   stats <- getMarkerStat(GAlist = GAlist, studyID = "GWAS1")
 }
 }
+\details{The ancestry and study_id attributes carry study metadata for gbase summary preparation.
+With rm.na=FALSE, allele metadata is provided when the database marker file is available.
+Single-study output includes Z-scores derived from b/seb. Multiple studies remain a list
+of marker-by-study matrices, retaining missing scores and sample sizes.}

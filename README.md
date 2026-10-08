@@ -77,8 +77,8 @@ biological databases including:
 
 ### Installation of the gact package
 
-To install the most recent version of the gact and qgg package from
-GitHub, use the following commands in R:
+Install gact from GitHub and the standalone gsuite analysis packages
+with:
 
 ``` r
 options(repos=c(
@@ -196,6 +196,22 @@ polygenic scores. Fine-mapping and polygenic-scoring examples have
 different inputs and model controls; retain the arguments and
 diagnostics for each run. Successful execution alone does not establish
 MCMC convergence.
+
+For optional LD consistency checking and missing Z-score imputation,
+keep gaps when extracting statistics and use an ancestry-matched Glist
+reference:
+
+``` r
+stat <- getMarkerStat(GAlist, studyID=c("GWAS1", "GWAS2"), rm.na=FALSE)
+stat <- gbase::checkStat(Glist, stat, ldcheck=TRUE, impute=TRUE)
+```
+
+The same call handles all trait columns. Accepted observed scores remain
+intact; poor-quality predictions stay missing. See the [summary
+preparation
+guide](https://psoerensen.github.io/gtools/gsuite/docs/genotype-preparation.html#summary-statistics-checking-and-imputation)
+for ancestry groups, explicit meta-analysis mixtures and diagnostic
+flags. Missing sample sizes and effect estimates are not inferred.
 
 Reference preparation, LD computation, model fitting, and scoring have
 separate resource requirements. Check disk and memory capacity before
