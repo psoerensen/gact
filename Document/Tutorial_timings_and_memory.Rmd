@@ -1,0 +1,82 @@
+---
+title: "Tutorial timings and memory"
+author: "Peter Sørensen"
+date: "8 October 2026"
+output:
+  html_document: default
+---
+
+<style>
+table { width:100%; font-variant-numeric:tabular-nums; }
+th,td { padding:9px 12px !important; }
+thead { background:#f3f6f8; }
+tbody tr:nth-child(even) { background:#f8fafb; }
+</style>
+
+These are recorded tutorial runs on Windows 11, R 4.4.1 and an Intel
+Core i7-1365U with about 16 GiB RAM. Memory is the whole R process's peak
+resident working set, including required inputs. It is not the size of the
+returned result or the additional memory needed by the solver.
+
+## Database and simulated data
+
+The simulated panel has 5,000 people and 37,991 filtered markers. Analysis
+times exclude downloading, data preparation and process startup. The mapping
+rows summarize three serial repeats; the other rows are single runs.
+
+| Tutorial / operation | Threads | Time | Peak resident memory |
+| :--- | ---: | ---: | ---: |
+| [Database download and setup](Download_and_install_gact_database.html) | — | 9 min 4 s | 2.68 GiB |
+| [Linear regression](Glma_linear_and_mixed_models_simulated_data.html) | 4 | 1.64 s | 153 MiB |
+| Gaussian LOCO | 4 | 57.00 s | 386 MiB |
+| Prior-selected LOCO | 4 | 124.12 s | 392 MiB |
+| [Four regional BayesC fits and posterior sets](Finemapping_bayesian_linear_regression_simulated_data.html) | 1 | 5.48 s | 0.56 GiB |
+| Genome-wide BayesC fit from prepared LD | 1 | 2.36 s | 0.81 GiB |
+| Genome-wide credible-set grouping | 1 | 3.95 s | 0.52 GiB |
+
+Regional mapping used one chain, 1,000 post-burn sweeps and 100 burn-in sweeps;
+the four regions contained 850, 785, 1,091 and 1,399 markers. Its observed
+time range was 5.22–6.28 s. Genome fitting used one chain and 100 sweeps without
+burn-in (2.03–2.38 s); grouping took 3.83–4.16 s. The tutorial shows two-chain
+calls; those have not been timed here. The chromosome-component glma examples
+also have no recorded timings. Database setup covers 2.57 GiB of transfers and
+a 3.04 GiB basic database; package installation is separate.
+
+## CAD and T2D
+
+[Genetic correlation](Genetic_correlation_CAD_T2D_gcorr.html) uses the common
+7,221,923-marker availability selection and stored LD scores. The reference
+has 503 EUR individuals. Time excludes input loading and saving; memory is
+the peak sampled during analysis with the required inputs already loaded.
+
+| Operation | Threads | Time | Peak resident memory |
+| :--- | ---: | ---: | ---: |
+| LDSC | — | 9.3 s | 3.02 GiB |
+| GNOVA | — | 6.4 s | 3.09 GiB |
+| SumHer baseline | — | 12.9 s | 3.53 GiB |
+| Chromosome-set LDSC preparation and fit | — | 29.9 s | 3.27 GiB |
+| HESS regional preparation | 4 | 18 min 49 s | 3.18 GiB |
+| HESS pair refit from compact moments | — | 3.3–3.6 s | 0.43 GiB |
+
+The score-based fitters expose no thread argument. HESS prepared 1,702 regions
+and 18,696 retained components; its two refits reused the compact moments.
+Preparation and fitting are separate costs.
+
+For the full [VEGAS gene analysis](Gene_analysis_vegas.html), 17,862 genes and
+two traits shared the same regional spectra:
+
+| Operation | Time | Peak resident memory |
+| :--- | ---: | ---: |
+| Marker-set LD eigenvalues | 10 min 43 s | — |
+| Prepare reusable VEGAS object | 1 min 20 s | — |
+| Initial two-trait VEGAS fit | 1 min 38 s | — |
+| Refit from restored preparation | 1 min 11 s | — |
+| Complete initial workflow, including preparation and alignment | 15 min | 5.88 GiB |
+
+VEGAS's memory figure covers the complete worker, including input loading;
+per-stage peaks were not recorded. Its preparation used four decoding threads;
+gene regions and the eigensolver were serial. The complete-workflow time is
+not the VEGAS fit time. Refitting excludes loading the restored preparation.
+
+Runtimes depend on the data and settings. Bayesian PoPS and the new chromosome
+component examples remain to be timed.

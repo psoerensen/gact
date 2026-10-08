@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-11-07" />
+<meta name="date" content="2026-10-08" />
 
 <title>Polygenic scoring (PGS) using summary statistics from PGS catalog and biological pathway information</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">Polygenic scoring (PGS) using summary
 statistics from PGS catalog and biological pathway information</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-11-07</h4>
+<h4 class="date">2026-10-08</h4>
 
 </div>
 
@@ -373,7 +373,9 @@ gact database.</p>
 <h4>Compute polygenic scores based on summary statistics from PGC
 catalog</h4>
 <pre class="r"><code># Load libraries
-library(qgg)
+library(gbase)
+library(gscore)
+library(data.table)
 library(gact)
 
 # Load GAlist
@@ -391,18 +393,21 @@ stat &lt;- stat[, c(&quot;marker&quot;, &quot;chr_name&quot;, &quot;chr_position
 colnames(stat) &lt;- c(&quot;marker&quot;, &quot;chr&quot;, &quot;pos&quot;, &quot;ea&quot;, &quot;nea&quot;, &quot;b&quot;)
 
 # Check and align summary statistics based on marker information in Glist
+stat$chr &lt;- as.character(stat$chr)
 stat &lt;- checkStat(Glist=Glist, stat=stat)
 
 # Compute polygenic scores
 pgs &lt;- gscore(Glist = Glist, stat = stat)
-head(pgs)
+head(pgs$scores)
 
 # Extract marker sets derived from KEGG pathways
 sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;KEGG&quot;)
+sets &lt;- mapSets(lapply(sets, unique), rsids=stat$rsids, index=FALSE)
+sets &lt;- sets[lengths(sets)&gt;0]
 
 # Compute polygenic scores for KEGG pathways
 pgs &lt;- gscore(Glist=Glist, stat=stat, sets=sets)
-head(pgs)</code></pre>
+head(pgs$scores)</code></pre>
 </div>
 </div>
 

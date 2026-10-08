@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-11-07" />
+<meta name="date" content="2026-10-08" />
 
 <title>Polygenic scoring (PGS) using Bayesian Linear Regression models and biological pathway information</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">Polygenic scoring (PGS) using Bayesian
 Linear Regression models and biological pathway information</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-11-07</h4>
+<h4 class="date">2026-10-08</h4>
 
 </div>
 
@@ -377,17 +377,19 @@ architecture of the traits. It can be implemented using GWAS summary
 statistics and a reference linkage disequilibrium (LD) correlation
 matrix. Ideally the summary statistics will correspond to the most
 powerful GWAS results available on the phenotype under study.</p>
-<p>Different BLR models can be fitted in the <code>qgg</code>-package in
-the function <code>gbayes()</code>, where the argument
-<code>method=</code> specifies which prior marker variance should be
-used. BLR models can be fitted using individual level genotype and
-phenotype data or based on GWAS summary statistics and a reference
+<p>Different BLR models can be fitted in the standalone
+<code>gbayes</code> package in the function <code>gbayes()</code>, where
+the argument <code>method=</code> specifies which prior marker variance
+should be used. BLR models can be fitted using individual level genotype
+and phenotype data or based on GWAS summary statistics and a reference
 linkage disequilibrium (LD) correlation matrix.</p>
 <p><br></p>
 <div id="prepare-input-data-for-polygenic-scoring" class="section level4">
 <h4>Prepare input data for polygenic scoring</h4>
 <pre class="r"><code># Load libraries
-library(qgg)
+library(gbase)
+library(gbayes)
+library(gscore)
 library(gact)
 
 # Load GAlist
@@ -400,13 +402,13 @@ GAlist$studies
 list.files(GAlist$dirs[&quot;gbayes&quot;])
 
 # Load Glist with information on 1000G
-Glist &lt;- readRDS(file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G.rds&quot;))
+Glist &lt;- readRDS(file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_eur_filtered.rds&quot;))
 
 # Select study
 studyID &lt;- &quot;GWAS1&quot;
 
 # Extract GWAS summary statistics for GWAS1
-stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
+stat &lt;- getMarkerStat(GAlist=GAlist, studyID=studyID)
 
 # Check and align summary statistics based on marker information in Glist
 stat &lt;- checkStat(Glist=Glist, stat=stat,
@@ -420,8 +422,16 @@ stat &lt;- checkStat(Glist=Glist, stat=stat,
                   excludeMISS=0.05,
                   excludeHWE=1e-12)
 
+# Prepare sparse LD for the checked marker selection.
+Glist &lt;- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
+  bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=stat$rsids)
+Glist &lt;- gprep(Glist, task=&quot;sparseld&quot;, msize=1000,
+  ldfiles=file.path(GAlist$dirs[&quot;marker&quot;], &quot;pgs-eur.ld&quot;), nthreads=4)
+
 # Extract marker sets derived from KEGG pathways
-sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;KEGG&quot;)</code></pre>
+sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;KEGG&quot;)
+sets &lt;- mapSets(lapply(sets, unique), rsids=stat$rsids, index=FALSE)
+sets &lt;- sets[lengths(sets)&gt;0]</code></pre>
 <p><br></p>
 </div>
 <div id="fit-blr-model-using-a-bayes-c-prior-for-the-marker-variance" class="section level4">
@@ -431,7 +441,7 @@ to be sampled from a mixture with a point mass at zero and univariate
 normal distribution conditional on a common marker effect variance:</p>
 <pre class="r"><code>fit &lt;- gbayes(stat=stat, Glist=Glist, method=&quot;bayesC&quot;, nit=1000)
 pgs &lt;- gscore(Glist=Glist, stat=fit$stat)
-head(pgs)</code></pre>
+head(pgs$scores)</code></pre>
 <p><br></p>
 </div>
 <div id="fit-blr-model-using-a-bayes-r-prior-for-the-marker-variance" class="section level4">
@@ -441,7 +451,7 @@ to be sampled from a mixture with a point mass at zero and univariate
 normal distributions conditional on a common marker effect variance:</p>
 <pre class="r"><code>fit &lt;- gbayes(Glist=Glist, stat=stat, method=&quot;bayesR&quot;, nit=5000, nburn=1000)
 pgs &lt;- gscore(Glist=Glist, stat=fit$stat)
-head(pgs)</code></pre>
+head(pgs$scores)</code></pre>
 <p><br></p>
 </div>
 <div id="fit-blr-model-using-a-bayes-r-prior-and-compute-pathway-specific-polygenic-scores" class="section level4">
@@ -452,7 +462,7 @@ to be sampled from a mixture with a point mass at zero and univariate
 normal distributions conditional on a common marker effect variance:</p>
 <pre class="r"><code>fit &lt;- gbayes(Glist=Glist, stat=stat, method=&quot;bayesR&quot;, nit=5000, nburn=1000)
 pgs &lt;- gscore(Glist=Glist, stat=fit$stat, sets=sets)
-head(pgs)</code></pre>
+head(pgs$scores)</code></pre>
 </div>
 </div>
 

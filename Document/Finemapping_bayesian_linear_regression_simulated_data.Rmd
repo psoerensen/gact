@@ -1,177 +1,84 @@
 ---
-title: "Fine-mapping with single trait Bayesian Linear Regression models on simulated data"
+title: "Fine-mapping simulated data with Bayesian linear regression"
 author: "Peter Sørensen"
-date: "`r Sys.Date()`"
+date: "8 October 2026"
 output:
   html_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo=TRUE, eval=FALSE)
 ```
 
-## Introduction
-This tutorial focus on fine-mapping using the Bayesian Linear Regression (BLR) model. It processes and analyzes GWAS (Genome-Wide Association Studies) summary statistics and employs fine-mapping on specific gene or genomic regions. Here we present the use of Bayesian linear regression (BLR) models for fine mapping approach using summary data. Allowing joint estimation of variants’ effects while accounting for LD among variants, our BLR models using Gibbs sampling technique, perform regularization and conduct variable selection.  
+This example uses **gbase**, **glma**, **gmap** and **gbayes**, with the familiar
+qgg preparation and MCMC arguments. The simulated panel contains 5,000 people
+and 50,000 markers. The phenotype is shared with the
+[linear and mixed-model example](Glma_linear_and_mixed_models_simulated_data.html).
 
-<br>
+## Prepare the data
 
+```{r prepare}
+library(gbase)
+library(glma)
+library(gmap)
+library(gbayes)
 
-For individual-level regression and chromosome-excluded mixed-model association on this panel, see the [glma analysis tutorial](Glma_linear_and_mixed_models_simulated_data.html), including the frozen phenotype, results, timings and memory measurements.
-
-#### Prepare simulated data used in fine-mapping examples 
-```{r, include=TRUE, eval=FALSE}
-#library(qgg)
-library(devtools)
-devtools::install_github("psoerensen/qgg")
-
-# Set working directory
 setwd("C:/Users/Projects/Examples")
+url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/"
+base <- "https://psoerensen.github.io/gact/Document/glma-simulated-data/"
+download.file(paste0(url, "human.bed"), "human.bed", mode="wb")
+download.file(paste0(base, "human.bim"), "human.bim")
+download.file(paste0(url, "human.fam"), "human.fam")
 
-# Download simulated genotype data
-url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/human.bed"
-download.file(url = url, mode = "wb", destfile = "human.bed")
-url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/human.bim"
-download.file(url = url, destfile = "human.bim")
-url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/human.fam"
-download.file(url = url, destfile = "human.fam")
+Glist <- gprep(study="Simulation", bedfiles="human.bed",
+  bimfiles="human.bim", famfiles="human.fam")
+rsids <- gfilter(Glist=Glist, excludeMAF=0.05, excludeMISS=0.05,
+  excludeCGAT=TRUE, excludeINDEL=TRUE, excludeDUPS=TRUE,
+  excludeHWE=1e-12, excludeMHC=FALSE)
+Glist <- gprep(study="Simulation", bedfiles="human.bed", rsids=rsids)
 
-# Prepare Glist with information on genotypes stored in PLINK files
-Glist <- gprep(study = "Simulation", 
-               bedfiles = "C:/Users/Projects/Examples/human.bed", 
-               bimfiles = "C:/Users/Projects/Examples/human.bim",
-               famfiles = "C:/Users/Projects/Examples/human.fam")
+phenotypes <- read.csv(paste0(base, "example-phenotypes.csv"),
+  colClasses=c("character", "numeric"))
+y <- setNames(phenotypes$phenotype, phenotypes$id)
+causal <- readLines(paste0(base, "causal-markers.txt"))
+sets <- createMarkerSets(Glist=Glist, rsids=causal, upstream=1000, downstream=1000)
 
-# Filter markers with predefined thresholds for MAF, missingness, etc.
-rsids <- gfilter(Glist = Glist, excludeMAF = 0.05, excludeMISS = 0.05,
-                 excludeCGAT = TRUE, excludeINDEL = TRUE, excludeDUPS = TRUE, excludeHWE = 1e-12,
-                 excludeMHC = FALSE)
-
-# Compute sparse LD using filtered markers (may take some time if R is not linked to openblas, atlas or MKL)
-Glist <- gprep(Glist, task = "sparseld", msize = 1000, 
-               rsids = rsids, 
-               ldfiles = "C:/Users/Projects/Examples/human.ld",
-               overwrite = TRUE)
-
-# Simulate phenotype using filtered markers
-sim <- gsim(Glist=Glist, rsids=rsids)
-
-# Create marker sets surrounding each index SNPs
-sets <- createMarkerSets(Glist=Glist, rsids=sim$causal, upstream=1000, downstream=1000)
-
-# Perform single marker regression analyses to get summary statistics
-stat <- glma(y=sim$y,Glist = Glist, rsids=rsids)
+scan <- glma(y=y, Glist=Glist, method="linear")
+stat <- checkStat(Glist=Glist, stat=scan$associations)
 ```
 
-<br>
+The supplied BIM corrects 13 invalid genetic-map entries without changing the
+genotypes, physical positions or alleles. `upstream` and `downstream` count
+markers within each chromosome.
 
-##### Region-wide fine-mapping using simulated data 
-```{r, include=TRUE, eval=FALSE}
+## Fit the regions
 
-# Fine-mapping in selected genome regions using a Bayes C prior for the marker variance
-fit <- gmap(Glist=Glist, stat=stat, sets=sets, method="bayesC", 
-            algorithm="mcmc", output="full",verbose=TRUE)
-
-
-# Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for every fine-mapped region
+```{r regional}
+fit <- gmap(Glist=Glist, stat=stat, sets=sets, method="bayesC",
+  nit=1000, nburn=100, nrun=2)
 head(fit$post)
-
-# Convergence statistics for every fine-mapped region
 head(fit$conv)
-
-# Posterior estimates of marker effects for every fine-mapped region
 head(fit$stat)
-
-# Credible sets for every fine-mapped region
-head(fit$cs)
+fit$cs
 ```
 
-<br>
+The default dense route computes full regional LD directly from BED. Posterior
+tables include hyperparameters, effects and PIPs; convergence tables contain
+native R-hat, ESS and status diagnostics. Inspect these before interpreting
+posterior results. Credible-set grouping uses marginal PIPs.
 
-##### Genome-wide fine-mapping using simulated data 
-```{r, include=TRUE, eval=FALSE}
+## Fit genome-wide marker effects
 
-# Fine-mapping across all chromosomes using a Bayes C prior for the marker variance
-fit <- gbayes(Glist=Glist, stat=stat, method="bayesC", 
-            algorithm="mcmc", verbose=TRUE)
-
-# Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for chromosomes in Glist
-head(fit$post)
-
-# Convergence statistics for chromosomes in Glist
-head(fit$conv)
-
-# Posterior estimates of marker effects for chromosomes in Glist
+```{r genome}
+Glist <- gprep(Glist, task="sparseld", msize=1000, ldfiles="human.ld", nthreads=4)
+fit <- gbayes(Glist=Glist, stat=stat, method="bayesC", nit=100, nrun=2)
 head(fit$stat)
-
-# Credible sets for every fine-mapped region defined by sets
-fit$cs <- getCredibleSets(Glist=Glist, fit=fit, sets=sets)
-head(fit$cs)
-
 ```
 
-## The same marker sets with standalone gsuite R packages
+Genome-wide fitting reuses sparse LD. An eigen route is also available for
+verified independent LD blocks; regional eigen fitting can be selected with
+`gmap(..., algorithm="mcmc-eigen", eigen_threshold=0.99)` after sparse-LD
+preparation. These routes have different likelihood and variance conventions;
+the common argument names do not imply identical qgg posterior draws.
 
-The original qgg examples above remain the reference workflow. Development
-installations of gbase, gmap and gbayes provide familiar calls on the same
-statistics and marker sets. Use statistics from these selected BED people
-when enabling regional residual-variance learning.
-
-```{r standalone-finemapping, include=TRUE, eval=FALSE}
-# Reuse stat and sets from the simulation above; no new phenotype is simulated.
-# This tutorial's BIM has negative genetic-map entries. Preserve the original
-# and make a separate validated metadata copy (physical coordinates unchanged).
-source_bim <- "C:/Users/Projects/Examples/human.bim"
-validated_bim <- "C:/Users/Projects/Examples/human-validated-map.bim"
-if (file.exists(validated_bim)) stop("Choose a new validated BIM filename")
-bim <- read.table(source_bim, stringsAsFactors=FALSE)
-bim[!is.finite(bim[[3]]) | bim[[3]] < 0, 3] <- 0
-write.table(bim, validated_bim, quote=FALSE, row.names=FALSE, col.names=FALSE)
-
-Gstandalone <- gbase::gprep(
-  bedfiles="C:/Users/Projects/Examples/human.bed", bimfiles=validated_bim,
-  famfiles="C:/Users/Projects/Examples/human.fam", rsids=stat$rsids)
-Gstandalone$assembly <- "simulated-human-tutorial"
-
-regional <- gmap::gmap(Glist=Gstandalone, stat=stat, sets=sets,
-  method="bayesC", algorithm="mcmc", nit=1000, nburn=100,
-  seed=10, output="full", verbose=TRUE)
-head(regional$stat) # bm: posterior mean, dm: PIP
-head(regional$post) # regional ve, derived vg, vb, pi, summed pip
-head(regional$conv) # native R-hat/ESS/MCSE and diagnostic statuses
-regional$cs        # named marginal-PIP groups
-regional$timings   # per-region LD, preparation and sampling times
-
-# Genome-wide regression reuses stored sparse LD. Its preparation is separate
-# from fitting; use the same 1000-marker window and zero cutoff as above.
-Gstandalone <- gbase::gprep(Gstandalone, task="sparseld",
-  out_prefix="C:/Users/Projects/Examples/human-standalone-ld",
-  max_distance_bp=0, max_distance_variants=1000, r2=0, nthreads=1)
-genome <- gbayes::gbayes(Glist=Gstandalone, stat=stat,
-  method="bayesC", algorithm="mcmc", nit=100, nburn=0,
-  seed=10, verbose=TRUE)
-head(genome$stat)
-genome$post
-genome$conv
-genome$cs <- gmap::getCredibleSets(Glist=Gstandalone, fit=genome, sets=sets)
-genome$cs
-```
-
-Dense regional MCMC computes full LD in memory using R's configured BLAS and
-requires positive-definite LD; it performs no truncation or PSD repair.
-`algorithm="mcmc-eigen"` preserves the explicit sparse-LD eigen route.
-`gbase::mapSets()` and `gbase::getLD()` expose marker membership and full
-regional correlation. The standalone grouping helper reproduces qgg CS2/CS3
-ordering and strict LD-squared cutoffs without depending on qgg at runtime.
-Marginal-PIP groups are not component credible sets with guaranteed coverage.
-
-The familiar fields retain native meanings: genome-wide `bm` uses standardized
-genotype/phenotype units, `post` has familiar summary rows and `conv` reports
-native R-hat/ESS/MCSE rather than Geweke z scores. `post$vg` averages retained
-joint-effect genetic variance and `post$pip` sums marker PIPs; no independent
-genetic-variance hyperparameter draw is added. The `mcmc` reference-LD residual
-adjustment defaults to .9. Both standalone BayesC/BayesR interfaces accept
-`mcmc-eigen`; genome-wide fitting requires verified exhaustive Glist LD blocks
-from `gbase::define_ld_blocks()` and uses retained-space residual normalization.
-The 1000-marker sliding-window resource above must be given a valid block
-partition before selecting that route. Single-chain fits are provisional. Reusing the same data and
-iteration counts does not make the two implementations identical.
+See [recorded tutorial timings](Tutorial_timings_and_memory.html).

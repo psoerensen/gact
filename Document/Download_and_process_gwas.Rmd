@@ -17,7 +17,6 @@ This tutorial is designed for incorporating new genetic association data into an
 
 ```{r all-code, include=TRUE, eval=FALSE}
 # Load libraries
-library(qgg)
 library(gact)
 library(data.table)
 
@@ -63,3 +62,5 @@ GAlist <- updateStatDB(GAlist = GAlist,
 # Save updated database
 saveRDS(GAlist, file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds", compress = FALSE)
 
+
+```

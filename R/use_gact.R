@@ -243,7 +243,7 @@ designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeature
   sets <- sets[select]
  }
  if(is.null(rowFeatureID)) rowFeatureID <- unique(unlist(sets))
- sets <- qgg:::mapSets(sets=sets,rsids=rowFeatureID, index=TRUE)
+ sets <- gbase::mapSets(sets=sets,rsids=rowFeatureID, index=TRUE)
  W <- matrix(0,nrow=length(rowFeatureID), ncol=length(sets))
  colnames(W) <- names(sets)
  rownames(W) <- rowFeatureID
@@ -537,7 +537,7 @@ getMarkerSets <- function(GAlist = NULL, feature = NULL, featureID = NULL,
    msigdb <- msigdbr(species = "human", category = "C2", subcategory = "CP:KEGG_LEGACY")
   }
   sets <- split(msigdb$ensembl_gene, f=msigdb$gs_name)
-  sets <- mapSets(sets,names(msets), index=FALSE)
+  sets <- gbase::mapSets(sets,names(msets), index=FALSE)
   sets <- lapply(sets, function(x) {unlist(msets[x])})
  }
  if(feature%in%c("GTEx","GTExV7","GTExV8")) {
@@ -569,7 +569,7 @@ getMarkerSets <- function(GAlist = NULL, feature = NULL, featureID = NULL,
 
  # Filter by rsids if provided
  if(!is.null(rsids)) {
-  sets <- qgg:::mapSets(sets = sets, rsids = rsids, index = FALSE)
+  sets <- gbase::mapSets(sets = sets, rsids = rsids, index = FALSE)
  }
 
  return(sets)
@@ -1614,14 +1614,17 @@ hgtSets <- function(GAlist = NULL, sets = NULL, feature = NULL, featureIDs = NUL
  rowids <- unique(unlist(featureSets))
 
  # Generate the design matrix
- X <- designMatrix(sets = featureSets, rowids = rowids)
+ mapped <- gbase::mapSets(featureSets, rsids = rowids)
+ X <- matrix(0, length(rowids), length(mapped),
+             dimnames = list(rowids, names(mapped)))
+ for (j in seq_along(mapped)) X[mapped[[j]], j] <- 1
 
  # Map sets from the database
  sets <- mapSetsDB(sets = sets, featureID = rownames(X), index = TRUE)
 
  # Apply hypergeometric test
  hgtResults <- apply(X, 2, function(x) {
-  # Using the exported function from the qgg package for hypergeometric testing
+  # Use the database hypergeometric test
   hgtestDB(p = 1 - x, sets = sets, threshold = 0.5)
  })
  p <- sapply(hgtResults, function(x) {x[,"P-value"]})

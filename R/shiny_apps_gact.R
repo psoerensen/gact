@@ -384,7 +384,7 @@
     # Display table when submit button is clicked
     observeEvent(input$submit, {
 
-     marker_sets_indices <- qgg:::mapSets(sets=gene_marker_sets, rsids=stat()$rsids, index=TRUE)
+     marker_sets_indices <- gbase::mapSets(sets=gene_marker_sets, rsids=stat()$rsids, index=TRUE)
 
      # Determine smallest p-value for each gene
      pgenes <- sapply(marker_sets_indices, function(x) {min(stat()$p[x])})
@@ -394,7 +394,7 @@
 
      # Extract feature-gene sets
      feature_genes <- getSetsDB(GAlist = GAlist, feature = input$feature)
-     feature_genes <- qgg:::mapSets(sets=feature_genes, rsids=names(pgenes), index=FALSE)
+     feature_genes <- gbase::mapSets(sets=feature_genes, rsids=names(pgenes), index=FALSE)
 
      # Get selected genes based on p-value threshold
      selected_genes <- genes[pgenes < input$threshold]
@@ -506,7 +506,7 @@
      })
 
 
-     marker_sets_indices <- qgg:::mapSets(sets=gene_marker_sets, rsids=stat()$rsids, index=TRUE)
+     marker_sets_indices <- gbase::mapSets(sets=gene_marker_sets, rsids=stat()$rsids, index=TRUE)
      selected_markers <- unique(unlist(marker_sets_indices[selected_genes]))
 
      # Create data frame for selected markers
@@ -1008,7 +1008,7 @@
 
      # Extract gene-marker sets
      marker_sets_indices <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes")
-     marker_sets_indices <- qgg:::mapSets(sets=marker_sets_indices, rsids=stat()$rsids, index=TRUE)
+     marker_sets_indices <- gbase::mapSets(sets=marker_sets_indices, rsids=stat()$rsids, index=TRUE)
      pgenes <- sapply(marker_sets_indices, function(x) {min(stat()$p[x])})
 
 
@@ -1224,7 +1224,7 @@
 
      # Extract gene-marker sets
      marker_sets_indices <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes")
-     marker_sets_indices <- qgg:::mapSets(sets=marker_sets_indices, rsids=stat()$rsids, index=TRUE)
+     marker_sets_indices <- gbase::mapSets(sets=marker_sets_indices, rsids=stat()$rsids, index=TRUE)
      pgenes <- sapply(marker_sets_indices, function(x) {min(stat()$p[x])})
 
      # Create data frame for markers
@@ -1442,7 +1442,7 @@
 
      # Extract gene-marker sets
      marker_sets_indices <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes")
-     marker_sets_indices <- qgg:::mapSets(sets=marker_sets_indices, rsids=stat()$rsids, index=TRUE)
+     marker_sets_indices <- gbase::mapSets(sets=marker_sets_indices, rsids=stat()$rsids, index=TRUE)
      pgenes <- sapply(marker_sets_indices, function(x) {min(stat()$p[x])})
 
      if (input$feature=="Genes") feature_genes <- input$featureID
@@ -1456,7 +1456,7 @@
       #if(feature=="ProteinComplexes") feature <- "ProteinComplexes2Genes"
       #if(feature=="ChemicalComplexes") feature <- "ChemicalComplexes2Genes"
       feature_genes <- getSetsDB(GAlist = GAlist, feature = feature)
-      feature_genes <- qgg:::mapSets(sets=feature_genes, rsids=names(marker_sets_indices), index=FALSE)
+      feature_genes <- gbase::mapSets(sets=feature_genes, rsids=names(marker_sets_indices), index=FALSE)
       feature_genes <- unlist(feature_genes[featureID])
      }
 
@@ -1658,7 +1658,7 @@
 
      # Extract gene-marker sets
      marker_sets_indices <- getMarkerSetsDB(GAlist = GAlist, feature = "Genes")
-     marker_sets_indices <- qgg:::mapSets(sets=marker_sets_indices, rsids=stat()$rsids, index=TRUE)
+     marker_sets_indices <- gbase::mapSets(sets=marker_sets_indices, rsids=stat()$rsids, index=TRUE)
      pgenes <- sapply(marker_sets_indices, function(x) {min(stat()$p[x])})
 
      message("Extract feature-gene sets")
@@ -1690,7 +1690,7 @@
      #  feature_genes <- lapply(feature_genes,function(x){na.omit(unlist(GAlist$gsets$ensp2ensg[x]))})
      # }
 
-     feature_genes <- qgg:::mapSets(sets=feature_genes, rsids=names(pgenes), index=FALSE)
+     feature_genes <- gbase::mapSets(sets=feature_genes, rsids=names(pgenes), index=FALSE)
 
      # Get selected genes based on p-value threshold
      selected_genes <- names(pgenes)[pgenes < input$threshold]
@@ -1994,7 +1994,7 @@
  #  # Display table when submit button is clicked
  #  observeEvent(input$submit, {
  #
- #   markerSetsIndices <- qgg:::mapSets(sets=markerSets, rsids=stat()$rsids, index=TRUE)
+ #   markerSetsIndices <- gbase::mapSets(sets=markerSets, rsids=stat()$rsids, index=TRUE)
  #
  #   # Determine smallest p-value for each gene
  #   pgenes <- sapply(markerSetsIndices, function(x) {min(stat()$p[x])})
@@ -2079,7 +2079,7 @@
  #   })
  #
  #
- #   marker_sets_indices <- qgg:::mapSets(sets=markerSets, rsids=stat()$rsids, index=TRUE)
+ #   marker_sets_indices <- gbase::mapSets(sets=markerSets, rsids=stat()$rsids, index=TRUE)
  #   selected_markers <- unique(unlist(marker_sets_indices[selected_genes]))
  #
  #   # Create data frame for selected markers

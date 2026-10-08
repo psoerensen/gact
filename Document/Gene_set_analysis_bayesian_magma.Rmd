@@ -30,7 +30,8 @@ This tutorial is designed for advanced gene set analysis, utilizing a variety of
 #### Prepare for Bayesian MAGMA gene set analysis 
 ```{r, include=TRUE, eval=FALSE}
 # Load libraries
-library(qgg)
+library(gbase)
+library(gsea)
 library(gact)
 
 # Load GAlist with information on gact database
@@ -57,15 +58,15 @@ head(stat)
 # Bayesian MAGMA based on single trait BLR model
 fit <- magma(stat=stat, sets=sets, method="bayesC",
              pi=0.01, nit=5000, nburn=1000)
-head(fit)
+head(fit$pathways)
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
 fit <- magma(stat=stat, sets=sets, type="joint")
-head(fit)
+head(fit$pathways)
 
 # MAGMA based on linear model using a marginal test for each feature
 fit <- magma(stat=stat, sets=sets, type="marginal")
-head(fit)
+head(fit$pathways)
 ```
 
 <br>
@@ -103,3 +104,10 @@ str(fit)
 head(fit$b)
 head(fit$PIP)
 ```
+
+The familiar `magma()` interface uses the existing competitive or Bayesian
+gsea engine with independent genes as its default working covariance.
+Joint Bayesian traits use independent residual trait errors by default;
+supply `sampling` for a different covariance model. This does not run the
+external MAGMA executable. Bayesian posterior coefficients and PIPs are in
+`fit$pathways`; inspect native chain diagnostics as well.

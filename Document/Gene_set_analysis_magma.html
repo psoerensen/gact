@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-12-12" />
+<meta name="date" content="2026-10-08" />
 
 <title>GSEA using BLR model derived gene-level statistics and MAGMA</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">GSEA using BLR model derived gene-level
 statistics and MAGMA</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-12-12</h4>
+<h4 class="date">2026-10-08</h4>
 
 </div>
 
@@ -393,7 +393,8 @@ associations.</p>
 <div id="magma-gene-set-analysis-using-blr-derived-gene-level-statistics" class="section level4">
 <h4>MAGMA gene set analysis using BLR derived gene-level statistics</h4>
 <pre class="r"><code># Load libraries
-library(qgg)
+library(gbase)
+library(gsea)
 library(gact)
 library(data.table)
 
@@ -429,17 +430,17 @@ sets &lt;- getFeatureSets(GAlist = GAlist, feature=&quot;KEGG&quot;, minsets=50)
 fitB &lt;- magma(stat=bstat, sets=sets, type=&quot;joint&quot;)
 fitD &lt;- magma(stat=dstat, sets=sets, type=&quot;joint&quot;)
 fitV &lt;- magma(stat=vstat, sets=sets, type=&quot;joint&quot;)
-head(fitB)
-head(fitD)
-head(fitV)
+head(fitB$pathways)
+head(fitD$pathways)
+head(fitV$pathways)
 
 # Bayesian MAGMA using Bayes R prior for regression effects
 fitB &lt;- magma(stat=bstat, sets=sets, method=&quot;bayesR&quot;)
 fitD &lt;- magma(stat=dstat, sets=sets, method=&quot;bayesR&quot;)
 fitV &lt;- magma(stat=vstat, sets=sets, method=&quot;bayesR&quot;)
-head(fitB)
-head(fitD)
-head(fitV)</code></pre>
+head(fitB$pathways)
+head(fitD$pathways)
+head(fitV$pathways)</code></pre>
 <p><br></p>
 </div>
 <div id="magma-marker-set-analysis-leveraging-gtex-eqtl-marker-sets" class="section level4">
@@ -448,8 +449,8 @@ head(fitV)</code></pre>
 sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;GTExV8&quot;, threshold=0.01)
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
-fitGTEx &lt;- magma(stat=stat[&quot;dm&quot;], sets=sets, type=&quot;joint&quot;)
-head(fitGTEx)</code></pre>
+fitGTEx &lt;- magma(stat=setNames(stat$dm, stat$rsids), sets=sets, type=&quot;joint&quot;)
+head(fitGTEx$pathways)</code></pre>
 <p><br></p>
 </div>
 <div id="magma-marker-set-analysis-leveraging-regulatory-marker-sets-from-ensembl" class="section level4">
@@ -459,8 +460,15 @@ ENSEMBL</h4>
 sets &lt;- getMarkerSets(GAlist = GAlist, feature = &quot;Regulatory Categories&quot;)
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
-fitREG &lt;- magma(stat=stat[&quot;dm&quot;], sets=sets, type=&quot;joint&quot;)
-head(fitREG)</code></pre>
+fitREG &lt;- magma(stat=setNames(stat$dm, stat$rsids), sets=sets, type=&quot;joint&quot;)
+head(fitREG$pathways)</code></pre>
+<p>The familiar <code>magma()</code> interface uses the existing
+competitive or Bayesian gsea engine with independent genes as its
+default working covariance. Joint Bayesian traits use independent
+residual trait errors by default; supply <code>sampling</code> for a
+different covariance model. This does not run the external MAGMA
+executable. Bayesian posterior coefficients and PIPs are in
+<code>fit$pathways</code>; inspect native chain diagnostics as well.</p>
 </div>
 </div>
 

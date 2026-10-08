@@ -11,9 +11,9 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2025-05-26" />
+<meta name="date" content="2026-10-08" />
 
-<title>Finemapping of ld regions using single trait Bayesian Linear Regression models</title>
+<title>Fine-mapping LD-score regions</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,88 +350,20 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Finemapping of ld regions using single
-trait Bayesian Linear Regression models</h1>
+<h1 class="title toc-ignore">Fine-mapping LD-score regions</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2025-05-26</h4>
+<h4 class="date">8 October 2026</h4>
 
 </div>
 
 
-<div id="introduction" class="section level1">
-<h1>Introduction</h1>
-<p>This script is focusing on fine-mapping using the Bayesian Linear
-Regression (BLR) model. It processes and analyzes GWAS (Genome-Wide
-Association Studies) summary statistics and employs fine-mapping on
-specific ld regions.</p>
-<pre class="r"><code># Load libraries
-library(devtools)
-devtools::install_github(&quot;psoerensen/qgg&quot;)
-library(gact)
-library(data.table)
-
-# Load GAlist
-GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
-
-# Save Glist for use later
-Glist &lt;- readRDS(file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G.rds&quot;))
-
-
-# Load Glist with information on 1000G
-Glist &lt;- readRDS(file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G.rds&quot;))
-
-# Select study
-studyID &lt;- &quot;GWAS1&quot;
-
-# Extract GWAS summary statistics for GWAS1
-stat &lt;- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
-
-# Check and align summary statistics based on marker information in Glist
-stat &lt;- checkStat(Glist=Glist, stat=stat,
-                  excludeMAF=0.05,
-                  excludeMAFDIFF=0.05,
-                  excludeINFO=0.8,
-                  excludeCGAT=TRUE,
-                  excludeINDEL=TRUE,
-                  excludeDUPS=TRUE,
-                  excludeMHC=FALSE,
-                  excludeMISS=0.05,
-                  excludeHWE=1e-12)
-
-# Fit BLR model across all chromosomes
-for ( chr in 1:22) {
-
-  # Create LD sets  
-  sets &lt;- qgg:::createLDsets(ldscores=Glist$ldscores[[chr]], 
-                             maxsize=2000, msize=50, verbose=TRUE)
-  
-  # Map LD sets to rsids in stat
-  sets &lt;- qgg:::mapSets(sets, rsids=stat$rsids, index=FALSE)
-
-  
-  # Fine-mapping using BLR model on selected regions
-  fit &lt;- gmap(Glist=Glist, stat=stat, sets=sets,
-              method=&quot;bayesC&quot;, pi=0.001, h2=0.1,
-              vb=0.01, ssb_prior=0.01, nub=5,
-              checkConvergence=TRUE, ntrial=3, 
-              pruneLD=TRUE, r2=0.95, checkLD=FALSE,
-              nit=1000, nburn=500, verbose=TRUE,
-              updateB=TRUE, updatePi=FALSE, updateG=TRUE, updateE=TRUE)
-  
-  # Posterior estimates of hyper-parameters (ve,vg,vb,pi,pip) for every fine-mapped region
-  head(fit$post)
-  
-  # Convergence statistics for every fine-mapped region
-  head(fit$conv)
-  
-  # Posterior estimates of marker effects for every fine-mapped region
-  head(fit$stat)
-  
-  # Save fit object for all sets on chromosome in directory of choice (here gbayes folder in database)
-  saveRDS(fit, file=file.path(GAlist$dirs[&quot;gbayes&quot;],paste0(&quot;fit_blr_chr&quot;,chr,&quot;_&quot;,studyID,&quot;.rds&quot;)))
-  
-}</code></pre>
-</div>
+<p>The <a href="Finemapping_bayesian_linear_regression_real_data.html">GWAS
+fine-mapping example</a> shows the complete workflow:
+<code>getLDscores(Glist, chr=&quot;17&quot;)</code>,
+<code>createLDsets(ldscores=ldscores)</code> and
+<code>gmap(Glist=Glist, stat=stat, sets=sets, method=&quot;bayesC&quot;)</code>.</p>
+<p>These marker sets are candidate regions. Use separately verified
+independent blocks when fitting a genome-wide block-eigen model.</p>
 
 
 

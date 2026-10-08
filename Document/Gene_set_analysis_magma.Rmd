@@ -29,7 +29,8 @@ This script facilitates advanced gene set analysis, integrating gene-marker sets
 #### MAGMA gene set analysis using BLR derived gene-level statistics 
 ```{r, include=TRUE, eval=FALSE}
 # Load libraries
-library(qgg)
+library(gbase)
+library(gsea)
 library(gact)
 library(data.table)
 
@@ -65,17 +66,17 @@ sets <- getFeatureSets(GAlist = GAlist, feature="KEGG", minsets=50)
 fitB <- magma(stat=bstat, sets=sets, type="joint")
 fitD <- magma(stat=dstat, sets=sets, type="joint")
 fitV <- magma(stat=vstat, sets=sets, type="joint")
-head(fitB)
-head(fitD)
-head(fitV)
+head(fitB$pathways)
+head(fitD$pathways)
+head(fitV$pathways)
 
 # Bayesian MAGMA using Bayes R prior for regression effects
 fitB <- magma(stat=bstat, sets=sets, method="bayesR")
 fitD <- magma(stat=dstat, sets=sets, method="bayesR")
 fitV <- magma(stat=vstat, sets=sets, method="bayesR")
-head(fitB)
-head(fitD)
-head(fitV)
+head(fitB$pathways)
+head(fitD$pathways)
+head(fitV$pathways)
 
 ```
 
@@ -87,8 +88,8 @@ head(fitV)
 sets <- getMarkerSets(GAlist = GAlist, feature = "GTExV8", threshold=0.01)
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
-fitGTEx <- magma(stat=stat["dm"], sets=sets, type="joint")
-head(fitGTEx)
+fitGTEx <- magma(stat=setNames(stat$dm, stat$rsids), sets=sets, type="joint")
+head(fitGTEx$pathways)
 ```
 
 <br>
@@ -99,6 +100,13 @@ head(fitGTEx)
 sets <- getMarkerSets(GAlist = GAlist, feature = "Regulatory Categories")
 
 # MAGMA based on linear model  using a joint test for features (default MAGMA method)
-fitREG <- magma(stat=stat["dm"], sets=sets, type="joint")
-head(fitREG)
+fitREG <- magma(stat=setNames(stat$dm, stat$rsids), sets=sets, type="joint")
+head(fitREG$pathways)
 ```
+
+The familiar `magma()` interface uses the existing competitive or Bayesian
+gsea engine with independent genes as its default working covariance.
+Joint Bayesian traits use independent residual trait errors by default;
+supply `sampling` for a different covariance model. This does not run the
+external MAGMA executable. Bayesian posterior coefficients and PIPs are in
+`fit$pathways`; inspect native chain diagnostics as well.

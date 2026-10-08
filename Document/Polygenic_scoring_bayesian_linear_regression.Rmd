@@ -15,14 +15,16 @@ Bayesian linear regression models have been proposed as a unified framework for 
 
 Genomic risk scoring using Bayesian Linear Regression (BLR) models is a very flexible approach for accounting for the underlying genetic architecture of the traits. It can be implemented using GWAS summary statistics and a reference linkage disequilibrium (LD) correlation matrix. Ideally the summary statistics will correspond to the most powerful GWAS results available on the phenotype under study. 
 
-Different BLR models can be fitted in the `qgg`-package in the function `gbayes()`, where the argument `method=` specifies which prior marker variance should be used. BLR models can be fitted using individual level genotype and phenotype data or based on GWAS summary statistics and a reference linkage disequilibrium (LD) correlation matrix.
+Different BLR models can be fitted in the standalone `gbayes` package in the function `gbayes()`, where the argument `method=` specifies which prior marker variance should be used. BLR models can be fitted using individual level genotype and phenotype data or based on GWAS summary statistics and a reference linkage disequilibrium (LD) correlation matrix.
 
 <br>
 
 #### Prepare input data for polygenic scoring 
 ```{r, include=TRUE, eval=FALSE}
 # Load libraries
-library(qgg)
+library(gbase)
+library(gbayes)
+library(gscore)
 library(gact)
 
 # Load GAlist
@@ -35,13 +37,13 @@ GAlist$studies
 list.files(GAlist$dirs["gbayes"])
 
 # Load Glist with information on 1000G
-Glist <- readRDS(file=file.path(GAlist$dirs["marker"],"Glist_1000G.rds"))
+Glist <- readRDS(file=file.path(GAlist$dirs["marker"],"Glist_1000G_eur_filtered.rds"))
 
 # Select study
 studyID <- "GWAS1"
 
 # Extract GWAS summary statistics for GWAS1
-stat <- getMarkerStatDB(GAlist=GAlist, studyID=studyID)
+stat <- getMarkerStat(GAlist=GAlist, studyID=studyID)
 
 # Check and align summary statistics based on marker information in Glist
 stat <- checkStat(Glist=Glist, stat=stat,
@@ -55,8 +57,16 @@ stat <- checkStat(Glist=Glist, stat=stat,
                   excludeMISS=0.05,
                   excludeHWE=1e-12)
 
+# Prepare sparse LD for the checked marker selection.
+Glist <- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
+  bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=stat$rsids)
+Glist <- gprep(Glist, task="sparseld", msize=1000,
+  ldfiles=file.path(GAlist$dirs["marker"], "pgs-eur.ld"), nthreads=4)
+
 # Extract marker sets derived from KEGG pathways
 sets <- getMarkerSets(GAlist = GAlist, feature = "KEGG")
+sets <- mapSets(lapply(sets, unique), rsids=stat$rsids, index=FALSE)
+sets <- sets[lengths(sets)>0]
 
 ```
 
@@ -67,7 +77,7 @@ In the Bayes C approach the marker effects, b, are a priori assumed to be sample
 ```{r,  eval=FALSE, echo=TRUE}
 fit <- gbayes(stat=stat, Glist=Glist, method="bayesC", nit=1000)
 pgs <- gscore(Glist=Glist, stat=fit$stat)
-head(pgs)
+head(pgs$scores)
 ```
 
 <br>
@@ -77,7 +87,7 @@ In the Bayes R approach the marker effects, b, are a priori assumed to be sample
 ```{r,  eval=FALSE, echo=TRUE}
 fit <- gbayes(Glist=Glist, stat=stat, method="bayesR", nit=5000, nburn=1000)
 pgs <- gscore(Glist=Glist, stat=fit$stat)
-head(pgs)
+head(pgs$scores)
 ```
 
 <br>
@@ -87,5 +97,5 @@ In the Bayes R approach the marker effects, b, are a priori assumed to be sample
 ```{r,  eval=FALSE, echo=TRUE}
 fit <- gbayes(Glist=Glist, stat=stat, method="bayesR", nit=5000, nburn=1000)
 pgs <- gscore(Glist=Glist, stat=fit$stat, sets=sets)
-head(pgs)
+head(pgs$scores)
 ```

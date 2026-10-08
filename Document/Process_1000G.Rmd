@@ -1,141 +1,43 @@
 ---
-title: "Download and process 1000G"
+title: "Download and prepare 1000G"
 author: "Peter Sørensen"
-date: "`r Sys.Date()`"
+date: "8 October 2026"
 output:
   html_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo=TRUE, eval=FALSE)
 ```
 
-## Introduction
-This tutorial details the process of preparing the Glist for 1000 Genomes (1000G) data. It encompasses a series of steps, including loading essential libraries, downloading data, processing genotype data for various ancestries, and saving the results for future use. 
+Use **gbase** to prepare a Glist that selects database markers through integer
+positions in the original BED files. Keep the original BED/BIM/FAM files.
 
-<br>
-
-#### Download 1000G for different ancestries
-```{r, include=TRUE, eval=FALSE}
-# Load libraries
-library(qgg)
+```{r download}
+library(gbase)
 library(gact)
-library(data.table)
 
-# Load GAlist
-GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
-
-# Download 1000G data (if not allready downloaded)
+GAlist <- readRDS("C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
 GAlist <- downloadDB(GAlist=GAlist, what="1000G")
 ```
 
-<br>
+Prepare and save one descriptor per ancestry. This applies the website's
+database-availability selection, without adding another QC filter.
 
-#### Prepare Glist for 1000G data for European ancestry (EUR)
-```{r, include=TRUE, eval=FALSE}
-
-# Marker IDs in database
-rsids <- GAlist$rsids
-
-# Define the file paths for the original bed/bim/fam files to read
-bedfiles <- file.path(GAlist$dirs["marker"], "g1000_eur.bed")
-bimfiles <- file.path(GAlist$dirs["marker"], "g1000_eur.bim")
-famfiles <- file.path(GAlist$dirs["marker"], "g1000_eur.fam")
-
-# Define the file paths for the filtered bed/bim/fam files to write
-bedfiles_filtered <- file.path(GAlist$dirs["marker"], "g1000_eur_filtered.bed")
-bimfiles_filtered <- file.path(GAlist$dirs["marker"], "g1000_eur_filtered.bim")
-famfiles_filtered <- file.path(GAlist$dirs["marker"], "g1000_eur_filtered.fam")
-
-# Call the writeBED function to filter and write the data
-writeBED(bedRead=bedfiles, 
-         bimRead=bimfiles, 
-         famRead=famfiles,
-         bedWrite=bedfiles_filtered, 
-         bimWrite=bimfiles_filtered, 
-         famWrite=famfiles_filtered,
-         rsids=rsids)
-
-# Prepare summary (i.e. Glist) for 1000G genotype data
-Glist <- gprep(study="1000G EUR",
-               bedfiles=bedfiles_filtered,
-               bimfiles=bimfiles_filtered,
-               famfiles=famfiles_filtered)
-
-# Save Glist for use later
-saveRDS(Glist, file=file.path(GAlist$dirs["marker"],"Glist_1000G_eur_filtered.rds"))
+```{r prepare}
+for (ancestry in c("eur", "eas", "sas")) {
+  prefix <- file.path(GAlist$dirs["marker"], paste0("g1000_", ancestry))
+  Glist <- gprep(study=paste("1000G", toupper(ancestry)),
+    bedfiles=paste0(prefix, ".bed"), bimfiles=paste0(prefix, ".bim"),
+    famfiles=paste0(prefix, ".fam"))
+  rsids <- intersect(unlist(Glist$rsids, use.names=FALSE), GAlist$rsids)
+  Glist <- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
+    bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=rsids)
+  saveRDS(Glist, file.path(GAlist$dirs["marker"],
+    paste0("Glist_1000G_", ancestry, "_filtered.rds")))
+}
 ```
 
-<br>
-
-#### Prepare Glist for 1000G data for East Asian ancestry (EAS)
-```{r, include=TRUE, eval=FALSE}
-
-# Marker IDs in database
-rsids <- GAlist$rsids
-
-# Define the file paths for the original bed/bim/fam files to read
-bedfiles <- file.path(GAlist$dirs["marker"],"g1000_eas.bed")
-bimfiles <- file.path(GAlist$dirs["marker"],"g1000_eas.bim")
-famfiles <- file.path(GAlist$dirs["marker"],"g1000_eas.fam")
-
-# Define the file paths for the filtered bed/bim/fam files to write
-bedfiles_filtered <- file.path(GAlist$dirs["marker"],"g1000_eas_filtered.bed")
-bimfiles_filtered <- file.path(GAlist$dirs["marker"],"g1000_eas_filtered.bim")
-famfiles_filtered <- file.path(GAlist$dirs["marker"],"g1000_eas_filtered.fam")
-
-## Call the writeBED function to filter and write the data
-writeBED(bedRead=bedfiles, 
-         bimRead=bimfiles, 
-         famRead=famfiles,
-         bedWrite=bedfiles_filtered, 
-         bimWrite=bimfiles_filtered, 
-         famWrite=famfiles_filtered,
-         rsids=rsids)
-
-# Prepare summary (i.e. Glist) for 1000G genotype data
-Glist <- gprep(study="1000G EAS",
-               bedfiles=bed_filtered,
-               bimfiles=bim_filtered,
-               famfiles=fam_filtered)
-
-# Save Glist for use later
-saveRDS(Glist, file=file.path(GAlist$dirs["marker"],"Glist_1000G_eas_filtered.rds"))
-```
-
-<br>
-
-#### Prepare Glist for 1000G data for South Asian ancestry (SAS)
-```{r, include=TRUE, eval=FALSE}
-
-# Marker IDs in database
-rsids <- GAlist$rsids
-
-# Define the file paths for the original bed/bim/fam files to read
-bedfiles <- file.path(GAlist$dirs["marker"],"g1000_sas.bed")
-bimfiles <- file.path(GAlist$dirs["marker"],"g1000_sas.bim")
-famfiles <- file.path(GAlist$dirs["marker"],"g1000_sas.fam")
-
-# Define the file paths for the filtered bed/bim/fam files to write
-bedfiles_filtered <- file.path(GAlist$dirs["marker"],"g1000_sas_filtered.bed")
-bimfiles_filtered <- file.path(GAlist$dirs["marker"],"g1000_sas_filtered.bim")
-famfiles_filtered <- file.path(GAlist$dirs["marker"],"g1000_sas_filtered.fam")
-
-## Call the writeBED function to filter and write the data
-writeBED(bedRead=bedfiles, 
-         bimRead=bimfiles, 
-         famRead=famfiles,
-         bedWrite=bedfiles_filtered, 
-         bimWrite=bimfiles_filtered, 
-         famWrite=famfiles_filtered,
-         rsids=rsids)
-
-# Prepare summary (i.e. Glist) for 1000G genotype data
-Glist <- gprep(study="1000G SAS",
-               bedfiles=bed_filtered,
-               bimfiles=bim_filtered,
-               famfiles=fam_filtered)
-
-# Save Glist for use later
-saveRDS(Glist, file=file.path(GAlist$dirs["marker"],"Glist_1000G_sas_filtered.rds"))
-```
+Continue with [sparse LD and LD scores](Compute_sparseLD_1000G.html).
+Older qgg descriptors should be prepared again with gbase using their existing
+BED/BIM/FAM paths; genotype data need not be downloaded again.

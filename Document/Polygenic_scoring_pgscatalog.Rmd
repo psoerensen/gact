@@ -20,7 +20,9 @@ In this tutorial we show how to download marker summary statistics from PGS Cata
 #### Compute polygenic scores based on summary statistics from PGC catalog
 ```{r, include=TRUE, eval=FALSE}
 # Load libraries
-library(qgg)
+library(gbase)
+library(gscore)
+library(data.table)
 library(gact)
 
 # Load GAlist
@@ -38,16 +40,19 @@ stat <- stat[, c("marker", "chr_name", "chr_position", "effect_allele", "other_a
 colnames(stat) <- c("marker", "chr", "pos", "ea", "nea", "b")
 
 # Check and align summary statistics based on marker information in Glist
+stat$chr <- as.character(stat$chr)
 stat <- checkStat(Glist=Glist, stat=stat)
 
 # Compute polygenic scores
 pgs <- gscore(Glist = Glist, stat = stat)
-head(pgs)
+head(pgs$scores)
 
 # Extract marker sets derived from KEGG pathways
 sets <- getMarkerSets(GAlist = GAlist, feature = "KEGG")
+sets <- mapSets(lapply(sets, unique), rsids=stat$rsids, index=FALSE)
+sets <- sets[lengths(sets)>0]
 
 # Compute polygenic scores for KEGG pathways
 pgs <- gscore(Glist=Glist, stat=stat, sets=sets)
-head(pgs)
+head(pgs$scores)
 ```

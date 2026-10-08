@@ -81,9 +81,12 @@ To install the most recent version of the gact and qgg package from
 GitHub, use the following commands in R:
 
 ``` r
-library(devtools)
+options(repos=c(
+  gsuite="https://psoerensen.github.io/gtools/gsuite/repository",
+  CRAN="https://cloud.r-project.org"
+))
 devtools::install_github("psoerensen/gact")
-devtools::install_github("psoerensen/qgg")
+gact::install_gsuite()
 ```
 
 ### Tutorials for downloading and installing the gact database
@@ -130,8 +133,9 @@ et al. 2024).
 [Gene set analysis using Bayesian
 MAGMA](Document/Gene_set_analysis_bayesian_magma.html)
 
-Polygenic Prioritization Scoring (PoPS) using BLR models and gene-level
-statistics derived from VEGAS (work in progress).  
+Gene ranking with chromosome-held-out ridge, BayesC and BayesR PoPS
+models using gene-level statistics derived from VEGAS.
+
 [Gene ranking using PoPS](Document/Gene_ranking_bayesian_pops.html)
 
 Individual-level linear regression and LOCO mixed-model association
@@ -169,6 +173,8 @@ regional HESS/rho-HESS, timing and memory.
 [Genetic correlation with
 gcorr](Document/Genetic_correlation_CAD_T2D_gcorr.html)
 
+[Tutorial timings and memory](Document/Tutorial_timings_and_memory.html)
+
 ### Workflow requirements and interpretation
 
 Use a genetic reference panel matched to the GWAS ancestry and genome
@@ -180,14 +186,16 @@ field is ambiguous. `normalizeStatSchema()` and `validateStatSchema()`
 support checking the resulting canonical fields before writing to the
 database.
 
-Most analysis tutorials use qgg implementations; the glma and gcorr
-tutorials identify their standalone gsuite packages explicitly.
-BLR-MAGMA in these tutorials is the Bayesian gene-set workflow; it is
-distinct from running the standalone MAGMA executable. PoPS prioritizes
-genes and does not produce individual polygenic scores. Fine-mapping and
-polygenic-scoring examples have different inputs and model controls;
-retain the arguments and diagnostics for each run. Successful execution
-alone does not establish MCMC convergence.
+The analysis tutorials use the standalone gsuite R packages with
+familiar qgg-style arguments. gact imports gbase for shared preparation
+and marker-set helpers; `install_gsuite()` installs the analysis
+packages explicitly. BLR-MAGMA in these tutorials is the Bayesian
+gene-set workflow; it is distinct from running the standalone MAGMA
+executable. PoPS prioritizes genes and does not produce individual
+polygenic scores. Fine-mapping and polygenic-scoring examples have
+different inputs and model controls; retain the arguments and
+diagnostics for each run. Successful execution alone does not establish
+MCMC convergence.
 
 Reference preparation, LD computation, model fitting, and scoring have
 separate resource requirements. Check disk and memory capacity before

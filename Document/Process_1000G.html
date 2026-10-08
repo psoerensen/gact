@@ -11,9 +11,9 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-11-07" />
+<meta name="date" content="2026-10-08" />
 
-<title>Download and process 1000G</title>
+<title>Download and prepare 1000G</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,136 +350,39 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Download and process 1000G</h1>
+<h1 class="title toc-ignore">Download and prepare 1000G</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-11-07</h4>
+<h4 class="date">8 October 2026</h4>
 
 </div>
 
 
-<div id="introduction" class="section level2">
-<h2>Introduction</h2>
-<p>This tutorial details the process of preparing the Glist for 1000
-Genomes (1000G) data. It encompasses a series of steps, including
-loading essential libraries, downloading data, processing genotype data
-for various ancestries, and saving the results for future use.</p>
-<p><br></p>
-<div id="download-1000g-for-different-ancestries" class="section level4">
-<h4>Download 1000G for different ancestries</h4>
-<pre class="r"><code># Load libraries
-library(qgg)
+<p>Use <strong>gbase</strong> to prepare a Glist that selects database
+markers through integer positions in the original BED files. Keep the
+original BED/BIM/FAM files.</p>
+<pre class="r"><code>library(gbase)
 library(gact)
-library(data.table)
 
-# Load GAlist
-GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
-
-# Download 1000G data (if not allready downloaded)
+GAlist &lt;- readRDS(&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 GAlist &lt;- downloadDB(GAlist=GAlist, what=&quot;1000G&quot;)</code></pre>
-<p><br></p>
-</div>
-<div id="prepare-glist-for-1000g-data-for-european-ancestry-eur" class="section level4">
-<h4>Prepare Glist for 1000G data for European ancestry (EUR)</h4>
-<pre class="r"><code># Marker IDs in database
-rsids &lt;- GAlist$rsids
-
-# Define the file paths for the original bed/bim/fam files to read
-bedfiles &lt;- file.path(GAlist$dirs[&quot;marker&quot;], &quot;g1000_eur.bed&quot;)
-bimfiles &lt;- file.path(GAlist$dirs[&quot;marker&quot;], &quot;g1000_eur.bim&quot;)
-famfiles &lt;- file.path(GAlist$dirs[&quot;marker&quot;], &quot;g1000_eur.fam&quot;)
-
-# Define the file paths for the filtered bed/bim/fam files to write
-bedfiles_filtered &lt;- file.path(GAlist$dirs[&quot;marker&quot;], &quot;g1000_eur_filtered.bed&quot;)
-bimfiles_filtered &lt;- file.path(GAlist$dirs[&quot;marker&quot;], &quot;g1000_eur_filtered.bim&quot;)
-famfiles_filtered &lt;- file.path(GAlist$dirs[&quot;marker&quot;], &quot;g1000_eur_filtered.fam&quot;)
-
-# Call the writeBED function to filter and write the data
-writeBED(bedRead=bedfiles, 
-         bimRead=bimfiles, 
-         famRead=famfiles,
-         bedWrite=bedfiles_filtered, 
-         bimWrite=bimfiles_filtered, 
-         famWrite=famfiles_filtered,
-         rsids=rsids)
-
-# Prepare summary (i.e. Glist) for 1000G genotype data
-Glist &lt;- gprep(study=&quot;1000G EUR&quot;,
-               bedfiles=bedfiles_filtered,
-               bimfiles=bimfiles_filtered,
-               famfiles=famfiles_filtered)
-
-# Save Glist for use later
-saveRDS(Glist, file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_eur_filtered.rds&quot;))</code></pre>
-<p><br></p>
-</div>
-<div id="prepare-glist-for-1000g-data-for-east-asian-ancestry-eas" class="section level4">
-<h4>Prepare Glist for 1000G data for East Asian ancestry (EAS)</h4>
-<pre class="r"><code># Marker IDs in database
-rsids &lt;- GAlist$rsids
-
-# Define the file paths for the original bed/bim/fam files to read
-bedfiles &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_eas.bed&quot;)
-bimfiles &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_eas.bim&quot;)
-famfiles &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_eas.fam&quot;)
-
-# Define the file paths for the filtered bed/bim/fam files to write
-bedfiles_filtered &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_eas_filtered.bed&quot;)
-bimfiles_filtered &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_eas_filtered.bim&quot;)
-famfiles_filtered &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_eas_filtered.fam&quot;)
-
-## Call the writeBED function to filter and write the data
-writeBED(bedRead=bedfiles, 
-         bimRead=bimfiles, 
-         famRead=famfiles,
-         bedWrite=bedfiles_filtered, 
-         bimWrite=bimfiles_filtered, 
-         famWrite=famfiles_filtered,
-         rsids=rsids)
-
-# Prepare summary (i.e. Glist) for 1000G genotype data
-Glist &lt;- gprep(study=&quot;1000G EAS&quot;,
-               bedfiles=bed_filtered,
-               bimfiles=bim_filtered,
-               famfiles=fam_filtered)
-
-# Save Glist for use later
-saveRDS(Glist, file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_eas_filtered.rds&quot;))</code></pre>
-<p><br></p>
-</div>
-<div id="prepare-glist-for-1000g-data-for-south-asian-ancestry-sas" class="section level4">
-<h4>Prepare Glist for 1000G data for South Asian ancestry (SAS)</h4>
-<pre class="r"><code># Marker IDs in database
-rsids &lt;- GAlist$rsids
-
-# Define the file paths for the original bed/bim/fam files to read
-bedfiles &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_sas.bed&quot;)
-bimfiles &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_sas.bim&quot;)
-famfiles &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_sas.fam&quot;)
-
-# Define the file paths for the filtered bed/bim/fam files to write
-bedfiles_filtered &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_sas_filtered.bed&quot;)
-bimfiles_filtered &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_sas_filtered.bim&quot;)
-famfiles_filtered &lt;- file.path(GAlist$dirs[&quot;marker&quot;],&quot;g1000_sas_filtered.fam&quot;)
-
-## Call the writeBED function to filter and write the data
-writeBED(bedRead=bedfiles, 
-         bimRead=bimfiles, 
-         famRead=famfiles,
-         bedWrite=bedfiles_filtered, 
-         bimWrite=bimfiles_filtered, 
-         famWrite=famfiles_filtered,
-         rsids=rsids)
-
-# Prepare summary (i.e. Glist) for 1000G genotype data
-Glist &lt;- gprep(study=&quot;1000G SAS&quot;,
-               bedfiles=bed_filtered,
-               bimfiles=bim_filtered,
-               famfiles=fam_filtered)
-
-# Save Glist for use later
-saveRDS(Glist, file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_sas_filtered.rds&quot;))</code></pre>
-</div>
-</div>
+<p>Prepare and save one descriptor per ancestry. This applies the
+website’s database-availability selection, without adding another QC
+filter.</p>
+<pre class="r"><code>for (ancestry in c(&quot;eur&quot;, &quot;eas&quot;, &quot;sas&quot;)) {
+  prefix &lt;- file.path(GAlist$dirs[&quot;marker&quot;], paste0(&quot;g1000_&quot;, ancestry))
+  Glist &lt;- gprep(study=paste(&quot;1000G&quot;, toupper(ancestry)),
+    bedfiles=paste0(prefix, &quot;.bed&quot;), bimfiles=paste0(prefix, &quot;.bim&quot;),
+    famfiles=paste0(prefix, &quot;.fam&quot;))
+  rsids &lt;- intersect(unlist(Glist$rsids, use.names=FALSE), GAlist$rsids)
+  Glist &lt;- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
+    bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=rsids)
+  saveRDS(Glist, file.path(GAlist$dirs[&quot;marker&quot;],
+    paste0(&quot;Glist_1000G_&quot;, ancestry, &quot;_filtered.rds&quot;)))
+}</code></pre>
+<p>Continue with <a href="Compute_sparseLD_1000G.html">sparse LD and LD
+scores</a>. Older qgg descriptors should be prepared again with gbase
+using their existing BED/BIM/FAM paths; genotype data need not be
+downloaded again.</p>
 
 
 

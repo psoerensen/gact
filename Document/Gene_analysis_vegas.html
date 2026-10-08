@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2024-11-07" />
+<meta name="date" content="2026-10-08" />
 
 <title>Gene analysis using VEGAS</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Gene analysis using VEGAS</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2024-11-07</h4>
+<h4 class="date">2026-10-08</h4>
 
 </div>
 
@@ -374,15 +374,16 @@ associations indicative of genetic risk for complex traits or
 diseases.</p>
 <p>This script is dedicated to gene analysis using the VEGAS (Versatile
 Gene-based Association Study) approach within the context of the gact
-and qgg frameworks in R. It is designed to perform gene-based
-association studies for multiple traits across different ancestries,
-specifically European (EUR), East Asian (EAS), and South Asian
-(SAS).</p>
+and standalone gsuite packages in R. It is designed to perform
+gene-based association studies for multiple traits across different
+ancestries, specifically European (EUR), East Asian (EAS), and South
+Asian (SAS).</p>
 <p><br></p>
 <div id="prepare-for-vegas-gene-analysis-shown-below" class="section level4">
 <h4>Prepare for VEGAS gene analysis shown below</h4>
 <pre class="r"><code># Load libraries
-library(qgg)
+library(gbase)
+library(glma)
 library(gact)
 
 # Load GAlist with information on gact database
@@ -410,8 +411,18 @@ stat &lt;- getMarkerStat(GAlist=GAlist, studyID=studyID)
 # Check and align summary statistics based on marker information in Glist
 stat &lt;- checkStat(Glist=Glist, stat=stat)
 
+# Match the sets to the checked markers and prepare regional eigenvalues.
+ids &lt;- if (is.data.frame(stat)) stat$rsids else Reduce(intersect, lapply(stat, `[[`, &quot;rsids&quot;))
+sets &lt;- mapSets(lapply(markerSets, unique), rsids=ids, index=FALSE)
+sets &lt;- sets[lengths(sets)&gt;0]
+Glist &lt;- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
+  bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=unique(unlist(sets, use.names=FALSE)))
+Glist &lt;- gprep(Glist, task=&quot;eigen&quot;, sets=sets, nthreads=4)
+order &lt;- unlist(Glist$rsids, use.names=FALSE)
+if (is.data.frame(stat)) stat &lt;- stat[match(order, stat$rsids), ]
+else stat &lt;- lapply(stat, function(x) x[match(order, x$rsids), ])
 # Gene analysis using VEGAS
-res &lt;- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)</code></pre>
+res &lt;- vegas(Glist=Glist, sets=sets, stat=stat, verbose=TRUE)</code></pre>
 <p><br></p>
 </div>
 <div id="perform-vegas-gene-analysis-for-a-single-study-of-east-asian-ancestry-eas" class="section level4">
@@ -429,8 +440,18 @@ stat &lt;- getMarkerStat(GAlist=GAlist, studyID=studyID)
 # Check and align summary statistics based on marker information in Glist
 stat &lt;- checkStat(Glist=Glist, stat=stat)
 
+# Match the sets to the checked markers and prepare regional eigenvalues.
+ids &lt;- if (is.data.frame(stat)) stat$rsids else Reduce(intersect, lapply(stat, `[[`, &quot;rsids&quot;))
+sets &lt;- mapSets(lapply(markerSets, unique), rsids=ids, index=FALSE)
+sets &lt;- sets[lengths(sets)&gt;0]
+Glist &lt;- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
+  bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=unique(unlist(sets, use.names=FALSE)))
+Glist &lt;- gprep(Glist, task=&quot;eigen&quot;, sets=sets, nthreads=4)
+order &lt;- unlist(Glist$rsids, use.names=FALSE)
+if (is.data.frame(stat)) stat &lt;- stat[match(order, stat$rsids), ]
+else stat &lt;- lapply(stat, function(x) x[match(order, x$rsids), ])
 # Gene analysis using VEGAS
-res &lt;- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)</code></pre>
+res &lt;- vegas(Glist=Glist, sets=sets, stat=stat, verbose=TRUE)</code></pre>
 <p><br></p>
 </div>
 <div id="perform-vegas-gene-analysis-for-multiple-studies-of-european-ancestry" class="section level4">
@@ -443,13 +464,21 @@ studyID &lt;- c(&quot;GWAS1&quot;,&quot;GWAS2&quot;)
 Glist &lt;- readRDS(file=file.path(GAlist$dirs[&quot;marker&quot;],&quot;Glist_1000G_eur_filtered.rds&quot;))
 
 # Get GWAS summary statistics from gact database
-stat &lt;- getMarkerStat(GAlist=GAlist, studyID=studyID)
+stat &lt;- setNames(lapply(studyID, function(id)
+  checkStat(Glist=Glist, stat=getMarkerStat(GAlist=GAlist, studyID=id))), studyID)
 
-# Check and align summary statistics based on marker information in Glist
-stat &lt;- checkStat(Glist=Glist, stat=stat)
-
+# Match the sets to the checked markers and prepare regional eigenvalues.
+ids &lt;- if (is.data.frame(stat)) stat$rsids else Reduce(intersect, lapply(stat, `[[`, &quot;rsids&quot;))
+sets &lt;- mapSets(lapply(markerSets, unique), rsids=ids, index=FALSE)
+sets &lt;- sets[lengths(sets)&gt;0]
+Glist &lt;- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
+  bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=unique(unlist(sets, use.names=FALSE)))
+Glist &lt;- gprep(Glist, task=&quot;eigen&quot;, sets=sets, nthreads=4)
+order &lt;- unlist(Glist$rsids, use.names=FALSE)
+if (is.data.frame(stat)) stat &lt;- stat[match(order, stat$rsids), ]
+else stat &lt;- lapply(stat, function(x) x[match(order, x$rsids), ])
 # Gene analysis using VEGAS
-res &lt;- vegas(Glist=Glist, sets=markerSets, stat=stat, verbose=TRUE)</code></pre>
+res &lt;- vegas(Glist=Glist, sets=sets, stat=stat, verbose=TRUE)</code></pre>
 </div>
 </div>
 

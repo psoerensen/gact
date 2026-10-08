@@ -1,127 +1,50 @@
 ---
-title: "Compute sparse LD matrices for 1000G"
+title: "Compute sparse LD and LD scores for 1000G"
 author: "Peter Sørensen"
-date: "`r Sys.Date()`"
+date: "8 October 2026"
 output:
   html_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo=TRUE, eval=FALSE)
 ```
 
-## Introduction
-This tutorial focuses on computing sparse Linkage Disequilibrium (LD) matrices for 1000 Genomes Project (1000G) data across different ancestries and exploring this LD data. These sparse LD matrices are essential for various genomic analyses, including LD score regression, VEGAS gene-based testing, and Bayesian linear regression models used for finemapping or genomic scoring.
+Use Glist from the [1000G preparation example](Process_1000G.html).
+The reference already selects markers available in the gact database.
 
-<br>
-
-#### Compute Sparse LD matrix and LD scores for EUR
-```{r, include=TRUE, eval=FALSE}
-# Load libraries
-library(qgg)
+```{r sparse-ld}
+library(gbase)
 library(gact)
 library(data.table)
 
-# Load GAlist
-GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
+GAlist <- readRDS("C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
 
-# Load Glist with information about genotypes in 1000G
-Glist <- readRDS(file=file.path(GAlist$dirs["marker"],"Glist_1000G_eur_filtered.rds"))
+for (ancestry in c("eur", "eas", "sas")) {
+  descriptor <- file.path(GAlist$dirs["marker"],
+    paste0("Glist_1000G_", ancestry, "_filtered.rds"))
+  Glist <- readRDS(descriptor)
+  Glist <- gprep(Glist, task="sparseld", msize=1000,
+    ldfiles=file.path(GAlist$dirs["marker"], paste0("g1000_", ancestry, ".ld")),
+    nthreads=4)
+  saveRDS(Glist, descriptor)
 
-# Marker IDs used in sparse LD computation
-#rsids <- GAlist$rsids
-rsids <- unlist(Glist$rsids)
-
-# Compute Sparse LD matrix and LD scores for EAS and save for later use
-Glist <- gprep(Glist, task = "sparseld", msize = 1000, rsids = rsids, overwrite = FALSE)
-
-saveRDS(Glist, file=file.path(GAlist$dirs["marker"],"Glist_1000G_eur_filtered.rds"))
-file.remove(Glist$ldfiles)
-
-markers <- data.frame(rsids=unlist(Glist$rsids),
-                      chr=unlist(Glist$chr),
-                      pos=unlist(Glist$pos),
-                      ea=unlist(Glist$a1),
-                      nea=unlist(Glist$a2),
-                      eaf=unlist(Glist$af),
-                      maf=unlist(Glist$maf),
-                      map=unlist(Glist$map),
-                      ldscores=unlist(Glist$ldscores))
-rownames(markers) <- markers$rsids
-fwrite(markers, file=file.path(GAlist$dirs["marker"],"markers_1000G_eur_filtered.txt.gz"))
+  markers <- data.frame(rsids=unlist(Glist$rsids, use.names=FALSE),
+    chr=unlist(Glist$chr), pos=unlist(Glist$pos),
+    ea=unlist(Glist$a1), nea=unlist(Glist$a2),
+    eaf=unlist(Glist$af), maf=unlist(Glist$maf), map=unlist(Glist$map))
+  markers$ldscores <- getLDscores(Glist)[markers$rsids]
+  fwrite(markers, file.path(GAlist$dirs["marker"],
+    paste0("markers_1000G_", ancestry, "_filtered.txt.gz")))
+}
 ```
 
-<br>
+`msize=1000` retains a 1,000-marker distance window, with no base-pair window
+or r² cutoff. LD scores are computed in the same pass. To store fewer
+correlations, supply an explicit `r2` cutoff. `ldfiles` names the output prefix;
+gbase writes its own sparse-resource files. Keep those files with Glist for
+analyses that read LD.
 
-#### Compute Sparse LD matrix and LD scores for EAS
-```{r, include=TRUE, eval=FALSE}
-# Load libraries
-library(qgg)
-library(gact)
-library(data.table)
-
-# Load GAlist
-GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
-
-# Load Glist with information about genotypes in 1000G
-Glist <- readRDS(file=file.path(GAlist$dirs["marker"],"Glist_1000G_eas_filtered.rds"))
-
-# Marker IDs used in sparse LD computation
-#rsids <- GAlist$rsids
-rsids <- unlist(Glist$rsids)
-
-# Compute Sparse LD matrix and LD scores for EAS and save for later use
-Glist <- gprep(Glist, task = "sparseld", msize = 1000, rsids = rsids, overwrite = FALSE)
-saveRDS(Glist, file=file.path(GAlist$dirs["marker"],"Glist_1000G_eas_filtered.rds"))
-file.remove(Glist$ldfiles)
-
-markers <- data.frame(rsids=unlist(Glist$rsids),
-                      chr=unlist(Glist$chr),
-                      pos=unlist(Glist$pos),
-                      ea=unlist(Glist$a1),
-                      nea=unlist(Glist$a2),
-                      eaf=unlist(Glist$af),
-                      maf=unlist(Glist$maf),
-                      map=unlist(Glist$map),
-                      ldscores=unlist(Glist$ldscores))
-rownames(markers) <- markers$rsids
-fwrite(markers, file=file.path(GAlist$dirs["marker"],"markers_1000G_eas_filtered.txt.gz"))
-```
-
-<br>
-
-#### Compute Sparse LD matrix and LD scores for SAS
-```{r all-code, include=TRUE, eval=FALSE}
-# Load libraries
-library(qgg)
-library(gact)
-library(data.table)
-
-# Load GAlist
-GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
-
-# Load Glist with information about genotypes in 1000G
-Glist <- readRDS(file=file.path(GAlist$dirs["marker"],"Glist_1000G_sas_filtered.rds"))
-
-# Marker IDs used in sparse LD computation
-#rsids <- GAlist$rsids
-rsids <- unlist(Glist$rsids)
-
-# Compute Sparse LD matrix and LD scores for EAS and save for later use
-Glist <- gprep(Glist, task = "sparseld", msize = 1000, rsids = rsids, overwrite = FALSE)
-saveRDS(Glist, file=file.path(GAlist$dirs["marker"],"Glist_1000G_sas_filtered.rds"))
-file.remove(Glist$ldfiles)
-
-markers <- data.frame(rsids=unlist(Glist$rsids),
-                      chr=unlist(Glist$chr),
-                      pos=unlist(Glist$pos),
-                      ea=unlist(Glist$a1),
-                      nea=unlist(Glist$a2),
-                      eaf=unlist(Glist$af),
-                      maf=unlist(Glist$maf),
-                      map=unlist(Glist$map),
-                      ldscores=unlist(Glist$ldscores))
-rownames(markers) <- markers$rsids
-fwrite(markers, file=file.path(GAlist$dirs["marker"],"markers_1000G_sas_filtered.txt.gz"))
-```
-
+For eigenvalues of supplied marker sets, use `gprep(Glist, task="eigen", sets=sets)`.
+See [genetic correlation](Genetic_correlation_CAD_T2D_gcorr.html) for methods
+that reuse stored LD scores and regional moments.

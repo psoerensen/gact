@@ -15,6 +15,27 @@ This tutorial is designed to download and set up the gact database, which is foc
 
 <br>
 
+## Install the R packages
+
+Configure the source repository before installing gact. Its required gbase
+dependency is installed with it. Install the analysis packages with one
+additional call:
+
+```{r install, eval=FALSE}
+options(repos=c(
+  gsuite="https://psoerensen.github.io/gtools/gsuite/repository",
+  CRAN="https://cloud.r-project.org"
+))
+devtools::install_github("psoerensen/gact")
+gact::install_gsuite()
+```
+
+If devtools is not installed, run `install.packages("devtools")` first.
+The analysis packages are gbase, gbayes, gcorr, glma, gmap, gscore and gsea.
+For a smaller installation, use `gact::install_gsuite(packages=c("gbase","gcorr"))`.
+Source packages require a C++17 toolchain; on Windows use Rtools matching your R
+version. Package installation does not download the database.
+
 ## Download, save and reopen
 
 The R package and database are installed separately. The default database contains

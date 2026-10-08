@@ -13,7 +13,7 @@
 
 <meta name="date" content="2026-10-08" />
 
-<title>LD Score regression</title>
+<title>Tutorial timings and memory</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,76 +350,212 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">LD Score regression</h1>
+<h1 class="title toc-ignore">Tutorial timings and memory</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2026-10-08</h4>
+<h4 class="date">8 October 2026</h4>
 
 </div>
 
 
-<div id="introduction" class="section level2">
-<h2>Introduction</h2>
-<p>LD score regression is a statistical method used to estimate the
-heritability of complex traits and to understand the genetic
-architecture underlying genome-wide association study (GWAS) results. By
-analyzing the relationship between linkage disequilibrium (LD) scores
-(which measure the extent to which SNPs are correlated with nearby
-genetic variants) and GWAS summary statistics, it separates true
-polygenic signal from confounding biases like population stratification.
-This approach helps to quantify the contribution of common genetic
-variants to trait heritability.</p>
-<p>This tutorial demonstrates how to estimate narrow-sense heritability
-and genetic correlation using the LD Score Regression (LDSC) method
-within the context of a gact database. It also includes examples of
-partitioning of heritability using different annotation sources. The
-script makes use of the gcorr and gact libraries to process and analyze
-GWAS summary statistics.</p>
-<p><br></p>
-<pre class="r"><code># Load libraries
-library(gcorr)
-library(gact)
-
-# Load GAlist
-GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
-
-# Check studies in gact database
-GAlist$studies
-
-# Select GWAS study IDs
-studyIDs &lt;- c(&quot;GWAS1&quot;,&quot;GWAS2&quot;,&quot;GWAS6&quot;)
-
-# Get GWAS summary statistics for studyIDs (e.g. z and n) from gact database
-stat &lt;- getMarkerStat(GAlist=GAlist, studyID=studyIDs)
-
-# Get ldscores matched to the ancestry of GWAS data
-ldscores &lt;- getLDscoresDB(GAlist=GAlist, ancestry=&quot;EUR&quot;, version=&quot;1000G&quot;)
-
-# Estimate narrow sense heritability using ldsc
-fit &lt;- ldsc(z=stat$z, n=stat$n, ldscores=ldscores, what=&quot;h2&quot;)
-fit
-
-# Estimate genetic correlation using using ldsc
-fit &lt;- ldsc(z=stat$z, n=stat$n, ldscores=ldscores, what=&quot;rg&quot;)
-fit$h2
-fit$rg
-
-# Reference sample count for grouped marker-set fits.
-Glist &lt;- readRDS(file.path(GAlist$dirs[&quot;marker&quot;], &quot;Glist_1000G_eur_filtered.rds&quot;))
-
-# Partition heritability using chromosome sets.
-sets &lt;- getMarkerSets(GAlist=GAlist, feature=&quot;Chromosomes&quot;)
-fit &lt;- ldsc(z=stat$z, n=stat$n, ldscores=ldscores, sets=sets, what=&quot;h2&quot;, residual=TRUE,
-  set_model=&quot;grouped&quot;, reference_sample_size=Glist$n)
-fit
-
-# Regulatory tagging scores require the prepared sparse-LD reference.
-sets &lt;- getMarkerSets(GAlist=GAlist, feature=&quot;Regulatory Categories&quot;)
-fit &lt;- ldsc(z=stat$z, n=stat$n, Glist=Glist, sets=sets, what=&quot;h2&quot;, residual=TRUE)
-fit</code></pre>
-<p>Chromosome groups reuse stored ordinary LD scores. Overlapping
-regulatory annotations use their annotation-specific tagging scores from
-sparse LD. The standalone example uses regression; qgg’s Bayesian LDSC
-prior is not implemented by this interface.</p>
+<style>
+table { width:100%; font-variant-numeric:tabular-nums; }
+th,td { padding:9px 12px !important; }
+thead { background:#f3f6f8; }
+tbody tr:nth-child(even) { background:#f8fafb; }
+</style>
+<p>These are recorded tutorial runs on Windows 11, R 4.4.1 and an Intel
+Core i7-1365U with about 16 GiB RAM. Memory is the whole R process’s
+peak resident working set, including required inputs. It is not the size
+of the returned result or the additional memory needed by the
+solver.</p>
+<div id="database-and-simulated-data" class="section level2">
+<h2>Database and simulated data</h2>
+<p>The simulated panel has 5,000 people and 37,991 filtered markers.
+Analysis times exclude downloading, data preparation and process
+startup. The mapping rows summarize three serial repeats; the other rows
+are single runs.</p>
+<table>
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<thead>
+<tr>
+<th align="left">Tutorial / operation</th>
+<th align="right">Threads</th>
+<th align="right">Time</th>
+<th align="right">Peak resident memory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left"><a href="Download_and_install_gact_database.html">Database download and
+setup</a></td>
+<td align="right">—</td>
+<td align="right">9 min 4 s</td>
+<td align="right">2.68 GiB</td>
+</tr>
+<tr>
+<td align="left"><a href="Glma_linear_and_mixed_models_simulated_data.html">Linear
+regression</a></td>
+<td align="right">4</td>
+<td align="right">1.64 s</td>
+<td align="right">153 MiB</td>
+</tr>
+<tr>
+<td align="left">Gaussian LOCO</td>
+<td align="right">4</td>
+<td align="right">57.00 s</td>
+<td align="right">386 MiB</td>
+</tr>
+<tr>
+<td align="left">Prior-selected LOCO</td>
+<td align="right">4</td>
+<td align="right">124.12 s</td>
+<td align="right">392 MiB</td>
+</tr>
+<tr>
+<td align="left"><a href="Finemapping_bayesian_linear_regression_simulated_data.html">Four
+regional BayesC fits and posterior sets</a></td>
+<td align="right">1</td>
+<td align="right">5.48 s</td>
+<td align="right">0.56 GiB</td>
+</tr>
+<tr>
+<td align="left">Genome-wide BayesC fit from prepared LD</td>
+<td align="right">1</td>
+<td align="right">2.36 s</td>
+<td align="right">0.81 GiB</td>
+</tr>
+<tr>
+<td align="left">Genome-wide credible-set grouping</td>
+<td align="right">1</td>
+<td align="right">3.95 s</td>
+<td align="right">0.52 GiB</td>
+</tr>
+</tbody>
+</table>
+<p>Regional mapping used one chain, 1,000 post-burn sweeps and 100
+burn-in sweeps; the four regions contained 850, 785, 1,091 and 1,399
+markers. Its observed time range was 5.22–6.28 s. Genome fitting used
+one chain and 100 sweeps without burn-in (2.03–2.38 s); grouping took
+3.83–4.16 s. The tutorial shows two-chain calls; those have not been
+timed here. The chromosome-component glma examples also have no recorded
+timings. Database setup covers 2.57 GiB of transfers and a 3.04 GiB
+basic database; package installation is separate.</p>
+</div>
+<div id="cad-and-t2d" class="section level2">
+<h2>CAD and T2D</h2>
+<p><a href="Genetic_correlation_CAD_T2D_gcorr.html">Genetic
+correlation</a> uses the common 7,221,923-marker availability selection
+and stored LD scores. The reference has 503 EUR individuals. Time
+excludes input loading and saving; memory is the peak sampled during
+analysis with the required inputs already loaded.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Operation</th>
+<th align="right">Threads</th>
+<th align="right">Time</th>
+<th align="right">Peak resident memory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">LDSC</td>
+<td align="right">—</td>
+<td align="right">9.3 s</td>
+<td align="right">3.02 GiB</td>
+</tr>
+<tr>
+<td align="left">GNOVA</td>
+<td align="right">—</td>
+<td align="right">6.4 s</td>
+<td align="right">3.09 GiB</td>
+</tr>
+<tr>
+<td align="left">SumHer baseline</td>
+<td align="right">—</td>
+<td align="right">12.9 s</td>
+<td align="right">3.53 GiB</td>
+</tr>
+<tr>
+<td align="left">Chromosome-set LDSC preparation and fit</td>
+<td align="right">—</td>
+<td align="right">29.9 s</td>
+<td align="right">3.27 GiB</td>
+</tr>
+<tr>
+<td align="left">HESS regional preparation</td>
+<td align="right">4</td>
+<td align="right">18 min 49 s</td>
+<td align="right">3.18 GiB</td>
+</tr>
+<tr>
+<td align="left">HESS pair refit from compact moments</td>
+<td align="right">—</td>
+<td align="right">3.3–3.6 s</td>
+<td align="right">0.43 GiB</td>
+</tr>
+</tbody>
+</table>
+<p>The score-based fitters expose no thread argument. HESS prepared
+1,702 regions and 18,696 retained components; its two refits reused the
+compact moments. Preparation and fitting are separate costs.</p>
+<p>For the full <a href="Gene_analysis_vegas.html">VEGAS gene
+analysis</a>, 17,862 genes and two traits shared the same regional
+spectra:</p>
+<table>
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<thead>
+<tr>
+<th align="left">Operation</th>
+<th align="right">Time</th>
+<th align="right">Peak resident memory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">Marker-set LD eigenvalues</td>
+<td align="right">10 min 43 s</td>
+<td align="right">—</td>
+</tr>
+<tr>
+<td align="left">Prepare reusable VEGAS object</td>
+<td align="right">1 min 20 s</td>
+<td align="right">—</td>
+</tr>
+<tr>
+<td align="left">Initial two-trait VEGAS fit</td>
+<td align="right">1 min 38 s</td>
+<td align="right">—</td>
+</tr>
+<tr>
+<td align="left">Refit from restored preparation</td>
+<td align="right">1 min 11 s</td>
+<td align="right">—</td>
+</tr>
+<tr>
+<td align="left">Complete initial workflow, including preparation and
+alignment</td>
+<td align="right">15 min</td>
+<td align="right">5.88 GiB</td>
+</tr>
+</tbody>
+</table>
+<p>VEGAS’s memory figure covers the complete worker, including input
+loading; per-stage peaks were not recorded. Its preparation used four
+decoding threads; gene regions and the eigensolver were serial. The
+complete-workflow time is not the VEGAS fit time. Refitting excludes
+loading the restored preparation.</p>
+<p>Runtimes depend on the data and settings. Bayesian PoPS and the new
+chromosome component examples remain to be timed.</p>
 </div>
 
 
