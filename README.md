@@ -86,55 +86,13 @@ devtools::install_github("psoerensen/gact")
 devtools::install_github("psoerensen/qgg")
 ```
 
-### Basic database setup
-
-The R package and database are installed separately. The default
-database contains annotations, markers, gene and pathway statistics,
-Bayesian results, ATC classifications and drug interactions. Genotype
-panels and LD preparation are separate workflow steps.
-
-``` r
-library(gact)
-dbdir <- file.path(path.expand("~"), "gact-data")
-GAlist <- gact(version = "hsa.0.0.1", dbdir = dbdir, task = "download")
-# Check the existing download log before saving the database descriptor.
-GAlist$downloads[, c("what", "status", "message")]
-if (is.null(GAlist$downloads) || any(GAlist$downloads$status != "success")) {
-  stop("Some components failed; inspect the download log before proceeding.")
-}
-descriptor <- file.path(GAlist$dbdir, paste0("GAlist_", GAlist$version, ".rds"))
-saveRDS(GAlist, descriptor)
-# In a later session, load the saved descriptor without starting downloads.
-GAlist <- readRDS(file.path(dbdir, "hsa.0.0.1", "GAlist_hsa.0.0.1.rds"))
-```
-
-Choose a new version directory for the initial download. Repeating
-`gact()` against an existing version directory stops; it does not resume
-installation. With the returned `GAlist`,
-`downloadDB(GAlist, what = "component")` can retry a selected component,
-which downloads that component again. Save the updated descriptor after
-a successful retry. Keep the database at its original location because
-the descriptor contains absolute paths.
-
-In the recorded original setup, the basic database occupied
-approximately **3.04 GiB**, including retained archives, and its
-descriptor was approximately **50 MiB**. The five Zenodo components
-totalled approximately **2.57 GiB of transfers**, with ATC and drug
-interactions downloaded separately. The original setup operation took
-**544.2 seconds (9 minutes 4 seconds)** and reached a process peak
-working set of **2.68 GiB** on Windows with an Intel Core i7-1365U,
-about 16 GiB RAM, and R 4.4.1. These are single-run measurements of that
-database snapshot, not minimum hardware requirements or guaranteed
-timings. Allow additional storage for the descriptor, genotype panels,
-LD resources and analysis outputs. Network speed and source updates can
-change download times and database size.
-
 ### Tutorials for downloading and installing the gact database
 
 Below is a set of tutorials used for the gact package:
 
-Download and set up the gact database, which is focused on genomic
-associations for complex traits:  
+Download, save and reopen the gact database, inspect its contents, and
+review storage and timing information:
+
 [Download and install gact
 database](Document/Download_and_install_gact_database.html)
 
