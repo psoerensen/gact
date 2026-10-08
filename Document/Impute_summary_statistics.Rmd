@@ -1,0 +1,87 @@
+---
+title: "Summary-statistics imputation"
+author: "Peter Sørensen"
+date: "8 October 2026"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, eval=FALSE)
+```
+
+## Prepare the data
+
+This example checks and imputes Z-scores for type 2 diabetes (GWAS1) and
+coronary artery disease (GWAS2). Both studies are processed in one call using
+**gbase** and the aligned statistics in the gact database.
+It requires gbase 0.1.3 or later and the updated gact package.
+
+Load your saved GAlist and an EUR Glist prepared with `gprep()`, using the same
+genome build and marker backbone. Its BED files must remain accessible.
+For LD checking, use a matched reference with at least 5,000 individuals.
+The paths below refer to your existing database and prepared reference.
+
+```{r prepare}
+library(gact)
+library(gbase)
+
+GAlist <- readRDS("path/to/GAlist_hsa.0.0.1.rds")
+Glist <- readRDS("path/to/Glist_EUR_reference.rds")
+
+studyIDs <- c("GWAS1", "GWAS2")
+stat <- getMarkerStat(GAlist=GAlist, studyID=studyIDs, rm.na=FALSE)
+```
+
+`rm.na=FALSE` keeps markers with missing statistics. The eligible markers in
+Glist define the output backbone; gact supplies study ancestry and marker identity.
+
+## Check and impute
+
+```{r impute}
+stat <- checkStat(Glist, stat, ldcheck=TRUE, impute=TRUE, nthreads=4)
+head(stat$z)
+```
+
+The function aligns alleles, applies marker QC, checks consistency with local
+reference LD, and imputes missing or LD-rejected Z-scores. Accepted observations
+are preserved. Predictions below the default quality threshold of `r2=0.6`
+remain missing, and reference-QC exclusions are not restored.
+
+LD is computed from BED in bounded windows. No stored sparse-LD matrices or
+prepared eigenvalues are required, and no new LD files are written.
+
+## Inspect the results
+
+```{r diagnostics}
+# Number of imputed scores for each study, and their reference prediction quality.
+quality <- attr(stat, "imputation")
+colSums(quality$imputed)
+head(quality$r2)
+
+# Original harmonized scores rejected by the LD consistency check.
+head(attr(stat, "ldcheck")$original)
+```
+
+Known values in `stat$n` are retained; missing sample sizes are not guessed.
+Effect estimates, standard errors and P values for new or repaired scores are
+left missing. A later analysis must supply the inputs it needs and account for
+imputation uncertainty. The LD check is a DENTIST-style diagnostic; its P values
+are approximate and do not establish that the reference equals the original study LD.
+
+## Other reference choices
+
+For imputation without LD checking, use `ldcheck=FALSE` in the same call.
+The filtered EUR Glist from the [1000G example](Compute_sparseLD_1000G.html)
+can illustrate that route; its smaller sample size limits prediction quality.
+For already aligned statistics, imputation alone is `stat <- impute(Glist, stat)`.
+Start from freshly extracted statistics when comparing alternative settings.
+
+A combined reference can be labelled with
+`Glist <- setReferenceGroups(Glist, list(EUR=eur_ids, EAS=eas_ids))`, where
+`eur_ids` and `eas_ids` are disjoint sample-ID vectors in that reference.
+Gact's study ancestry then selects the corresponding group for each trait.
+Explicit mixture weights are supported for independent standardized meta-analysis
+scores with constant coefficients; they are not a general model of local admixture.
+See the [preparation guide](https://psoerensen.github.io/gtools/gsuite/docs/genotype-preparation.html#summary-statistics-checking-and-imputation)
+for ancestry selection, mixture weights and controls.

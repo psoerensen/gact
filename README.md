@@ -118,6 +118,11 @@ statistics](Document/Download_and_process_gwas.html)
 
 ### Tutorials for various types of genomic analysis using the gact database
 
+Check summary statistics against reference LD and impute missing
+Z-scores for multiple studies:
+
+[Summary-statistics imputation](Document/Impute_summary_statistics.html)
+
 Gene analysis using the VEGAS (Versatile Gene-based Association Study)
 approach using the 1000G LD reference data processed above:  
 [Gene analysis using VEGAS](Document/Gene_analysis_vegas.html)
@@ -211,7 +216,9 @@ intact; poor-quality predictions stay missing. See the [summary
 preparation
 guide](https://psoerensen.github.io/gtools/gsuite/docs/genotype-preparation.html#summary-statistics-checking-and-imputation)
 for ancestry groups, explicit meta-analysis mixtures and diagnostic
-flags. Missing sample sizes and effect estimates are not inferred.
+flags. The [gact imputation
+example](Document/Impute_summary_statistics.html) shows the CAD/T2D
+workflow. Missing sample sizes and effect estimates are not inferred.
 
 Reference preparation, LD computation, model fitting, and scoring have
 separate resource requirements. Check disk and memory capacity before
