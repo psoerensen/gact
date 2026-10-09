@@ -14,230 +14,115 @@ knitr::opts_chunk$set(echo=TRUE, eval=FALSE)
 
 ## Introduction
 
-This example fits BayesC and BayesR to individual-level genotypes and a
-simulated phenotype. We inspect posterior variance summaries, marker effects
-and predictions, then enable scheduled marker updates.
-
-We use the same 5,000-person PLINK panel and four-causal-marker phenotype as
-the [linear and mixed models example](Glma_linear_and_mixed_models_simulated_data.html).
-The revised example uses **gbayes 0.1.4 or later**, with compatible gbase and gscore
-installations and a native build containing the
-[all-marker weight-update correction](https://github.com/psoerensen/gbayes/commit/c198232).
-The code is a runnable recipe; rendering this page reads saved
-results rather than fitting the models again.
+Fit BayesC and BayesR to the simulated individual-level panel and inspect
+posterior parameter estimates. We use all individuals; prediction and the
+historical eight-fit comparison are in the
+[advanced example](Gbayes_individual_level_simulated_data_advanced.html).
+Use **gbayes 0.1.5 or later** and a compatible gbase installation.
+This page shows a runnable recipe; rendering does not fit the models.
 
 ## Prepare the data
 
-Download the simulated panel, corrected marker map and phenotype. Existing
-files are reused. The original genotypes are unchanged.
+Set the working directory to an existing folder of your choice. Download the
+same panel, corrected marker map and phenotype used in the
+[linear and mixed models example](Glma_linear_and_mixed_models_simulated_data.html).
 
 ```{r prepare}
 library(gbase)
 library(gbayes)
-library(gscore)
 
-dir.create("gbayes-individual-example", showWarnings=FALSE)
-setwd("gbayes-individual-example")
-panel_url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/"
-example_url <- "https://psoerensen.github.io/gact/Document/glma-simulated-data/"
-fetch <- function(url, file) {
-  if (!file.exists(file)) download.file(url, file, mode="wb")
-}
-fetch(paste0(panel_url, "human.bed"), "human.bed")
-fetch(paste0(example_url, "human.bim"), "human.bim")
-fetch(paste0(panel_url, "human.fam"), "human.fam")
-fetch(paste0(example_url, "example-phenotypes.csv"), "phenotypes.csv")
+setwd("C:/Users/Projects/Examples")
+url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/"
+base <- "https://psoerensen.github.io/gact/Document/glma-simulated-data/"
+download.file(paste0(url, "human.bed"), "human.bed", mode="wb")
+download.file(paste0(base, "human.bim"), "human.bim")
+download.file(paste0(url, "human.fam"), "human.fam")
 
-panel <- gprep(bedfiles="human.bed")
-phenotypes <- read.csv("phenotypes.csv", colClasses=c("character", "numeric"))
+Glist <- gprep(study="Simulation", bedfiles="human.bed",
+  bimfiles="human.bim", famfiles="human.fam")
+rsids <- gfilter(Glist=Glist, excludeMAF=0.05, excludeMISS=0.05,
+  excludeCGAT=TRUE, excludeINDEL=TRUE, excludeDUPS=TRUE,
+  excludeHWE=1e-12, excludeMHC=FALSE)
+Glist <- gprep(study="Simulation", bedfiles="human.bed", rsids=rsids)
+
+phenotypes <- read.csv(paste0(base, "example-phenotypes.csv"),
+  colClasses=c("character", "numeric"))
 y <- setNames(phenotypes$phenotype, phenotypes$id)
-
-# Split people before marker QC or model fitting.
-set.seed(20261009)
-train_ids <- sample(panel$ids, 4000)
-test_ids <- panel$ids[!panel$ids %in% train_ids]
-train <- gprep(bedfiles="human.bed", ids=train_ids)
-markers <- gfilter(train, maf=.05, missing=.05, hwe=1e-12,
-  ambiguous=TRUE, indels=TRUE, mhc=FALSE)
-train <- gprep(bedfiles="human.bed", ids=train_ids, rsids=markers)
-test <- gprep(bedfiles="human.bed", ids=test_ids, rsids=markers)
-
-# Standardize the phenotype using training samples only.
-y_mean <- mean(y[train_ids])
-y_sd <- sd(y[train_ids])
-data <- data.frame(id=train$study_ids,
-  response=as.numeric((y[train$study_ids]-y_mean)/y_sd))
-m <- length(markers)
+data <- data.frame(id=Glist$ids, phenotype=as.numeric(y[Glist$ids]))
 ```
-
-Training-only QC retained 37,994 markers in the recorded run. Both genotype
-coding and phenotype scaling for prediction come from the training samples.
 
 ## Fit BayesC
 
-BayesC uses a point mass at zero and one nonzero effect-variance component.
-For this simulation, initialize the inclusion probability using its four
-causal markers. Real analyses require prior choices without known truth.
-
 ```{r bayesc}
-pi <- 4/m
-vb <- .5/(m*pi)
-prior_c <- list(inclusion_probability=pi,
-  effect_variance=vb, residual_variance=.5,
-  effect_variance_prior=list(df=4, scale=vb/2),
-  residual_variance_prior=list(df=4, scale=.25), weight_prior=c(1, 1))
-control <- list(burnin=1000, sampling_sweeps=2000, thinning=5,
-  seeds=c(17, 29), threads=2, retain_diagnostics=TRUE,
-  likelihood_dimension=length(train_ids)-1,
-  estimate_effect_variance=TRUE, estimate_residual_variance=TRUE,
-  estimate_weights=TRUE)
-
-fit_c <- gbayes(data=data, Glist=train, trait="response",
-  method="bayesc", prior=prior_c, control=control)
+fit_c <- gbayes(data=data, Glist=Glist, trait="phenotype", method="bayesc")
+fit_c
 ```
 
-Because weight learning is enabled, `inclusion_probability` initializes the
-chain; `weight_prior=c(1,1)` defines its diffuse Beta learning prior. The starting
-four-marker count is not imposed on the posterior. BayesR's initial `weights`
-and Dirichlet `weight_prior` are likewise separate choices.
+The defaults learn effect variance, residual variance and mixture weights.
+They use two reproducible chains, 1000 burn-in and 2000 sampling sweeps,
+thinning by five and full marker sweeps. Starting variances use the observed
+phenotype variance; they do not use the known number of causal markers.
+The phenotype is centred internally without rescaling, so estimates retain
+its original units. These are starting settings, not a convergence guarantee.
 
 ## Inspect posterior summaries
 
-The posterior table contains means, SDs and credible intervals, with R-hat,
-effective sample size and Monte Carlo error for checking chain agreement.
-
 ```{r posterior}
-columns <- c("parameter", "mean", "sd", "lower", "upper")
-fit_c$posterior[, columns]
-
-# Marker effect means, variances and posterior inclusion probabilities.
+fit_c$posterior
 head(fit_c$estimates)
 ```
 
-Check sampling diagnostics separately. The sweep counts above are a starting
-point, not a convergence guarantee. Inspect the quantities needed for the
-analysis; stable predictions do not imply stable mixture weights or variances.
-
-```{r diagnostics}
-fit_c$posterior[, c("parameter", "rhat", "ess_bulk", "mcse_mean")]
-
-# Flag quantities needing further investigation (a screening rule).
-subset(fit_c$posterior, estimated &
-  (diagnostic_status != "available" | is.na(rhat) | is.na(ess_bulk) |
-   rhat > 1.01 | ess_bulk < 100))
-```
-
 | Parameter | Meaning |
-|---|---|
-| `genetic_variance` (VG) | Total genetic variance of joint marker effects |
-| `vle` | Diagonal marker contribution |
-| `vld` | Cross-marker contribution; VG = VLE + VLD |
-| `effect_variance` (VB) | Nonzero marker-effect variance scale |
-| `residual_variance` (VE) | Residual variance parameter |
-| `h2` | Heritability, VG / (VG + VE), calculated for each draw |
+| --- | --- |
+| VB (`effect_variance`) | Slab variance scale for standardized marker effects |
+| VE (`residual_variance`) | Residual variance |
+| VG (`genetic_variance`) | Realized genetic variance in this panel |
+| VLE (`vle`) | Sum of individual-marker variance contributions |
+| VLD (`vld`) | Sum of cross-marker contributions, VG − VLE |
+| h² (`h2`) | Draw-wise VG / (VG + VE) |
 
-VLD can be negative. VB is a prior variance scale for marker effects and
-differs from total genetic variance. The variance of predictions made using
-posterior mean effects also differs from posterior mean VG.
-
-These are the original exploratory BayesC variance summaries on the standardized
-training phenotype scale. That recorded run used 200 burn-in and 500 sampling
-sweeps, rather than the longer starting settings above:
-
-```{r recorded-c, echo=FALSE, eval=TRUE, purl=FALSE}
-saved <- read.csv("gbayes-individual-data/simple-posterior.csv")
-knitr::kable(saved[saved$fit == "sparse_bayesc_full",
-  c("parameter", "mean", "sd", "lower", "upper")], digits=4, row.names=FALSE)
-```
-
-VG, VLE, VLD and h² use every post-burn-in sweep from each original chain.
-VB and VE use the retained parameter draws. Credible intervals use the
-requested probability (95% by default); effect thinning does not thin the
-BED variance rows. Continuation reports the new sampling batch.
+The table reports posterior means, SDs, credible intervals, R-hat, bulk ESS
+and Monte Carlo error. VLD can be negative. Posterior mean VG also differs
+from the variance of scores calculated using posterior mean marker effects.
 
 ## Fit BayesR
 
-BayesR uses a zero component and several nonzero variance components. Here,
-their multipliers are 0.01, 0.1 and 1. The component weights and variance
-parameters are learned during sampling.
-
 ```{r bayesr}
-weights <- c(1-pi, .7*pi, .25*pi, .05*pi)
-gamma <- c(0, .01, .1, 1)
-vb_r <- .5/(m*sum(weights*gamma))
-prior_r <- list(weights=weights, variance_multipliers=gamma,
-  effect_variance=vb_r, residual_variance=.5,
-  effect_variance_prior=list(df=4, scale=vb_r/2),
-  residual_variance_prior=list(df=4, scale=.25), weight_prior=rep(1, 4))
-
-fit_r <- gbayes(data=data, Glist=train, trait="response",
-  method="bayesr", prior=prior_r, control=control)
-fit_r$posterior[, columns]
-head(fit_r$estimates)
+fit_r <- gbayes(data=data, Glist=Glist, trait="phenotype", method="bayesr")
+fit_r
+fit_r$posterior
 ```
 
-```{r recorded-r, echo=FALSE, eval=TRUE, purl=FALSE}
-knitr::kable(saved[saved$fit == "sparse_bayesr_full",
-  c("parameter", "mean", "sd", "lower", "upper")], digits=4, row.names=FALSE)
+BayesR uses several nonzero variance components. Its initial mixture weights
+and its Dirichlet learning prior are separate settings. The fitted `$prior`
+and `$control` show the resolved defaults; explicit settings remain available.
+See the [defaults guide](https://psoerensen.github.io/gtools/gsuite/docs/gbayes-workflow.html#simple-individual-level-defaults)
+for the initialization formulas and explicit-prior compatibility.
+
+## Check diagnostics
+
+```{r diagnostics}
+fit_c$posterior[, c("parameter", "rhat", "ess_bulk", "mcse_mean")]
+fit_r$posterior[, c("parameter", "rhat", "ess_bulk", "mcse_mean")]
 ```
 
-## Enable scheduled marker updates
+Printing a fit flags estimated quantities with unavailable diagnostics,
+R-hat above 1.01 or bulk ESS below 100. Inspect traces and continue sampling
+when needed; passing this screen does not prove convergence. Check variance
+and mixture quantities separately. The
+[advanced investigation](Gbayes_individual_level_simulated_data_advanced.html#investigation-prediction-agreement-and-sampling-diagnostics)
+shows why stable predictions can coexist with poor parameter mixing.
 
-Scheduled updates visit active or likely candidate markers frequently and
-skip some low-probability null markers, with periodic full sweeps. Here we use
-scheduling **only during burn-in**. Every posterior sampling sweep then visits
-all markers and updates learned mixture weights. Compare diagnostics rather
-than assuming that a longer run has converged.
+## Optional scheduling during burn-in
 
 ```{r scheduled}
-scheduled_control <- control
-scheduled_control$marker_schedule <- list(enabled=TRUE, burnin_only=TRUE)
-
-fit_c_scheduled <- gbayes(data=data, Glist=train, trait="response",
-  method="bayesc", prior=prior_c, control=scheduled_control)
-fit_r_scheduled <- gbayes(data=data, Glist=train, trait="response",
-  method="bayesr", prior=prior_r, control=scheduled_control)
-fit_c_scheduled$posterior[, columns]
-fit_r_scheduled$posterior[, columns]
+fit_scheduled <- gbayes(data=data, Glist=Glist, trait="phenotype",
+  method="bayesc",
+  control=list(marker_schedule=list(enabled=TRUE, burnin_only=TRUE)))
+fit_scheduled$posterior
 ```
 
-## Predict held-out individuals
-
-Score using the allele frequencies and effects stored in the fitted weights,
-then return predictions to the original phenotype scale.
-
-```{r prediction}
-scores <- gscore(fit_c$weights, test, scale_scores=FALSE)$scores[, 1]
-predicted <- y_mean + y_sd*scores
-observed <- y[names(scores)]
-c(correlation=cor(observed, predicted),
-  rmse=sqrt(mean((observed-predicted)^2)))
-```
-
-The original exploratory sparse-trait comparison below used scheduling during
-both burn-in and sampling (`burnin_only=FALSE`). Its timing and visit reductions
-therefore do not describe the safer burn-in-only recipe above:
-
-```{r recorded-comparison, echo=FALSE, eval=TRUE, purl=FALSE}
-comparison <- read.csv("gbayes-individual-data/fit-comparison.csv")
-knitr::kable(comparison[startsWith(comparison$fit, "sparse_"),
-  c("fit", "correlation", "rmse", "seconds", "fraction_marker_visits")],
-  digits=3, row.names=FALSE)
-```
-
-The prediction results are encouraging. The two original sparse-fit chains'
-posterior-mean predictions correlate above 0.999; their held-out accuracy is
-also very similar. Some mixture weights nevertheless mix slowly. Additional
-sampling improved sparse BayesR's variance diagnostics, while full polygenic
-BayesR still showed poor mixing. Use prediction agreement, variance diagnostics
-and mixture diagnostics as separate checks. This does not establish posterior
-equivalence or guarantee convergence of individual marker effects.
-Passing a variance-only screen does not qualify the joint posterior when
-other parameters still show poor mixing.
-
-For the 500-causal-marker trait, variance plots, known-effect reference,
-full diagnostics and continuation, see the
-[advanced eight-fit example](Gbayes_individual_level_simulated_data_advanced.html).
-It also shows a polygenic BayesR case where scheduling visited every marker
-and provided no speed gain. The independent simulated panel illustrates
-empirical cross-marker contributions, not realistic population-LD behavior.
+Posterior sampling still visits every marker. Compare diagnostics before
+interpreting differences between fits. The simulated independent-marker
+panel illustrates the variance decomposition; it does not validate realistic
+population LD.
