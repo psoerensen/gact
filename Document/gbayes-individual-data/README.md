@@ -23,3 +23,14 @@ The simple-posterior table was recalculated from the original saved chain
 draws, using every post-burn-in BED variance sweep and type-8 equal-tail
 quantiles. Existing VB/VE rows retain their native effect-thinned summaries.
 The original runs predate the gbayes 0.1.3 posterior-table adapter update.
+
+The mixing investigation preserves the original priors and prediction results.
+Four original fits were continued for two 500-sweep batches. A controlled
+polygenic scheduled BayesR check starts from the same original saved states
+using native correction c198232 and R package 0.1.4. Complete scheduled marker
+visits now learn mixture weights on every sweep: 500 updates instead of 50
+per batch. Prediction accuracy remains similar, but the polygenic posterior
+is still not qualified. Parameter groups and per-chain update counts are
+reported separately; the screening thresholds are not convergence proof.
+See mixing-investigation-record.json for source revisions, DLL hashes and
+focused validation scope. Original eight-fit evidence remains unchanged.

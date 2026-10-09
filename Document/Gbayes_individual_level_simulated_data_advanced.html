@@ -373,6 +373,8 @@ mixture weights and diagnostics</a></li>
 <li><a href="#held-out-prediction" id="toc-held-out-prediction">Held-out
 prediction</a></li>
 <li><a href="#recorded-short-run-results" id="toc-recorded-short-run-results">Recorded short-run results</a></li>
+<li><a href="#investigation-prediction-agreement-and-sampling-diagnostics" id="toc-investigation-prediction-agreement-and-sampling-diagnostics">Investigation:
+prediction agreement and sampling diagnostics</a></li>
 <li><a href="#extend-a-short-run-from-saved-state" id="toc-extend-a-short-run-from-saved-state">Extend a short run from
 saved state</a></li>
 </ul>
@@ -502,11 +504,12 @@ when comparing truth with fitted quantities.</p>
 <div id="fit-the-four-models-for-each-trait" class="section level2">
 <h2>Fit the four models for each trait</h2>
 <p>Use lower-case method names with the individual-level interface.
-Starting priors have the same nominal genetic variance under independent
-standardized markers: <span class="math inline">\(m\pi V_b\)</span> for
-BayesC and <span class="math inline">\(m V_b\sum_k w_k\gamma_k\)</span>
-for BayesR. This prior heuristic is distinct from realized <span class="math inline">\(V_g\)</span>, which also reflects LD and empirical
-marker variances.</p>
+Starting parameter values have the same nominal genetic variance under
+independent standardized markers: <span class="math inline">\(m\pi
+V_b\)</span> for BayesC and <span class="math inline">\(m V_b\sum_k
+w_k\gamma_k\)</span> for BayesR. This prior heuristic is distinct from
+realized <span class="math inline">\(V_g\)</span>, which also reflects
+LD and empirical marker variances.</p>
 <pre class="r"><code>schedule &lt;- list(enabled=TRUE, full_sweep_every=10,
   base_interval=50, maximum_interval=200,
   candidate_threshold=.001, candidate_lifetime=20, burnin_only=FALSE)
@@ -551,7 +554,7 @@ saveRDS(list(fits=fits, elapsed=elapsed, scaling=phenotype_scaling,
 <p>These sweep counts are a starting point for a teaching run. Examine
 chain agreement, R-hat, ESS, Monte Carlo error and traces before
 deciding whether longer runs are needed. Known causal counts guide this
-simulation’s starting priors; real analyses must choose priors without
+simulation’s starting values; real analyses must choose priors without
 held-out outcomes or known truth. Elapsed time is measured on your
 machine, not a published speed benchmark. The likelihood dimension
 subtracts the fitted training intercept. Phenotype-only pre-adjustment
@@ -1030,6 +1033,417 @@ diagnostics</a>, <a href="gbayes-individual-data/run-record.json">run
 settings</a> and <a href="gbayes-individual-data/input-checksums.json">input
 checksums</a>.</p>
 </div>
+<div id="investigation-prediction-agreement-and-sampling-diagnostics" class="section level2">
+<h2>Investigation: prediction agreement and sampling diagnostics</h2>
+<p>The original prediction results remain useful. Posterior-mean
+predictions from the two saved chains correlate above 0.999 for the
+sparse traits and between 0.9956 and 0.9988 for the polygenic traits.
+Their held-out correlations and RMSEs are also very similar. This
+measures agreement of posterior-mean predictions, not convergence of the
+full predictive distribution or individual marker effects.</p>
+<table>
+<colgroup>
+<col width="19%" />
+<col width="20%" />
+<col width="22%" />
+<col width="19%" />
+<col width="19%" />
+</colgroup>
+<thead>
+<tr>
+<th align="left">fit</th>
+<th align="right">chain_prediction_correlation</th>
+<th align="right">chain_prediction_rms_difference</th>
+<th align="right">chain1_heldout_correlation</th>
+<th align="right">chain2_heldout_correlation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">sparse_bayesc_full</td>
+<td align="right">0.9997</td>
+<td align="right">0.0091</td>
+<td align="right">0.3281</td>
+<td align="right">0.3285</td>
+</tr>
+<tr>
+<td align="left">sparse_bayesc_scheduled</td>
+<td align="right">0.9995</td>
+<td align="right">0.0108</td>
+<td align="right">0.3281</td>
+<td align="right">0.3270</td>
+</tr>
+<tr>
+<td align="left">sparse_bayesr_full</td>
+<td align="right">0.9994</td>
+<td align="right">0.0123</td>
+<td align="right">0.3280</td>
+<td align="right">0.3280</td>
+</tr>
+<tr>
+<td align="left">sparse_bayesr_scheduled</td>
+<td align="right">0.9995</td>
+<td align="right">0.0114</td>
+<td align="right">0.3277</td>
+<td align="right">0.3277</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesc_full</td>
+<td align="right">0.9985</td>
+<td align="right">0.0339</td>
+<td align="right">0.6219</td>
+<td align="right">0.6205</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesc_scheduled</td>
+<td align="right">0.9988</td>
+<td align="right">0.0308</td>
+<td align="right">0.6198</td>
+<td align="right">0.6182</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesr_full</td>
+<td align="right">0.9956</td>
+<td align="right">0.0590</td>
+<td align="right">0.6164</td>
+<td align="right">0.6168</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesr_scheduled</td>
+<td align="right">0.9968</td>
+<td align="right">0.0501</td>
+<td align="right">0.6194</td>
+<td align="right">0.6167</td>
+</tr>
+</tbody>
+</table>
+<p>Inspect three diagnostic groups separately: VB/VE parameters;
+VG/VLE/VLD/h²; and mixture weights/active-marker count. A single
+worst-parameter R-hat does not describe all of these outputs.</p>
+<p>The four most problematic original fits were continued for two
+additional 500-sweep batches without changing their priors or scheduling
+settings. The second batch is summarized separately; its diagnostics are
+not pooled with the earlier exploratory draws. The initial adapter did
+not place the genetic variance quantities directly in its posterior
+diagnostic table; later batches do, so the group sizes are recorded
+explicitly.</p>
+<table style="width:100%;">
+<colgroup>
+<col width="23%" />
+<col width="18%" />
+<col width="17%" />
+<col width="9%" />
+<col width="7%" />
+<col width="11%" />
+<col width="12%" />
+</colgroup>
+<thead>
+<tr>
+<th align="left">fit</th>
+<th align="left">phase</th>
+<th align="left">group</th>
+<th align="right">quantities</th>
+<th align="right">max_rhat</th>
+<th align="right">min_ess_bulk</th>
+<th align="left">screening_pass</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">polygenic_bayesc_scheduled</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">parameter_variances</td>
+<td align="right">2</td>
+<td align="right">1.014</td>
+<td align="right">172.137</td>
+<td align="left">FALSE</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesc_scheduled</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">genetic_variances</td>
+<td align="right">4</td>
+<td align="right">1.005</td>
+<td align="right">290.628</td>
+<td align="left">TRUE</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesc_scheduled</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">mixture</td>
+<td align="right">3</td>
+<td align="right">1.002</td>
+<td align="right">32.043</td>
+<td align="left">FALSE</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesr_full</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">parameter_variances</td>
+<td align="right">2</td>
+<td align="right">1.564</td>
+<td align="right">3.752</td>
+<td align="left">FALSE</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesr_full</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">genetic_variances</td>
+<td align="right">4</td>
+<td align="right">1.600</td>
+<td align="right">3.452</td>
+<td align="left">FALSE</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesr_full</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">mixture</td>
+<td align="right">5</td>
+<td align="right">1.871</td>
+<td align="right">3.080</td>
+<td align="left">FALSE</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesr_scheduled</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">parameter_variances</td>
+<td align="right">2</td>
+<td align="right">1.439</td>
+<td align="right">4.387</td>
+<td align="left">FALSE</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesr_scheduled</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">genetic_variances</td>
+<td align="right">4</td>
+<td align="right">1.220</td>
+<td align="right">6.742</td>
+<td align="left">FALSE</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesr_scheduled</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">mixture</td>
+<td align="right">5</td>
+<td align="right">1.731</td>
+<td align="right">3.308</td>
+<td align="left">FALSE</td>
+</tr>
+<tr>
+<td align="left">sparse_bayesr_scheduled</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">parameter_variances</td>
+<td align="right">2</td>
+<td align="right">1.000</td>
+<td align="right">58.248</td>
+<td align="left">FALSE</td>
+</tr>
+<tr>
+<td align="left">sparse_bayesr_scheduled</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">genetic_variances</td>
+<td align="right">4</td>
+<td align="right">1.006</td>
+<td align="right">783.924</td>
+<td align="left">TRUE</td>
+</tr>
+<tr>
+<td align="left">sparse_bayesr_scheduled</td>
+<td align="left">continuation_batch_2</td>
+<td align="left">mixture</td>
+<td align="right">5</td>
+<td align="right">1.069</td>
+<td align="right">21.540</td>
+<td align="left">FALSE</td>
+</tr>
+</tbody>
+</table>
+<p>The screening rule is R-hat ≤ 1.01 and bulk ESS ≥ 100 for each
+estimated quantity with available diagnostics. It is a practical flag,
+not proof of convergence. Sparse scheduled BayesR and polygenic
+scheduled BayesC improved their genetic-variance diagnostics, while
+mixture weights can still have low ESS. Full and scheduled polygenic
+BayesR remain inadequately mixed in these additional short batches.
+Longer execution alone must not be called a fix. Convergence concerns
+the joint chain: passing a variance-only screen does not qualify a fit
+when other parameters fail. See the <a href="https://mc-stan.org/docs/reference-manual/analysis.html#convergence-is-global">Stan
+posterior-analysis explanation</a>.</p>
+<div id="corrected-all-marker-scheduling" class="section level3">
+<h3>Corrected all-marker scheduling</h3>
+<p>The source audit found an avoidable slowdown: the original scalar
+schedule held mixture weights on nonperiodic sweeps even when it visited
+every marker. The <a href="https://github.com/psoerensen/gbayes/commit/c198232">native
+correction</a> updates weights whenever a scalar scheduled visit is
+complete. A seeded regression failed before the correction and passes
+afterward: an all-hot schedule reproduces ordinary full-sweep
+BayesC/BayesR results and RNG state. Separate checks preserve lazy
+updates for genuinely skipped-marker visits.</p>
+<p>This changes the scheduled transition sequence. Keep a consistent
+native build within a study; results from the original build are
+historical evidence, not results from the repaired sampler. The
+multivariate policy is unchanged. <code>scheduled_full_sweeps</code>
+counts requested full sweeps, rather than every nonperiodic visit that
+happens to cover all markers.</p>
+<p>The controlled check starts from the same original saved states and
+keeps the same priors, seeds and thinning. Each corrected 500-sweep
+batch updates weights 500 times, compared with 50 in the original
+kernel; both visit every marker. In the second batch the worst R-hat
+improves from 1.73 to 1.26, but the lowest bulk ESS remains only about
+6.1. This verifies the correction without claiming that polygenic BayesR
+has converged.</p>
+<table>
+<colgroup>
+<col width="28%" />
+<col width="19%" />
+<col width="15%" />
+<col width="8%" />
+<col width="6%" />
+<col width="10%" />
+<col width="11%" />
+</colgroup>
+<thead>
+<tr>
+<th align="left">fit</th>
+<th align="left">phase</th>
+<th align="left">group</th>
+<th align="right">quantities</th>
+<th align="right">max_rhat</th>
+<th align="right">min_ess_bulk</th>
+<th align="left">screening_pass</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">corrected_polygenic_bayesr_scheduled</td>
+<td align="left">corrected_kernel_batch_2</td>
+<td align="left">parameter_variances</td>
+<td align="right">2</td>
+<td align="right">1.130</td>
+<td align="right">13.329</td>
+<td align="left">FALSE</td>
+</tr>
+<tr>
+<td align="left">corrected_polygenic_bayesr_scheduled</td>
+<td align="left">corrected_kernel_batch_2</td>
+<td align="left">genetic_variances</td>
+<td align="right">4</td>
+<td align="right">1.139</td>
+<td align="right">12.670</td>
+<td align="left">FALSE</td>
+</tr>
+<tr>
+<td align="left">corrected_polygenic_bayesr_scheduled</td>
+<td align="left">corrected_kernel_batch_2</td>
+<td align="left">mixture</td>
+<td align="right">5</td>
+<td align="right">1.258</td>
+<td align="right">6.110</td>
+<td align="left">FALSE</td>
+</tr>
+</tbody>
+</table>
+<p>Prediction accuracy stays similar: the corrected polygenic scheduled
+BayesR batch has held-out correlation 0.6175 and RMSE 0.8081. Its
+posterior-mean predictions correlate 0.9977 with the original
+predictions. The following table reports the second continuation
+batches; the corrected row uses the repaired kernel and must not be
+pooled with original-kernel draws.</p>
+<table>
+<colgroup>
+<col width="22%" />
+<col width="7%" />
+<col width="4%" />
+<col width="19%" />
+<col width="20%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="13%" />
+</colgroup>
+<thead>
+<tr>
+<th align="left">fit</th>
+<th align="right">correlation</th>
+<th align="right">rmse</th>
+<th align="right">original_prediction_correlation</th>
+<th align="right">original_prediction_rms_difference</th>
+<th align="right">vg</th>
+<th align="right">vle</th>
+<th align="right">vld</th>
+<th align="right">marker_visit_fraction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">polygenic_bayesc_scheduled</td>
+<td align="right">0.6194</td>
+<td align="right">0.8066</td>
+<td align="right">0.9995</td>
+<td align="right">0.0197</td>
+<td align="right">0.4115</td>
+<td align="right">0.4201</td>
+<td align="right">-0.0086</td>
+<td align="right">0.2996</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesr_full</td>
+<td align="right">0.6168</td>
+<td align="right">0.8087</td>
+<td align="right">0.9979</td>
+<td align="right">0.0406</td>
+<td align="right">0.5471</td>
+<td align="right">0.5571</td>
+<td align="right">-0.0099</td>
+<td align="right">1.0000</td>
+</tr>
+<tr>
+<td align="left">polygenic_bayesr_scheduled</td>
+<td align="right">0.6171</td>
+<td align="right">0.8083</td>
+<td align="right">0.9985</td>
+<td align="right">0.0347</td>
+<td align="right">0.4917</td>
+<td align="right">0.5016</td>
+<td align="right">-0.0099</td>
+<td align="right">1.0000</td>
+</tr>
+<tr>
+<td align="left">sparse_bayesr_scheduled</td>
+<td align="right">0.3272</td>
+<td align="right">0.9892</td>
+<td align="right">0.9998</td>
+<td align="right">0.0069</td>
+<td align="right">0.1184</td>
+<td align="right">0.1194</td>
+<td align="right">-0.0010</td>
+<td align="right">0.1100</td>
+</tr>
+<tr>
+<td align="left">corrected_polygenic_bayesr_scheduled</td>
+<td align="right">0.6175</td>
+<td align="right">0.8081</td>
+<td align="right">0.9977</td>
+<td align="right">0.0432</td>
+<td align="right">0.5326</td>
+<td align="right">0.5426</td>
+<td align="right">-0.0100</td>
+<td align="right">1.0000</td>
+</tr>
+</tbody>
+</table>
+<p>The main lesson now uses longer starting runs and
+<code>burnin_only=TRUE</code>: every posterior sampling sweep visits all
+markers and learns weights. Scheduling during posterior sampling remains
+an explicit approximation whose performance and posterior agreement need
+separate assessment. The original priors are preserved. Their specified
+inclusion/mixture probabilities initialize the chains; their
+Beta/Dirichlet learning priors are separate, diffuse choices.</p>
+<p>See the <a href="gbayes-individual-data/mixing-investigation-record.json">investigation
+run record</a> and <a href="gbayes-individual-data/continuation-posterior.csv">parameter-level
+continuation summaries</a>.</p>
+</div>
+</div>
 <div id="extend-a-short-run-from-saved-state" class="section level2">
 <h2>Extend a short run from saved state</h2>
 <p>Repeat the training data, prior and transition settings when
@@ -1045,8 +1459,11 @@ training_data &lt;- data.frame(id=train$study_ids,
 control &lt;- old$control
 control$burnin &lt;- 0
 control$sampling_sweeps &lt;- 2000
-extended &lt;- gbayes(data=training_data, Glist=train, method=old$method,
+warm &lt;- gbayes(data=training_data, Glist=train, method=old$method,
   trait=old$trait, prior=old$prior, control=control, continuation=old)
+# Discard this batch as further warm-up; summaries below describe the next batch.
+extended &lt;- gbayes(data=training_data, Glist=train, method=old$method,
+  trait=old$trait, prior=old$prior, control=control, continuation=warm)
 extended$posterior
 saveRDS(extended, paste0(key, &quot;-continued.rds&quot;))</code></pre>
 <p>Continuation summaries and traces cover the new batch; they do not

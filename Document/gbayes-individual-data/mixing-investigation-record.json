@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-09",
+  "original_native_revision": "aa1a4a4c57e90710f4a0ba4b54172a1140014c84",
+  "corrected_native_revision": "c198232",
+  "original_eight_fit_r_package": "0.1.2",
+  "original_extension_r_package": "0.1.3",
+  "corrected_r_package": "0.1.4",
+  "original_native_dll_sha256": "10157dc9b5dfa6f8ec65f65e344d74a629e8cc5eff7155990e6726c9b58b1b7b",
+  "corrected_native_dll_sha256": "a6efbf9e19e2d29546a3e29c57a34ac0fb510f8aa1b8fad335f781e1699338b7",
+  "original_model_prior_preserved": true,
+  "seeds": [
+    17,
+    29
+  ],
+  "thinning": 5,
+  "original_extension": {
+    "fits": [
+      "polygenic_bayesr_full",
+      "polygenic_bayesr_scheduled",
+      "polygenic_bayesc_scheduled",
+      "sparse_bayesr_scheduled"
+    ],
+    "batches": 2,
+    "sweeps_per_batch": 500
+  },
+  "corrected_kernel_check": {
+    "fit": "polygenic_bayesr_scheduled",
+    "batches": 2,
+    "sweeps_per_batch": 500,
+    "initialization": "same original saved states as the original-kernel extension",
+    "exact_continuation_across_builds": false
+  },
+  "screening": {
+    "rhat_max": 1.01,
+    "ess_bulk_min": 100,
+    "convergence_proof": false
+  },
+  "qualification": {
+    "native_bed_regression": "passed",
+    "native_scalar_regression": "passed",
+    "r_bed_regression": "passed",
+    "full_R_CMD_check": false,
+    "all_polygenic_posteriors_qualified": false
+  }
+}

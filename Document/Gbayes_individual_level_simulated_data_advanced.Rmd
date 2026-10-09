@@ -140,7 +140,7 @@ comparing truth with fitted quantities.
 ## Fit the four models for each trait
 
 Use lower-case method names with the individual-level interface. Starting
-priors have the same nominal genetic variance under independent standardized
+parameter values have the same nominal genetic variance under independent standardized
 markers: \(m\pi V_b\) for BayesC and
 \(m V_b\sum_k w_k\gamma_k\) for BayesR. This prior heuristic is distinct
 from realized \(V_g\), which also reflects LD and empirical marker variances.
@@ -192,7 +192,7 @@ saveRDS(list(fits=fits, elapsed=elapsed, scaling=phenotype_scaling,
 These sweep counts are a starting point for a teaching run. Examine chain
 agreement, R-hat, ESS, Monte Carlo error and traces before deciding whether
 longer runs are needed. Known causal counts guide this simulation's starting
-priors; real analyses must choose priors without held-out outcomes or known truth.
+values; real analyses must choose priors without held-out outcomes or known truth.
 Elapsed time is measured on your machine, not a published speed benchmark.
 The likelihood dimension subtracts the fitted training intercept. Phenotype-only
 pre-adjustment for other covariates is not generally equivalent to a joint
@@ -465,6 +465,97 @@ Saved public evidence includes [fit summaries](gbayes-individual-data/fit-compar
 [run settings](gbayes-individual-data/run-record.json) and
 [input checksums](gbayes-individual-data/input-checksums.json).
 
+## Investigation: prediction agreement and sampling diagnostics
+
+The original prediction results remain useful. Posterior-mean predictions from
+the two saved chains correlate above 0.999 for the sparse traits and between
+0.9956 and 0.9988 for the polygenic traits. Their held-out correlations and RMSEs
+are also very similar. This measures agreement of posterior-mean predictions,
+not convergence of the full predictive distribution or individual marker effects.
+
+```{r prediction-agreement, echo=FALSE, eval=TRUE, purl=FALSE}
+agreement <- read.csv("gbayes-individual-data/prediction-chain-agreement.csv")
+knitr::kable(agreement[c("fit", "chain_prediction_correlation",
+  "chain_prediction_rms_difference", "chain1_heldout_correlation",
+  "chain2_heldout_correlation")], digits=4, row.names=FALSE)
+```
+
+Inspect three diagnostic groups separately: VB/VE parameters; VG/VLE/VLD/h²;
+and mixture weights/active-marker count. A single worst-parameter R-hat does
+not describe all of these outputs.
+
+The four most problematic original fits were continued for two additional
+500-sweep batches without changing their priors or scheduling settings. The
+second batch is summarized separately; its diagnostics are not pooled with
+the earlier exploratory draws. The initial adapter did not place the genetic
+variance quantities directly in its posterior diagnostic table; later batches
+do, so the group sizes are recorded explicitly.
+
+```{r continued-diagnostic-groups, echo=FALSE, eval=TRUE, purl=FALSE}
+groups <- read.csv("gbayes-individual-data/mixing-diagnostic-groups.csv")
+knitr::kable(groups[groups$phase == "continuation_batch_2", ],
+  digits=3, row.names=FALSE)
+```
+
+The screening rule is R-hat ≤ 1.01 and bulk ESS ≥ 100 for each estimated
+quantity with available diagnostics. It is a practical flag, not proof of
+convergence. Sparse scheduled BayesR and polygenic scheduled BayesC improved
+their genetic-variance diagnostics, while mixture weights can still have low
+ESS. Full and scheduled polygenic BayesR remain inadequately mixed in these
+additional short batches. Longer execution alone must not be called a fix.
+Convergence concerns the joint chain: passing a variance-only screen does not
+qualify a fit when other parameters fail. See the
+[Stan posterior-analysis explanation](https://mc-stan.org/docs/reference-manual/analysis.html#convergence-is-global).
+
+### Corrected all-marker scheduling
+
+The source audit found an avoidable slowdown: the original scalar schedule
+held mixture weights on nonperiodic sweeps even when it visited every marker.
+The [native correction](https://github.com/psoerensen/gbayes/commit/c198232)
+updates weights whenever a scalar scheduled visit is complete. A seeded
+regression failed before the correction and passes afterward: an all-hot
+schedule reproduces ordinary full-sweep BayesC/BayesR results and RNG state.
+Separate checks preserve lazy updates for genuinely skipped-marker visits.
+
+This changes the scheduled transition sequence. Keep a consistent native build
+within a study; results from the original build are historical evidence, not
+results from the repaired sampler. The multivariate policy is unchanged.
+`scheduled_full_sweeps` counts requested full sweeps, rather than every
+nonperiodic visit that happens to cover all markers.
+
+The controlled check starts from the same original saved states and keeps the
+same priors, seeds and thinning. Each corrected 500-sweep batch updates weights
+500 times, compared with 50 in the original kernel; both visit every marker.
+In the second batch the worst R-hat improves from 1.73 to 1.26, but the lowest
+bulk ESS remains only about 6.1. This verifies the correction without claiming
+that polygenic BayesR has converged.
+
+```{r corrected-diagnostic-groups, echo=FALSE, eval=TRUE, purl=FALSE}
+knitr::kable(groups[groups$phase == "corrected_kernel_batch_2", ],
+  digits=3, row.names=FALSE)
+```
+
+Prediction accuracy stays similar: the corrected polygenic scheduled BayesR
+batch has held-out correlation 0.6175 and RMSE 0.8081. Its posterior-mean
+predictions correlate 0.9977 with the original predictions. The following
+table reports the second continuation batches; the corrected row uses the
+repaired kernel and must not be pooled with original-kernel draws.
+
+```{r continuation-prediction-stability, echo=FALSE, eval=TRUE, purl=FALSE}
+stability <- read.csv("gbayes-individual-data/continuation-prediction-stability.csv")
+knitr::kable(stability, digits=4, row.names=FALSE)
+```
+
+The main lesson now uses longer starting runs and `burnin_only=TRUE`: every
+posterior sampling sweep visits all markers and learns weights. Scheduling
+during posterior sampling remains an explicit approximation whose performance
+and posterior agreement need separate assessment. The original priors are
+preserved. Their specified inclusion/mixture probabilities initialize the
+chains; their Beta/Dirichlet learning priors are separate, diffuse choices.
+
+See the [investigation run record](gbayes-individual-data/mixing-investigation-record.json)
+and [parameter-level continuation summaries](gbayes-individual-data/continuation-posterior.csv).
+
 ## Extend a short run from saved state
 
 Repeat the training data, prior and transition settings when continuing a
@@ -481,8 +572,11 @@ training_data <- data.frame(id=train$study_ids,
 control <- old$control
 control$burnin <- 0
 control$sampling_sweeps <- 2000
-extended <- gbayes(data=training_data, Glist=train, method=old$method,
+warm <- gbayes(data=training_data, Glist=train, method=old$method,
   trait=old$trait, prior=old$prior, control=control, continuation=old)
+# Discard this batch as further warm-up; summaries below describe the next batch.
+extended <- gbayes(data=training_data, Glist=train, method=old$method,
+  trait=old$trait, prior=old$prior, control=control, continuation=warm)
 extended$posterior
 saveRDS(extended, paste0(key, "-continued.rds"))
 ```

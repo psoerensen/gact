@@ -380,10 +380,11 @@ a simulated phenotype. We inspect posterior variance summaries, marker
 effects and predictions, then enable scheduled marker updates.</p>
 <p>We use the same 5,000-person PLINK panel and four-causal-marker
 phenotype as the <a href="Glma_linear_and_mixed_models_simulated_data.html">linear and mixed
-models example</a>. The example requires <strong>gbayes 0.1.3 or
-later</strong>, with compatible gbase and gscore installations. The code
-is a runnable recipe; rendering this page reads saved results rather
-than fitting the models again.</p>
+models example</a>. The revised example uses <strong>gbayes 0.1.4 or
+later</strong>, with compatible gbase and gscore installations and a
+native build containing the <a href="https://github.com/psoerensen/gbayes/commit/c198232">all-marker
+weight-update correction</a>. The code is a runnable recipe; rendering
+this page reads saved results rather than fitting the models again.</p>
 </div>
 <div id="prepare-the-data" class="section level2">
 <h2>Prepare the data</h2>
@@ -441,7 +442,7 @@ prior_c &lt;- list(inclusion_probability=pi,
   effect_variance=vb, residual_variance=.5,
   effect_variance_prior=list(df=4, scale=vb/2),
   residual_variance_prior=list(df=4, scale=.25), weight_prior=c(1, 1))
-control &lt;- list(burnin=200, sampling_sweeps=500, thinning=5,
+control &lt;- list(burnin=1000, sampling_sweeps=2000, thinning=5,
   seeds=c(17, 29), threads=2, retain_diagnostics=TRUE,
   likelihood_dimension=length(train_ids)-1,
   estimate_effect_variance=TRUE, estimate_residual_variance=TRUE,
@@ -449,6 +450,12 @@ control &lt;- list(burnin=200, sampling_sweeps=500, thinning=5,
 
 fit_c &lt;- gbayes(data=data, Glist=train, trait=&quot;response&quot;,
   method=&quot;bayesc&quot;, prior=prior_c, control=control)</code></pre>
+<p>Because weight learning is enabled,
+<code>inclusion_probability</code> initializes the chain;
+<code>weight_prior=c(1,1)</code> defines its diffuse Beta learning
+prior. The starting four-marker count is not imposed on the posterior.
+BayesR’s initial <code>weights</code> and Dirichlet
+<code>weight_prior</code> are likewise separate choices.</p>
 </div>
 <div id="inspect-posterior-summaries" class="section level2">
 <h2>Inspect posterior summaries</h2>
@@ -460,8 +467,16 @@ fit_c$posterior[, columns]
 
 # Marker effect means, variances and posterior inclusion probabilities.
 head(fit_c$estimates)</code></pre>
-<p>Check sampling diagnostics separately:</p>
-<pre class="r"><code>fit_c$posterior[, c(&quot;parameter&quot;, &quot;rhat&quot;, &quot;ess_bulk&quot;, &quot;mcse_mean&quot;)]</code></pre>
+<p>Check sampling diagnostics separately. The sweep counts above are a
+starting point, not a convergence guarantee. Inspect the quantities
+needed for the analysis; stable predictions do not imply stable mixture
+weights or variances.</p>
+<pre class="r"><code>fit_c$posterior[, c(&quot;parameter&quot;, &quot;rhat&quot;, &quot;ess_bulk&quot;, &quot;mcse_mean&quot;)]
+
+# Flag quantities needing further investigation (a screening rule).
+subset(fit_c$posterior, estimated &amp;
+  (diagnostic_status != &quot;available&quot; | is.na(rhat) | is.na(ess_bulk) |
+   rhat &gt; 1.01 | ess_bulk &lt; 100))</code></pre>
 <table>
 <colgroup>
 <col width="50%" />
@@ -504,8 +519,10 @@ head(fit_c$estimates)</code></pre>
 and differs from total genetic variance. The variance of predictions
 made using posterior mean effects also differs from posterior mean
 VG.</p>
-<p>These are the recorded BayesC variance summaries on the standardized
-training phenotype scale:</p>
+<p>These are the original exploratory BayesC variance summaries on the
+standardized training phenotype scale. That recorded run used 200
+burn-in and 500 sampling sweeps, rather than the longer starting
+settings above:</p>
 <table>
 <thead>
 <tr>
@@ -644,10 +661,12 @@ head(fit_r$estimates)</code></pre>
 <h2>Enable scheduled marker updates</h2>
 <p>Scheduled updates visit active or likely candidate markers frequently
 and skip some low-probability null markers, with periodic full sweeps.
-This is an approximation to ordinary full-sweep sampling; compare
-diagnostics and results.</p>
+Here we use scheduling <strong>only during burn-in</strong>. Every
+posterior sampling sweep then visits all markers and updates learned
+mixture weights. Compare diagnostics rather than assuming that a longer
+run has converged.</p>
 <pre class="r"><code>scheduled_control &lt;- control
-scheduled_control$marker_schedule &lt;- list(enabled=TRUE)
+scheduled_control$marker_schedule &lt;- list(enabled=TRUE, burnin_only=TRUE)
 
 fit_c_scheduled &lt;- gbayes(data=data, Glist=train, trait=&quot;response&quot;,
   method=&quot;bayesc&quot;, prior=prior_c, control=scheduled_control)
@@ -665,7 +684,10 @@ predicted &lt;- y_mean + y_sd*scores
 observed &lt;- y[names(scores)]
 c(correlation=cor(observed, predicted),
   rmse=sqrt(mean((observed-predicted)^2)))</code></pre>
-<p>The recorded sparse-trait comparison is:</p>
+<p>The original exploratory sparse-trait comparison below used
+scheduling during both burn-in and sampling
+(<code>burnin_only=FALSE</code>). Its timing and visit reductions
+therefore do not describe the safer burn-in-only recipe above:</p>
 <table>
 <colgroup>
 <col width="32%" />
@@ -714,10 +736,16 @@ c(correlation=cor(observed, predicted),
 </tr>
 </tbody>
 </table>
-<p>These short runs illustrate the interface. Several fits in the wider
-study have poor mixing, including scheduled sparse BayesR; longer runs
-are needed before interpreting small differences. Similar prediction
-accuracy does not establish posterior equivalence.</p>
+<p>The prediction results are encouraging. The two original sparse-fit
+chains’ posterior-mean predictions correlate above 0.999; their held-out
+accuracy is also very similar. Some mixture weights nevertheless mix
+slowly. Additional sampling improved sparse BayesR’s variance
+diagnostics, while full polygenic BayesR still showed poor mixing. Use
+prediction agreement, variance diagnostics and mixture diagnostics as
+separate checks. This does not establish posterior equivalence or
+guarantee convergence of individual marker effects. Passing a
+variance-only screen does not qualify the joint posterior when other
+parameters still show poor mixing.</p>
 <p>For the 500-causal-marker trait, variance plots, known-effect
 reference, full diagnostics and continuation, see the <a href="Gbayes_individual_level_simulated_data_advanced.html">advanced
 eight-fit example</a>. It also shows a polygenic BayesR case where

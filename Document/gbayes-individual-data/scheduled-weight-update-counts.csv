@@ -1,0 +1,9 @@
+"kernel","batch","chain","sweeps","weight_updates","fraction_marker_visits"
+"original",1,1,500,50,1
+"original",1,2,500,50,1
+"original",2,1,500,50,1
+"original",2,2,500,50,1
+"corrected",1,1,500,500,1
+"corrected",1,2,500,500,1
+"corrected",2,1,500,500,1
+"corrected",2,2,500,500,1
