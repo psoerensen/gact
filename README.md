@@ -148,6 +148,11 @@ using the standalone glma package on the same simulated-human panel:
 [Linear regression and LOCO mixed models with
 glma](Document/Glma_linear_and_mixed_models_simulated_data.html)
 
+Individual-level BayesC and BayesR, full and scheduled marker updates,
+held-out prediction and genetic variance decomposition on sparse and
+polygenic simulated traits: [Individual-level Bayesian regression with
+gbayes](Document/Gbayes_individual_level_simulated_data.html)
+
 Finemapping with single trait Bayesian Linear Regression models and
 simulated data (Shrestha et al. 2023).  
 [Finemapping using BLR models on simulated

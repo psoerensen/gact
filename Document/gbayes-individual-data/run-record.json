@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-09",
+  "sample_count": 5000,
+  "training_count": 4000,
+  "test_count": 1000,
+  "marker_count": 37994,
+  "burnin": 200,
+  "sampling_sweeps": 500,
+  "thinning": 5,
+  "seeds": [17, 29],
+  "split_seed": 20261009,
+  "simulation_seed": 271828,
+  "causal_counts": [4, 500],
+  "threads": 2,
+  "scheduler": {
+    "enabled": true,
+    "full_sweep_every": 10,
+    "base_interval": 50,
+    "maximum_interval": 200,
+    "candidate_threshold": 0.001,
+    "candidate_lifetime": 20,
+    "burnin_only": false
+  },
+  "package_versions": {
+    "gbase": "0.1.3",
+    "gbayes": "0.1.2",
+    "gscore": "0.1.1"
+  },
+  "phenotype_scaling": {
+    "sparse": [0.326, 1.0787],
+    "polygenic": [0.0052, 1.0032]
+  },
+  "convergence_qualified": false,
+  "native": {
+    "header_version": "0.1.0",
+    "runtime_version": "0.1.0",
+    "abi_contract": 0,
+    "headers_match_runtime": true,
+    "gmat_version": "0.6.0",
+    "gmat_abi": 0,
+    "gsolve_version": "0.27.0",
+    "gsolve_abi": 4,
+    "gbits_version": "0.21.0",
+    "gbits_abi": 4,
+    "gscore_version": "0.1.0",
+    "gscore_abi": 0
+  }
+}
