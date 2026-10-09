@@ -834,6 +834,15 @@ check_downloads <- function(GAlist, min_size_MB = 0.5, verbose = TRUE) {
 
 #' @export
 #'
+#' @title Remove studies from a GACT database
+#'
+#' @description Deletes the selected summary-statistics files and updates the database study metadata.
+#'
+#' @param GAlist GACT database list containing directory paths, study metadata and mappings.
+#' @param studyID Character vector of existing study IDs to remove.
+#'
+#' @return Updated GAlist. The summary files are removed and existing GWAS_information.csv metadata is rewritten.
+#' @export
 removeStatDB <- function(GAlist,studyID=NULL) {
  if (is.null(studyID)) stop("Please provide a valid studyID.")
  if (!all(studyID %in% GAlist$study$id))
@@ -1147,6 +1156,20 @@ updateStatDB <- function(GAlist=NULL,
 #  colnames(stat)[1] <- "rsids"
 #  return(stat)
 # }
+#' @title Map and align summary statistics to a GACT marker reference
+#'
+#' @description Maps chromosome-position-allele keys to the database, removes duplicate markers, aligns effect alleles and filters allele-frequency differences.
+#'
+#' @param GAlist GACT database list containing directory paths, study metadata and mappings.
+#' @param stat Ordinary data frame with chr, pos, ea, nea and p columns; b is used when alleles are flipped. Optional eaf, seb and n columns supply frequencies, standard errors and sample sizes.
+#' @param excludeMAFDIFF Maximum absolute difference between reported and reference effect-allele frequency.
+#' @param excludeMAF,excludeINFO,excludeCGAT,excludeINDEL,excludeDUPS,excludeMHC,excludeMISS,excludeHWE Legacy compatibility arguments, currently unused. Duplicate markers are removed unconditionally; these arguments do not enable their named filters.
+#' @param return_metrics Attach mapping, flipping and filtering counts as the qc_metrics attribute.
+#'
+#' @details Reads cpra.txt.gz and markers.txt.gz from the database marker directory. Missing EAF uses the reference frequency; missing n can be estimated from seb and EAF. Mapping checks either allele order but does not infer strand complements. This legacy helper is separate from gbase::checkStat() and gbase::gfilter().
+#'
+#' @return Aligned, filtered data frame with marker IDs and optional qc_metrics.
+#' @export
 qcStatDB <- function(GAlist = NULL,
                      stat = NULL,
                      excludeMAF = 0.01,
@@ -1317,6 +1340,16 @@ qcStatDB <- function(GAlist = NULL,
 
 #' @export
 #'
+#' @title Suggest summary-statistic columns using legacy heuristics
+#'
+#' @description Inspects column classes, cardinalities and numeric ranges to suggest column names.
+#'
+#' @param stat Data frame of summary-statistic columns.
+#'
+#' @details The heuristics are intended for inspection and may fail on inputs without the expected column types. They do not validate or normalize a schema; use detectStatSchema(), normalizeStatSchema() and validateStatSchema() for the current ingestion workflow.
+#'
+#' @return Character vector of candidate column names; the vector is not a named schema mapping.
+#' @export
 columnStatDB <- function(stat=NULL) {
  col_names <- colnames(stat)
  types <- sapply(stat,class)

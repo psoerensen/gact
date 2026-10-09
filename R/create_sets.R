@@ -1209,6 +1209,20 @@ createRegulatoryMarkerSets <- function(GAlist, overwrite = FALSE) {
 
 #' @export
 #'
+#' @title Build legacy GACT annotation sets
+#'
+#' @description Reads local annotation resources and writes legacy gene, interaction, drug and marker mappings.
+#'
+#' @param GAlist GACT database list containing directory paths, study metadata and mappings.
+#' @param what Character vector enabling the additional regulatory, diseases or atc branches. Core Ensembl, gene and interaction preparation runs regardless of this value.
+#' @param upstream,downstream Gene-boundary extensions in kilobases for marker mapping.
+#' @param min_combined_score Minimum STRING/STITCH combined interaction score.
+#' @param min_interactions Minimum interaction-set size used by the legacy preparation.
+#'
+#' @details This is the legacy monolithic builder, with hard-coded resource filenames and build assumptions. Prefer createSetsDB() for current modular preparation. Existing output files can be overwritten; resources must already be available locally.
+#'
+#' @return Updated GAlist, with mapping and set RDS files written to its database directories.
+#' @export
 createSetsDB0 <- function(GAlist = NULL, what="ensembl",
                          upstream=35, downstream=10,
                          min_combined_score=900, min_interactions=5) {
@@ -1598,6 +1612,18 @@ createSetsDB0 <- function(GAlist = NULL, what="ensembl",
 
 #' @export
 #'
+#' @title Build legacy marker sets from gene mappings
+#'
+#' @description Expands selected local feature-to-gene mappings through the existing ensg2rsids mapping.
+#'
+#' @param GAlist GACT database list containing directory paths, study metadata and mappings.
+#' @param what Character vector selecting GO, reactome, string, stitch or drug mappings. NULL selects no mapping branch.
+#' @param upstream,downstream,min_combined_score,min_interactions Legacy compatibility arguments, currently unused; the existing gene-to-marker mapping determines membership.
+#'
+#' @details Prefer createMarkerSetsDB() for current preparation. Existing selected outputs can be overwritten.
+#'
+#' @return GAlist; selected marker-set RDS files are written to its gsets directory.
+#' @export
 createMarkerSetsDB0 <- function(GAlist = NULL, what=NULL,
                                upstream=35, downstream=10,
                                min_combined_score=900, min_interactions=5) {

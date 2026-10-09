@@ -104,6 +104,21 @@ getFeatureStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,file=NULL,
 
 #' @export
 #'
+#' @title Write feature statistics to a CSV file
+#'
+#' @description Retrieves feature statistics and writes a semicolon-separated CSV, optionally including spreadsheet hyperlinks.
+#'
+#' @param GAlist GACT database list containing directory paths, study metadata and mappings.
+#' @param feature Feature type accepted by getFeatureStat().
+#' @param featureID Optional feature IDs forwarded to getFeatureStat().
+#' @param studyID Optional study IDs forwarded to getFeatureStat().
+#' @param threshold Threshold forwarded to getFeatureStat(); its use depends on that retrieval route.
+#' @param format Retrieval format forwarded to getFeatureStat(); the export code expects tabular output.
+#' @param file.csv Destination CSV path passed to write.csv2().
+#' @param hyperlink Include spreadsheet hyperlink formulas in feature identifiers.
+#'
+#' @return The return value of write.csv2(), invisibly; the CSV file is written as a side effect.
+#' @export
 writeStatDB <- function(GAlist=NULL, feature=NULL, featureID=NULL,
                       studyID=NULL, threshold=0.95,
                       format="data.frame", file.csv=NULL, hyperlink=TRUE) {
@@ -233,6 +248,20 @@ getFeatureStat <- function(GAlist=NULL, feature=NULL, featureID=NULL,
 
 #' @export
 #'
+#' @title Construct a feature-set membership matrix
+#'
+#' @description Maps database feature sets to supplied row identifiers and constructs a dense membership matrix.
+#'
+#' @param GAlist GACT database list containing directory paths, study metadata and mappings.
+#' @param feature Feature category passed to getFeatureSets().
+#' @param featureID Optional feature-set names to retain.
+#' @param rowFeatureID Ordered row identifiers. NULL uses the unique members of the selected sets.
+#' @param scale Standardize each membership column with base scale().
+#'
+#' @details Unscaled entries are zero or one. Constant columns can become non-finite when scaled.
+#'
+#' @return Numeric matrix with row identifiers and feature-set names as dimnames.
+#' @export
 designMatrixDB <- function(GAlist=NULL, feature=NULL, featureID=NULL, rowFeatureID=NULL, scale=FALSE) {
  if(is.null(GAlist)) stop ("Please provide GAlist")
  if(is.null(feature)) stop ("Please provide feature")
@@ -462,6 +491,18 @@ getFeatureSets <- function(GAlist=NULL, feature=NULL, featureID=NULL, minsets=NU
 
 #' @export
 #'
+#' @title Expand drug targets through local STRING interactions
+#'
+#' @description Combines local drug-gene sets with protein-interaction partners and maps them back to genes.
+#'
+#' @param GAlist GACT database list containing directory paths, study metadata and mappings.
+#' @param min_interactions Minimum number of retained protein partners per STRING source protein.
+#' @param min_combined_score Minimum STRING combined interaction score.
+#'
+#' @details Requires drug2ensg.rds, the local 9606.protein.links.v12.0.txt.gz file and ensg2ensp/ensp2ensg mappings; no resource is downloaded.
+#'
+#' @return Named list of unique gene IDs for each drug, including its original targets.
+#' @export
 getDrugComplexesDB <- function(GAlist=NULL, min_interactions=1, min_combined_score=900) {
  drugGenes <- readRDS(file=file.path(GAlist$dirs["gsets"],"drug2ensg.rds"))
  #file_string <- file.path(GAlist$dirs["gsets"],"9606.protein.links.v11.5.txt.gz")
@@ -581,6 +622,16 @@ getMarkerSets <- function(GAlist = NULL, feature = NULL, featureID = NULL,
 
 #' @export
 #'
+#' @title Retrieve the local drug-gene interaction table
+#'
+#' @description Merges the local DGIdb interactions table with the database Entrez-to-Ensembl mapping.
+#'
+#' @param GAlist GACT database list. Supply it explicitly; the legacy self-referential default does not construct a database.
+#' @param feature Currently only "Drug Gene Interactions" is implemented.
+#' @param featureID,format Legacy compatibility arguments, currently unused; the complete merged table is returned.
+#'
+#' @return Data frame of local drug-gene interactions and mapped gene identifiers.
+#' @export
 getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="list") {
  if(feature=="Drug Gene Interactions") {
   eg2ensg <- readRDS(file.path(GAlist$dirs["gsets"],"eg2ensg.rds"))
@@ -1251,6 +1302,18 @@ getDISEASES <- function(GAlist = NULL, ensg = NULL, ensp = NULL, what = "Integra
 #'
 
 # hyperg test
+#' @title Test threshold enrichment in supplied index sets
+#'
+#' @description Computes an upper-tail hypergeometric test for each set using a supplied vector of p-values as the universe.
+#'
+#' @param p Finite p-values for the universe, ordered to match set indices.
+#' @param sets Named list of integer indices into p. Use unique valid indices within each set.
+#' @param threshold P-values strictly below this threshold count as associated.
+#'
+#' @details The calculation assumes distinct members and a common universe. It does not validate duplicates or apply multiple-testing correction. Empty sets or no associated universe members can produce undefined enrichment factors.
+#'
+#' @return Data frame with set name, member count, associated count, enrichment factor and unadjusted p-value.
+#' @export
 hgtestDB <- function(p = NULL, sets = NULL, threshold = 0.05) {
  population_size <- length(p)
  sample_size <- sapply(sets, length)
@@ -1288,6 +1351,15 @@ hgtestDB <- function(p = NULL, sets = NULL, threshold = 0.05) {
 #' @export
 #'
 # Create a plot function
+#' @title Plot association p-values in input order
+#'
+#' @description Plots -log10(p) against the supplied vector order and adds a horizontal line at eight.
+#'
+#' @param p Nonempty vector of finite p-values in (0, 1].
+#' @param main Optional plot title.
+#'
+#' @return The return value of the final graphics call, invisibly; a base graphics plot is drawn.
+#' @export
 mhplotDB <- function(p=NULL, main=NULL) {
  pobs <- -log10(p)
  plot(pobs,
@@ -1299,6 +1371,15 @@ mhplotDB <- function(p=NULL, main=NULL) {
 #' @export
 #'
 # Create a plot function
+#' @title Draw a p-value quantile plot
+#'
+#' @description Plots sorted observed -log10(p) against expected values from ranks divided by the number of observations.
+#'
+#' @param p Nonempty vector of finite p-values in (0, 1].
+#' @param main Optional plot title.
+#'
+#' @return The return value of the final graphics call, invisibly; a base graphics plot is drawn.
+#' @export
 qqplotDB <- function(p=NULL, main=NULL) {
  pobs <- -log10(p)
  pexp <- -log10((1:length(pobs))/length(pobs) )
@@ -1314,6 +1395,16 @@ qqplotDB <- function(p=NULL, main=NULL) {
 
 #' @export
 #'
+#' @title Prepare study metadata for a Shiny table
+#'
+#' @description Converts stored study metadata to a data frame, removes legacy columns and adds PubMed hyperlinks.
+#'
+#' @param GAlist GACT database list containing directory paths, study metadata and mappings.
+#'
+#' @details Requires the legacy study column order: columns two and eleven are removed by position.
+#'
+#' @return Data frame of study metadata with integer effective sample sizes and HTML references.
+#' @export
 getStudiesShinyDB <- function(GAlist=NULL) {
  df_studies <- as.data.frame(GAlist$study)[,-c(2,11)]
  df_studies$neff <- as.integer(df_studies$neff)
@@ -1326,6 +1417,17 @@ getStudiesShinyDB <- function(GAlist=NULL) {
 #' @export
 #'
 # Create a plot function
+#' @title Create HTML links from identifiers
+#'
+#' @description Concatenates a base URL and identifiers into HTML anchor strings.
+#'
+#' @param url Base URL prepended to each identifier.
+#' @param urlid Identifier or vector of identifiers used in the URL and link text.
+#'
+#' @details Values are concatenated without HTML escaping or URL encoding; supply trusted, already suitable values.
+#'
+#' @return Character vector of HTML anchors opening in a new tab.
+#' @export
 createURL <- function(url=NULL,urlid=NULL){
  url <- paste0(url, urlid)
  html_code <- paste0("<a href='", url, "' target='_blank'>", urlid, "</a>")
@@ -1334,6 +1436,16 @@ createURL <- function(url=NULL,urlid=NULL){
 
 #' @export
 #'
+#' @title Look up legacy ATC codes by drug name
+#'
+#' @description Matches drug names case-insensitively against the legacy ATC table.
+#'
+#' @param drugname Character vector of drug names.
+#'
+#' @details The helper uses a GAlist object resolved in its enclosing environment, containing atc$name and atc$code. It has no explicit database argument and is not a general database accessor.
+#'
+#' @return Character vector of matched ATC codes; unmatched names are "Unknown".
+#' @export
 addATC <- function(drugname=NULL) {
  atc <- rep("Unknown",length(drugname))
  has_atc <- match(tolower(drugname),tolower(GAlist$atc$name))
@@ -1343,6 +1455,16 @@ addATC <- function(drugname=NULL) {
 
 #' @export
 #'
+#' @title Create an interactive database table
+#'
+#' @description Builds a DT widget with search, sorting, horizontal scrolling and CSV/Excel buttons.
+#'
+#' @param df Data frame to display.
+#'
+#' @details HTML escaping is disabled to display database hyperlinks. Supply trusted table content; optional DT dependencies must be available.
+#'
+#' @return DT datatable widget.
+#' @export
 createDT <- function(df=NULL) {
  dt <- datatable(df, extensions = "Buttons",
                  escape = FALSE,
@@ -1362,6 +1484,16 @@ createDT <- function(df=NULL) {
 # Extract gene information from Ensembl
 #' @export
 #'
+#' @title Retrieve one gene record from Ensembl
+#'
+#' @description Requests a human gene-symbol lookup through the Ensembl REST service.
+#'
+#' @param symbol One human gene symbol.
+#'
+#' @details This helper makes a network request and uses GET/content helpers from httr and JSON parsing. It does not cache responses or infer identifier versions.
+#'
+#' @return Character vector containing symbol, Ensembl gene ID, description, biotype, chromosome, start and end; an API error produces missing fields.
+#' @export
 getGeneDB <- function(symbol=NULL) {
  base_url <- "https://rest.ensembl.org"
  url <- paste0(base_url, "/lookup/symbol/homo_sapiens/", symbol)
@@ -1375,6 +1507,18 @@ getGeneDB <- function(symbol=NULL) {
 # Define function to retrieve interaction partners
 #' @export
 #'
+#' @title Retrieve interaction partners from STRING
+#'
+#' @description Requests the STRING interaction-partners TSV endpoint for supplied identifiers.
+#'
+#' @param ids Character vector of identifiers accepted by STRING.
+#' @param species STRING taxonomy identifier; the default is human, 9606.
+#' @param threshold Required interaction score sent to STRING, on its 0-1000 scale.
+#'
+#' @details This helper makes a network request and requires the GET/content helpers from httr. No network query is performed merely by loading its help.
+#'
+#' @return Data frame parsed from the returned TSV.
+#' @export
 getInteractionsDB <- function(ids=NULL, species="9606", threshold=900) {
  ids <- paste0(ids, collapse = "%0d")
  url <- paste0("https://string-db.org/api/tsv/interaction_partners?identifiers=",
@@ -1390,6 +1534,19 @@ getInteractionsDB <- function(ids=NULL, species="9606", threshold=900) {
 }
 
 
+#' @export
+#' @title Map legacy set members to ordered feature identifiers
+#'
+#' @description Matches each supplied set member to an explicit ordered reference vector.
+#'
+#' @param sets List of feature-member vectors; unnamed sets receive generated names.
+#' @param featureID Ordered reference identifiers used by match().
+#' @param GAlist Legacy compatibility argument, currently unused.
+#' @param index Return integer reference positions when TRUE, or matched identifiers when FALSE.
+#'
+#' @details This legacy helper does not harmonize identifiers or validate duplicates. The task-neutral marker helper is gbase::mapSets().
+#'
+#' @return Named list of matched members. Unmatched members and sets with no matches are removed; duplicate members are retained.
 #' @export
 mapSetsDB <- function(sets = NULL, featureID = NULL, GAlist = NULL, index = TRUE) {
  nsets <- sapply(sets, length)
@@ -1486,6 +1643,17 @@ getLDscoresDB <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="HapMap
 
 
 # Define the function to translate gene symbols to Ensembl IDs
+#' @export
+#' @title Retrieve gene annotation records from Ensembl
+#'
+#' @description Requests human gene records by symbol or Ensembl gene ID and assembles a table.
+#'
+#' @param sym Character vector of human gene symbols, or NULL.
+#' @param ensg Character vector of Ensembl gene IDs, or NULL. If both inputs are supplied, the ID lookup replaces the symbol result.
+#'
+#' @details Makes one network request per identifier through the existing lookup helpers, requiring httr GET/content helpers and JSON parsing. Supply at least one identifier input; responses are not cached.
+#'
+#' @return Data frame with Symbol, Ensembl Gene Id, Description, Type, Chr, Start and End columns.
 #' @export
 getGeneInfo <- function(sym=NULL,ensg=NULL) {
  if(!is.null(sym)) {
@@ -1596,6 +1764,15 @@ createHyperlink <- function(ids, base_url) {
 
 
 # QQ-plot
+#' @export
+#' @title Draw the legacy p-value quantile plot
+#'
+#' @description Plots ranked observed -log10(p) against expected values from ranks divided by the number of observations.
+#'
+#' @param p Nonempty vector of finite p-values in (0, 1].
+#' @param main Optional plot title.
+#'
+#' @return The return value of the final graphics call, invisibly; a base graphics plot is drawn.
 #' @export
 qplot <- function(p=NULL, main = "") {
  mlogObs <- -log10(p)

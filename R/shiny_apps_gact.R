@@ -2,6 +2,17 @@
  #'
 
 
+#' @title Create a legacy GACT Shiny application
+#'
+#' @description Constructs the selected interactive application from local database resources.
+#'
+#' @param GAlist GACT database list containing directory paths, study metadata and mappings.
+#' @param what Application branch: checkBAYES, test, checkSTAT, customGSEA, geneDrugs, featureDRUGS, featureGSEA or DrugDBTables.
+#'
+#' @details Branches have different database, saved-result and optional-package requirements. App actions may run analyses or query remote services; constructing documentation does not launch an application.
+#'
+#' @return A Shiny application object for the selected branch.
+#' @export
  shinyAppsDB <- function(GAlist=NULL, what="DrugDBTables") {
 
   require(shiny)
