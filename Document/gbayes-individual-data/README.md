@@ -18,3 +18,8 @@ Focused BED and continuation adapter tests passed; no full R CMD check is claime
 
 Inputs: https://github.com/psoerensen/qgdata/tree/main/simulated_human_data
 Corrected map: https://psoerensen.github.io/gact/Document/glma-simulated-data/
+
+The simple-posterior table was recalculated from the original saved chain
+draws, using every post-burn-in BED variance sweep and type-8 equal-tail
+quantiles. Existing VB/VE rows retain their native effect-thinned summaries.
+The original runs predate the gbayes 0.1.3 posterior-table adapter update.
