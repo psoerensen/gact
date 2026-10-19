@@ -1,0 +1,72 @@
+R version 4.4.1 (2024-06-14 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26200)
+
+Matrix products: default
+
+
+locale:
+[1] C
+system code page: 65001
+
+time zone: Europe/Copenhagen
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] gbase_0.0.1 qgg_1.1.6  
+
+loaded via a namespace (and not attached):
+ [1] Matrix_1.7-0        lattice_0.22-6      coda_0.19-4.1      
+ [4] splines_4.4.1       parallel_4.4.1      RhpcBLASctl_0.23-42
+ [7] grid_4.4.1          data.table_1.18.4   corpcor_1.6.10     
+[10] statmod_1.5.0       compiler_4.4.1      quantreg_5.98      
+[13] tools_4.4.1         SparseM_1.84-2      Rcpp_1.1.1         
+[16] survival_3.6-4      MCMCpack_1.7-0      mcmc_0.9-8         
+[19] MASS_7.3-60.2       MatrixModels_0.5-3 
+qgg 1.1.6 C:/Users/au223366/AppData/Local/R/win-library/4.4/qgg
+gbase 0.0.1 C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbase
+$gmat
+$gmat$header_version
+[1] "0.6.0"
+
+$gmat$header_abi
+[1] 0
+
+$gmat$runtime_version
+[1] "0.6.0"
+
+$gmat$runtime_abi
+[1] 0
+
+
+$gbits
+$gbits$header_version
+[1] "0.21.0"
+
+$gbits$header_abi
+[1] 4
+
+$gbits$runtime_version
+[1] "0.21.0"
+
+$gbits$runtime_abi
+[1] 4
+
+
+$gsolve
+$gsolve$header_version
+[1] "0.22.0"
+
+$gsolve$header_abi
+[1] 4
+
+$gsolve$runtime_version
+[1] "0.22.0"
+
+$gsolve$runtime_abi
+[1] 4
+
+

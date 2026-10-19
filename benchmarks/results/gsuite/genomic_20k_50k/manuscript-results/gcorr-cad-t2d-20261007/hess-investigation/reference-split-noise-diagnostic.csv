@@ -1,0 +1,4 @@
+"region","training_samples","holdout_samples","retained_components","full_region_markers","split_variable_markers","holdout_noise_energy_per_component","interpretation"
+"chr1_178944309_178954470",251,252,3,25,25,0.979538983528846,"single reference-only split; not a GWAS noise correction"
+"chr10_134336329_134494673",251,252,20,451,450,0.935045870611392,"single reference-only split; not a GWAS noise correction"
+"chr6_47311898_48391125",251,252,20,3000,2981,0.941567254243593,"single reference-only split; not a GWAS noise correction"

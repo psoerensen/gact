@@ -1,0 +1,122 @@
+gscore 0.0.1 C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gscore
+Package: gscore
+Type: Package
+Title: Focused Genomic Scoring Workflows
+Version: 0.0.1
+Authors@R:
+        person("Peter","Soerensen",role=c("aut","cre"),email="peter.soerensen@example.invalid")
+Description: Independently installable interface for constructing
+        clumped-and-thresholded marker weights from association
+        statistics and applying allele-labelled genome-wide or
+        marker-set weights to PLINK BED genotypes through public native
+        gscore workflows.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: gbase (>= 0.0.1), Rcpp
+LinkingTo: Rcpp
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
+SystemRequirements: C++17, gscore 0.1.0 (ABI 0), gbayes 0.1.0 (ABI 0),
+        gmat 0.6.0 (ABI 0), gsolve 0.22.0 (ABI 4), gbits 0.21.0 (ABI
+        4), portable native task closure
+NeedsCompilation: yes
+Packaged: 2026-09-30 20:15:18 UTC; au223366
+Author: Peter Soerensen [aut, cre]
+Maintainer: Peter Soerensen <peter.soerensen@example.invalid>
+Built: R 4.4.1; x86_64-w64-mingw32; 2026-09-30 20:15:22 UTC; windows
+Archs: x64
+
+-- File: C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gscore/Meta/package.rds 
+$gscore
+$gscore$expected_version
+[1] "0.1.0"
+
+$gscore$expected_abi
+[1] 0
+
+$gscore$runtime_version
+[1] "0.1.0"
+
+$gscore$runtime_abi
+[1] 0
+
+$gscore$compatible
+[1] TRUE
+
+
+$gbayes
+$gbayes$expected_version
+[1] "0.1.0"
+
+$gbayes$expected_abi
+[1] 0
+
+$gbayes$runtime_version
+[1] "0.1.0"
+
+$gbayes$runtime_abi
+[1] 0
+
+$gbayes$compatible
+[1] TRUE
+
+
+$gmat
+$gmat$expected_version
+[1] "0.6.0"
+
+$gmat$expected_abi
+[1] 0
+
+$gmat$runtime_version
+[1] "0.6.0"
+
+$gmat$runtime_abi
+[1] 0
+
+$gmat$compatible
+[1] TRUE
+
+
+$gsolve
+$gsolve$expected_version
+[1] "0.22.0"
+
+$gsolve$expected_abi
+[1] 4
+
+$gsolve$runtime_version
+[1] "0.22.0"
+
+$gsolve$runtime_abi
+[1] 4
+
+$gsolve$compatible
+[1] TRUE
+
+
+$gbits
+$gbits$expected_version
+[1] "0.21.0"
+
+$gbits$expected_abi
+[1] 4
+
+$gbits$runtime_version
+[1] "0.21.0"
+
+$gbits$runtime_abi
+[1] 4
+
+$gbits$compatible
+[1] TRUE
+
+
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gscore/libs/x64/gbits.dll c5fc40361a340d47bdb4cd0245a116e8
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gscore/libs/x64/gscore.dll 5691044e192fa64ae8d46c64f6ea0e4e
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gscore/libs/x64/libgbayes.dll 4ac187ad7993648301cc4d4471a6dbb4
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gscore/libs/x64/libgmat.dll a08dd0cbbc86ea74e754ef597c4bec68
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gscore/libs/x64/libgscore.dll 8054d7d16ac8de66f838cbb9f7b18219
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gscore/libs/x64/libgscore_summary.dll 297bc3f462e238201910777267d5478b
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gscore/libs/x64/libgsolve.dll b2fd3bc3457ad1d4ea3cc4d23117569d

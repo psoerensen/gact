@@ -1,0 +1,98 @@
+List of 39
+ $ study                       : chr "1000G EUR chr22"
+ $ bedfiles                    : chr "C:/Users/au223366/Documents/GitHub/gsuite/build/benchmarks/manuscript-chr22-ld-20261005-200555/reference_fixtur"| __truncated__
+ $ bimfiles                    : chr "C:/Users/au223366/Documents/GitHub/gsuite/build/benchmarks/manuscript-chr22-ld-20261005-200555/reference_fixtur"| __truncated__
+ $ famfiles                    : chr "C:/Users/au223366/Documents/GitHub/gsuite/build/benchmarks/manuscript-chr22-ld-20261005-200555/reference_fixtur"| __truncated__
+ $ ids                         : chr [1:503] "HG00096" "HG00097" "HG00099" "HG00100" ...
+ $ study_ids                   : NULL
+ $ n                           : num 503
+ $ nchr                        : int 1
+ $ physical_marker_counts      : num 141121
+ $ rsids                       :List of 1
+  ..$ : chr [1:141121] "rs587616822" "rs62224609" "rs587646183" "rs139918843" ...
+ $ mchr                        : int 141121
+ $ chr                         :List of 1
+  ..$ : chr [1:141121] "22" "22" "22" "22" ...
+ $ pos                         :List of 1
+  ..$ : num [1:141121] 16050840 16051249 16052463 16052684 16052837 ...
+ $ map                         :List of 1
+  ..$ : num [1:141121] 0 0 0 0 0 0 0 0 0 0 ...
+ $ a1                          :List of 1
+  ..$ : chr [1:141121] "G" "C" "C" "C" ...
+ $ a2                          :List of 1
+  ..$ : chr [1:141121] "C" "T" "T" "A" ...
+ $ af                          :List of 1
+  ..$ : num [1:141121] 0.02087 0.09344 0.02584 0.01392 0.00497 ...
+ $ af1                         :List of 1
+  ..$ : num [1:141121] 0.02087 0.09344 0.02584 0.01392 0.00497 ...
+ $ af2                         :List of 1
+  ..$ : num [1:141121] 0.979 0.907 0.974 0.986 0.995 ...
+ $ maf                         :List of 1
+  ..$ : num [1:141121] 0.02087 0.09344 0.02584 0.01392 0.00497 ...
+ $ nmiss                       :List of 1
+  ..$ : num [1:141121] 0 0 0 0 0 0 0 0 0 0 ...
+ $ hom                         :List of 1
+  ..$ : num [1:141121] 0.958 0.833 0.952 0.972 0.99 ...
+ $ het                         :List of 1
+  ..$ : num [1:141121] 0.04175 0.167 0.04771 0.02783 0.00994 ...
+ $ n0                          :List of 1
+  ..$ : num [1:141121] 482 414 478 489 498 427 443 496 485 443 ...
+ $ n1                          :List of 1
+  ..$ : num [1:141121] 21 84 24 14 5 74 59 7 17 59 ...
+ $ n2                          :List of 1
+  ..$ : num [1:141121] 0 5 1 0 0 2 1 0 1 1 ...
+ $ assembly                    : NULL
+ $ source_marker_indices_0based:List of 1
+  ..$ : num [1:141121] 0 1 2 3 4 5 6 7 8 9 ...
+ $ sample_source_indices_0based: num [1:503] 0 1 2 3 4 5 6 7 8 9 ...
+ $ genotype_format             : chr "PLINK BED SNP-major"
+ $ marker_selection_order      : chr "canonical file/BIM order"
+ $ provenance                  :List of 5
+  ..$ persistent_store: chr "existing PLINK BED files"
+  ..$ summary_samples : chr "all"
+  ..$ dosage_allele   : chr "BIM field 5 (a1)"
+  ..$ af_policy       : chr "exact empirical; no clipping"
+  ..$ versions        :List of 3
+ $ cpra                        :List of 1
+  ..$ : chr [1:141121] "22_16050840_G_C" "22_16051249_C_T" "22_16052463_C_T" "22_16052684_C_A" ...
+ $ m                           : int 141121
+ $ sparseLD                    :List of 25
+  ..$ prefix               : chr "C:/Users/au223366/Documents/GitHub/gsuite/build/benchmarks/manuscript-chr22-ld-20261005-200555/ld_gbase-1/chr22"
+  ..$ format               : chr "sparse_ld_csr"
+  ..$ version              : int 1
+  ..$ paths                :List of 5
+  ..$ n                    : int 503
+  ..$ source_n             : num 503
+  ..$ m                    : num 141121
+  ..$ nnz                  : num 1.41e+08
+  ..$ chr                  : int 1
+  ..$ bed_files            : chr "C:/Users/au223366/Documents/GitHub/gsuite/build/benchmarks/manuscript-chr22-ld-20261005-200555/reference_fixtur"| __truncated__
+  ..$ cls                  :List of 1
+  ..$ rows                 : int [1:503] 1 2 3 4 5 6 7 8 9 10 ...
+  ..$ af                   :List of 1
+  ..$ rsids                :List of 1
+  ..$ sample_ids           : chr [1:503] "HG00096" "HG00097" "HG00099" "HG00100" ...
+  ..$ sample_indices_0based: num [1:503] 0 1 2 3 4 5 6 7 8 9 ...
+  ..$ marker_indices_0based:List of 1
+  ..$ marker_metadata      :'data.frame':	141121 obs. of  8 variables:
+  ..$ r2_threshold         : num 0
+  ..$ max_distance_bp      : int 0
+  ..$ max_distance_variants: int 1000
+  ..$ block_size           : int 1000
+  ..$ nthreads             : int 1
+  ..$ checksums            : Named chr [1:5] "363d297eaff5be57e7a3286d86257318" "0e1173b872c31d00b65ba6504b5fc67d" "42d759007c50d0e9aa9ac898a89c6309" "76d9a0e30114ccd2f429875df0b342f5" ...
+  .. ..- attr(*, "names")= chr [1:5] "row_ptr" "col_idx" "values" "metadata" ...
+  ..$ provenance           :List of 14
+ $ ldfiles                     :List of 5
+  ..$ row_ptr : chr "C:/Users/au223366/Documents/GitHub/gsuite/build/benchmarks/manuscript-chr22-ld-20261005-200555/ld_gbase-1/chr22"| __truncated__
+  ..$ col_idx : chr "C:/Users/au223366/Documents/GitHub/gsuite/build/benchmarks/manuscript-chr22-ld-20261005-200555/ld_gbase-1/chr22"| __truncated__
+  ..$ values  : chr "C:/Users/au223366/Documents/GitHub/gsuite/build/benchmarks/manuscript-chr22-ld-20261005-200555/ld_gbase-1/chr22.values.f32.bin"
+  ..$ metadata: chr "C:/Users/au223366/Documents/GitHub/gsuite/build/benchmarks/manuscript-chr22-ld-20261005-200555/ld_gbase-1/chr22.meta.txt"
+  ..$ markers : chr "C:/Users/au223366/Documents/GitHub/gsuite/build/benchmarks/manuscript-chr22-ld-20261005-200555/ld_gbase-1/chr22.markers.tsv"
+ $ rsidsLD                     :List of 1
+  ..$ : chr [1:141121] "rs587616822" "rs62224609" "rs587646183" "rs139918843" ...
+ $ idsLD                       : chr [1:503] "HG00096" "HG00097" "HG00099" "HG00100" ...
+ $ ldscores                    :List of 1
+  ..$ : Named num [1:141121] 11.6 25.86 4.69 18.49 4.94 ...
+  .. ..- attr(*, "names")= chr [1:141121] "rs587616822" "rs62224609" "rs587646183" "rs139918843" ...
+ - attr(*, "class")= chr [1:2] "gs_genotypes" "Glist"

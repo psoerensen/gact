@@ -1,0 +1,9 @@
+"stage","seconds","cpu"
+"input_loading",110.45,105.62
+"common_marker_and_gene_alignment",8.59,8.48
+"regional_eigen_preparation",643.36,613.11
+"vegas_spectrum_adapter",79.52,77.5000000000001
+"summary_alignment_and_statistic_conversion",12.71,12.18
+"vegas_evaluation",97.6899999999999,93.7199999999999
+"prepared_RDS_loading",17.26,16.79
+"repeated_vegas_evaluation",71.4400000000001,70.1

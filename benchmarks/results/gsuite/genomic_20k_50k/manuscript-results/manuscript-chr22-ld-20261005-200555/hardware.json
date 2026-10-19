@@ -1,0 +1,17 @@
+{
+    "processPrivateMetric":  "sampled maximum PrivateMemorySize64, 100ms interval",
+    "ramBytes":  16794288128,
+    "cpu":  "13th Gen Intel(R) Core(TM) i7-1365U",
+    "storage":  {
+                    "DriveLetter":  "C",
+                    "FileSystem":  "NTFS",
+                    "Size":  509290213376,
+                    "SizeRemaining":  58383495168
+                },
+    "osVersion":  "10.0.26200",
+    "os":  "Microsoft Windows 11 Enterprise",
+    "timezone":  "Europe/Copenhagen",
+    "physicalCores":  10,
+    "memoryAPI":  "System.Diagnostics.Process.PeakWorkingSet64; R analysis process identified by Sys.getpid(), excluding launcher and helper processes",
+    "logicalCores":  12
+}

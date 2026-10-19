@@ -1,0 +1,7 @@
+"stage","threads","processWallSeconds","peakWorkingSetBytes","sampledPeakPrivateBytes","exitCode","stageDirectoryBytes","path"
+"reference_fixture","1","248,2965058","3295588352","3474231296","0","21983434","C:\Users\au223366\Documents\GitHub\gsuite\build\benchmarks\manuscript-chr22-ld-20261005-200555\reference_fixture-1"
+"prepare_qgg","1","4,109985","309878784","333463552","0","3712154","C:\Users\au223366\Documents\GitHub\gsuite\build\benchmarks\manuscript-chr22-ld-20261005-200555\prepare_qgg-1"
+"prepare_gbase","1","5,4580765","392777728","412078080","0","4093878","C:\Users\au223366\Documents\GitHub\gsuite\build\benchmarks\manuscript-chr22-ld-20261005-200555\prepare_gbase-1"
+"ld_qgg","1","59,7958682","537931776","694435840","0","1135536818","C:\Users\au223366\Documents\GitHub\gsuite\build\benchmarks\manuscript-chr22-ld-20261005-200555\ld_qgg-1"
+"ld_gbase","1","299,1629487","444813312","471248896","0","1141619901","C:\Users\au223366\Documents\GitHub\gsuite\build\benchmarks\manuscript-chr22-ld-20261005-200555\ld_gbase-1"
+"validate_ld","1","4,7614728","428625920","447913984","0","3462","C:\Users\au223366\Documents\GitHub\gsuite\build\benchmarks\manuscript-chr22-ld-20261005-200555\validate_ld-1"

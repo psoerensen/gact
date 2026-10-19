@@ -1,0 +1,2 @@
+"region","component","quantity","trait1","trait2","estimate","standard_error","z","p_value","undefined_reason","uncertainty_reason"
+NA,"total","h2","GWAS2",NA,0.682063194769718,NA,NA,NA,"","Joint HESS uncertainty requires valid regional genetic and total residual parameters"

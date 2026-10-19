@@ -1,0 +1,24 @@
+gact 0.0.0.1 C:/Users/au223366/AppData/Local/R/win-library/4.4/gact
+Package: gact
+Title: Genomic Assocation of Complex Traits
+Version: 0.0.0.1
+Authors@R: person("Peter", "Soerensen", , "pso@r-qgg.org", role =
+        c("aut", "cre"), comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: Infrastructure for creating and using genomic association
+        statistics for complex traits and diseases.
+License: `use_mit_license()`
+Encoding: UTF-8
+Imports: data.table, DT, shiny, R.utils, msigdbr
+Suggests: XML, RCurl, testthat (>= 3.0.0), yaml
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Config/testthat/edition: 3
+Author: Peter Soerensen [aut, cre] (YOUR-ORCID-ID)
+Maintainer: Peter Soerensen <pso@r-qgg.org>
+Built: R 4.4.1; ; 2026-03-31 13:20:49 UTC; windows
+
+-- File: C:/Users/au223366/AppData/Local/R/win-library/4.4/gact/Meta/package.rds 
+C:/Users/au223366/AppData/Local/R/win-library/4.4/gact/R/gact d6c68f1fe41ced6e98a766a3757313da
+C:/Users/au223366/AppData/Local/R/win-library/4.4/gact/R/gact.rdb f3a6dbc40e1f5567d7fda72f52603d22
+C:/Users/au223366/AppData/Local/R/win-library/4.4/gact/R/gact.rdx ed811d5224a98dab5f9c28bc087e36a4
+Installer and downloader bodies match the inspected local source; downloadDB text differs in Unicode messages on this locale.

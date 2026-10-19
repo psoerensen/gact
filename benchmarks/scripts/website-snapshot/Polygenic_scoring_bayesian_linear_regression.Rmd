@@ -1,0 +1,101 @@
+---
+title: "Polygenic scoring (PGS) using Bayesian Linear Regression models and biological pathway information"
+author: "Peter Sørensen"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+Bayesian linear regression models have been proposed as a unified framework for gene mapping, genomic risk scoring, estimation of genetic parameters and effect size distribution. BLR methods use an iterative algorithm for estimating joint marker effects that account for LD and allow for differential shrinkage of marker effects. Estimation of the joint marker effects depend on additional model parameters such as a probability of being causal ($\pi$), an overall marker variance ($\sigma_{b}^2$), and residual variance ($\sigma_e^2$). Estimation of model parameters can be done using MCMC techniques by sampling from fully conditional posterior distributions. 
+
+Genomic risk scoring using Bayesian Linear Regression (BLR) models is a very flexible approach for accounting for the underlying genetic architecture of the traits. It can be implemented using GWAS summary statistics and a reference linkage disequilibrium (LD) correlation matrix. Ideally the summary statistics will correspond to the most powerful GWAS results available on the phenotype under study. 
+
+Different BLR models can be fitted in the standalone `gbayes` package in the function `gbayes()`, where the argument `method=` specifies which prior marker variance should be used. BLR models can be fitted using individual level genotype and phenotype data or based on GWAS summary statistics and a reference linkage disequilibrium (LD) correlation matrix.
+
+<br>
+
+#### Prepare input data for polygenic scoring 
+```{r, include=TRUE, eval=FALSE}
+# Load libraries
+library(gbase)
+library(gbayes)
+library(gscore)
+library(gact)
+
+# Load GAlist
+GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
+
+# Check studies in gact database
+GAlist$studies
+
+# List BLR results files allready in gact database
+list.files(GAlist$dirs["gbayes"])
+
+# Load Glist with information on 1000G
+Glist <- readRDS(file=file.path(GAlist$dirs["marker"],"Glist_1000G_eur_filtered.rds"))
+
+# Select study
+studyID <- "GWAS1"
+
+# Extract GWAS summary statistics for GWAS1
+stat <- getMarkerStat(GAlist=GAlist, studyID=studyID)
+
+# Check and align summary statistics based on marker information in Glist
+stat <- checkStat(Glist=Glist, stat=stat,
+                  excludeMAF=0.05,
+                  excludeMAFDIFF=0.05,
+                  excludeINFO=0.8,
+                  excludeCGAT=TRUE,
+                  excludeINDEL=TRUE,
+                  excludeDUPS=TRUE,
+                  excludeMHC=FALSE,
+                  excludeMISS=0.05,
+                  excludeHWE=1e-12)
+
+# Prepare sparse LD for the checked marker selection.
+Glist <- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
+  bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=stat$rsids)
+Glist <- gprep(Glist, task="sparseld", msize=1000,
+  ldfiles=file.path(GAlist$dirs["marker"], "pgs-eur.ld"), nthreads=4)
+
+# Extract marker sets derived from KEGG pathways
+sets <- getMarkerSets(GAlist = GAlist, feature = "KEGG")
+sets <- mapSets(lapply(sets, unique), rsids=stat$rsids, index=FALSE)
+sets <- sets[lengths(sets)>0]
+
+```
+
+<br>
+
+#### Fit BLR model using a Bayes C prior for the marker variance
+In the Bayes C approach the marker effects, b, are a priori assumed to be sampled from a mixture with a point mass at zero and univariate normal distribution conditional on a common marker effect variance:
+```{r,  eval=FALSE, echo=TRUE}
+fit <- gbayes(stat=stat, Glist=Glist, method="bayesC", nit=1000)
+pgs <- gscore(Glist=Glist, stat=fit$stat)
+head(pgs$scores)
+```
+
+<br>
+
+#### Fit BLR model using a Bayes R prior for the marker variance
+In the Bayes R approach the marker effects, b, are a priori assumed to be sampled from a mixture with a point mass at zero and univariate normal distributions conditional on a common marker effect variance: 
+```{r,  eval=FALSE, echo=TRUE}
+fit <- gbayes(Glist=Glist, stat=stat, method="bayesR", nit=5000, nburn=1000)
+pgs <- gscore(Glist=Glist, stat=fit$stat)
+head(pgs$scores)
+```
+
+<br>
+
+#### Fit BLR model using a Bayes R prior and compute pathway specific polygenic scores
+In the Bayes R approach the marker effects, b, are a priori assumed to be sampled from a mixture with a point mass at zero and univariate normal distributions conditional on a common marker effect variance: 
+```{r,  eval=FALSE, echo=TRUE}
+fit <- gbayes(Glist=Glist, stat=stat, method="bayesR", nit=5000, nburn=1000)
+pgs <- gscore(Glist=Glist, stat=fit$stat, sets=sets)
+head(pgs$scores)
+```

@@ -1,0 +1,36 @@
+diff --git a/packages/gbase/src/gprep.cpp b/packages/gbase/src/gprep.cpp
+index 2c52503..0a93399 100644
+--- a/packages/gbase/src/gprep.cpp
++++ b/packages/gbase/src/gprep.cpp
+@@ -123,7 +123,7 @@ Rcpp::List cpp_gbase_sparse_ld_open(std::string prefix){return disk(gmat::inspec
+ Rcpp::List cpp_gbase_sparse_ld_identity(std::string prefix){return disk(gmat::open_sparse_ld_csr_disk(prefix));}
+ 
+ // [[Rcpp::export]]
+-SEXP cpp_gbase_ld_scores(std::string prefix,bool corrected,Rcpp::Nullable<Rcpp::NumericMatrix> annotation_values,Rcpp::CharacterVector annotation_marker_ids,Rcpp::CharacterVector annotation_names){auto d=gmat::open_sparse_ld_csr_disk(prefix);Rcpp::CharacterVector marker_names;for(const auto& m:d.markers)marker_names.push_back(m.marker_id);if(annotation_values.isNull()){auto x=corrected?gmat::corrected_sparse_ld_scores_from_disk(prefix):gmat::sparse_ld_scores_from_disk(prefix);Rcpp::NumericVector out(x.begin(),x.end());out.attr("names")=marker_names;return out;}Rcpp::NumericMatrix matrix(annotation_values);if(matrix.nrow()!=annotation_marker_ids.size()||matrix.ncol()!=annotation_names.size())Rcpp::stop("native annotation dimensions are inconsistent");std::vector<double> values;values.reserve(static_cast<std::size_t>(matrix.nrow())*static_cast<std::size_t>(matrix.ncol()));for(int i=0;i<matrix.nrow();++i)for(int j=0;j<matrix.ncol();++j){double value=matrix(i,j);if(!std::isfinite(value))Rcpp::stop("native annotation values contain a non-finite value");values.push_back(value);}gmat::AnnotationMatrix annotations(strings(annotation_marker_ids,"annotation marker IDs"),strings(annotation_names,"annotation names"),std::move(values));auto scores=corrected?gmat::corrected_partitioned_ld_scores_from_disk(prefix,annotations):gmat::partitioned_ld_scores_from_disk(prefix,annotations);Rcpp::NumericMatrix out(static_cast<int>(scores.marker_count()),static_cast<int>(scores.annotation_count()));for(std::uint64_t i=0;i<scores.marker_count();++i)for(std::uint64_t j=0;j<scores.annotation_count();++j)out(static_cast<int>(i),static_cast<int>(j))=scores.value(i,j);out.attr("dimnames")=Rcpp::List::create(marker_names,annotation_names);return out;}
++SEXP cpp_gbase_ld_scores(std::string prefix,bool corrected,Rcpp::Nullable<Rcpp::NumericMatrix> annotation_values,Rcpp::CharacterVector annotation_marker_ids,Rcpp::CharacterVector annotation_names){auto d=gmat::open_sparse_ld_csr_disk(prefix);const R_xlen_t marker_count=static_cast<R_xlen_t>(d.markers.size());Rcpp::CharacterVector marker_names(marker_count);for(R_xlen_t i=0;i<marker_count;++i)marker_names[i]=d.markers[static_cast<std::size_t>(i)].marker_id;if(annotation_values.isNull()){auto x=corrected?gmat::corrected_sparse_ld_scores_from_disk(prefix):gmat::sparse_ld_scores_from_disk(prefix);Rcpp::NumericVector out(x.begin(),x.end());out.attr("names")=marker_names;return out;}Rcpp::NumericMatrix matrix(annotation_values);if(matrix.nrow()!=annotation_marker_ids.size()||matrix.ncol()!=annotation_names.size())Rcpp::stop("native annotation dimensions are inconsistent");std::vector<double> values;values.reserve(static_cast<std::size_t>(matrix.nrow())*static_cast<std::size_t>(matrix.ncol()));for(int i=0;i<matrix.nrow();++i)for(int j=0;j<matrix.ncol();++j){double value=matrix(i,j);if(!std::isfinite(value))Rcpp::stop("native annotation values contain a non-finite value");values.push_back(value);}gmat::AnnotationMatrix annotations(strings(annotation_marker_ids,"annotation marker IDs"),strings(annotation_names,"annotation names"),std::move(values));auto scores=corrected?gmat::corrected_partitioned_ld_scores_from_disk(prefix,annotations):gmat::partitioned_ld_scores_from_disk(prefix,annotations);Rcpp::NumericMatrix out(static_cast<int>(scores.marker_count()),static_cast<int>(scores.annotation_count()));for(std::uint64_t i=0;i<scores.marker_count();++i)for(std::uint64_t j=0;j<scores.annotation_count();++j)out(static_cast<int>(i),static_cast<int>(j))=scores.value(i,j);out.attr("dimnames")=Rcpp::List::create(marker_names,annotation_names);return out;}
+ 
+ // [[Rcpp::export]]
+ Rcpp::List cpp_gbase_ld_region(std::string prefix,Rcpp::NumericVector selected,double maximum_dimension,bool decompose,double symmetry_tolerance,double verification_tolerance){auto indices0=indices(selected,"marker indices");auto region=gmat::sparse_ld_region_from_disk(prefix,indices0,integer(maximum_dimension,"maximum dimension"));int n=static_cast<int>(indices0.size());Rcpp::CharacterVector ids(n);for(int i=0;i<n;++i)ids[i]=region.markers[static_cast<std::size_t>(i)].marker_id;if(!decompose){Rcpp::NumericMatrix matrix(n,n,region.matrix.begin());matrix.attr("dimnames")=Rcpp::List::create(ids,ids);return Rcpp::List::create(Rcpp::_["matrix"]=matrix);}gsolve::SymmetricEigensystemOptions options;options.maximum_dimension=integer(maximum_dimension,"maximum dimension");options.symmetry_tolerance=symmetry_tolerance;options.verification_tolerance=verification_tolerance;auto result=gsolve::compute_symmetric_eigensystem(gsolve::ConstMatrixView(region.matrix.data(),n,n,n),options);if(!result.status.is_ok())Rcpp::stop(result.status.message());Rcpp::NumericMatrix vectors(n,n,result.eigenvectors.begin());vectors.attr("dimnames")=Rcpp::List::create(ids,R_NilValue);const auto& d=result.diagnostics;return Rcpp::List::create(Rcpp::_["values"]=result.eigenvalues,Rcpp::_["vectors"]=vectors,Rcpp::_["diagnostics"]=Rcpp::List::create(Rcpp::_["backend"]=d.backend,Rcpp::_["relative_symmetry_error"]=d.relative_symmetry_error,Rcpp::_["relative_residual"]=d.relative_residual,Rcpp::_["relative_reconstruction_error"]=d.relative_reconstruction_error,Rcpp::_["orthogonality_error"]=d.orthogonality_error));}
+diff --git a/packages/gbase/tests/testthat/test-genotype-ld.R b/packages/gbase/tests/testthat/test-genotype-ld.R
+index b2c4d1c..0daed89 100644
+--- a/packages/gbase/tests/testthat/test-genotype-ld.R
++++ b/packages/gbase/tests/testthat/test-genotype-ld.R
+@@ -32,15 +32,18 @@ test_that("Glist LD utilities agree with dense deterministic calculations", {
+   expect_error(ld_region(Glist, colnames(genotype), maximum_dimension = 2),
+     "maximum_dimension")
+ 
++  expect_identical(names(ld_scores(Glist)), colnames(genotype))
+   expect_equal(unname(ld_scores(Glist)), unname(rowSums(expected^2)), tolerance = 3e-6)
+   correction <- expected^2
+   correction[row(correction) != col(correction)] <-
+     correction[row(correction) != col(correction)] -
+     (1 - correction[row(correction) != col(correction)]) / (nrow(genotype) - 2)
++  expect_identical(names(ld_scores(Glist, corrected = TRUE)), colnames(genotype))
+   expect_equal(unname(ld_scores(Glist, corrected = TRUE)), unname(rowSums(correction)),
+     tolerance = 3e-6)
+   annotation <- cbind(first = c(1, 0, 0), rest = c(0, 1, 1))
+   rownames(annotation) <- c("a", "b", "c")
++  expect_identical(rownames(ld_scores(Glist, annotation)), colnames(genotype))
+   expect_equal(unname(ld_scores(Glist, annotation)),
+     unname(expected^2 %*% annotation), tolerance = 3e-6)
+ 

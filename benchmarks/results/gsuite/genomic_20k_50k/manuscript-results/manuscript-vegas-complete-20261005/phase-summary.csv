@@ -1,0 +1,9 @@
+phase,R_call,source_stage,seconds,minutes,scope
+marker_set_spectrum_preparation,"gbase::gprep(G, task=""eigen"", sets=sets)",regional_eigen_preparation,643.36,10.7227,"Once for all 17862 sets; reused across two traits; includes validation, setup, decoding and LD products"
+vegas_prepared_object_conversion,glma::prepare_vegas(G),vegas_spectrum_adapter,79.52,1.3253,Uses stored spectra; no LD read or eigendecomposition
+vegas_fit_initial,"glma::vegas(stat, prepared=prepared)",vegas_evaluation,97.69,1.6282,"Both traits; includes statistic validation, gene statistics, tails and result assembly"
+vegas_fit_reused,"glma::vegas(stat, prepared=restored)",repeated_vegas_evaluation,71.44,1.1907,Separate repeat for both traits; prepared-object loading excluded
+input_loading,readRDS(inputs),input_loading,110.45,1.8408,Shown separately from complete analysis and fit
+marker_and_gene_alignment,common marker and set alignment,common_marker_and_gene_alignment,8.59,0.1432,Shown separately from spectrum preparation and fit
+summary_statistic_conversion,allele alignment and P-to-z conversion,summary_alignment_and_statistic_conversion,12.71,0.2118,Shown separately from spectrum preparation and fit
+prepared_object_loading,readRDS(prepared),prepared_RDS_loading,17.26,0.2877,Separate reuse measurement; excluded from repeated fit

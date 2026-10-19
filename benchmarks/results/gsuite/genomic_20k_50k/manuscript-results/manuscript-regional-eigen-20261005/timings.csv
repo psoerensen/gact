@@ -1,0 +1,11 @@
+"method","region","elapsed","user","system"
+"gbase_1thread","region100",1.53,1.35,0.16
+"gbase_4thread","region100",1.61,1.42,0.17
+"qgg_getG_cor_values_only","region100",0.0199999999999996,0.0100000000000007,0
+"qgg_current_getG_cor_full_eigen","region100",0.0100000000000007,0.0199999999999996,0
+"gbase_1thread","region1000",1.79,1.64,0.11
+"gbase_4thread","region1000",1.58,1.46,0.08
+"qgg_getG_cor_values_only","region1000",0.48,0.470000000000001,0.11
+"qgg_current_getG_cor_full_eigen","region1000",0.690000000000001,0.69,0.36
+"gbase_4thread_batch10","ten_1000_marker_regions",2.34,2.27,0.03
+"qgg_current_batch10","ten_1000_marker_regions",6.18,7.98,1.41

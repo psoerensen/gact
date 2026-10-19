@@ -1,0 +1,108 @@
+---
+title: "GACT benchmark overview"
+author: "Peter Sørensen"
+date: "19 October 2026"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+<style>
+table {width:100%; font-variant-numeric:tabular-nums; margin-bottom:1.4em;}
+th,td {padding:8px 10px !important; vertical-align:top;}
+thead {background:#f3f6f8;}
+tbody tr:nth-child(even) {background:#f8fafb;}
+</style>
+
+These representative measurements describe GACT website workflows and simulated workloads. They were recorded on an Intel Core i7-1365U workstation with approximately 16 GiB RAM and R 4.4.1 on Windows. Exact software versions vary between runs; historical evidence is labeled separately. Timings do not measure the original UK Biobank manuscript analyses or establish a systematic scaling study.
+
+## Database and CAD T2D workflows
+
+| Operation | Threads | Wall time | Resident memory |
+| --- | --- | --- | --- |
+| Database download and setup | 1 requested | 544.20 s | 2.68 GiB |
+| VEGAS complete initial analysis | 4 decoding; serial spectra | 899.94 s | 5.88 GiB |
+| LDSC | No fitter thread argument | 9.28 s | 3.02 GiB |
+| GNOVA | No fitter thread argument | 6.39 s | 3.09 GiB |
+| SumHer equal-marker baseline | No fitter thread argument | 12.87 s | 3.53 GiB |
+| Chromosome-set LDSC preparation and fit | No fitter thread argument | 29.91 s | 3.27 GiB |
+| HESS regional preparation | 4 | 1128.67 s | 3.18 GiB |
+| HESS raw pair refit | No fitter thread argument | 3.61 s | 0.41 GiB |
+| HESS partial pair refit | No fitter thread argument | 3.31 s | 0.43 GiB |
+
+Database setup transfers 2.57 GiB and installs a 3.04 GiB basic database; its 544.20-second clock is a published earlier-version download/setup measurement, separate from package installation. Network conditions affect this measurement.
+
+VEGAS covers 17,862 genes, two traits and a 503-person EUR reference. The 899.94-second complete initial analysis includes regional spectra, prepared-object conversion and alignment; input-file loading is separate. Its 5.88 GiB is the complete-worker peak including loading. Preparation uses four decoding threads while regional products/eigensolvers are serial. Component clocks are 643.36 s for spectra, 79.52 s for conversion and 97.69 s for the initial fit. A separate prepared refit takes 71.44 s, excluding the 17.26-second object-loading cost. Do not add this alternative refit to the initial workflow.
+
+Correlation fits use 7,221,923 common marker rows. Their memory is a sampled analysis peak with inputs loaded before the clock, rather than a whole-process high-water mark. HESS prepares 1,702 regions and 18,696 components; refits reuse compact moments. SumHer is an equal-marker baseline, not an upstream LDAK comparison. Scores are reused; estimator-specific assumptions remain in the [correlation tutorial](Genetic_correlation_CAD_T2D_gcorr.html).
+
+## Simulated association and fine mapping
+
+The panel contains 5,000 people and 37,991 filtered markers. Downloading, simulation, QC, startup and whole-genome sparse-LD preparation are excluded from these fit times.
+
+| Operation | Threads | Wall time | Process peak memory |
+| --- | --- | --- | --- |
+| Linear regression | 4 | 1.64 s | 153 MiB |
+| Gaussian LOCO | 4 | 57.00 s | 386 MiB |
+| Prior-selected LOCO | 4 | 124.12 s | 392 MiB |
+| Four regional BayesC fits and posterior sets | 1 | 5.48 s (5.22–6.28) | 0.56 GiB |
+| Genome-wide BayesC fit from prepared LD | 1 | 2.36 s (2.03–2.38) | 0.81 GiB |
+| Genome-wide credible-set grouping | 1 | 3.95 s (3.83–4.16) | 0.52 GiB |
+
+Association rows are single runs. Fine-mapping rows are medians of three serial repeats; memory is the median whole-process peak working set. Regional BayesC uses one chain, 1,000 post-burn sweeps and 100 burn-in sweeps over four regions containing 850, 785, 1,091 and 1,399 markers. The genome fit uses one chain and 100 sweeps without burn-in. The tutorial's two-chain calls have not been timed. These short runs measure computation, not convergence or calibrated inference.
+
+## Existing simulated scoring evidence
+
+The following historical standalone measurements separate score application from fitting. They are suitable as labeled representative workload evidence. They do not establish the cost of every current software version.
+
+| Operation | Simulated workload | Threads requested | Wall time | Process peak memory |
+| --- | --- | --- | --- | --- |
+| Total score | Artificial-LD panel; 2,000 recipients; 50,000 SNPs | 1 | 8.03 s | 192.3 MiB |
+| Three synthetic pathway scores | Artificial-LD panel; 2,000 recipients; 50,000 SNPs | 1 | 6.30 s | 192.8 MiB |
+| Total score | Artificial-LD panel; 2,000 recipients; 50,000 SNPs | 4 | 3.23 s | 192.9 MiB |
+| Three synthetic pathway scores | Artificial-LD panel; 2,000 recipients; 50,000 SNPs | 4 | 2.66 s | 192.7 MiB |
+| Total score | 1000G-derived gsim panel; 2,000 recipients; 5,360 SNPs | 1 | 1.03 s | 157.2 MiB |
+| Three synthetic pathway scores | 1000G-derived gsim panel; 2,000 recipients; 5,360 SNPs | 1 | 2.41 s | 157.8 MiB |
+
+The artificial-LD panel uses binomial/block-copy genotypes and gsim phenotypes. The 1000G-derived panel uses gsim reference-conditioned simulation from 503 EUR donors on chr22; filtering retains 5,360 SNPs. Both have 2,000 held-out score recipients and three synthetic pathway memberships. The reference-derived scores use fixed simulated effect weights, not posterior weights from a model fit. No UK Biobank data are used for these scoring measurements.
+
+Operation clocks exclude recipient preparation, input loading and serialization; the memory peaks cover the complete R process including loading and saving. Thread counts are requested limits; runtime worker counts were not observed. Each setting is one execution. The reference-derived workload superseded artificial LD for the real-LD benchmark objective; the historical artificial-LD thread comparison remains useful with this qualification.
+
+A different 50,000-marker workload scored a total plus 20 artificial gene-marker sets in 14.88 s at one thread and 5.31 s at four threads. Its driver did not record peak memory; memory from the rows above cannot be assigned to that combined workload.
+
+## Historical gene set and PoPS evidence
+
+These earlier runs do not match all current website model interfaces and settings. PoPS produces gene rankings, not individual polygenic scores.
+
+| Operation | Threads requested | Wall time | Process peak memory |
+| --- | --- | --- | --- |
+| Joint two-trait, three-set simulated model | 1 | 0.10 s | 102.9 MiB |
+| Joint CAD/T2D gene-set model, KEGG | 4 | 3.11 s | 2997.7 MiB |
+| qgg full-data PoPS ridge | 1 | 2.04 s | 410.5 MiB |
+| qgg full-data PoPS BayesC | 1 | 3.21 s | 498.5 MiB |
+| qgg full-data PoPS BayesR | 1 | 7.71 s | 498.3 MiB |
+
+The simulated joint model uses four chains, 200 burn-in and 800 sampling sweeps, independent gene covariance and fixed trait/effect covariance and inclusion-pattern settings. It is not an equivalence claim for qgg BLR-MAGMA. The CAD/T2D joint timing is an earlier standalone KEGG counterpart, not the manuscript Reactome fit. Historical qgg PoPS fits the full dataset; the updated [PoPS tutorial](Gene_ranking_bayesian_pops.html) excludes the predicted chromosome from training and specifies two chains for its Bayesian calls.
+
+## Remaining measurement gaps
+
+| Item | What remains |
+| --- | --- |
+| Current Bayesian gene-set calls | No verified record matching the exact current website implementation and controls |
+| Current chromosome-held-out Bayesian PoPS | No tutorial-scale timing/memory record for the updated held-out workflow; test durations are not benchmark timings |
+| Memory for combined total plus 20-set run | No captured memory for this specific run; use the separately measured scoring workloads instead |
+| Systematic scoring scalability | No controlled grid of recipient count, markers, set count and overlap; existing runs remain representative examples |
+| Chromosome-component glma examples | Component-example time and memory |
+| Two-chain fine-mapping calls | Matching two-chain measurements; retain one-chain qualification if using existing results |
+| VEGAS component memory | Separate preparation/fit peaks; not required for whole-workflow reporting |
+
+Scoring time, memory and separate total/pathway costs are already available for the workloads above. More measurements would be needed for a controlled scaling grid, not to fill a general absence of scoring evidence. Final output-size reporting can use saved artifact inventories with consistent definitions.
+
+## Evidence and reproducibility
+
+The [consolidated evidence table](../benchmarks/revision/consolidated-timings.md) retains component clocks, qualifications and source references. [Original file locations and checksums](../benchmarks/provenance.csv) identify the imported evidence; [consolidation source hashes](../benchmarks/revision/consolidated-sources.json) identify the selected records. Scripts are preserved in [benchmarks](../benchmarks/README.md) with their original execution assumptions. Large datasets and source archives remain outside this small-file collection.
+
+Selected records: [artificial-LD measurements](../benchmarks/results/gsuite/genomic_20k_50k/manuscript-results/20261004/measurements.csv), [reference-derived simulation measurements](../benchmarks/results/gsuite/genomic_20k_50k/manuscript-results/20261004-real-1000g/measurements.csv), [historical gene-set and PoPS records](../benchmarks/results/gsuite/genomic_20k_50k/manuscript-results/20261005-structured/completed-stage-measurements-current.csv), and [correlation timing and memory](../benchmarks/results/website-data/gcorr-current-timings-memory.csv).
+
+Memory is resident working set, not result size, incremental solver allocation or machine RAM. Missing memory stays missing. These evidence tables reuse existing measurements; no new analysis was run to produce this overview.

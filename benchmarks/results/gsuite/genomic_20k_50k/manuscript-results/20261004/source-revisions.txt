@@ -1,0 +1,28 @@
+gsuite
+ed5872b51a7e08dbd5d916cda9cde0bb784bf784
+?? benchmarks/genomic_20k_50k/manuscript-benchmark-milestone.md
+?? benchmarks/genomic_20k_50k/manuscript-benchmark-plan.md
+?? benchmarks/genomic_20k_50k/manuscript-results/
+?? benchmarks/genomic_20k_50k/manuscript_stage.R
+?? benchmarks/genomic_20k_50k/run_manuscript.ps1
+?? benchmarks/genomic_20k_50k/summarize_manuscript.R
+gact
+d06762eb575efa8f8cc0ef709c4587e04e0fedfb
+gbase
+ed5872b51a7e08dbd5d916cda9cde0bb784bf784
+?? ../../benchmarks/genomic_20k_50k/manuscript-benchmark-milestone.md
+?? ../../benchmarks/genomic_20k_50k/manuscript-benchmark-plan.md
+?? ../../benchmarks/genomic_20k_50k/manuscript-results/
+?? ../../benchmarks/genomic_20k_50k/manuscript_stage.R
+?? ../../benchmarks/genomic_20k_50k/run_manuscript.ps1
+?? ../../benchmarks/genomic_20k_50k/summarize_manuscript.R
+glma
+24cba10c85a41454635b9eb62020ceebd38ea3a0
+gsea
+4b223771026db9bdf4f945e6f29c81c3b487877a
+gmap
+5891925b7c348621bdd8a75f694e432616d0c184
+gscore
+83d6f90b3537270a3b79e97b3e0b808b17a02de8
+gbayes
+138806cc62ea9b379ee340938b634c053b24e0fc

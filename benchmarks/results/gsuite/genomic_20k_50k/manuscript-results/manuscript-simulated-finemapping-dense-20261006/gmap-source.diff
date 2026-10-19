@@ -1,0 +1,439 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 92b6a4e..b44ee75 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,5 +1,5 @@
+ cmake_minimum_required(VERSION 3.22)
+-project(gmap VERSION 0.2.0 LANGUAGES CXX)
++project(gmap VERSION 0.3.0 LANGUAGES CXX)
+ include(GNUInstallDirs)
+ include(CMakePackageConfigHelpers)
+ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+@@ -19,7 +19,7 @@ target_include_directories(gmap PUBLIC
+   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+ set_target_properties(gmap PROPERTIES CXX_EXTENSIONS OFF
+   CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN YES
+-  VERSION ${PROJECT_VERSION} SOVERSION 1)
++  VERSION ${PROJECT_VERSION} SOVERSION 2)
+ function(gmap_warnings target)
+   if(MSVC)
+     target_compile_options(${target} PRIVATE /W4 /permissive-)
+diff --git a/README.md b/README.md
+index fb69377..cc3dbbb 100644
+--- a/README.md
++++ b/README.md
+@@ -36,7 +36,8 @@ component credible sets consume fitted assignments; they do not fit or test sign
+ - [Migration provenance](docs/migration.md)
+ 
+ Use `find_package(gmap CONFIG REQUIRED)` and link `gmap::gmap` for every method.
+-The unified library version is 0.2.0, ABI/SOVERSION 1. The API moved from
++The unified library version is 0.3.0, ABI/SOVERSION 2. Prepared-region and
++fit-result layouts changed; rebuild compiled consumers against this ABI. The API moved from
+ `gcorr` to `gmap`; callers must update headers, namespace and linked target.
+ No compatibility facade is retained. This local development repository has no
+ configured public software release.
+diff --git a/docs/credible-sets.md b/docs/credible-sets.md
+index 0dc7b28..9ecba27 100644
+--- a/docs/credible-sets.md
++++ b/docs/credible-sets.md
+@@ -162,3 +162,17 @@ inconsistent variance/activity flags. All four native gmap checks and three
+ installed consumers passed; gbayes' analytic variance and objective checks are
+ recorded in its provenance file. The existing marginal-PIP route was unchanged;
+ its pinned sblr comparison was not rerun for this adapter-only extension.
++
++## qgg-compatible marginal grouping
++
++`make_qgg_marginal_sets()` implements qgg CS2/CS3 grouping without a qgg
++runtime dependency. It fixes initial lead/member ordering, requires strict
++squared correlation greater than the supplied cutoff, accepts neighborhoods
++meeting the current marginal-PIP target, and removes the entire accepted
++neighborhood from subsequent grouping. CS3 uses initial LD-squared weighted
++PIP order. Input PIPs below the cutoff are excluded. The grouping target is
++expected active-marker count, not component credible coverage.
++
++This implementation follows `qgg/R/genomic_bayes.R::crs`; its GPL-3 source
++provenance is retained in `src/credible_sets.cpp`, alongside the existing
++GPL-3 notices. R callers receive the existing labelled native set diagnostics.
+diff --git a/docs/development.md b/docs/development.md
+index db649c9..280e8d1 100644
+--- a/docs/development.md
++++ b/docs/development.md
+@@ -124,3 +124,13 @@ locations if different. The R example launcher supplies these only around its
+ child executable calls and restores its previous PATH. No runtime is copied or
+ rebuilt by this adapter. The standalone gmap core still requires neither gsolve
+ nor these optional runtimes.
++
++## Dense regional ABI and focused regression checks
++
++The dense prepared-region and timed-fit additions require gmap 0.3.0,
++ABI/SOVERSION 2. Rebuild downstream compiled consumers; do not load them
++against the older layout. The existing `test_regional_bayes` target verifies
++dense fits against a direct gbayes dense oracle, rejects truncation, singular
++and indefinite LD, and checks qgg grouping order and strict boundary behavior.
++Use the canonical gsuite native cache and run the relevant test targets;
++configuration alone does not count as a passing test.
+diff --git a/docs/prepared-regions.md b/docs/prepared-regions.md
+index 978ded8..1b215a7 100644
+--- a/docs/prepared-regions.md
++++ b/docs/prepared-regions.md
+@@ -228,3 +228,19 @@ No new simulation, eigensystem format, R binding or batch scheduler is needed.
+ The [native overview](native-workflow.md) summarises the canonical workflow and
+ current limits. The [evaluation record](fine-mapping-evaluation.md) preserves the
+ original four-scenario findings and the subsequent baseline convergence correction.
++
++## Full dense LD preparation
++
++`PreparedRegion::from_dense_ld()` and `from_dense_reference()` validate full
++regional correlation and preserve it in marker space. An installed gsolve
++dense Cholesky inverse checks positive definiteness without creating a full
++eigensystem. No jitter, PSD repair or rank truncation is applied. Dense
++retention accepts full rank and mass one only; its minimum eigenvalue is
++unavailable. Singular LD can use the existing explicit positive-eigenmass
++route instead.
++
++Binding uses marker sums of squares to construct dense cross-products for
++the existing gbayes sampler. Caller identity, allele alignment and in-sample
++normalization checks remain enforced. Prepared-fit results separately record
++sampling and posterior-grouping seconds. The R consumer additionally measures
++LD decoding/product, preparation and binding.
+diff --git a/docs/regional-bayes.md b/docs/regional-bayes.md
+index 01d71ae..414dbd8 100644
+--- a/docs/regional-bayes.md
++++ b/docs/regional-bayes.md
+@@ -102,3 +102,12 @@ see the gbayes factorized contract for preparation and statistical limitations.
+ The separate [posterior-set helpers](credible-sets.md) now consume BayesC/BayesR
+ PIPs as well as single-/multi-effect assignments. They add mapping summaries
+ without changing these regional fitters or their posterior objects.
++
++## Dense marker-space sampling
++
++Prepared dense regions reuse the public gbayes dense cross-product sampler
++for BayesC/BayesR. This avoids full eigendecomposition when the supplied LD
++is positive definite. Eigen-based preparation remains available with explicit
++retention controls. These routes share model ownership, but their update
++operators can have different floating-point and RNG behavior; timings alone
++do not establish posterior equivalence or convergence.
+diff --git a/include/gmap/credible_sets.hpp b/include/gmap/credible_sets.hpp
+index 07aae4f..88efb0b 100644
+--- a/include/gmap/credible_sets.hpp
++++ b/include/gmap/credible_sets.hpp
+@@ -57,6 +57,11 @@ struct PosteriorSets {
+   std::optional<MarginalSetControls> marginal_controls;
+   std::optional<ComponentSetControls> component_controls;
+ };
++// qgg crs CS2/CS3 grouping: fixed initial lead order, strict r2 threshold,
++// zero the whole accepted LD neighbourhood. Mass is marginal PIP mass,
++// not component-assignment probability. No fitting or normalization occurs.
++GMAP_EXPORT PosteriorSets make_qgg_marginal_sets(const std::vector<double>&,
++    const RegionalLd&, const MarginalSetControls& = {});
+ GMAP_EXPORT PosteriorSets make_marginal_sets(const std::vector<double>& pip,
+     const RegionalLd&, const MarginalSetControls& = {});
+ GMAP_EXPORT PosteriorSets make_component_sets(const std::vector<std::vector<double>>& assignments,
+diff --git a/include/gmap/prepared_region.hpp b/include/gmap/prepared_region.hpp
+index 025ebbc..3e87733 100644
+--- a/include/gmap/prepared_region.hpp
++++ b/include/gmap/prepared_region.hpp
+@@ -28,7 +28,8 @@ struct BoundMappingRegion {
+  std::shared_ptr<const RegionalLd> ld;
+  gbayes::FixedGaussianStatistics statistics;
+ };
+-// Owns a regional LD matrix and verified full eigenpairs. Reuse across traits.
++// Owns regional LD; the eigen route verifies full eigenpairs, the dense route
++// checks SPD and binds marker-space cross-products. Reuse across traits.
+ // Prepared R/LDlist arrays can be imported without an eigensolver call.
+ class GMAP_EXPORT PreparedMappingRegion final {
+  public:
+@@ -46,6 +47,14 @@ class GMAP_EXPORT PreparedMappingRegion final {
+      std::string reference,const std::vector<std::uint64_t>& source_indices,
+      std::size_t retained_rank=0,const gsolve::SymmetricEigensystemResult* cached=nullptr,
+      const gsolve::SymmetricEigensystemOptions& options={});
++ // Full-rank dense route: checked SPD LD, no eigenvectors or score projection.
++ static PreparedMappingRegion from_dense_ld(gmat::SparseLdRegion, Region,
++     std::string reference, std::vector<std::uint64_t> source_indices,
++     bool incomplete_reference,
++     const gsolve::SymmetricEigensystemOptions& options={});
++ static PreparedMappingRegion from_dense_reference(const gmat::SparseLdDiskReader&,
++     Region, std::string reference, const std::vector<std::uint64_t>& source_indices,
++     const gsolve::SymmetricEigensystemOptions& options={});
+  const gsolve::SymmetricEigensystemResult& eigensystem() const noexcept {return eigen_;}
+  EigenRetention retention(double requested_positive_mass) const;
+  BoundMappingRegion bind(const RegionalScoreTable&, bool project_discarded=false) const;
+@@ -53,6 +62,11 @@ class GMAP_EXPORT PreparedMappingRegion final {
+      bool project_discarded) const;
+  private:
+  PreparedMappingRegion()=default;
++ static PreparedMappingRegion from_ld_impl(gmat::SparseLdRegion, Region,
++     std::string, std::vector<std::uint64_t>, bool, std::size_t,
++     const gsolve::SymmetricEigensystemResult*,
++     const gsolve::SymmetricEigensystemOptions&, bool dense);
++ bool dense_{false};
+  Region region_;
+  std::string reference_;
+  std::uint64_t reference_sample_count_{};
+@@ -67,6 +81,7 @@ template<class Fit> struct PreparedMappingFit {
+  BoundMappingRegion input; // owns the scaled operator; retains reference/region metadata
+  Fit posterior; // complete native result, including every sampler chain
+  PosteriorSets sets;
++ double sampling_seconds{}, sets_seconds{};
+ };
+ GMAP_EXPORT PreparedMappingFit<gbayes::BayesCResult> fit_prepared_bayesc(
+  const BoundMappingRegion&, const gbayes::BayesCPrior& = {},
+diff --git a/include/gmap/version.hpp b/include/gmap/version.hpp
+index da6951e..5df5f36 100644
+--- a/include/gmap/version.hpp
++++ b/include/gmap/version.hpp
+@@ -2,7 +2,7 @@
+ #include <cstdint>
+ #include "gmap/export.h"
+ namespace gmap {
+-inline constexpr std::uint32_t experimental_abi = 1;
++inline constexpr std::uint32_t experimental_abi = 2;
+ GMAP_EXPORT const char* version_string() noexcept;
+ GMAP_EXPORT std::uint32_t abi_version() noexcept;
+ }
+diff --git a/src/credible_sets.cpp b/src/credible_sets.cpp
+index db1d23a..b7a348c 100644
+--- a/src/credible_sets.cpp
++++ b/src/credible_sets.cpp
+@@ -93,6 +93,41 @@ RegionalLd regional_ld(const gmat::SparseLdCsr& csr,const std::vector<std::size_
+  }
+  return out;
+ }
++// Grouping behavior adapted from qgg R/genomic_bayes.R::crs,
++// Copyright Peter Sorensen, GPL-3. The installed qgg oracle is archived in
++// the gact comparison evidence; no qgg runtime dependency is introduced.
++PosteriorSets make_qgg_marginal_sets(const std::vector<double>& input,
++ const RegionalLd& ld,const MarginalSetControls& c) {
++ validate_ld(ld);validate_weights(input,ld.marker_ids.size());coverage(c.coverage);
++ probability(c.min_r2);probability(c.pip_cutoff);
++ if(c.lead!=LeadSelection::pip&&c.lead!=LeadSelection::ld_pip)
++   throw std::invalid_argument("Invalid qgg lead mode");
++ auto p=input;const auto n=p.size();
++ for(double& x:p)if(x<c.pip_cutoff)x=0;
++ auto score=p;
++ if(c.lead==LeadSelection::ld_pip) {
++   std::fill(score.begin(),score.end(),0);
++   for(std::size_t j=0;j<n;++j)for(std::size_t k=0;k<n;++k)score[j]+=r2(ld,j,k)*p[k];
++ }
++ std::vector<std::size_t> order(n);std::iota(order.begin(),order.end(),0);
++ order=rank(std::move(order),score);
++ PosteriorSets out;out.marker_ids=ld.marker_ids;out.marginal_controls=c;
++ out.incomplete_ld_reference=ld.incomplete_reference;
++ for(auto lead:order) {
++   std::vector<std::size_t> neighbours,candidates;double mass=0;
++   for(auto j:order)if(r2(ld,lead,j)>c.min_r2) {
++     neighbours.push_back(j);mass+=p[j];if(p[j]>0)candidates.push_back(j);
++   }
++   if(mass<c.coverage||candidates.empty())continue;
++   auto selected=select(candidates,p,c.coverage);
++   auto s=describe(selected,p,ld,lead,c.coverage,c.min_r2);
++   s.source_index=out.sets.size();s.remaining_mass_before=std::accumulate(p.begin(),p.end(),0.0);
++   for(auto j:neighbours)p[j]=0;
++   s.remaining_mass_after=std::accumulate(p.begin(),p.end(),0.0);
++   out.sets.push_back(std::move(s));
++ }
++ duplicates(out);return out;
++}
+ PosteriorSets make_marginal_sets(const std::vector<double>& input,const RegionalLd& ld,const MarginalSetControls& c) {
+  validate_ld(ld);validate_weights(input,ld.marker_ids.size());coverage(c.coverage);probability(c.min_r2);probability(c.pip_cutoff);probability(c.min_signal_pip);
+  if(!std::isfinite(c.signal_coverage)||c.signal_coverage<0) throw std::invalid_argument("Invalid signal mass threshold");
+diff --git a/src/prepared_region.cpp b/src/prepared_region.cpp
+index 596a765..1c18ba5 100644
+--- a/src/prepared_region.cpp
++++ b/src/prepared_region.cpp
+@@ -3,10 +3,26 @@
+ #include <cmath>
+ #include <stdexcept>
+ #include <unordered_set>
++#include <chrono>
++#include <limits>
++#include <gsolve/dense_cholesky_inverse.hpp>
+ namespace gmap {
+ PreparedMappingRegion PreparedMappingRegion::from_ld(gmat::SparseLdRegion data,Region region,
+  std::string reference,std::vector<std::uint64_t> indices,bool incomplete,std::size_t rank,
+  const gsolve::SymmetricEigensystemResult* cached,const gsolve::SymmetricEigensystemOptions& options) {
++ return from_ld_impl(std::move(data),std::move(region),std::move(reference),
++   std::move(indices),incomplete,rank,cached,options,false);
++}
++PreparedMappingRegion PreparedMappingRegion::from_dense_ld(gmat::SparseLdRegion data,
++ Region region,std::string reference,std::vector<std::uint64_t> indices,bool incomplete,
++ const gsolve::SymmetricEigensystemOptions& options) {
++ return from_ld_impl(std::move(data),std::move(region),std::move(reference),
++   std::move(indices),incomplete,0,nullptr,options,true);
++}
++PreparedMappingRegion PreparedMappingRegion::from_ld_impl(gmat::SparseLdRegion data,Region region,
++ std::string reference,std::vector<std::uint64_t> indices,bool incomplete,std::size_t rank,
++ const gsolve::SymmetricEigensystemResult* cached,const gsolve::SymmetricEigensystemOptions& options,
++ bool dense) {
+  const auto n=data.markers.size();
+  if(!n||n>options.maximum_dimension||data.matrix.size()!=n*n||indices.size()!=n||!data.reference_sample_count||
+     reference.empty()||region.id.empty()||region.chromosome.empty()||region.assembly.empty()||
+@@ -29,6 +45,20 @@ PreparedMappingRegion PreparedMappingRegion::from_ld(gmat::SparseLdRegion data,R
+  if(!region.positions.empty()&&region.positions!=positions)throw std::invalid_argument("Region positions differ from reference");
+  region.positions=std::move(positions);
+  const gsolve::ConstMatrixView view{data.matrix.data(),n,n,n};
++ if(dense) {
++   // The dense operator requires PSD input; this full-rank route conservatively
++   // requires SPD. No diagonal jitter, clipping or repair is performed.
++   for(std::size_t j=0;j<n;++j)for(std::size_t i=0;i<j;++i)
++     if(std::abs(data.matrix[i+n*j]-data.matrix[j+n*i])>options.symmetry_tolerance)
++       throw std::invalid_argument("Dense LD is asymmetric");
++   gsolve::DenseCholeskyInverse check(view);
++   if(!check.validation_status().is_ok())
++     throw std::invalid_argument("Dense regional LD must be positive definite: "+check.validation_status().message());
++   PreparedMappingRegion out;out.region_=std::move(region);out.reference_=std::move(reference);
++   out.reference_sample_count_=data.reference_sample_count;out.markers_=std::move(data.markers);out.indices_=std::move(indices);
++   out.ld_=std::make_shared<RegionalLd>(RegionalLd{std::move(ids),std::move(data.matrix),incomplete});
++   out.rank_=n;out.dense_=true;return out;
++ }
+  auto eigen=cached?gsolve::import_symmetric_eigensystem(view,cached->eigenvalues,cached->eigenvectors,options):
+    gsolve::compute_symmetric_eigensystem(view,options);
+  if(!eigen.status.is_ok())throw std::invalid_argument(eigen.status.message());
+@@ -62,7 +92,22 @@ PreparedMappingRegion PreparedMappingRegion::from_reference(
+    (o.max_distance_markers>0&&indices.back()-indices.front()>o.max_distance_markers);
+  return from_ld(std::move(ld),std::move(region),std::move(reference),indices,incomplete,rank,cached,options);
+ }
++PreparedMappingRegion PreparedMappingRegion::from_dense_reference(
++ const gmat::SparseLdDiskReader& reader,Region region,std::string reference,
++ const std::vector<std::uint64_t>& indices,const gsolve::SymmetricEigensystemOptions& options) {
++ auto data=reader.read_region(indices,options.maximum_dimension);
++ std::uint64_t low=data.markers.front().base_pair_position,high=low;
++ for(const auto& m:data.markers){low=std::min(low,m.base_pair_position);high=std::max(high,m.base_pair_position);}
++ const auto& o=reader.resource().options;
++ const bool incomplete=o.r2_threshold>0||(o.max_distance_bp>0&&high-low>o.max_distance_bp)||
++   (o.max_distance_markers>0&&indices.back()-indices.front()>o.max_distance_markers);
++ return from_dense_ld(std::move(data),std::move(region),std::move(reference),indices,incomplete,options);
++}
+ EigenRetention PreparedMappingRegion::retention(double requested) const {
++ if(dense_) {
++   if(requested!=1)throw std::invalid_argument("Dense MCMC requires full LD without eigen truncation");
++   return {1,1,std::numeric_limits<double>::quiet_NaN(),rank_,rank_};
++ }
+  if(!std::isfinite(requested)||requested<=0||requested>1)
+    throw std::invalid_argument("Requested retained positive eigenvalue mass must be in (0, 1]");
+  const auto n=eigen_.eigenvalues.size();
+@@ -80,6 +125,7 @@ EigenRetention PreparedMappingRegion::retention(double requested) const {
+  return {requested,retained/total,eigen_.eigenvalues[rank-1],rank,n};
+ }
+ BoundMappingRegion PreparedMappingRegion::bind(const RegionalScoreTable& table,bool project) const {
++ if(dense_)return bind(table,retention(1),project);
+  EigenRetention selected{1,1,eigen_.eigenvalues[rank_-1],rank_,eigen_.eigenvalues.size()};
+  if(rank_<eigen_.eigenvalues.size()) {
+    double total=0,retained=0;
+@@ -96,7 +142,7 @@ BoundMappingRegion PreparedMappingRegion::bind(const RegionalScoreTable& table,
+  if(table.allele1.size()!=total||table.allele2.size()!=total||table.score.size()!=total||table.marker_ss.size()!=total||
+     table.trait.empty()||table.effect_units.empty()||table.provenance.empty())throw std::invalid_argument("Incomplete aligned score table");
+  const auto rank=selected.retained_rank;
+- if(!rank||rank>n||selected.full_rank!=n||eigen_.eigenvalues[rank-1]<=0)
++ if(!rank||rank>n||selected.full_rank!=n||(!dense_&&eigen_.eigenvalues[rank-1]<=0))
+    throw std::invalid_argument("Invalid retained eigensystem rank");
+  if(rank<n&&!project)throw std::invalid_argument("Discarded LD directions require explicit score projection");
+  std::vector<double> score,ss;
+@@ -107,6 +153,15 @@ BoundMappingRegion PreparedMappingRegion::bind(const RegionalScoreTable& table,
+      throw std::invalid_argument("Scores must match reference marker order, alleles and declared scale");
+    score.push_back(table.score[i]);ss.push_back(table.marker_ss[i]);
+  }
++ if(dense_) {
++   if(rank!=n)throw std::invalid_argument("Dense MCMC does not truncate LD");
++   std::vector<double> scaled(ld_->correlation);
++   for(std::size_t j=0;j<n;++j)for(std::size_t i=0;i<n;++i)
++     scaled[i+n*j]*=std::sqrt(ss[i])*std::sqrt(ss[j]);
++   gbayes::FixedGaussianStatistics st{gbayes::dense_cross_products(n,std::move(scaled)),
++     std::move(score),ld_->marker_ids,table.trait,table.effect_units,table.provenance,{}};
++   return {region_,reference_,reference_sample_count_,false,0,ld_,std::move(st)};
++ }
+  std::vector<double> values(eigen_.eigenvalues.begin(),eigen_.eigenvalues.begin()+rank);
+  std::vector<double> vectors(eigen_.eigenvectors.begin(),eigen_.eigenvectors.begin()+n*rank);
+  auto factor=gbayes::eigen_cross_products(values,vectors,ss,rank<n?gbayes::Factorization::truncated:gbayes::Factorization::exact);
+@@ -124,13 +179,25 @@ void validate_bound(const BoundMappingRegion& d) {
+ }
+ PreparedMappingFit<gbayes::BayesCResult> fit_prepared_bayesc(const BoundMappingRegion& d,
+  const gbayes::BayesCPrior& p,const gbayes::BayesCControls& c,const gbayes::GaussianLearning& l,const MarginalSetControls& s) {
+- validate_bound(d);auto f=fit_region_bayesc(d.region,d.statistics,p,c,l);
+- auto sets=make_marginal_sets(f.posterior,*d.ld,s);return {d,std::move(f.posterior),std::move(sets)};
++ validate_bound(d);const auto start=std::chrono::steady_clock::now();
++ auto f=fit_region_bayesc(d.region,d.statistics,p,c,l);
++ const auto sampled=std::chrono::steady_clock::now();
++ auto sets=make_marginal_sets(f.posterior,*d.ld,s);
++ const auto finished=std::chrono::steady_clock::now();
++ return {d,std::move(f.posterior),std::move(sets),
++   std::chrono::duration<double>(sampled-start).count(),
++   std::chrono::duration<double>(finished-sampled).count()};
+ }
+ PreparedMappingFit<gbayes::BayesRResult> fit_prepared_bayesr(const BoundMappingRegion& d,
+  const gbayes::BayesRPrior& p,const gbayes::BayesCControls& c,const gbayes::GaussianLearning& l,const MarginalSetControls& s) {
+- validate_bound(d);auto f=fit_region_bayesr(d.region,d.statistics,p,c,l);
+- auto sets=make_marginal_sets(f.posterior,*d.ld,s);return {d,std::move(f.posterior),std::move(sets)};
++ validate_bound(d);const auto start=std::chrono::steady_clock::now();
++ auto f=fit_region_bayesr(d.region,d.statistics,p,c,l);
++ const auto sampled=std::chrono::steady_clock::now();
++ auto sets=make_marginal_sets(f.posterior,*d.ld,s);
++ const auto finished=std::chrono::steady_clock::now();
++ return {d,std::move(f.posterior),std::move(sets),
++   std::chrono::duration<double>(sampled-start).count(),
++   std::chrono::duration<double>(finished-sampled).count()};
+ }
+ PreparedMappingFit<gbayes::MultiEffectResult> fit_prepared_multi_effect(const BoundMappingRegion& d,
+  const gbayes::SingleEffectPrior& p,const gbayes::MultiEffectControls& c,const ComponentSetControls& s) {
+diff --git a/src/version.cpp b/src/version.cpp
+index 0355a96..c6c8c50 100644
+--- a/src/version.cpp
++++ b/src/version.cpp
+@@ -1,5 +1,5 @@
+ #include "gmap/version.hpp"
+ namespace gmap {
+-const char* version_string() noexcept { return "0.2.0"; }
++const char* version_string() noexcept { return "0.3.0"; }
+ std::uint32_t abi_version() noexcept { return experimental_abi; }
+ }
+diff --git a/tests/test_gmap_link.cpp b/tests/test_gmap_link.cpp
+index 3b244f3..d40a3fe 100644
+--- a/tests/test_gmap_link.cpp
++++ b/tests/test_gmap_link.cpp
+@@ -4,7 +4,7 @@
+ #include <cmath>
+ #include <cstring>
+ int main() {
+-  if (std::strcmp(gmap::version_string(), "0.2.0") || gmap::abi_version() != 1) return 1;
++  if (std::strcmp(gmap::version_string(), "0.3.0") || gmap::abi_version() != 2) return 1;
+   const auto fit = gmap::combine_coloc_log_abf({{"rs1"},{0}}, {{"rs1"},{0}});
+   if (fit.probabilities[3] != 0 || !std::isfinite(fit.probabilities[4])) return 2;
+   try { gmap::normal_effect_log_abf(0, 0, .15); }
+diff --git a/tests/test_regional_bayes.cpp b/tests/test_regional_bayes.cpp
+index 8204163..210ed71 100644
+--- a/tests/test_regional_bayes.cpp
++++ b/tests/test_regional_bayes.cpp
+@@ -28,6 +28,14 @@ void multivariate_region_check() {
+ }
+ int main() {try {
+   multivariate_region_check();
++  MarginalSetControls qgg_controls;qgg_controls.coverage=.8;
++  RegionalLd qgg_ld{{"a","b","c"},{1,.8,0,.8,1,0,0,0,1},false};
++  auto qgg_groups=make_qgg_marginal_sets({.6,.3,.9},qgg_ld,qgg_controls);
++  check(qgg_groups.sets.size()==2&&qgg_groups.sets[0].indices==std::vector<std::size_t>({2})&&
++    qgg_groups.sets[1].indices==std::vector<std::size_t>({0,1}),"qgg fixed-order grouping");
++  qgg_controls.min_r2=.25;
++  RegionalLd boundary{{"a","b"},{1,.5,.5,1},false};
++  check(make_qgg_marginal_sets({.7,.7},boundary,qgg_controls).sets.empty(),"qgg r2 threshold must be strict");
+   Region region{"locus1","1","example-assembly",100,300,{150,250}};
+   gbayes::FixedGaussianStatistics data{gbayes::dense_cross_products(2,{100,40,40,100}),
+     {25,10},{"m1","m2"},"trait","phenotype per allele","prepared regional cross-products",{}};
+@@ -58,6 +66,18 @@ int main() {try {
+   RegionalScoreTable table{{"m1","m2","m3","m4"},{"A","A","A","A"},{"G","G","G","G"},
+     {25,10,10,25},{100,100,100,100},"trait","phenotype per allele","native fixture"};
+   auto prepared=PreparedMappingRegion::from_ld(native_ld,region,"panel",{0,1},false);
++  auto dense_prepared=PreparedMappingRegion::from_dense_ld(native_ld,region,"panel",{0,1},false);
++  auto dense_bound=dense_prepared.bind(table);
++  auto dense_fit=fit_prepared_bayesc(dense_bound,{},controls);
++  auto dense_oracle=gbayes::fit_bayesc({gbayes::dense_cross_products(2,{100,40,40,100}),
++    {25,10},{"m1","m2"},"trait","phenotype per allele","native fixture",{}},{},controls);
++  check(dense_fit.posterior.mean==dense_oracle.mean&&dense_fit.posterior.pip==dense_oracle.pip,"dense posterior changed");
++  check(dense_prepared.eigensystem().eigenvectors.empty()&&dense_fit.posterior.chains[0].working_residual_dimension==2,"dense path computed eigenvectors");
++  rejects([&]{dense_prepared.retention(.99);});
++  auto indefinite=native_ld;indefinite.matrix={1,1.2,1.2,1};
++  rejects([&]{PreparedMappingRegion::from_dense_ld(indefinite,region,"panel",{0,1},false);});
++  auto singular=native_ld;singular.matrix={1,1,1,1};
++  rejects([&]{PreparedMappingRegion::from_dense_ld(singular,region,"panel",{0,1},false);});
+   auto cached=PreparedMappingRegion::from_ld(native_ld,region,"panel",{0,1},false,0,&prepared.eigensystem());
+   auto bound=cached.bind(table);
+   auto bc=fit_prepared_bayesc(bound,{},controls);

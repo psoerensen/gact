@@ -1,0 +1,8 @@
+list(markers = 141121L, samples = 503, window = 1000L, r2_cutoff = 1e-04, 
+    requested_threads = 4, block_size = 1024L, stored_pairs = 129085235, 
+    baseline_stored_pairs = 140620500, retained_fraction = 0.917968823891253, 
+    minimum_absolute_stored_r = 0.0100000146776438, sampled_markers = 192L, 
+    sampled_pairs = 36864, max_absolute_filtered_correlation_difference = 0, 
+    minimum_ld_score_decrease = 2.37681649650767e-06, maximum_ld_score_decrease = 0.0303072665933044, 
+    mean_ld_score_decrease = 0.00547016734710599, ld_file_bytes = 1039751670, 
+    note = "Cutoff deliberately removes correlations; results are not the unfiltered reference. Base-pair limit disabled to retain the original marker window. Default block size 1024. Preparation reused and excluded.")

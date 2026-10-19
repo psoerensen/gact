@@ -1,0 +1,77 @@
+gbayes 0.0.1 C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbayes
+Package: gbayes
+Type: Package
+Title: Focused Bayesian Genomic Workflows
+Version: 0.0.1
+Authors@R: person("Peter", "Soerensen", role=c("aut","cre"),
+        email="peter.soerensen@example.invalid")
+Description: Private independently installable interfaces to selected
+        public native gbayes workflows. Interfaces fit deterministic
+        single-effect models; scalar and multivariate BayesC or BayesR
+        models with parameter learning and exact continuation;
+        point-normal and continuous-shrinkage Gibbs models; and
+        variational summary models from ordinary checked
+        summary-statistics data frames, prepared sparse-LD resources,
+        study-specific references, or individual-level PLINK data
+        represented by a gbase Glist.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: gbase (>= 0.0.1), Rcpp
+LinkingTo: Rcpp
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
+SystemRequirements: C++17, gbayes 0.1.0 (SOVERSION 0), gmat 0.6.0 (ABI
+        0), gsolve 0.22.0 (ABI 4), gbits 0.21.0 (ABI 4), gscore 0.1.0
+        (ABI 0) with summary component
+NeedsCompilation: yes
+Packaged: 2026-09-30 20:17:51 UTC; au223366
+Author: Peter Soerensen [aut, cre]
+Maintainer: Peter Soerensen <peter.soerensen@example.invalid>
+Built: R 4.4.1; x86_64-w64-mingw32; 2026-09-30 20:17:54 UTC; windows
+Archs: x64
+
+-- File: C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbayes/Meta/package.rds 
+$header_version
+[1] "0.1.0"
+
+$runtime_version
+[1] "0.1.0"
+
+$abi_contract
+[1] 0
+
+$headers_match_runtime
+[1] TRUE
+
+$gmat_version
+[1] "0.6.0"
+
+$gmat_abi
+[1] 0
+
+$gsolve_version
+[1] "0.22.0"
+
+$gsolve_abi
+[1] 4
+
+$gbits_version
+[1] "0.21.0"
+
+$gbits_abi
+[1] 4
+
+$gscore_version
+[1] "0.1.0"
+
+$gscore_abi
+[1] 0
+
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbayes/libs/x64/gbayes.dll 47403ea00aa3877bb64aeb5cc7a68e7e
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbayes/libs/x64/gbits.dll c5fc40361a340d47bdb4cd0245a116e8
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbayes/libs/x64/libgbayes.dll 4ac187ad7993648301cc4d4471a6dbb4
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbayes/libs/x64/libgmat.dll a08dd0cbbc86ea74e754ef597c4bec68
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbayes/libs/x64/libgscore.dll 8054d7d16ac8de66f838cbb9f7b18219
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbayes/libs/x64/libgscore_summary.dll 297bc3f462e238201910777267d5478b
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbayes/libs/x64/libgsolve.dll b2fd3bc3457ad1d4ea3cc4d23117569d

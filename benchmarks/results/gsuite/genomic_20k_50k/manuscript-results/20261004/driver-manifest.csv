@@ -1,0 +1,4 @@
+"file","bytes","md5"
+"benchmarks/genomic_20k_50k/manuscript_stage.R",5196,"213fc7831ca4e0802437bf5dce1b42f7"
+"benchmarks/genomic_20k_50k/run_manuscript.ps1",3238,"24920c52550d756052b569f232c0a389"
+"benchmarks/genomic_20k_50k/summarize_manuscript.R",5662,"c6a904dab97db938526234a97b6ff4e6"

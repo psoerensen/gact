@@ -1,0 +1,1014 @@
+diff --git a/README.md b/README.md
+index 3879951..61c5b00 100644
+--- a/README.md
++++ b/README.md
+@@ -225,6 +225,13 @@ partitions and selected-individual score uncertainty. It consumes ordinary check
+ summary-statistics data frames and `gbase` Glist resources, including multiple BED
+ components and study-specific sparse-LD references.
+ See the [Bayesian regression tutorial](docs/gbayes-workflow.qmd).
++
++Single-trait summary `gbayes()` and regional `gmap()` also accept familiar
++`method="bayesC"`, `algorithm="mcmc"`, `nit`, `nburn` and `seed` arguments.
++Regional dense MCMC computes full BED LD in memory; `gbase::mapSets()` and
++`getLD()` expose marker membership and regional correlation.
++`gmap::getCredibleSets()` groups saved marginal PIPs without a qgg dependency.
++Native diagnostics and statistical meanings remain explicit in the guides.
+ Saved individual-level BED BayesC/BayesR fits can be interpreted by region
+ through `gmap::gmap_bed(fit, G, regions)`, using LD prepared from the same
+ people and markers. This reuses global-fit PIPs without regional refitting or
+diff --git a/docs/architecture.md b/docs/architecture.md
+index 499b6b0..052263a 100644
+--- a/docs/architecture.md
++++ b/docs/architecture.md
+@@ -147,3 +147,9 @@ combinations.
+ 
+ `gsim` is separate from the analysis dependency graph. It creates ordinary R
+ data that can be passed into examples and analysis packages.
++
++Regional dense MCMC follows the same ownership boundaries: gbase maps marker
++sets and exposes full BED LD through installed gmat decoding and R's BLAS;
++native gmap validates and binds the region, then reuses native gbayes sampling.
++Familiar argument adapters remain in the gmap and gbayes R packages. Native
++gmap owns qgg-compatible marginal-PIP grouping; it does not require qgg at runtime.
+diff --git a/docs/gbayes-workflow.qmd b/docs/gbayes-workflow.qmd
+index a8c6380..6f33c18 100644
+--- a/docs/gbayes-workflow.qmd
++++ b/docs/gbayes-workflow.qmd
+@@ -27,6 +27,32 @@ method/data combinations fail explicitly.
+ 
+ ## Prepare genotypes and summaries
+ 
++Single-trait summary BayesC/BayesR also accepts familiar iteration and prior
++arguments:
++
++```r
++fit <- gbayes::gbayes(Glist=Glist, stat=stat, method="bayesC",
++  algorithm="mcmc", nit=100, nburn=0, seed=10)
++head(fit$stat)       # bm: native posterior mean; dm: PIP
++fit$post            # native posterior parameter table
++fit$conv            # native diagnostic list
++```
++
++Familiar calls default to one chain, 100 sweeps, zero burn-in, `h2=.5`,
++BayesC active probability `.001`, and learned slab/residual variances and
++mixture weights. `nit/nburn/nthin/nrun/seed`, `pi/gamma/vb/ve`, and
++`updateB/updateE/updatePi` adapt to native settings. Explicit conflicting
++aliases and nested settings are rejected; existing advanced calls retain
++their defaults. Familiar adaptation is limited to single-trait summaries.
++
++Summary `bm` remains in standardized native genotype/phenotype units. The
++standalone reference-LD residual policy defaults to adjustment `.9`; it differs
++from qgg's marker-specific adjustment. No independent genetic-variance draw is
++recreated. The aliases preserve native posterior and diagnostic meanings;
++single-chain output does not establish convergence or posterior equivalence.
++Use `gmap::getCredibleSets(Glist, fit, sets)` to interpret saved marginal PIPs
++with full BED LD without refitting.
++
+ `gbase::gprep()` owns the qgg-style Glist contract. Sparse LD is added to the
+ same object rather than creating another public descriptor.
+ 
+diff --git a/docs/gmap-workflow.qmd b/docs/gmap-workflow.qmd
+index 62d9eaf..1492eec 100644
+--- a/docs/gmap-workflow.qmd
++++ b/docs/gmap-workflow.qmd
+@@ -18,6 +18,56 @@ This example requires development installations of gbase, gbayes, gmap and gsim.
+ The website displays saved results and does not run models. The current calls
+ are shown below; a refreshed end-to-end script remains separate work.
+ 
++## Familiar summary-statistic calls
++
++For statistics computed from the selected BED people, regional BayesC/BayesR
++can use full LD directly in memory:
++
++```r
++G <- gbase::gprep(bedfiles="cohort.bed")
++sets <- list(locus=c("marker1", "marker2", "marker3"))
++fit <- gmap::gmap(Glist=G, stat=stat, sets=sets, method="bayesC",
++  algorithm="mcmc", nit=1000, nburn=100, seed=10, output="full")
++head(fit$stat)       # bm: native posterior effect mean; dm: PIP
++fit$post            # native parameter summaries
++fit$conv            # native regional diagnostics
++fit$cs              # marginal-PIP/LD groups by region
++fit$timings         # decoding, LD product, preparation and sampling phases
++```
++
++`gbase::mapSets(sets, Glist=G)` maps named marker sets to prepared marker IDs or indices;
++unknown members are dropped and empty sets stay visible. `gbase::getLD(G,
++rsids=sets$locus)` returns full regional correlation in requested marker order
++without writing an LD file. Missing dosages are mean-imputed. Local `nthreads`
++controls decoding; the dense product uses R's configured BLAS.
++
++`algorithm="mcmc"` requires positive-definite LD, applies no PSD repair or
++truncation, and does not require sparse LD. `algorithm="mcmc-eigen"` retains
++the sparse-LD eigen route and its explicit retained-mass controls. Existing
++`regions` and score/information calls retain their advanced defaults.
++
++Familiar calls default to one chain, 1000 post-burn sweeps, 100 burn-in sweeps,
++`h2=.5`, `mc=5000`, BayesC weights `c(.99,.01)`, and learned slab/residual
++variances and mixture weights. Residual learning asserts in-sample LD and
++rejects a likelihood dimension exceeding the selected reference sample count.
++`nit`, `nburn`, `nthin`, `nrun`, `seed`, `pi`, `gamma`, `vb`, `ve` and
++`updateB/updateE/updatePi` adapt to native controls; conflicting explicit aliases
++and nested settings are rejected. No independent genetic-variance draw is
++added. `post` and `conv` retain native columns and meanings. One-chain fits
++remain provisional.
++
++Saved regional or genome-wide PIPs can be grouped without refitting:
++
++```r
++groups <- gmap::getCredibleSets(Glist=G, fit=fit, sets=sets,
++  cs_threshold=.8, cs_r2=.5, cs_method="CS2")
++```
++
++This standalone native helper reproduces qgg CS2/CS3 ordering and strict
++`LD^2 > r2` neighborhoods. Its grouping target is marginal-PIP mass (expected
++active-marker count), not guaranteed component credible coverage. It has no
++qgg runtime dependency. Multi-trait results require an explicit `trait`.
++
+ ## From an individual-level BED fit to regional marker support
+ 
+ First fit the whole selected marker panel using pre-adjusted phenotypes, as in
+diff --git a/docs/methods.md b/docs/methods.md
+index 20fe6cc..5b5b323 100644
+--- a/docs/methods.md
++++ b/docs/methods.md
+@@ -38,7 +38,7 @@ for the mixed-model entry points.
+ | SEM, partial-correlation networks and fixed-graph GGM | gcorr | `gcorr_covariance()`, `gcorr_sem()`, `gcorr_ggm()`, `gcorr_ggm_network()` and native test functions. Grouped interfaces extract GNOVA categories and SumHer components/categories with full cross-group jackknife covariance for joint SEM/GGM contrasts. See [covariance models](covariance-models.qmd). |
+ | GSMR, GSMR2, IVW, Egger and weighted-median MR | gcorr | `gcorr_prepare_mr()` plus focused method functions and thin `gcorr(..., method=)` dispatch consume aligned ordinary summary-statistics data frames, explicit effect units and signed LD. See the [MR workflow](mr-workflow.qmd). |
+ | BayesC/BayesR from individual BED or aligned summaries, annotation-informed block-eigen regression, several traits or independent studies | gbayes | Learned scalar and multivariate summary/BED BayesC/BayesR, plus single-trait `sbayesrc` over verified Glist LD blocks with retained eigensystems and component annotations. Shared-LD or independent sampling, study-specific references, covariance learning, posterior capture and continuation, genetic covariance, reporting partitions, selected-individual score uncertainty and four focused summary engines are available; [Bayesian regression](gbayes-workflow.qmd). |
+-| Regional Bayesian mapping and posterior sets | gbayes, gmap | `gmap::gmap()` fits regional multi-effect, BayesC or BayesR models from `gmap_stat()` output and Glist-owned sparse LD; `gmap_bed()` interprets a saved individual-BED posterior without refitting. `gmap_sets()` presents labelled set/member tables and `gmap_bfdr()` summarizes PIP-threshold Bayesian FDR. [Mapping workflow](gmap-workflow.qmd). Marginal-PIP groups and component sets have different meanings |
++| Regional Bayesian mapping and posterior sets | gbayes, gmap | `gmap::gmap()` fits regional multi-effect, BayesC or BayesR models using full BED LD for dense MCMC or explicit sparse-LD eigen preparation; familiar iteration/prior arguments and standalone `getCredibleSets()` are available; `gmap_bed()` interprets a saved individual-BED posterior without refitting. `gmap_sets()` presents labelled set/member tables and `gmap_bfdr()` summarizes PIP-threshold Bayesian FDR. [Mapping workflow](gmap-workflow.qmd). Marginal-PIP groups and component sets have different meanings |
+ | ABF and component-pair colocalisation | gmap | `gmap_coloc()` provides the single-causal ABF route; `gmap_coloc_components()` compares saved multi-effect components without refitting. [Colocalisation](gmap-workflow.qmd#abf-colocalisation) has method-specific assumptions |
+ | Linear/logistic GWAS and quantitative-trait LOCO association | glma | `glma::glma()` provides ordinary, conditional, batched linear, logistic, infinitesimal LOCO and prior-selected LOCO scans over `gbase` Glist inputs. Binary logistic tests do not adjust for relatedness |
+ | Genomic scoring and posterior prediction | gscore, model-fitting packages | `gscore(weights, Glist)` applies portable allele-labelled weights and can accumulate overlapping, cross-file marker-set scores from Glist-resolved marker names. `clump_threshold(stat, Glist)` constructs conventional C+T weights from reported association effects and prepared sparse LD. glma, gbayes and other model owners fit their statistical effects. Selected-individual score uncertainty is available through [`gbayes::gbayes()`](gbayes-workflow.qmd#predict-selected-individuals-with-uncertainty); [guide](summary-interfaces.qmd) |
+diff --git a/docs/r-package-boundaries.md b/docs/r-package-boundaries.md
+index c442793..b8d8570 100644
+--- a/docs/r-package-boundaries.md
++++ b/docs/r-package-boundaries.md
+@@ -91,12 +91,13 @@ The groups below cover the current exported interface.
+ | `gbase::gprep()` prepare/sparseld/eigen routes, lightweight Glist validation, explicit `verify_ld()` integrity checks and printing | gbase |
+ | `checkStat()` user-facing summary-statistic mapping, harmonization and QC | gbase |
+ | `gbase::gfilter()`, `ld_scores()`, `ld_region()` and `ld_eigen()` over Glist | gbase |
++| `mapSets()` marker membership and `getLD()` full in-memory regional BED correlation | gbase; installed gmat owns genotype decoding |
+ | `gcorr()` and its fit, summary, plot, covariance, annotation and MR methods | gcorr |
+ | `gscore()`, `clump_threshold()` and score prediction methods | gscore; C+T is scoring-specific, while fitted association and posterior effects remain with their model packages |
+ | `gbayes()` and Bayesian fit, continuation, posterior and prediction methods | gbayes |
+ | `glma()` and association-result methods | glma |
+ | `vegas()` marker-set association evidence | glma implementation and native integration; gsea re-export and `gsea_input()` handoff |
+-| `gmap()`, `gmap_stat()`, `gmap_bed()` and focused mapping/colocalisation methods | gmap |
++| `gmap()`, `gmap_stat()`, `gmap_bed()`, `getCredibleSets()` and focused mapping/colocalisation methods | gmap; statistical priors, adapters and posterior grouping remain task-owned |
+ | `gsea()` and enrichment-result methods | gsea |
+ | `greml()`, persistent mixed-model, pedigree, multivariate, longitudinal and component-model constructors and methods | gsuite, backed by greml |
+ | `gsolve()`, `gsuite_solve()` and solver result methods | gsuite, backed by gsolve |
+diff --git a/packages/gbase/DESCRIPTION b/packages/gbase/DESCRIPTION
+index 4914644..7526dd6 100644
+--- a/packages/gbase/DESCRIPTION
++++ b/packages/gbase/DESCRIPTION
+@@ -20,6 +20,6 @@ LinkingTo: Rcpp
+ Suggests: testthat (>= 3.0.0)
+ Config/testthat/edition: 3
+ SystemRequirements: C++17, gmat 0.6.0 (ABI 0), gbits 0.21.0 (ABI 4),
+-    gsolve 0.22.0 (ABI 4)
++    gsolve 0.26.0 (ABI 4)
+ NeedsCompilation: yes
+ RoxygenNote: 7.3.3
+diff --git a/packages/gbase/NAMESPACE b/packages/gbase/NAMESPACE
+index 991be8a..90c46fa 100644
+--- a/packages/gbase/NAMESPACE
++++ b/packages/gbase/NAMESPACE
+@@ -4,6 +4,8 @@ importFrom(utils,tail)
+ export(checkStat)
+ export(variant_key)
+ export(gprep)
++export(mapSets)
++export(getLD)
+ export(validate_Glist)
+ export(verify_ld)
+ export(gbase_native_info)
+diff --git a/packages/gbase/R/RcppExports.R b/packages/gbase/R/RcppExports.R
+index 7aebd4f..f0687ba 100644
+--- a/packages/gbase/R/RcppExports.R
++++ b/packages/gbase/R/RcppExports.R
+@@ -13,6 +13,10 @@ cpp_gbase_bed_panel <- function(paths, families, individuals, marker_ids) {
+     .Call(`_gbase_cpp_gbase_bed_panel`, paths, families, individuals, marker_ids)
+ }
+ 
++cpp_gbase_standardized_region <- function(paths, families, individuals, marker_ids, selected, threads) {
++    .Call(`_gbase_cpp_gbase_standardized_region`, paths, families, individuals, marker_ids, selected, threads)
++}
++
+ cpp_gbase_bed_spectra <- function(paths, families, individuals, marker_ids, regions, threads, maximum_dimension, symmetry_tolerance, verification_tolerance) {
+     .Call(`_gbase_cpp_gbase_bed_spectra`, paths, families, individuals, marker_ids, regions, threads, maximum_dimension, symmetry_tolerance, verification_tolerance)
+ }
+diff --git a/packages/gbase/R/gprep.R b/packages/gbase/R/gprep.R
+index cfc0553..75bd5fd 100644
+--- a/packages/gbase/R/gprep.R
++++ b/packages/gbase/R/gprep.R
+@@ -11,8 +11,10 @@ gbase_native_info <- function() cpp_gbase_native_info()
+     identical(as.character(info$gmat$runtime_abi), "0") &&
+     identical(info$gbits$runtime_version, "0.21.0") &&
+     identical(as.character(info$gbits$runtime_abi), "4") &&
+-    identical(info$gsolve$runtime_version, "0.22.0") &&
+-    identical(as.character(info$gsolve$runtime_abi), "4")
++    identical(info$gsolve$runtime_version, "0.26.0") &&
++    identical(as.character(info$gsolve$runtime_abi), "4") &&
++    all(vapply(info,function(x) identical(x$header_version,x$runtime_version) &&
++      identical(as.character(x$header_abi),as.character(x$runtime_abi)),logical(1)))
+   if (!ok) .gbase_stop("Loaded gmat/gbits/gsolve versions or ABIs are incompatible with gbase.")
+ }
+ 
+diff --git a/packages/gbase/README.md b/packages/gbase/README.md
+index 3875193..4852ce5 100644
+--- a/packages/gbase/README.md
++++ b/packages/gbase/README.md
+@@ -79,3 +79,12 @@ repeating LD computation or decomposition. It returns a serializable prepared
+ object with the required marker and allele order for subsequent traits.
+ Constant positive weights within each gene are supported; nonuniform weights
+ continue to use the sparse-LD route. Statistical evaluation remains owned by glma.
++
++`mapSets(sets, Glist)` resolves named marker memberships to prepared marker IDs
++or indices. Unknown members are dropped; empty sets remain visible.
++`getLD(Glist, rsids=region)` computes full regional BED correlation in requested
++marker order using the selected people, installed gmat decoding and R's
++configured BLAS. Missing genotypes are mean-imputed and constant markers are
++rejected. It writes no files and applies no sparse-LD windows or cutoffs.
++The returned matrix records sample count and decoding/product timings.
++Statistical priors, sampler controls and posterior sets remain with task packages.
+diff --git a/packages/gbase/src/Makevars.win b/packages/gbase/src/Makevars.win
+index 6e9a4f5..86e2c7f 100644
+--- a/packages/gbase/src/Makevars.win
++++ b/packages/gbase/src/Makevars.win
+@@ -23,7 +23,7 @@ endif
+ ifneq ($(GBITS_VERSION):$(GBITS_ABI),0.21.0:4)
+ $(error Incompatible gbits version/ABI)
+ endif
+-ifneq ($(GSOLVE_VERSION):$(GSOLVE_ABI),0.22.0:4)
++ifneq ($(GSOLVE_VERSION):$(GSOLVE_ABI),0.26.0:4)
+ $(error Incompatible gsolve version/ABI)
+ endif
+ GBASE_REQUIRED_NATIVE_FILES = \
+diff --git a/packages/gbase/src/RcppExports.cpp b/packages/gbase/src/RcppExports.cpp
+index 6342c2a..99d7e2d 100644
+--- a/packages/gbase/src/RcppExports.cpp
++++ b/packages/gbase/src/RcppExports.cpp
+@@ -47,6 +47,22 @@ BEGIN_RCPP
+     return rcpp_result_gen;
+ END_RCPP
+ }
++// cpp_gbase_standardized_region
++Rcpp::NumericMatrix cpp_gbase_standardized_region(Rcpp::List paths, Rcpp::CharacterVector families, Rcpp::CharacterVector individuals, Rcpp::List marker_ids, Rcpp::NumericVector selected, int threads);
++RcppExport SEXP _gbase_cpp_gbase_standardized_region(SEXP pathsSEXP, SEXP familiesSEXP, SEXP individualsSEXP, SEXP marker_idsSEXP, SEXP selectedSEXP, SEXP threadsSEXP) {
++BEGIN_RCPP
++    Rcpp::RObject rcpp_result_gen;
++    Rcpp::RNGScope rcpp_rngScope_gen;
++    Rcpp::traits::input_parameter< Rcpp::List >::type paths(pathsSEXP);
++    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type families(familiesSEXP);
++    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type individuals(individualsSEXP);
++    Rcpp::traits::input_parameter< Rcpp::List >::type marker_ids(marker_idsSEXP);
++    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type selected(selectedSEXP);
++    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
++    rcpp_result_gen = Rcpp::wrap(cpp_gbase_standardized_region(paths, families, individuals, marker_ids, selected, threads));
++    return rcpp_result_gen;
++END_RCPP
++}
+ // cpp_gbase_bed_spectra
+ Rcpp::List cpp_gbase_bed_spectra(Rcpp::List paths, Rcpp::CharacterVector families, Rcpp::CharacterVector individuals, Rcpp::List marker_ids, Rcpp::List regions, int threads, double maximum_dimension, double symmetry_tolerance, double verification_tolerance);
+ RcppExport SEXP _gbase_cpp_gbase_bed_spectra(SEXP pathsSEXP, SEXP familiesSEXP, SEXP individualsSEXP, SEXP marker_idsSEXP, SEXP regionsSEXP, SEXP threadsSEXP, SEXP maximum_dimensionSEXP, SEXP symmetry_toleranceSEXP, SEXP verification_toleranceSEXP) {
+@@ -167,6 +183,7 @@ static const R_CallMethodDef CallEntries[] = {
+     {"_gbase_cpp_gbase_native_info", (DL_FUNC) &_gbase_cpp_gbase_native_info, 0},
+     {"_gbase_cpp_gbase_bed_resource", (DL_FUNC) &_gbase_cpp_gbase_bed_resource, 3},
+     {"_gbase_cpp_gbase_bed_panel", (DL_FUNC) &_gbase_cpp_gbase_bed_panel, 4},
++    {"_gbase_cpp_gbase_standardized_region", (DL_FUNC) &_gbase_cpp_gbase_standardized_region, 6},
+     {"_gbase_cpp_gbase_bed_spectra", (DL_FUNC) &_gbase_cpp_gbase_bed_spectra, 9},
+     {"_gbase_cpp_gbase_bed_counts", (DL_FUNC) &_gbase_cpp_gbase_bed_counts, 6},
+     {"_gbase_cpp_gbase_sparse_ld", (DL_FUNC) &_gbase_cpp_gbase_sparse_ld, 6},
+diff --git a/packages/gbase/src/gprep.cpp b/packages/gbase/src/gprep.cpp
+index 32895e5..5edc96c 100644
+--- a/packages/gbase/src/gprep.cpp
++++ b/packages/gbase/src/gprep.cpp
+@@ -106,7 +106,7 @@ Rcpp::List disk(const gmat::SparseLdDiskResource& x) {
+ Rcpp::List cpp_gbase_native_info(){return Rcpp::List::create(
+   Rcpp::_["gmat"]=Rcpp::List::create(Rcpp::_["header_version"]="0.6.0",Rcpp::_["header_abi"]=gmat::experimental_abi,Rcpp::_["runtime_version"]=gmat::version_string(),Rcpp::_["runtime_abi"]=gmat::abi_version()),
+   Rcpp::_["gbits"]=Rcpp::List::create(Rcpp::_["header_version"]="0.21.0",Rcpp::_["header_abi"]=4,Rcpp::_["runtime_version"]=gbits_library_version(),Rcpp::_["runtime_abi"]=gbits_abi_version()),
+-  Rcpp::_["gsolve"]=Rcpp::List::create(Rcpp::_["header_version"]="0.22.0",Rcpp::_["header_abi"]=gsolve::experimental_abi,Rcpp::_["runtime_version"]=gsolve::version_string(),Rcpp::_["runtime_abi"]=gsolve::abi_version()));}
++  Rcpp::_["gsolve"]=Rcpp::List::create(Rcpp::_["header_version"]=std::to_string(gsolve::version_major)+"."+std::to_string(gsolve::version_minor)+"."+std::to_string(gsolve::version_patch),Rcpp::_["header_abi"]=gsolve::experimental_abi,Rcpp::_["runtime_version"]=gsolve::version_string(),Rcpp::_["runtime_abi"]=gsolve::abi_version()));}
+ 
+ // [[Rcpp::export]]
+ Rcpp::List cpp_gbase_bed_resource(std::string bed,std::string bim,std::string fam){gmat::BedMatrix x(bed,bim,fam);return Rcpp::List::create(Rcpp::_["paths"]=Rcpp::List::create(Rcpp::_["bed"]=x.bed_path(),Rcpp::_["bim"]=x.bim_path(),Rcpp::_["fam"]=x.fam_path()),Rcpp::_["sample_count"]=number(x.sample_count(),"samples"),Rcpp::_["marker_count"]=number(x.marker_count(),"markers"),Rcpp::_["markers"]=markers(x.markers()),Rcpp::_["samples"]=samples(x.samples()));}
+@@ -114,6 +114,21 @@ Rcpp::List cpp_gbase_bed_resource(std::string bed,std::string bim,std::string fa
+ // [[Rcpp::export]]
+ Rcpp::List cpp_gbase_bed_panel(Rcpp::List paths,Rcpp::CharacterVector families,Rcpp::CharacterVector individuals,Rcpp::List marker_ids){auto c=components(paths);gmat::BedPanel panel(std::move(c),selection(families,individuals,marker_ids,paths.size()));Rcpp::NumericVector rows(panel.sample_count());for(std::uint64_t i=0;i<panel.sample_count();++i)rows[i]=number(panel.sample_source_index(i),"sample index");Rcpp::List source(panel.component_count());for(std::uint64_t k=0;k<panel.component_count();++k){const auto& x=panel.component_marker_indices(k);source[k]=Rcpp::NumericVector(x.begin(),x.end());}return Rcpp::List::create(Rcpp::_["samples"]=samples(panel.samples()),Rcpp::_["sample_source_indices_0based"]=rows,Rcpp::_["component_marker_indices_0based"]=source);}
+ 
++// [[Rcpp::export]]
++Rcpp::NumericMatrix cpp_gbase_standardized_region(Rcpp::List paths,
++    Rcpp::CharacterVector families, Rcpp::CharacterVector individuals,
++    Rcpp::List marker_ids, Rcpp::NumericVector selected, int threads) {
++  if (threads < 1) Rcpp::stop("regional LD requires positive threads");
++  auto c = components(paths);
++  gmat::BedPanel panel(std::move(c), selection(families, individuals, marker_ids, paths.size()));
++  auto result = gmat::read_standardized_bed_region(panel,
++      indices(selected, "region indices"), static_cast<std::uint32_t>(threads));
++  if (result.sample_count > INT_MAX || result.marker_count > INT_MAX)
++    Rcpp::stop("regional matrix exceeds R dimensions");
++  return Rcpp::NumericMatrix(static_cast<int>(result.sample_count),
++      static_cast<int>(result.marker_count), result.values.begin());
++}
++
+ // [[Rcpp::export]]
+ Rcpp::List cpp_gbase_bed_spectra(Rcpp::List paths,
+     Rcpp::CharacterVector families, Rcpp::CharacterVector individuals,
+diff --git a/packages/gbase/tests/testthat/test-gprep.R b/packages/gbase/tests/testthat/test-gprep.R
+index 91b3cd6..b56f5a0 100644
+--- a/packages/gbase/tests/testthat/test-gprep.R
++++ b/packages/gbase/tests/testthat/test-gprep.R
+@@ -24,9 +24,9 @@ test_that("gbase checks its exact native contracts", {
+   expect_equal(info$gbits$header_abi, 4)
+   expect_identical(info$gbits$runtime_version, "0.21.0")
+   expect_equal(info$gbits$runtime_abi, 4)
+-  expect_identical(info$gsolve$header_version, "0.22.0")
++  expect_identical(info$gsolve$header_version, "0.26.0")
+   expect_equal(info$gsolve$header_abi, 4)
+-  expect_identical(info$gsolve$runtime_version, "0.22.0")
++  expect_identical(info$gsolve$runtime_version, "0.26.0")
+   expect_equal(info$gsolve$runtime_abi, 4)
+ })
+ 
+diff --git a/packages/gbayes/DESCRIPTION b/packages/gbayes/DESCRIPTION
+index 1b9371b..714a34f 100644
+--- a/packages/gbayes/DESCRIPTION
++++ b/packages/gbayes/DESCRIPTION
+@@ -11,5 +11,5 @@ Imports: gbase (>= 0.1.0), Rcpp
+ LinkingTo: Rcpp
+ Suggests: testthat (>= 3.0.0)
+ Config/testthat/edition: 3
+-SystemRequirements: C++17, gbayes 0.1.0 (SOVERSION 0), gmat 0.6.0 (ABI 0), gsolve 0.22.0 (ABI 4), gbits 0.21.0 (ABI 4), gscore 0.1.0 (ABI 0) with summary component
++SystemRequirements: C++17, gbayes 0.1.0 (SOVERSION 0), gmat 0.6.0 (ABI 0), gsolve 0.26.0 (ABI 4), gbits 0.21.0 (ABI 4), gscore 0.1.0 (ABI 0) with summary component
+ NeedsCompilation: yes
+diff --git a/packages/gbayes/R/gbayes.R b/packages/gbayes/R/gbayes.R
+index 8a90b70..576edc0 100644
+--- a/packages/gbayes/R/gbayes.R
++++ b/packages/gbayes/R/gbayes.R
+@@ -5,7 +5,7 @@ gbayes_native_info <- function() cpp_gbayes_native_info()
+     identical(as.character(x$abi_contract), "0") &&
+     identical(x$gmat_version, "0.6.0") &&
+     identical(as.character(x$gmat_abi), "0") &&
+-    identical(x$gsolve_version, "0.22.0") &&
++    identical(x$gsolve_version, "0.26.0") &&
+     identical(as.character(x$gsolve_abi), "4") &&
+     identical(x$gbits_version, "0.21.0") &&
+     identical(as.character(x$gbits_abi), "4") &&
+@@ -735,8 +735,8 @@ gbayes_native_info <- function() cpp_gbayes_native_info()
+ #' @return A serializable `gbayes_fit` containing estimates, standardized
+ #'   genomic-score weights, requested posterior quantities, chain summaries,
+ #'   controls, and provenance.
+-#' @export
+-gbayes <- function(stat = NULL, Glist, method = c("bayesr", "bayesc", "sbayesrc",
++#' @noRd
++.gbayes_fit <- function(stat = NULL, Glist, method = c("bayesr", "bayesc", "sbayesrc",
+                    "point_normal", "continuous_shrinkage", "variational",
+                    "mixture_variational"),
+                    prior = list(), control = list(), trait = NULL,
+diff --git a/packages/gbayes/man/gbayes.Rd b/packages/gbayes/man/gbayes.Rd
+index edeeba8..4ad3300 100644
+--- a/packages/gbayes/man/gbayes.Rd
++++ b/packages/gbayes/man/gbayes.Rd
+@@ -8,10 +8,22 @@ gbayes(stat = NULL, Glist, method = c("bayesr", "bayesc", "sbayesrc",
+   "mixture_variational"),
+   prior = list(), control = list(), trait = NULL, data = NULL,
+   annotation = NULL, posterior = list(), continuation = NULL,
+-  sampling = NULL)
++  sampling = NULL, algorithm = NULL, nit = NULL, nburn = NULL,
++  nthin = NULL, nrun = NULL, seed = NULL, h2 = NULL, pi = NULL,
++  gamma = NULL, vb = NULL, ve = NULL, nub = NULL, nue = NULL,
++  updateB = NULL, updateE = NULL, updatePi = NULL, verbose = FALSE)
+ \method{print}{gbayes_fit}(x, ...)
+ }
+ \arguments{
++\item{algorithm}{The familiar single-trait summary route supports mcmc.}
++\item{nit,nburn,nthin,nrun,seed}{Post-burn sweeps, burn-in, thinning,
++chain count and starting uint32 seed. Chains use consecutive seeds.}
++\item{h2,pi,gamma,vb,ve,nub,nue}{Starting prior settings on the standalone
++standardized summary likelihood scale. BayesC pi is a scalar active
++probability or c(null,active); BayesR pi/gamma describe all components.}
++\item{updateB,updateE,updatePi}{Slab, residual and mixture-weight learning
++flags. Familiar calls default to learning all three parameters.}
++\item{verbose}{Print the final fit summary.}
+ \item{stat}{For summary fitting, an ordinary checked data frame with
+ \code{rsids}, \code{chr}, \code{pos}, \code{ea}, \code{nea}, \code{b},
+ \code{seb}, and \code{n}; a named list selects multivariate fitting.}
+@@ -64,6 +76,22 @@ object. Model-defining inputs must be repeated unchanged.}
+ \item{x}{A \code{gbayes_fit}.}
+ \item{...}{Reserved.}
+ }
++\details{
++Familiar arguments, algorithm, or the method spellings bayesC/bayesR select
++the single-trait summary adapter. It defaults to 100 sweeps, zero burn-in,
++one chain, h2=.5 and BayesC active probability .001. Existing nested-control
++calls retain their advanced defaults. Conflicting aliases are rejected.
++Residual learning defaults to the standalone reference-LD policy with .9
++adjustment, rather than qgg's marker-specific residual adjustment. An independent
++genetic-variance draw is not recreated.
++
++The result includes stat$bm/stat$dm aliases for native effect means and PIPs.
++In familiar calls post aliases the native posterior parameter table and conv
++aliases the native diagnostics list; their shapes and meanings remain native.
++Summary effects retain standardized genotype/phenotype units and are labelled
++accordingly; matching field names does not imply identical qgg effect scales.
++Diagnostics, posterior state, effective priors and controls remain available.
++}
+ \description{Fits fixed or learned scalar or multivariate BayesC or BayesR and focused
+ point-normal, continuous-shrinkage, or variational summary models using
+ installed public gbayes and gmat interfaces. Reported effects are converted to
+diff --git a/packages/gbayes/src/Makevars.win b/packages/gbayes/src/Makevars.win
+index 630ccf8..f4d4a2b 100644
+--- a/packages/gbayes/src/Makevars.win
++++ b/packages/gbayes/src/Makevars.win
+@@ -16,7 +16,7 @@ endif
+ ifneq ($(GMAT_VERSION):$(GMAT_ABI),0.6.0:0)
+ $(error Incompatible gmat version/ABI)
+ endif
+-ifneq ($(GSOLVE_VERSION):$(GSOLVE_ABI),0.22.0:4)
++ifneq ($(GSOLVE_VERSION):$(GSOLVE_ABI),0.26.0:4)
+ $(error Incompatible gsolve version/ABI)
+ endif
+ ifneq ($(GBITS_VERSION):$(GBITS_ABI),0.21.0:4)
+diff --git a/packages/gbayes/src/gbayes.cpp b/packages/gbayes/src/gbayes.cpp
+index 4e4ef09..10642e2 100644
+--- a/packages/gbayes/src/gbayes.cpp
++++ b/packages/gbayes/src/gbayes.cpp
+@@ -705,7 +705,10 @@ Rcpp::List variational_result(const gbayes::SummaryVariationalResult& fit,
+ Rcpp::List cpp_gbayes_native_info() {
+   return Rcpp::List::create(
+     Rcpp::Named("header_version")="0.1.0", Rcpp::Named("runtime_version")=gbayes::version_string(),
+-    Rcpp::Named("abi_contract")=0, Rcpp::Named("headers_match_runtime")=std::string(gbayes::version_string())=="0.1.0",
++    Rcpp::Named("abi_contract")=0, Rcpp::Named("headers_match_runtime")=std::string(gbayes::version_string())=="0.1.0" &&
++      std::string(gsolve::version_string())==std::to_string(gsolve::version_major)+"."+
++      std::to_string(gsolve::version_minor)+"."+std::to_string(gsolve::version_patch) &&
++      gsolve::abi_version()==gsolve::experimental_abi,
+     Rcpp::Named("gmat_version")=gmat::version_string(), Rcpp::Named("gmat_abi")=gmat::abi_version(),
+     Rcpp::Named("gsolve_version")=gsolve::version_string(), Rcpp::Named("gsolve_abi")=gsolve::abi_version(),
+     Rcpp::Named("gbits_version")=gbits_library_version(), Rcpp::Named("gbits_abi")=gbits_abi_version(),
+diff --git a/packages/gmap/DESCRIPTION b/packages/gmap/DESCRIPTION
+index 4a5199e..e39a138 100644
+--- a/packages/gmap/DESCRIPTION
++++ b/packages/gmap/DESCRIPTION
+@@ -15,7 +15,7 @@ Imports: gbase (>= 0.1.0), Rcpp
+ LinkingTo: Rcpp
+ Suggests: testthat (>= 3.0.0)
+ Config/testthat/edition: 3
+-SystemRequirements: C++17, gmap 0.2.0 (ABI 1), gbayes 0.1.0 (ABI 0),
+-    gmat 0.6.0 (ABI 0), gsolve 0.22.0 (ABI 4), gbits 0.21.0 (ABI 4)
++SystemRequirements: C++17, gmap 0.3.0 (ABI 2), gbayes 0.1.0 (ABI 0),
++    gmat 0.6.0 (ABI 0), gsolve 0.26.0 (ABI 4), gbits 0.21.0 (ABI 4)
+ NeedsCompilation: yes
+ RoxygenNote: 7.3.3
+diff --git a/packages/gmap/NAMESPACE b/packages/gmap/NAMESPACE
+index 8d94655..e3201a4 100644
+--- a/packages/gmap/NAMESPACE
++++ b/packages/gmap/NAMESPACE
+@@ -4,6 +4,7 @@ export(gmap_coloc)
+ export(gmap_coloc_components)
+ export(gmap_bed)
+ export(gmap)
++export(getCredibleSets)
+ export(gmap_stat)
+ export(gmap_native_info)
+ export(gmap_sets)
+diff --git a/packages/gmap/R/RcppExports.R b/packages/gmap/R/RcppExports.R
+index 21d3c9d..d4ea281 100644
+--- a/packages/gmap/R/RcppExports.R
++++ b/packages/gmap/R/RcppExports.R
+@@ -25,6 +25,10 @@ cpp_gmap_prepare_region <- function(reader_pointer, indices, region, reference,
+     .Call(`_gmap_cpp_gmap_prepare_region`, reader_pointer, indices, region, reference, eigen_control)
+ }
+ 
++cpp_gmap_prepare_matrix <- function(matrix, metadata, indices, region, reference, sample_count, eigen_control, dense) {
++    .Call(`_gmap_cpp_gmap_prepare_matrix`, matrix, metadata, indices, region, reference, sample_count, eigen_control, dense)
++}
++
+ cpp_gmap_release_region <- function(prepared_pointer) {
+     invisible(.Call(`_gmap_cpp_gmap_release_region`, prepared_pointer))
+ }
+@@ -33,6 +37,10 @@ cpp_gmap_fit_region <- function(prepared_pointer, stat, trait, method, prior, co
+     .Call(`_gmap_cpp_gmap_fit_region`, prepared_pointer, stat, trait, method, prior, control, retained_positive_mass)
+ }
+ 
++cpp_gmap_qgg_sets <- function(matrix, marker_ids, pip, threshold, minimum_r2, cutoff, method) {
++    .Call(`_gmap_cpp_gmap_qgg_sets`, matrix, marker_ids, pip, threshold, minimum_r2, cutoff, method)
++}
++
+ cpp_gmap_bed_sets <- function(reader_pointer, indices, marker_ids, pip, control, maximum_dimension, incomplete_reference) {
+     .Call(`_gmap_cpp_gmap_bed_sets`, reader_pointer, indices, marker_ids, pip, control, maximum_dimension, incomplete_reference)
+ }
+diff --git a/packages/gmap/R/gmap-regional.R b/packages/gmap/R/gmap-regional.R
+index 5e3a8c4..f59fc94 100644
+--- a/packages/gmap/R/gmap-regional.R
++++ b/packages/gmap/R/gmap-regional.R
+@@ -105,12 +105,14 @@
+ #'   explicit residual-variance learning with in-sample LD.
+ #' @return A serializable `gmap_fit`. `diagnostic_summary` records the selected
+ #'   retained mass and rank; `eigen_attempts` records every attempted threshold.
+-#' @export
+-gmap <- function(stat, Glist, regions, method = c("multi_effect", "bayesc", "bayesr"),
+-                 prior = list(), control = list(), normalization = NULL) {
++#' @noRd
++.gmap_fit <- function(stat, Glist, regions, method = c("multi_effect", "bayesc", "bayesr"),
++                 prior = list(), control = list(), normalization = NULL,
++                 algorithm = "eigen", nthreads = 1L) {
+   call <- match.call()
+   method <- match.arg(method)
+-  reference <- .gmap_reference(Glist)
++  from_bed <- identical(algorithm, "mcmc")
++  reference <- .gmap_reference(Glist, bed = from_bed)
+   markers <- reference$metadata
+   assembly <- Glist$assembly
+   if (!is.character(assembly) || length(assembly) != 1L ||
+@@ -169,10 +171,19 @@ gmap <- function(stat, Glist, regions, method = c("multi_effect", "bayesc", "bay
+     retain_diagnostics = FALSE, pip_range_threshold = .1,
+     estimate_effect_variance = FALSE, estimate_weights = FALSE)
+   defaults <- c(defaults, list(estimate_residual_variance = FALSE,
+-    sets = list(), eigen = list()))
++    sets = list(), eigen = list(), qgg_sets = FALSE))
+   controls <- .gmap_settings(control, defaults, "control")
+   controls$sets <- .gmap_set_control(controls$sets, method)
+   controls$eigen <- .gmap_eigen_control(controls$eigen)
++  if (from_bed) {
++    if (method == "multi_effect") .gmap_stop("Dense MCMC requires BayesC or BayesR.")
++    if (!is.null(control$eigen$retained_positive_mass) &&
++        (length(control$eigen$retained_positive_mass)!=1L || control$eigen$retained_positive_mass!=1))
++      .gmap_stop("Dense MCMC requires full LD; eigen truncation is only available with mcmc-eigen.")
++    controls$eigen$retained_positive_mass <- 1
++    controls$eigen$select_on_convergence <- FALSE
++  }
++  controls$qgg_sets <- .gmap_flag(controls$qgg_sets, "qgg_sets")
+   if (any(lengths(indices) > controls$eigen$maximum_dimension))
+     .gmap_stop("A region exceeds the configured dense dimension limit.")
+   if (method == "multi_effect") {
+@@ -227,13 +238,26 @@ gmap <- function(stat, Glist, regions, method = c("multi_effect", "bayesc", "bay
+       length(reference$sparseLD$reference) == 1L &&
+       nzchar(reference$sparseLD$reference)) reference$sparseLD$reference else
+     "gbase-sparse-ld"
+-  reader <- cpp_gmap_open_ld(reference$sparseLD$prefix)
+-  on.exit(cpp_gmap_release_ld(reader), add = TRUE)
++  reader <- if (from_bed) NULL else cpp_gmap_open_ld(reference$sparseLD$prefix)
++  if (!from_bed) on.exit(cpp_gmap_release_ld(reader), add = TRUE)
++  phase_times <- list()
+   for (region in names(regions)) {
+-    prepared <- tryCatch(cpp_gmap_prepare_region(reader,
+-      as.double(indices[[region]]), region_info[[region]], reference_id,
+-      controls$eigen), error = function(error)
+-        .gmap_stop("Region ", region, ": ", conditionMessage(error)))
++    LD <- NULL; ld_time <- c(validation=0, decode=0, product=0, total=0)
++    if (from_bed) {
++      LD <- gbase::getLD(Glist, regions[[region]], nthreads=nthreads,
++        maximum_dimension=controls$eigen$maximum_dimension)
++      ld_time <- attr(LD, "timings_seconds")
++    }
++    preparing <- proc.time()[[3L]]
++    prepared <- tryCatch(if (from_bed) cpp_gmap_prepare_matrix(LD,
++      markers[indices[[region]], , drop=FALSE], as.double(indices[[region]]),
++      region_info[[region]], reference_id, attr(LD, "reference_sample_count"),
++      controls$eigen, TRUE) else cpp_gmap_prepare_region(reader,
++        as.double(indices[[region]]), region_info[[region]], reference_id,
++        controls$eigen), error = function(error)
++          .gmap_stop("Region ", region, ": ", conditionMessage(error)))
++    prepare_seconds <- unname(proc.time()[[3L]]-preparing)
++    rm(LD)
+     tryCatch({
+       details[[region]] <- sets[[region]] <-
+         stats::setNames(vector("list", length(stat)), names(stat))
+@@ -335,6 +359,14 @@ gmap <- function(stat, Glist, regions, method = c("multi_effect", "bayesc", "bay
+           region, trait, method, controls)
+         details[[region]][[trait]] <- value
+         sets[[region]][[trait]] <- value$sets
++        timing <- value$timings_seconds
++        phase_times[[length(phase_times)+1L]] <- data.frame(region=region, trait=trait,
++          ld_validation_seconds=unname(ld_time['validation']),
++          decode_seconds=unname(ld_time['decode']), product_seconds=unname(ld_time['product']),
++          ld_total_seconds=unname(ld_time['total']), prepare_seconds=prepare_seconds,
++          binding_seconds=if(is.null(timing)) NA_real_ else timing$binding,
++          sampling_seconds=if(is.null(timing)) NA_real_ else timing$sampling,
++          sets_seconds=if(is.null(timing)) NA_real_ else timing$sets)
+       }
+     }, finally = cpp_gmap_release_region(prepared))
+   }
+@@ -342,6 +374,7 @@ gmap <- function(stat, Glist, regions, method = c("multi_effect", "bayesc", "bay
+     estimates = do.call(rbind, rows), sets = sets, details = details,
+     diagnostic_summary = do.call(rbind, diagnostics),
+     eigen_attempts = do.call(rbind, attempts),
++    timings = do.call(rbind, phase_times), algorithm = algorithm,
+     parameters = do.call(rbind, parameters), normalization = normal,
+     region_metadata = region_info,
+     reference = list(reference = reference_id, assembly = assembly,
+diff --git a/packages/gmap/R/gmap-stat.R b/packages/gmap/R/gmap-stat.R
+index 0c07287..c498ae2 100644
+--- a/packages/gmap/R/gmap-stat.R
++++ b/packages/gmap/R/gmap-stat.R
+@@ -1,7 +1,16 @@
+ .gmap_stop <- function(...) stop(..., call. = FALSE)
+ 
+-.gmap_reference <- function(Glist) {
++.gmap_reference <- function(Glist, bed = FALSE) {
+   gbase::validate_Glist(Glist)
++  if (bed) {
++    metadata <- data.frame(marker_id=unlist(Glist$rsids, use.names=FALSE),
++      chromosome=as.character(unlist(Glist$chr, use.names=FALSE)),
++      base_pair_position=as.double(unlist(Glist$pos, use.names=FALSE)),
++      allele1=unlist(Glist$a1, use.names=FALSE), allele2=unlist(Glist$a2, use.names=FALSE))
++    return(list(metadata=metadata, sparseLD=list(n=if (is.null(Glist$study_ids))
++      length(Glist$ids) else length(Glist$study_ids), reference="full-regional-BED",
++      checksums=NULL, prefix=NULL)))
++  }
+   if (!is.list(Glist$sparseLD))
+     .gmap_stop("`Glist` must be augmented with `gprep(task = 'sparseld')`.")
+   metadata <- Glist$sparseLD$marker_metadata
+diff --git a/packages/gmap/README.md b/packages/gmap/README.md
+index a0ab0ba..07f1569 100644
+--- a/packages/gmap/README.md
++++ b/packages/gmap/README.md
+@@ -7,13 +7,16 @@ native interfaces.
+ The public workflows are:
+ 
+ - `gmap_stat()` for explicit OLS beta/SE/n conversion;
+-- `gmap()` for regional multi-effect, BayesC or BayesR fitting against
+-  Glist-owned sparse LD, with one eigendecomposition per region and an ordered
+-  retained-eigenvalue-mass fallback;
++- `gmap()` for regional multi-effect, BayesC or BayesR fitting. Familiar
++  `sets`, `method="bayesC"`, `algorithm="mcmc"`, `nit` and `seed` arguments
++  use full BED LD in memory and the native dense sampler. Advanced eigen calls
++  retain Glist-owned sparse LD and explicit retained-mass controls;
+ - `gmap_bed()` for checked regional interpretation of a saved individual-BED
+   `gbayes_fit`, without refitting;
+ - `gmap_sets()` for labelled set and member tables, and `gmap_bfdr()` for
+   PIP-threshold Bayesian-FDR summaries;
++- `getCredibleSets()` for qgg-compatible CS2/CS3 grouping of saved marginal
++  PIPs using full BED LD, without refitting or a qgg runtime dependency;
+ - `gmap_coloc()` for single-causal two-trait ABF colocalisation;
+ - `gmap_coloc_components()` for post-fit comparison of saved multi-effect
+   components, without refitting.
+@@ -21,3 +24,10 @@ The public workflows are:
+ Prepare genotype resources with `gbase::gprep()` and add sparse LD with
+ `gbase::gprep(Glist = ..., task = "sparseld")`. There is no public LDlist or
+ root-gsuite compatibility interface.
++
++Dense MCMC requires positive-definite regional LD and applies no truncation,
++jitter or PSD repair. BED decoding uses local `nthreads`; LD products use R's
++configured BLAS. The result retains native diagnostics, controls and phase
++timings. Familiar fields `stat$bm`, `stat$dm`, `post`, `conv` and `cs` are
++aliases with native statistical meanings; no independent genetic-variance draw
++is added. Marginal-PIP groups do not imply component credible coverage.
+diff --git a/packages/gmap/man/gmap-regional.Rd b/packages/gmap/man/gmap-regional.Rd
+index 5f31882..f7c4b25 100644
+--- a/packages/gmap/man/gmap-regional.Rd
++++ b/packages/gmap/man/gmap-regional.Rd
+@@ -4,9 +4,15 @@
+ \alias{summary.gmap_fit}
+ \title{Fit regional Bayesian mapping models}
+ \usage{
+-gmap(stat, Glist, regions,
++gmap(stat, Glist, regions = NULL,
+      method = c("multi_effect", "bayesc", "bayesr"),
+-     prior = list(), control = list(), normalization = NULL)
++     prior = list(), control = list(), normalization = NULL,
++     sets = NULL, algorithm = NULL, nit = NULL, nburn = NULL,
++     nthin = NULL, nrun = NULL, seed = NULL, h2 = NULL, mc = NULL,
++     pi = NULL, gamma = NULL, vb = NULL, ve = NULL, vy = NULL,
++     nub = NULL, nue = NULL, updateB = NULL, updateE = NULL,
++     updatePi = NULL, cs_threshold = NULL, cs_r2 = NULL,
++     output = "summary", verbose = FALSE, nthreads = 1L)
+ 
+ \method{print}{gmap_fit}(x, ...)
+ 
+@@ -32,14 +38,50 @@ gmap(stat, Glist, regions,
+   \item{normalization}{Named response normalization, required only when
+   residual-variance learning is explicitly enabled against complete in-sample
+   LD.}
++  \item{sets}{Familiar alias for regions. Unknown members are dropped; every
++  region must retain a marker. Statistics must cover the prepared reference.}
++  \item{algorithm}{\code{"mcmc"} reads full regional BED LD in memory and uses
++  the dense sampler with a positive-definite check. \code{"mcmc-eigen"}
++  uses the existing sparse-LD eigen route. Dense MCMC does not truncate LD.}
++  \item{nit,nburn,nthin,nrun,seed}{Post-burn sweeps, burn-in, thinning, chain
++  count and starting uint32 seed. Chains use consecutive seeds.}
++  \item{h2,mc,pi,gamma,vb,ve,vy,nub,nue}{Starting prior settings. The familiar
++  route uses h2=.5, mc=5000, BayesC weights c(.99,.01), and four-degree
++  scaled variance priors. Explicit nested priors remain supported.}
++  \item{updateB,updateE,updatePi}{Slab, residual and mixture-weight learning
++  flags; the familiar route defaults to TRUE. Residual learning asserts that
++  supplied statistics come from the selected BED reference and rejects a
++  likelihood dimension exceeding the reference sample count.}
++  \item{cs_threshold,cs_r2}{Marginal-PIP grouping target and strict minimum
++  squared correlation; familiar defaults .9 and .5.}
++  \item{output}{\code{"summary"} or \code{"full"}; both preserve native
++  diagnostics and details.}
++  \item{verbose}{Print the final diagnostic summary.}
++  \item{nthreads}{Local BED decoding threads; BLAS threading is unchanged.}
+   \item{x,object}{A fitted \code{gmap_fit}.}
+   \item{...}{Unused.}
+ }
++\details{
++Supplying sets, algorithm with ordinary beta/SE summaries, familiar iteration
++arguments, or the method spellings bayesC/bayesR selects the familiar route.
++Its regional defaults are 1000 post-burn sweeps, 100 burn-in sweeps and one
++chain. Existing regions/score/information calls retain their advanced defaults.
++Conflicting aliases and nested settings are rejected. No independent genetic
++variance draw is added. Single-chain fits remain provisional.
++
++The returned stat table contains labelled bm/dm effect-mean/PIP columns; csets
++and cs contain named qgg-compatible CS2 groups. In familiar calls, post aliases
++the native parameters table and conv aliases the native diagnostic summary;
++their columns retain native meanings. Native estimates, posterior-set tables,
++diagnostics, effective controls and phase timings remain available. Marginal
++PIP mass is expected active-marker count, not component credible coverage.
++Eigen preparation timings include decomposition and numerical verification.
++}
+ \value{A serializable \code{gmap_fit} containing marker posterior estimates,
+ posterior sets, selected-fit diagnostics, per-threshold eigen attempt
+ diagnostics, learned or fixed parameter summaries, regional
+ metadata, controls and input provenance.}
+ \description{Fits one or more named traits separately within named regions,
+-using exact aligned score/information statistics and sparse LD owned by the
+-supplied Glist. Numerical fitting uses installed public gmap and gbayes
++using aligned score/information statistics and either full BED LD or sparse LD
++owned by the supplied Glist. Numerical fitting uses installed public gmap and gbayes
+ interfaces.}
+diff --git a/packages/gmap/src/Makevars.win b/packages/gmap/src/Makevars.win
+index d376b2a..9f1537f 100644
+--- a/packages/gmap/src/Makevars.win
++++ b/packages/gmap/src/Makevars.win
+@@ -10,7 +10,7 @@ include $(GSUITE_NATIVE_PREFIX)/manifest/qualification-manifest.mk
+ ifneq ($(GSUITE_NATIVE_PROFILE),task-packages-portable)
+ $(error Expected task-packages-portable native profile)
+ endif
+-ifneq ($(GMAP_VERSION):$(GMAP_ABI),0.2.0:1)
++ifneq ($(GMAP_VERSION):$(GMAP_ABI),0.3.0:2)
+ $(error Incompatible gmap version/ABI)
+ endif
+ ifneq ($(GBAYES_VERSION):$(GBAYES_ABI),0.1.0:0)
+@@ -19,7 +19,7 @@ endif
+ ifneq ($(GMAT_VERSION):$(GMAT_ABI),0.6.0:0)
+ $(error Incompatible gmat version/ABI)
+ endif
+-ifneq ($(GSOLVE_VERSION):$(GSOLVE_ABI),0.22.0:4)
++ifneq ($(GSOLVE_VERSION):$(GSOLVE_ABI),0.26.0:4)
+ $(error Incompatible gsolve version/ABI)
+ endif
+ ifneq ($(GBITS_VERSION):$(GBITS_ABI),0.21.0:4)
+diff --git a/packages/gmap/src/RcppExports.cpp b/packages/gmap/src/RcppExports.cpp
+index 141f77b..21b1ec7 100644
+--- a/packages/gmap/src/RcppExports.cpp
++++ b/packages/gmap/src/RcppExports.cpp
+@@ -87,6 +87,24 @@ BEGIN_RCPP
+     return rcpp_result_gen;
+ END_RCPP
+ }
++// cpp_gmap_prepare_matrix
++SEXP cpp_gmap_prepare_matrix(Rcpp::NumericMatrix matrix, Rcpp::DataFrame metadata, Rcpp::NumericVector indices, Rcpp::List region, std::string reference, double sample_count, Rcpp::List eigen_control, bool dense);
++RcppExport SEXP _gmap_cpp_gmap_prepare_matrix(SEXP matrixSEXP, SEXP metadataSEXP, SEXP indicesSEXP, SEXP regionSEXP, SEXP referenceSEXP, SEXP sample_countSEXP, SEXP eigen_controlSEXP, SEXP denseSEXP) {
++BEGIN_RCPP
++    Rcpp::RObject rcpp_result_gen;
++    Rcpp::RNGScope rcpp_rngScope_gen;
++    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type matrix(matrixSEXP);
++    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type metadata(metadataSEXP);
++    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type indices(indicesSEXP);
++    Rcpp::traits::input_parameter< Rcpp::List >::type region(regionSEXP);
++    Rcpp::traits::input_parameter< std::string >::type reference(referenceSEXP);
++    Rcpp::traits::input_parameter< double >::type sample_count(sample_countSEXP);
++    Rcpp::traits::input_parameter< Rcpp::List >::type eigen_control(eigen_controlSEXP);
++    Rcpp::traits::input_parameter< bool >::type dense(denseSEXP);
++    rcpp_result_gen = Rcpp::wrap(cpp_gmap_prepare_matrix(matrix, metadata, indices, region, reference, sample_count, eigen_control, dense));
++    return rcpp_result_gen;
++END_RCPP
++}
+ // cpp_gmap_release_region
+ void cpp_gmap_release_region(SEXP prepared_pointer);
+ RcppExport SEXP _gmap_cpp_gmap_release_region(SEXP prepared_pointerSEXP) {
+@@ -114,6 +132,23 @@ BEGIN_RCPP
+     return rcpp_result_gen;
+ END_RCPP
+ }
++// cpp_gmap_qgg_sets
++Rcpp::List cpp_gmap_qgg_sets(Rcpp::NumericMatrix matrix, Rcpp::CharacterVector marker_ids, Rcpp::NumericVector pip, double threshold, double minimum_r2, double cutoff, std::string method);
++RcppExport SEXP _gmap_cpp_gmap_qgg_sets(SEXP matrixSEXP, SEXP marker_idsSEXP, SEXP pipSEXP, SEXP thresholdSEXP, SEXP minimum_r2SEXP, SEXP cutoffSEXP, SEXP methodSEXP) {
++BEGIN_RCPP
++    Rcpp::RObject rcpp_result_gen;
++    Rcpp::RNGScope rcpp_rngScope_gen;
++    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type matrix(matrixSEXP);
++    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type marker_ids(marker_idsSEXP);
++    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pip(pipSEXP);
++    Rcpp::traits::input_parameter< double >::type threshold(thresholdSEXP);
++    Rcpp::traits::input_parameter< double >::type minimum_r2(minimum_r2SEXP);
++    Rcpp::traits::input_parameter< double >::type cutoff(cutoffSEXP);
++    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
++    rcpp_result_gen = Rcpp::wrap(cpp_gmap_qgg_sets(matrix, marker_ids, pip, threshold, minimum_r2, cutoff, method));
++    return rcpp_result_gen;
++END_RCPP
++}
+ // cpp_gmap_bed_sets
+ Rcpp::List cpp_gmap_bed_sets(SEXP reader_pointer, Rcpp::NumericVector indices, Rcpp::CharacterVector marker_ids, Rcpp::NumericVector pip, Rcpp::List control, int maximum_dimension, bool incomplete_reference);
+ RcppExport SEXP _gmap_cpp_gmap_bed_sets(SEXP reader_pointerSEXP, SEXP indicesSEXP, SEXP marker_idsSEXP, SEXP pipSEXP, SEXP controlSEXP, SEXP maximum_dimensionSEXP, SEXP incomplete_referenceSEXP) {
+@@ -155,8 +190,10 @@ static const R_CallMethodDef CallEntries[] = {
+     {"_gmap_cpp_gmap_release_ld", (DL_FUNC) &_gmap_cpp_gmap_release_ld, 1},
+     {"_gmap_cpp_gmap_read_ld_region", (DL_FUNC) &_gmap_cpp_gmap_read_ld_region, 3},
+     {"_gmap_cpp_gmap_prepare_region", (DL_FUNC) &_gmap_cpp_gmap_prepare_region, 5},
++    {"_gmap_cpp_gmap_prepare_matrix", (DL_FUNC) &_gmap_cpp_gmap_prepare_matrix, 8},
+     {"_gmap_cpp_gmap_release_region", (DL_FUNC) &_gmap_cpp_gmap_release_region, 1},
+     {"_gmap_cpp_gmap_fit_region", (DL_FUNC) &_gmap_cpp_gmap_fit_region, 7},
++    {"_gmap_cpp_gmap_qgg_sets", (DL_FUNC) &_gmap_cpp_gmap_qgg_sets, 7},
+     {"_gmap_cpp_gmap_bed_sets", (DL_FUNC) &_gmap_cpp_gmap_bed_sets, 7},
+     {"_gmap_cpp_gmap_coloc_components", (DL_FUNC) &_gmap_cpp_gmap_coloc_components, 6},
+     {NULL, NULL, 0}
+diff --git a/packages/gmap/src/gmap.cpp b/packages/gmap/src/gmap.cpp
+index 4ca5941..d1240e9 100644
+--- a/packages/gmap/src/gmap.cpp
++++ b/packages/gmap/src/gmap.cpp
+@@ -22,13 +22,13 @@ Rcpp::List version(const char* expected_version, std::uint32_t expected_abi,
+ // [[Rcpp::export]]
+ Rcpp::List cpp_gmap_native_info() {
+   return Rcpp::List::create(
+-    Rcpp::Named("gmap") = version("0.2.0", 1,
++    Rcpp::Named("gmap") = version("0.3.0", 2,
+       gmap::version_string(), gmap::abi_version()),
+     Rcpp::Named("gbayes") = version("0.1.0", 0,
+       gbayes::version_string(), 0),
+     Rcpp::Named("gmat") = version("0.6.0", 0,
+       gmat::version_string(), gmat::abi_version()),
+-    Rcpp::Named("gsolve") = version("0.22.0", 4,
++    Rcpp::Named("gsolve") = version("0.26.0", 4,
+       gsolve::version_string(), gsolve::abi_version()),
+     Rcpp::Named("gbits") = version("0.21.0", 4,
+       gbits_library_version(), gbits_abi_version()));
+diff --git a/packages/gmap/src/mapping.cpp b/packages/gmap/src/mapping.cpp
+index 6269d7b..0329db6 100644
+--- a/packages/gmap/src/mapping.cpp
++++ b/packages/gmap/src/mapping.cpp
+@@ -2,6 +2,7 @@
+ #include <gmap/prepared_region.hpp>
+ #include <gbayes/diagnostics.hpp>
+ #include <gmat/sparse_ld_disk.hpp>
++#include <chrono>
+ 
+ namespace {
+ using namespace Rcpp;
+@@ -192,13 +193,52 @@ SEXP cpp_gmap_prepare_region(SEXP reader_pointer, Rcpp::NumericVector indices,
+   options.verification_tolerance = as<double>(eigen_control["verification_tolerance"]);
+   XPtr<gmat::SparseLdDiskReader> reader(reader_pointer);
+   if (!reader) stop("Expired sparse-LD reader");
+-  auto prepared = gmap::PreparedMappingRegion::from_reference(*reader, r,
++  const bool dense = eigen_control.containsElementNamed("dense") && as<bool>(eigen_control["dense"]);
++  auto prepared = dense ? gmap::PreparedMappingRegion::from_dense_reference(*reader, r,
++    reference, selected, options) : gmap::PreparedMappingRegion::from_reference(*reader, r,
+     reference, selected, 0, nullptr, options);
+   XPtr<gmap::PreparedMappingRegion> pointer(
+     new gmap::PreparedMappingRegion(std::move(prepared)), true);
+   return pointer;
+ }
+ 
++// [[Rcpp::export]]
++SEXP cpp_gmap_prepare_matrix(Rcpp::NumericMatrix matrix, Rcpp::DataFrame metadata,
++    Rcpp::NumericVector indices, Rcpp::List region, std::string reference,
++    double sample_count, Rcpp::List eigen_control, bool dense) {
++  using namespace Rcpp;
++  CharacterVector ids=metadata["marker_id"], chr=metadata["chromosome"],
++    a1=metadata["allele1"], a2=metadata["allele2"];
++  NumericVector positions=metadata["base_pair_position"];
++  const auto n=static_cast<size_t>(ids.size());
++  if(matrix.nrow()!=int(n)||matrix.ncol()!=int(n)||indices.size()!=int(n) ||
++      !std::isfinite(sample_count)||sample_count<2||sample_count!=std::floor(sample_count))
++    stop("Invalid dense region dimensions or reference sample count");
++  gmat::SparseLdRegion data;
++  data.reference_sample_count=static_cast<uint64_t>(sample_count);
++  data.matrix=as<std::vector<double>>(matrix);
++  std::vector<uint64_t> selected;
++  for(size_t j=0;j<n;++j) {
++    const double index=indices[j];
++    if(!std::isfinite(index)||index<1||index!=std::floor(index))stop("Invalid dense region index");
++    selected.push_back(static_cast<uint64_t>(index-1));
++    data.markers.push_back({as<std::string>(ids[j]),as<std::string>(chr[j]),
++      static_cast<uint64_t>(positions[j]),as<std::string>(a1[j]),as<std::string>(a2[j]),0,selected.back()});
++  }
++  gmap::Region r;
++  r.id=as<std::string>(region["id"]);r.chromosome=as<std::string>(region["chromosome"]);
++  r.assembly=as<std::string>(region["assembly"]);
++  r.start=as<double>(region["start"]);r.end=as<double>(region["end"]);
++  gsolve::SymmetricEigensystemOptions options;
++  options.maximum_dimension=as<double>(eigen_control["maximum_dimension"]);
++  options.symmetry_tolerance=as<double>(eigen_control["symmetry_tolerance"]);
++  options.verification_tolerance=as<double>(eigen_control["verification_tolerance"]);
++  auto prepared=dense ? gmap::PreparedMappingRegion::from_dense_ld(std::move(data),r,
++    reference,selected,false,options) : gmap::PreparedMappingRegion::from_ld(std::move(data),r,
++    reference,selected,false,0,nullptr,options);
++  return XPtr<gmap::PreparedMappingRegion>(new gmap::PreparedMappingRegion(std::move(prepared)),true);
++}
++
+ // [[Rcpp::export]]
+ void cpp_gmap_release_region(SEXP prepared_pointer) {
+   Rcpp::XPtr<gmap::PreparedMappingRegion> prepared(prepared_pointer);
+@@ -221,9 +261,11 @@ Rcpp::List cpp_gmap_fit_region(SEXP prepared_pointer, Rcpp::DataFrame stat,
+   table.trait = trait;
+   table.effect_units = "caller-supplied design scale";
+   table.provenance = "standalone gmap exact sufficient statistics";
++  const auto binding_start=std::chrono::steady_clock::now();
+   auto retention = prepared->retention(retained_positive_mass);
+   auto bound = prepared->bind(table, retention,
+     retention.retained_rank < retention.full_rank);
++  const double binding_seconds=std::chrono::duration<double>(std::chrono::steady_clock::now()-binding_start).count();
+   const double residual = as<double>(prior["residual_variance"]);
+   const double effect = as<double>(prior["effect_variance"]);
+   const bool learn_residual = as<bool>(control["estimate_residual_variance"]);
+@@ -257,6 +299,8 @@ Rcpp::List cpp_gmap_fit_region(SEXP prepared_pointer, Rcpp::DataFrame stat,
+     auto fit = gmap::fit_prepared_multi_effect(bound, p, c,
+       component_controls(as<List>(control["sets"])));
+     auto output = mapping_result(fit, retention);
++    output["timings_seconds"]=List::create(_["binding"]=binding_seconds,
++      _["sampling"]=fit.sampling_seconds,_["sets"]=fit.sets_seconds);
+     const auto& q = fit.posterior;
+     List components(q.components.size());
+     for (size_t i = 0; i < q.components.size(); ++i) {
+@@ -317,7 +361,17 @@ Rcpp::List cpp_gmap_fit_region(SEXP prepared_pointer, Rcpp::DataFrame stat,
+     p.inclusion_probability = as<double>(prior["inclusion_probability"]);
+     auto fit = gmap::fit_prepared_bayesc(bound, p, c, learning,
+       marginal_controls(as<List>(control["sets"])));
++    if(control.containsElementNamed("qgg_sets") && as<bool>(control["qgg_sets"])) {
++      const auto grouping_start=std::chrono::steady_clock::now();
++      fit.sets=gmap::make_qgg_marginal_sets(fit.posterior.pip,*bound.ld,
++        marginal_controls(as<List>(control["sets"])));
++      fit.sets.trait=fit.posterior.trait;fit.sets.provenance=fit.posterior.provenance;
++      fit.sets.truncated_likelihood=fit.posterior.truncated_likelihood;
++      fit.sets_seconds+=std::chrono::duration<double>(std::chrono::steady_clock::now()-grouping_start).count();
++    }
+     auto output = mapping_result(fit, retention);
++    output["timings_seconds"]=List::create(_["binding"]=binding_seconds,
++      _["sampling"]=fit.sampling_seconds,_["sets"]=fit.sets_seconds);
+     List chains(fit.posterior.chains.size());
+     for (size_t i = 0; i < fit.posterior.chains.size(); ++i)
+       chains[i] = chain(fit.posterior.chains[i]);
+@@ -334,7 +388,17 @@ Rcpp::List cpp_gmap_fit_region(SEXP prepared_pointer, Rcpp::DataFrame stat,
+   p.variance_multipliers = as<std::vector<double>>(prior["variance_multipliers"]);
+   auto fit = gmap::fit_prepared_bayesr(bound, p, c, learning,
+     marginal_controls(as<List>(control["sets"])));
++  if(control.containsElementNamed("qgg_sets") && as<bool>(control["qgg_sets"])) {
++    const auto grouping_start=std::chrono::steady_clock::now();
++    fit.sets=gmap::make_qgg_marginal_sets(fit.posterior.pip,*bound.ld,
++      marginal_controls(as<List>(control["sets"])));
++    fit.sets.trait=fit.posterior.trait;fit.sets.provenance=fit.posterior.provenance;
++    fit.sets.truncated_likelihood=fit.posterior.truncated_likelihood;
++    fit.sets_seconds+=std::chrono::duration<double>(std::chrono::steady_clock::now()-grouping_start).count();
++  }
+   auto output = mapping_result(fit, retention);
++  output["timings_seconds"]=List::create(_["binding"]=binding_seconds,
++    _["sampling"]=fit.sampling_seconds,_["sets"]=fit.sets_seconds);
+   List chains(fit.posterior.chains.size());
+   for (size_t i = 0; i < fit.posterior.chains.size(); ++i) {
+     const auto& x = fit.posterior.chains[i];
+@@ -352,6 +416,22 @@ Rcpp::List cpp_gmap_fit_region(SEXP prepared_pointer, Rcpp::DataFrame stat,
+   return output;
+ }
+ 
++// [[Rcpp::export]]
++Rcpp::List cpp_gmap_qgg_sets(Rcpp::NumericMatrix matrix,
++    Rcpp::CharacterVector marker_ids, Rcpp::NumericVector pip,
++    double threshold, double minimum_r2, double cutoff, std::string method) {
++  using namespace Rcpp;
++  if(method!="CS2"&&method!="CS3")stop("cs_method must be CS2 or CS3");
++  gmap::RegionalLd ld{as<std::vector<std::string>>(marker_ids),
++    as<std::vector<double>>(matrix),false};
++  if(matrix.nrow()!=marker_ids.size()||matrix.ncol()!=marker_ids.size())
++    stop("LD dimensions differ from marker IDs");
++  gmap::MarginalSetControls c;
++  c.coverage=threshold;c.min_r2=minimum_r2;c.pip_cutoff=cutoff;
++  c.lead=method=="CS3" ? gmap::LeadSelection::ld_pip : gmap::LeadSelection::pip;
++  return sets(gmap::make_qgg_marginal_sets(as<std::vector<double>>(pip),ld,c));
++}
++
+ // [[Rcpp::export]]
+ Rcpp::List cpp_gmap_bed_sets(SEXP reader_pointer, Rcpp::NumericVector indices,
+     Rcpp::CharacterVector marker_ids, Rcpp::NumericVector pip,
+diff --git a/tools/build/build_workflow.ps1 b/tools/build/build_workflow.ps1
+index f5c3051..ad7a17a 100644
+--- a/tools/build/build_workflow.ps1
++++ b/tools/build/build_workflow.ps1
+@@ -386,9 +386,13 @@ try {
+     )
+     $nativeProfile = if ($TaskPackagesPortable) { "task-packages-portable" } else { "suite-full" }
+     $capabilityState = if ($TaskPackagesPortable) { "OFF" } else { "ON" }
++    $solverVersionFile = Join-Path $directories.prefix "lib\cmake\gsolve\gsolveConfigVersion.cmake"
++    $solverVersionMatch = [regex]::Match((Get-Content -LiteralPath $solverVersionFile -Raw), 'set\(PACKAGE_VERSION "([0-9.]+)"\)')
++    if (-not $solverVersionMatch.Success) { throw "Installed gsolve version is unavailable." }
++    $installedSolverVersion = $solverVersionMatch.Groups[1].Value
+     $qualificationLines = @(
+         "GSUITE_QUALIFICATION_ONLY=true", "GSUITE_NATIVE_PROFILE=$nativeProfile",
+-        "GSOLVE_VERSION=0.22.0", "GSOLVE_ABI=4",
++        "GSOLVE_VERSION=$installedSolverVersion", "GSOLVE_ABI=4",
+         "GSOLVE_CHOLMOD=$capabilityState", "GSOLVE_MKL_DENSE_KERNELS=$capabilityState",
+         "GSOLVE_PARDISO=$capabilityState", "GSOLVE_OPENMP=ON",
+         "GREML_VERSION=0.68.0", "GREML_ABI=40",
+@@ -399,7 +403,7 @@ try {
+         $qualificationLines += @(
+             "GCORR_VERSION=0.1.0", "GCORR_ABI=0", "GCORR_OPENMP=ON",
+             "GSCORE_VERSION=0.1.0", "GSCORE_ABI=0", "GSCORE_SUMMARY=ON",
+-            "GMAP_VERSION=0.2.0", "GMAP_ABI=1",
++            "GMAP_VERSION=0.3.0", "GMAP_ABI=2",
+             "GLMA_VERSION=0.1.0", "GLMA_ABI=0",
+             "GSEA_VERSION=0.1.0", "GSEA_ABI=0"
+         )

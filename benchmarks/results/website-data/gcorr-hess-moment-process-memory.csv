@@ -1,0 +1,2 @@
+peak_working_set_GiB,sampled_peak_private_GiB,sampling_interval_ms,scope,context
+4.94551,14.3337,100,R process: saved-moment checks plus automatic genome preparation/fits; monitor began during first cache read,Single confirmation run; documentation rendering and focused native compilation ran concurrently during preparation

@@ -1,0 +1,122 @@
+gmap 0.0.1 C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gmap
+Package: gmap
+Type: Package
+Title: Focused Fine-Mapping and Colocalisation Workflows
+Version: 0.0.1
+Authors@R: person("Peter", "Soerensen", role = c("aut", "cre"), email =
+        "peter.soerensen@example.invalid")
+Description: Private independently installable interfaces to selected
+        public native gmap workflows. Provides deterministic two-trait
+        colocalisation from ordinary aligned summary-statistics data
+        frames and Glist-owned preparation of ordinary
+        linear-regression cross-products, plus regional multi-effect,
+        BayesC and BayesR mapping against Glist-owned sparse LD.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: gbase (>= 0.0.1), Rcpp
+LinkingTo: Rcpp
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
+SystemRequirements: C++17, gmap 0.2.0 (ABI 1), gbayes 0.1.0 (ABI 0),
+        gmat 0.6.0 (ABI 0), gsolve 0.22.0 (ABI 4), gbits 0.21.0 (ABI 4)
+NeedsCompilation: yes
+RoxygenNote: 7.3.3
+Packaged: 2026-09-30 20:12:36 UTC; au223366
+Author: Peter Soerensen [aut, cre]
+Maintainer: Peter Soerensen <peter.soerensen@example.invalid>
+Built: R 4.4.1; x86_64-w64-mingw32; 2026-09-30 20:12:38 UTC; windows
+Archs: x64
+
+-- File: C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gmap/Meta/package.rds 
+$gmap
+$gmap$expected_version
+[1] "0.2.0"
+
+$gmap$expected_abi
+[1] 1
+
+$gmap$runtime_version
+[1] "0.2.0"
+
+$gmap$runtime_abi
+[1] 1
+
+$gmap$compatible
+[1] TRUE
+
+
+$gbayes
+$gbayes$expected_version
+[1] "0.1.0"
+
+$gbayes$expected_abi
+[1] 0
+
+$gbayes$runtime_version
+[1] "0.1.0"
+
+$gbayes$runtime_abi
+[1] 0
+
+$gbayes$compatible
+[1] TRUE
+
+
+$gmat
+$gmat$expected_version
+[1] "0.6.0"
+
+$gmat$expected_abi
+[1] 0
+
+$gmat$runtime_version
+[1] "0.6.0"
+
+$gmat$runtime_abi
+[1] 0
+
+$gmat$compatible
+[1] TRUE
+
+
+$gsolve
+$gsolve$expected_version
+[1] "0.22.0"
+
+$gsolve$expected_abi
+[1] 4
+
+$gsolve$runtime_version
+[1] "0.22.0"
+
+$gsolve$runtime_abi
+[1] 4
+
+$gsolve$compatible
+[1] TRUE
+
+
+$gbits
+$gbits$expected_version
+[1] "0.21.0"
+
+$gbits$expected_abi
+[1] 4
+
+$gbits$runtime_version
+[1] "0.21.0"
+
+$gbits$runtime_abi
+[1] 4
+
+$gbits$compatible
+[1] TRUE
+
+
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gmap/libs/x64/gbits.dll c5fc40361a340d47bdb4cd0245a116e8
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gmap/libs/x64/gmap.dll 9357744192c567fcd201abf651ccbe09
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gmap/libs/x64/libgbayes.dll 4ac187ad7993648301cc4d4471a6dbb4
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gmap/libs/x64/libgmap.dll adb3a5485229bd84f3ba0690022bf278
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gmap/libs/x64/libgmat.dll a08dd0cbbc86ea74e754ef597c4bec68
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gmap/libs/x64/libgsolve.dll b2fd3bc3457ad1d4ea3cc4d23117569d

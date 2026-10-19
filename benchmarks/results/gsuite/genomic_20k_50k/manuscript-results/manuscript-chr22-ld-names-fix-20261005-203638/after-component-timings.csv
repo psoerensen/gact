@@ -1,0 +1,5 @@
+"component","user_seconds","system_seconds","elapsed_seconds"
+"identity open",0.26,0.04,0.31
+"full payload inspection",0.72,1.14,2.19
+"LD scores including validated traversal",1.27,1.1,2.39
+"MD5 file checksums",1.67,1.19,2.89

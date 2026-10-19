@@ -1,0 +1,4 @@
+implementation,stage,operation_seconds,serialization_seconds,process_wall_seconds,peak_working_set_bytes,source,status,warnings
+earlier version,database_fresh,544.2,12.48,575.4050446,2873872384,build\benchmarks\manuscript-20261004-143135\database-1,,
+setup restart candidate,database_fresh,1567.64,43.45,1619.7645616,3042394112,build\benchmarks\manuscript-setup-restart-20261005-185311\database_fresh-1,completed,strings not representable in native encoding will be translated to UTF-8
+setup restart candidate,database_reuse,857.93,49.62,912.3359326,1147854848,build\benchmarks\manuscript-setup-restart-20261005-185311\database_reuse-1,completed,

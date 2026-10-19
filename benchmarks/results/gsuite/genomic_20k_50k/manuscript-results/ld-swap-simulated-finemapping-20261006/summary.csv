@@ -1,0 +1,5 @@
+"stage","probability","repeats","median_seconds","minimum_seconds","maximum_seconds","median_peak_rss_gib","attempted","accepted"
+"cmp_suite_genome",0,3,6.61,6.2,9.74,0.814174652099609,0,0
+"cmp_suite_regional",0,3,15.89,14.92,22.95,0.493095397949219,0,0
+"cmp_suite_genome",0.05,3,8.17,6.08,8.2,0.814350128173828,0,0
+"cmp_suite_regional",0.05,3,20.06,15.77,20.73,0.491222381591797,0,0

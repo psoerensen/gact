@@ -1,0 +1,17 @@
+List of 16
+ $ markers                            : int 141121
+ $ samples                            : num 503
+ $ window                             : int 1000
+ $ r2                                 : num 0
+ $ sampled_markers                    : int 192
+ $ sampled_pairs                      : num 36864
+ $ max_absolute_correlation_difference: num 2.98e-08
+ $ maximum_common_ld_score_difference : num 1.38e-05
+ $ qgg_ld_score_markers               : int 141121
+ $ gbase_ld_score_markers             : int 141121
+ $ missing_qgg_ld_score_markers       : chr(0) 
+ $ sampled_qgg_nonunit_diagonal       : int 0
+ $ qgg_ld_bytes                       : num 1.13e+09
+ $ gbase_ld_bytes                     : num 1.13e+09
+ $ gbase_nnz                          : num 1.41e+08
+ $ note                               : chr "Timing includes public sparse-LD construction, persistence and ordinary LD scores; input preparation and final "| __truncated__

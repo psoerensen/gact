@@ -1,0 +1,347 @@
+{
+  "purpose": "Preserve pre-setup-restart manuscript timing evidence; no new performance measurements",
+  "pre_milestone_gact_commit": "2510035",
+  "qualification": "This is the source checkpoint before the restart milestone, not an assertion that every historical measurement ran at that commit. Retain the original per-run provenance.",
+  "files": [
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/binary-manifest-check.csv",
+      "bytes": 6498,
+      "sha256": "9f51b63eb2198831233b5a1c4fed612ef33fd3936093e461048b3e294fea3075"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/build-cache-settings.txt",
+      "bytes": 618,
+      "sha256": "76dbda056d25a72458cfaf014bcb9688778bae19df52812aca95d32695303439"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/database-checks.txt",
+      "bytes": 141,
+      "sha256": "ab229127c9d6823e630e8a5dd12e54be291fa73ba3e5d6607600e36bd8eee003"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/database-downloads.csv",
+      "bytes": 2752,
+      "sha256": "5abb29067524be8eda7af83cd8c4d2fd2664645f686e728f7a5ffcea22bdab0a"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/database-files.csv",
+      "bytes": 14955,
+      "sha256": "983e63db9e8194ef1c9a0abd738329601cfab7ec6e781fb89e5b0fb8a1c59f1d"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/database-measurements.csv",
+      "bytes": 463,
+      "sha256": "33b64180f1d20d26e6cfebeb15f462be932a13a643e2e9b8607964e662d2b11f"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/database-studies.csv",
+      "bytes": 1164,
+      "sha256": "a2c14a4524326f6af4127029bca5dcfeb0e9fba2f71e735e0180d8a547a64561"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/driver-manifest.csv",
+      "bytes": 293,
+      "sha256": "8fcc6fbfa98499d0b0e04fd51678b20e18e462e2550c3aa91b0f333bea218e81"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gact-provenance.txt",
+      "bytes": 1286,
+      "sha256": "9a5fb7911bdb4c450ddef2442d34d3589be6bd229b52c8566fb7331870c53d34"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gbase-build-manifest.tsv",
+      "bytes": 1691,
+      "sha256": "d32f1470f4b6fbd81c00291a774be235c201b3fcd7c65f36def9676c25b20af2"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gbase-provenance.txt",
+      "bytes": 2373,
+      "sha256": "561955f08ca27e9e8099a78082c1e92625b6ab522317d62b9167068ee01ec883"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gbayes-build-manifest.tsv",
+      "bytes": 2654,
+      "sha256": "9cda066b24913bafbd0c4950e83776dcf8ba1c01d8a4feeb1d50ec73a760dfcc"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gbayes-provenance.txt",
+      "bytes": 2873,
+      "sha256": "11b01f0e9ba5d258c7c267d9f0f57b6b04cadb4e74b94b5a053c7eda9575e756"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gene-set-size-audit.csv",
+      "bytes": 244,
+      "sha256": "d8fc469810d785fd1f62564c0cca8d318212246e4e43576e0dde7b9dc4e7896c"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/glma-build-manifest.tsv",
+      "bytes": 2825,
+      "sha256": "7f9cae87fe2588092e91a5b96a2517914beb31d01e4211d829fae6fca507e2d0"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/glma-provenance.txt",
+      "bytes": 3580,
+      "sha256": "6223b59c42b2e136293feff77fce286eb7a797b731b066ffa5b9c2241a25dc8a"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gmap-build-manifest.tsv",
+      "bytes": 2505,
+      "sha256": "6196d3e2d11d84d5b49b736d201451f1305c710560c8815ced597952fb7c3898"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gmap-provenance.txt",
+      "bytes": 3098,
+      "sha256": "d76e28082fd4a3a66fd6787424a6413ce7383d7f3ffaed72be7debbf48eb876d"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gscore-build-manifest.tsv",
+      "bytes": 2654,
+      "sha256": "66eb2f0d3b802b215aea27e4066de7f95200750ed211641d7f30857fe62f1550"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gscore-provenance.txt",
+      "bytes": 3163,
+      "sha256": "4b3b764e5845846760b9d1a4edbbecd69532289538b45ca841dfbd042eb7a51c"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gsea-build-manifest.tsv",
+      "bytes": 2829,
+      "sha256": "84b49d24b7c1e6653033c7db30a55bc5ff9ea91a01958a2124a648fad620d8fd"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/gsea-provenance.txt",
+      "bytes": 2497,
+      "sha256": "7c9f64bfef1a3fc10c401fb7fdb4a8a39ba39e7be4ebf14596a49c758fae8691"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/hardware.json",
+      "bytes": 719,
+      "sha256": "411fa699f17d3d5c47c342d826775a97b34a81ffbd64ff14357891b9e9e2e217"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/input-manifest.csv",
+      "bytes": 1824,
+      "sha256": "befe816d8dacac691fbb150527820dfaf7991437eed6166490eab32268b18e0d"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/measurements.csv",
+      "bytes": 1850,
+      "sha256": "eca5768163981fc22ada38e45ee8598a84b1d393dc4564adae683c6ab1ac8c41"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/output-checks.csv",
+      "bytes": 434,
+      "sha256": "234048010a204248b1f330de5f10fced329c4d4604a896dc7e03ca71ac1f0a54"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/primary-one-thread-measurements.csv",
+      "bytes": 1057,
+      "sha256": "96c15327604ffc378163deecfc1378f68f1f619bd7bf57cccd1ffbd4f959b0cf"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/README.md",
+      "bytes": 10898,
+      "sha256": "8886c11de8b17a234ecd820b70380fcfd61db890b47f3dac8ab07d47d38bb7d9"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/session.txt",
+      "bytes": 427,
+      "sha256": "12e71814b0bb3faae17bcc80d9e61721dccd6f7783c0e3dfd4006bc1daf63955"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004/source-revisions.txt",
+      "bytes": 1087,
+      "sha256": "095cf5fb4006940362575e132c42191fed5bdd522b1049e5c2d10aef22274ad7"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-qgg-website/installed-qgg-checkStat.R",
+      "bytes": 6472,
+      "sha256": "76f6692143fec23679d3cdd266553739bcf2ab79e0e0dfe056b443278c95689d"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-qgg-website/installed-qgg-gbayes.R",
+      "bytes": 15670,
+      "sha256": "c0361b1ac0a4202d2c538f7356846591dcd4a874b59381065684c57a7ec38471"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-qgg-website/installed-qgg-getSparseLD.R",
+      "bytes": 1115,
+      "sha256": "f79b954acbc10a17947f61bb958f776872b53cc3c530c129f44a053cac9c9251"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-qgg-website/installed-qgg-gmap.R",
+      "bytes": 20927,
+      "sha256": "211b73915cfb4658d32fa3959b59811c547e213695838881011695d6fc2753f9"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-qgg-website/installed-qgg-magma.R",
+      "bytes": 3180,
+      "sha256": "4797074a91584780334a76aa86eacee7c6d67d618bcea9ca8748382d4260a75b"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-qgg-website/installed-qgg-mtblr.R",
+      "bytes": 4354,
+      "sha256": "a6fdc82ca49e90b6ff3490567a0aaadc1b62d49ddb6273ab1503dbec2c3ef6a5"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-qgg-website/installed-qgg-pchisqsum.R",
+      "bytes": 399,
+      "sha256": "e2396d78659aa8de322d7ff80343572aace8c8935cf768204ac984dc948208ae"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-qgg-website/raw-gene-size-audit.csv",
+      "bytes": 794393,
+      "sha256": "dfd8e329830d3664b835ba7638ec6b3fe2df2f3d5ff1e5291a716c8fc55070d7"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-qgg-website/README.md",
+      "bytes": 4626,
+      "sha256": "fd957b193514876175ffc1e4e6c9c23ade92a2a6b41d559c226319ed01ce2ca7"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/build-cache-settings.txt",
+      "bytes": 618,
+      "sha256": "76dbda056d25a72458cfaf014bcb9688778bae19df52812aca95d32695303439"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/driver-manifest.csv",
+      "bytes": 487,
+      "sha256": "0f81f828f47b48ac74788fb536f563923d147aeccfa56280802f0a7d9eb6637a"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/file-inventory.csv",
+      "bytes": 7656,
+      "sha256": "8f5af4638048e7e52ce6863ffc11df4ee3dd11e68d925b58581c31f7cc26310f"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/gbase-provenance.txt",
+      "bytes": 2349,
+      "sha256": "dc77148dd373cc7af4e3d2b4293f76ed70ab2a274bb095f4a60bf369e614ae2b"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/gbayes-provenance.txt",
+      "bytes": 2849,
+      "sha256": "0a680e95756806e2923a949e422c9362e097bab8895f1c78f415cc0c572c4a81"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/gene-set-manifest.csv",
+      "bytes": 52047,
+      "sha256": "5df92b26ca08cb4d993d2002c7fd54411daea70718deee4e7f6d94a70cdb7035"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/glma-provenance.txt",
+      "bytes": 3556,
+      "sha256": "640a605521cc6341c6e54ac57469ab1dcc1c2c396ef59ae6d7b2f87b17a0a679"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/gmap-provenance.txt",
+      "bytes": 3074,
+      "sha256": "9ae6519cc7145db7238c7dbc0ad0830e94fdc12811b5e1302cded0ead4114824"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/gscore-provenance.txt",
+      "bytes": 3139,
+      "sha256": "479a0748d569263fdac998d91ce2b200011c4117ef6b8feb3b04e4d279168600"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/gsea-provenance.txt",
+      "bytes": 2473,
+      "sha256": "cb8f8c1255b859cd5ba2d261b0d647b361d60a785acef0769554d3c7cd284d0d"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/gsim-provenance.txt",
+      "bytes": 1339,
+      "sha256": "73f49811da327a3da76eb87bee679df421988c85ae66423bf67eff029f3afeed"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/hardware.json",
+      "bytes": 719,
+      "sha256": "6164d043487ff1569ba5849d42770fbade7d9ce868477c8f66d3ad040d20deb7"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/input-manifest.csv",
+      "bytes": 495,
+      "sha256": "7ff2dfb5878a272cb0bfea37ed092982078a8e8e25fc400b98f865991e0cb523"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/mapping-diagnostics.csv",
+      "bytes": 5962,
+      "sha256": "95ad25661ce89cc5c2d231ffa6a19e19a15bc9a141b79299aa94056e5591cbb2"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/mapping-eigen-attempts.csv",
+      "bytes": 14472,
+      "sha256": "31753206154b17e5faf2122a7e01dd130d586e1e7676634d5a541484228df466"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/measurements.csv",
+      "bytes": 3593,
+      "sha256": "edb051b81770ec9c6efc43606eca49726601e30bcb7b1e64164ab01cc500e3d8"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/output-checks.txt",
+      "bytes": 184,
+      "sha256": "607ee922d72826632662e3f22c43240fc80c640e3a67fba31a69dba3727cef1b"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/README.md",
+      "bytes": 8596,
+      "sha256": "543ab999f2ce3beab686da212a5430294bc185bc07f7dacb221c53eaa12bce47"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/scoring-weight-provenance.txt",
+      "bytes": 77,
+      "sha256": "5140018b9b406d033ceb92277f706bad3caddda9ae35d025879decbe3dc7fc96"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/source-revisions.txt",
+      "bytes": 1208,
+      "sha256": "60a142a3ed1d007d5989c343eff50e3c4f8dfe6d99f72339d9b8c0c5b8ff90d5"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/vegas-numerical-diagnostics.csv",
+      "bytes": 96178,
+      "sha256": "5ee59f2f7c08ed5c6e083f9fddd51a071f7fbe81378cf1a3d77dbd9064330b82"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261004-real-1000g/workload.txt",
+      "bytes": 511,
+      "sha256": "40e6e590779ca3c12ce3a1144b3148b94182ef41d6172db88383f115b4c043bf"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261005-structured/completed-stage-measurements-current.csv",
+      "bytes": 9417,
+      "sha256": "ff7478d3c63154e1077647669ab65a6a7ca929b20290a1c7a5705fe3fe98fb8f"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261005-structured/completed-stage-measurements.csv",
+      "bytes": 2302,
+      "sha256": "980f9f692dbbd5dbfa4bc2916593adea64ba62f19380270f3dfc2f52489f6b57"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261005-structured/gact-benchmark-current-overview.docx",
+      "bytes": 42350,
+      "sha256": "b8bb731ca63a69912813f78f7793e872e58881eb5d0a10744fe924bb44a83c58"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261005-structured/gene-building-block-details-1thread.csv",
+      "bytes": 82212,
+      "sha256": "7bf2c2ebd03f8622fd1500fae191bef235de4b1a3987106a2c655c772ae96937"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261005-structured/gene-building-block-details.csv",
+      "bytes": 83031,
+      "sha256": "a4a0462b6a1927644ff5e2a0c6144c976cdd1385c14e7b6e65d258c9e8f6c94c"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261005-structured/gene-building-block-summary-1thread.csv",
+      "bytes": 742,
+      "sha256": "aad2d5d00227386d6968c2403bbef97c60cd3df49aca3e8e085f2c18e0718951"
+    },
+    {
+      "path": "benchmarks/genomic_20k_50k/manuscript-results/20261005-structured/gene-building-block-summary.csv",
+      "bytes": 899,
+      "sha256": "18f8786dd48e2f0a501ecfa7f29d0251bf015941d1d3d684f18cd589a833e830"
+    }
+  ]
+}

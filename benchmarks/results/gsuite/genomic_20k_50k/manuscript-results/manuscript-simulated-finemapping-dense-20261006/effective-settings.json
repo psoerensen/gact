@@ -1,0 +1,160 @@
+{
+  "gbase": {
+    "gmat": {
+      "header_version": "0.6.0",
+      "header_abi": 0,
+      "runtime_version": "0.6.0",
+      "runtime_abi": 0
+    },
+    "gbits": {
+      "header_version": "0.21.0",
+      "header_abi": 4,
+      "runtime_version": "0.21.0",
+      "runtime_abi": 4
+    },
+    "gsolve": {
+      "header_version": "0.26.0",
+      "header_abi": 4,
+      "runtime_version": "0.26.0",
+      "runtime_abi": 4
+    }
+  },
+  "gmap": {
+    "gmap": {
+      "expected_version": "0.3.0",
+      "expected_abi": 2,
+      "runtime_version": "0.3.0",
+      "runtime_abi": 2,
+      "compatible": true
+    },
+    "gbayes": {
+      "expected_version": "0.1.0",
+      "expected_abi": 0,
+      "runtime_version": "0.1.0",
+      "runtime_abi": 0,
+      "compatible": true
+    },
+    "gmat": {
+      "expected_version": "0.6.0",
+      "expected_abi": 0,
+      "runtime_version": "0.6.0",
+      "runtime_abi": 0,
+      "compatible": true
+    },
+    "gsolve": {
+      "expected_version": "0.26.0",
+      "expected_abi": 4,
+      "runtime_version": "0.26.0",
+      "runtime_abi": 4,
+      "compatible": true
+    },
+    "gbits": {
+      "expected_version": "0.21.0",
+      "expected_abi": 4,
+      "runtime_version": "0.21.0",
+      "runtime_abi": 4,
+      "compatible": true
+    }
+  },
+  "gbayes": {
+    "header_version": "0.1.0",
+    "runtime_version": "0.1.0",
+    "abi_contract": 0,
+    "headers_match_runtime": true,
+    "gmat_version": "0.6.0",
+    "gmat_abi": 0,
+    "gsolve_version": "0.26.0",
+    "gsolve_abi": 4,
+    "gbits_version": "0.21.0",
+    "gbits_abi": 4,
+    "gscore_version": "0.1.0",
+    "gscore_abi": 0
+  },
+  "regional_prior": {
+    "residual_variance": 0.5748,
+    "effect_variance": 0.0115,
+    "inclusion_probability": 0.01,
+    "effect_variance_prior": {
+      "df": 4,
+      "scale": 0.0057
+    },
+    "residual_variance_prior": {
+      "df": 4,
+      "scale": 0.2874
+    },
+    "weight_prior": [1, 1]
+  },
+  "regional_control": {
+    "burnin": 100,
+    "sampling_sweeps": 1000,
+    "thinning": 1,
+    "seeds": 10,
+    "retain_diagnostics": true,
+    "pip_range_threshold": 0.1,
+    "estimate_effect_variance": true,
+    "estimate_weights": true,
+    "estimate_residual_variance": true,
+    "sets": {
+      "coverage": 0.9,
+      "min_r2": 0.5,
+      "pip_cutoff": 0.001,
+      "lead": "pip",
+      "remove": "ld_neighborhood",
+      "mode": "neighborhood",
+      "max_sets": 2147483647,
+      "allow_incomplete": false,
+      "signal_coverage": 0.95,
+      "min_signal_pip": 0.05
+    },
+    "eigen": {
+      "maximum_dimension": 2048,
+      "symmetry_tolerance": 1.4211e-14,
+      "verification_tolerance": 1e-10,
+      "retained_positive_mass": 1,
+      "select_on_convergence": false
+    },
+    "qgg_sets": true
+  },
+  "genome_prior": {
+    "residual_variance": 0.5,
+    "effect_variance": 0.0132,
+    "effect_variance_prior": {
+      "df": 4,
+      "scale": 0.0066
+    },
+    "residual_variance_prior": {
+      "df": 4,
+      "scale": 0.25
+    },
+    "weight_prior": [1, 1],
+    "inclusion_probability": 0.001
+  },
+  "genome_control": {
+    "burnin": 0,
+    "sampling_sweeps": 100,
+    "thinning": 1,
+    "seeds": 20261005,
+    "threads": 1,
+    "retain_diagnostics": true,
+    "probability": 0.95,
+    "estimate_effect_variance": true,
+    "estimate_residual_variance": true,
+    "estimate_weights": true,
+    "ld_swap": {
+      "probability": 0,
+      "minimum_r2": 0.8,
+      "maximum_friends": 50,
+      "moves": 1
+    },
+    "residual_policy": "reference_ld",
+    "residual_adjustment": 0.9,
+    "normalization": {
+      "response_ss": 4998,
+      "likelihood_dimension": 4998,
+      "in_sample_ld": false
+    },
+    "sample_size": "common",
+    "storage": "memory",
+    "max_ld_entries": 100000000
+  }
+}

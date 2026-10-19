@@ -1,0 +1,12 @@
+List of 11
+ $ source          : chr "real 1000G EUR phased chr22; gsim reference-conditioned founders"
+ $ region          : chr "22:20000000-22200000 GRCh37"
+ $ raw_markers     : int 48088
+ $ retained_markers: int 5360
+ $ maf_min         : num 0.01
+ $ n               : num 20000
+ $ reference_n     : num 18000
+ $ gene_count      : num 1000
+ $ gene_size       : num 274
+ $ gene_definition : chr "size-controlled contiguous windows, not biological gene annotations"
+ $ seed            : num 20260930

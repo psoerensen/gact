@@ -1,0 +1,67 @@
+{
+  "consolidated_date": "2026-10-19",
+  "new_analyses_run": false,
+  "sources": [
+    {
+      "path": "results/gsuite/genomic_20k_50k/manuscript-results/20261005-structured/completed-stage-measurements-current.csv",
+      "sha256": "ff7478d3c63154e1077647669ab65a6a7ca929b20290a1c7a5705fe3fe98fb8f"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/README.md",
+      "sha256": "0b0d93c1265320c6741838f15c9cf0720940b6037196d9fcbc1a367a3f9ff48f"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/median-stage-measurements.csv",
+      "sha256": "4598318f81dfca09164b8745a8cc11147d4ce7c9232525d4d9b58c42b26cc79f"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/manuscript-results/manuscript-vegas-complete-20261005/README.md",
+      "sha256": "79f265e1230bf80314ef123bbce2bb44cd976cce244446bc0a600703d9297a0a"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/manuscript-results/manuscript-vegas-complete-20261005/phase-summary.csv",
+      "sha256": "3eada2341533512313f286d603f71323bde8dd5712fdb6bee0a5aa85efb883a7"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/results/provenance-4cores.csv",
+      "sha256": "33e57a64e3ab7f3e765bf3c828990abb0a576df7d15a182cb26ea7b2e45aad36"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/results/provenance.csv",
+      "sha256": "6210db7818f7d4527256c50dc5bf76803b2b3a2b5ca19c661fa22df311410134"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/results/summary-4cores.csv",
+      "sha256": "865c2ab2405f6b9c5c5cc8251ca0b43223532ec998c1741771cd0ac74ce3f912"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/results/summary.csv",
+      "sha256": "aa248598002c8cab3ea82c828eddd4626ae60814d1109ddd35ab68f8925374c5"
+    },
+    {
+      "path": "results/website-data/gcorr-current-timings-memory.csv",
+      "sha256": "4fdfb149445ff6493a35f9dd8626bc74763899412971d32c0035b85ddd5b1ac4"
+    },
+    {
+      "path": "scripts/website-snapshot/Tutorial_timings_and_memory.Rmd",
+      "sha256": "fd347116cf66d98845e09f8b9fca27dc4136973b412a8dff9519adc8b1bace21"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/manuscript-results/20261004/measurements.csv",
+      "sha256": "eca5768163981fc22ada38e45ee8598a84b1d393dc4564adae683c6ab1ac8c41"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/manuscript-results/20261004-real-1000g/measurements.csv",
+      "sha256": "edb051b81770ec9c6efc43606eca49726601e30bcb7b1e64164ab01cc500e3d8"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/manuscript-results/20261004/README.md",
+      "sha256": "8886c11de8b17a234ecd820b70380fcfd61db890b47f3dac8ab07d47d38bb7d9"
+    },
+    {
+      "path": "results/gsuite/genomic_20k_50k/manuscript-results/20261004-real-1000g/README.md",
+      "sha256": "543ab999f2ce3beab686da212a5430294bc185bc07f7dacb221c53eaa12bce47"
+    }
+  ],
+  "saved_record_audit_date": "2026-10-19"
+}

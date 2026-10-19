@@ -1,0 +1,334 @@
+$R.version
+$R.version$platform
+[1] "x86_64-w64-mingw32"
+
+$R.version$arch
+[1] "x86_64"
+
+$R.version$os
+[1] "mingw32"
+
+$R.version$crt
+[1] "ucrt"
+
+$R.version$system
+[1] "x86_64, mingw32"
+
+$R.version$status
+[1] ""
+
+$R.version$major
+[1] "4"
+
+$R.version$minor
+[1] "4.1"
+
+$R.version$year
+[1] "2024"
+
+$R.version$month
+[1] "06"
+
+$R.version$day
+[1] "14"
+
+$R.version$`svn rev`
+[1] "86737"
+
+$R.version$language
+[1] "R"
+
+$R.version$version.string
+[1] "R version 4.4.1 (2024-06-14 ucrt)"
+
+$R.version$nickname
+[1] "Race for Your Life"
+
+
+$platform
+[1] "x86_64-w64-mingw32/x64"
+
+$locale
+[1] "C"
+
+$tzone
+[1] "Europe/Copenhagen"
+
+$tzcode_type
+[1] "internal"
+
+$running
+[1] "Windows 11 x64 (build 26200)"
+
+$RNGkind
+[1] "Mersenne-Twister" "Inversion"        "Rejection"       
+
+$basePkgs
+[1] "stats"     "graphics"  "grDevices" "utils"     "datasets"  "methods"  
+[7] "base"     
+
+$otherPkgs
+$otherPkgs$gcorr
+Package: gcorr
+Type: Package
+Title: Focused Genetic Correlation Workflows
+Version: 0.1.5
+Authors@R: person("Peter", "Soerensen", role = c("aut", "cre"), email =
+        "peter.soerensen@example.invalid")
+Description: An independently installable R interface to gcorr
+        workflows. The interface fits ordinary, standard stratified,
+        and grouped LD-score regression through a convenient checked
+        single- or multi-trait summary-statistics and Glist workflow or
+        explicit focused inputs, ordinary or binary-annotation GNOVA,
+        and SumHer architecture models from ordinary, allele-labelled
+        summary-statistics data frames and explicit LD, annotation,
+        architecture, overlap, and delete-block inputs. Compact
+        multi-trait HESS projections stream regional BED genotypes
+        without persistent LD or eigenvector files. Reusable regional
+        LD preparation from Glist sparse LD or explicit matrices
+        supports HESS, rho-HESS, SUPERGNOVA, HDL-L, and LAVA marginal,
+        binary, simulation, partial-correlation, and regression
+        workflows. Continuous-trait covariance summaries support
+        explicit structural equation and fixed-graph Gaussian graphical
+        models, including joint contrasts across GNOVA categories and
+        SumHer components or categories. A thin package-owned
+        dispatcher delegates to focused method functions. Explicit
+        preparation of aligned instruments supports GSMR, GSMR2,
+        inverse-variance weighted MR, MR-Egger, and weighted-median MR.
+        Native computation remains in the installed gcorr and gmat
+        libraries.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: gbase (>= 0.1.0), Rcpp, stats
+LinkingTo: Rcpp
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
+SystemRequirements: C++17, gcorr 0.1.4 (ABI 0), gmat 0.6.0 (ABI 0),
+        gsolve 0.26.0 (ABI 4), OpenMP; the portable profile excludes
+        CHOLMOD, MKL dense kernels, and PARDISO
+NeedsCompilation: yes
+RoxygenNote: 7.3.3
+Packaged: 2026-10-07 15:46:34 UTC; CodexSandboxOffline
+Author: Peter Soerensen [aut, cre]
+Maintainer: Peter Soerensen <peter.soerensen@example.invalid>
+Built: R 4.4.1; x86_64-w64-mingw32; 2026-10-07 15:46:36 UTC; windows
+Archs: x64
+
+-- File: C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gcorr/Meta/package.rds 
+
+
+$loadedOnly
+$loadedOnly$compiler
+Package: compiler
+Version: 4.4.1
+Priority: base
+Title: The R Compiler Package
+Author: Luke Tierney <luke-tierney@uiowa.edu>
+Maintainer: R Core Team <do-use-Contact-address@r-project.org>
+Contact: R-help mailing list <r-help@r-project.org>
+Description: Byte code compiler for R.
+License: Part of R 4.4.1
+Built: R 4.4.1; ; 2024-06-14 08:18:28 UTC; windows
+
+-- File: C:/Program Files/R/R-4.4.1/library/compiler/Meta/package.rds 
+
+$loadedOnly$tools
+Package: tools
+Version: 4.4.1
+Priority: base
+Title: Tools for Package Development
+Author: R Core Team
+Maintainer: R Core Team <do-use-Contact-address@r-project.org>
+Contact: R-help mailing list <r-help@r-project.org>
+Description: Tools for package development, administration and
+        documentation.
+License: Part of R 4.4.1
+Suggests: codetools, methods, xml2, curl, commonmark, knitr, xfun,
+        mathjaxr, V8
+NeedsCompilation: yes
+Built: R 4.4.1; x86_64-w64-mingw32; 2024-06-14 08:18:26 UTC; windows
+
+-- File: C:/Program Files/R/R-4.4.1/library/tools/Meta/package.rds 
+
+$loadedOnly$Rcpp
+Package: Rcpp
+Title: Seamless R and C++ Integration
+Version: 1.1.1
+Date: 2026-01-07
+Authors@R: c(person("Dirk", "Eddelbuettel", role = c("aut", "cre"),
+        email = "edd@debian.org", comment = c(ORCID =
+        "0000-0001-6419-907X")), person("Romain", "Francois", role =
+        "aut", comment = c(ORCID = "0000-0002-2444-4226")),
+        person("JJ", "Allaire", role = "aut", comment = c(ORCID =
+        "0000-0003-0174-9868")), person("Kevin", "Ushey", role = "aut",
+        comment = c(ORCID = "0000-0003-2880-7407")), person("Qiang",
+        "Kou", role = "aut", comment = c(ORCID =
+        "0000-0001-6786-5453")), person("Nathan", "Russell", role =
+        "aut"), person("I<U+00F1>aki", "Ucar", role = "aut", comment = c(ORCID
+        = "0000-0001-6403-5550")), person("Doug", "Bates", role =
+        "aut", comment = c(ORCID = "0000-0001-8316-9503")),
+        person("John", "Chambers", role = "aut"))
+Description: The 'Rcpp' package provides R functions as well as C++
+        classes which offer a seamless integration of R and C++. Many R
+        data types and objects can be mapped back and forth to C++
+        equivalents which facilitates both writing of new code as well
+        as easier integration of third-party libraries. Documentation
+        about 'Rcpp' is provided by several vignettes included in this
+        package, via the 'Rcpp Gallery' site at
+        <https://gallery.rcpp.org>, the paper by Eddelbuettel and
+        Francois (2011, <doi:10.18637/jss.v040.i08>), the book by
+        Eddelbuettel (2013, <doi:10.1007/978-1-4614-6868-4>) and the
+        paper by Eddelbuettel and Balamuta (2018,
+        <doi:10.1080/00031305.2017.1375990>); see 'citation("Rcpp")'
+        for details.
+Depends: R (>= 3.5.0)
+Imports: methods, utils
+Suggests: tinytest, inline, rbenchmark, pkgKitten (>= 0.1.2)
+URL: https://www.rcpp.org,
+        https://dirk.eddelbuettel.com/code/rcpp.html,
+        https://github.com/RcppCore/Rcpp
+License: GPL (>= 2)
+BugReports: https://github.com/RcppCore/Rcpp/issues
+MailingList: rcpp-devel@lists.r-forge.r-project.org
+RoxygenNote: 6.1.1
+Encoding: UTF-8
+VignetteBuilder: Rcpp
+NeedsCompilation: yes
+Packaged: 2026-01-08 14:33:45 UTC; edd
+Author: Dirk Eddelbuettel [aut, cre] (ORCID:
+        <https://orcid.org/0000-0001-6419-907X>), Romain Francois [aut]
+        (ORCID: <https://orcid.org/0000-0002-2444-4226>), JJ Allaire
+        [aut] (ORCID: <https://orcid.org/0000-0003-0174-9868>), Kevin
+        Ushey [aut] (ORCID: <https://orcid.org/0000-0003-2880-7407>),
+        Qiang Kou [aut] (ORCID:
+        <https://orcid.org/0000-0001-6786-5453>), Nathan Russell [aut],
+        I<U+00F1>aki Ucar [aut] (ORCID:
+        <https://orcid.org/0000-0001-6403-5550>), Doug Bates [aut]
+        (ORCID: <https://orcid.org/0000-0001-8316-9503>), John Chambers
+        [aut]
+Maintainer: Dirk Eddelbuettel <edd@debian.org>
+Repository: CRAN
+Date/Publication: 2026-01-10 09:50:02 UTC
+Built: R 4.4.3; x86_64-w64-mingw32; 2026-01-31 03:06:29 UTC; windows
+Archs: x64
+RemoteType: standard
+RemotePkgRef: Rcpp
+RemoteRef: Rcpp
+RemoteRepos: https://cran.rstudio.com
+RemoteSha: 1.1.1
+
+-- File: C:/Users/au223366/AppData/Local/R/win-library/4.4/Rcpp/Meta/package.rds 
+
+$loadedOnly$gbase
+Package: gbase
+Type: Package
+Title: Shared Data Contracts for Gsuite R Packages
+Version: 0.1.0
+Authors@R: person("Peter", "Soerensen", role = c("aut", "cre"), email =
+        "peter.soerensen@example.invalid")
+Author: Peter Soerensen [aut, cre]
+Maintainer: Peter Soerensen <peter.soerensen@example.invalid>
+Description: Task-neutral R data contracts and genotype preparation
+        shared by packages in the gsuite ecosystem. Contracts cover
+        allele-labelled summary statistics, serializable PLINK genotype
+        and sparse-LD resources, marker filtering, verified independent
+        blocks, LD scores, and regional LD matrices and eigensystems
+        without statistical fitting, cross-dataset exchange, or
+        workflow orchestration.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: Rcpp
+LinkingTo: Rcpp
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
+SystemRequirements: C++17, gmat 0.6.0 (ABI 0), gbits 0.21.0 (ABI 4),
+        gsolve 0.26.0 (ABI 4)
+NeedsCompilation: yes
+RoxygenNote: 7.3.3
+Packaged: 2026-10-07 15:35:19 UTC; CodexSandboxOffline
+Built: R 4.4.1; x86_64-w64-mingw32; 2026-10-07 15:35:20 UTC; windows
+Archs: x64
+
+-- File: C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbase/Meta/package.rds 
+
+
+$matprod
+[1] "default"
+
+$BLAS
+[1] ""
+
+$LAPACK
+[1] ""
+
+$LA_version
+[1] "3.12.0"
+
+$system.codepage
+[1] 65001
+
+$codepage
+[1] 0
+
+$gcorr
+$gcorr$header_version
+[1] "0.1.4"
+
+$gcorr$header_abi
+[1] 0
+
+$gcorr$runtime_version
+[1] "0.1.4"
+
+$gcorr$runtime_abi
+[1] 0
+
+$gcorr$headers_match_runtime
+[1] TRUE
+
+$gcorr$linked_gmat_version
+[1] "0.6.0"
+
+$gcorr$linked_gmat_abi
+[1] 0
+
+$gcorr$linked_gmat_matches_runtime
+[1] TRUE
+
+
+$gmat
+$gmat$header_version
+[1] "0.6.0"
+
+$gmat$header_abi
+[1] 0
+
+$gmat$runtime_version
+[1] "0.6.0"
+
+$gmat$runtime_abi
+[1] 0
+
+$gmat$headers_match_runtime
+[1] TRUE
+
+
+$gsolve
+$gsolve$header_version
+[1] "0.26.0"
+
+$gsolve$header_abi
+[1] 4
+
+$gsolve$runtime_version
+[1] "0.26.0"
+
+$gsolve$runtime_abi
+[1] 4
+
+$gsolve$headers_match_runtime
+[1] TRUE
+
+

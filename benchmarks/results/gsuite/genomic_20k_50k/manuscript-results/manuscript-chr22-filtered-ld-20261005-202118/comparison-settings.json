@@ -1,0 +1,12 @@
+{
+    "samples":  503,
+    "r2Threshold":  0.0001,
+    "windowMarkers":  1000,
+    "ancestry":  "EUR",
+    "chromosome":  22,
+    "requestedThreads":  4,
+    "blockSize":  1024,
+    "basePairWindow":  0,
+    "scope":  "One gbase filtered four-thread run, same prior chromosome-22 fixture and marker window; default block size. Threading and filtering both changed. No downloads, genome-wide LD or package code changes",
+    "workerSha256":  "E703ED759F9407782C130C9F4C61E50A6E0BD61AB74B2E9191EA557271432C5D"
+}

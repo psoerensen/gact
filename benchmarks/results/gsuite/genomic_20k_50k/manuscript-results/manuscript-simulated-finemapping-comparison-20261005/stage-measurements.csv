@@ -1,0 +1,11 @@
+stage,threads,operation_seconds,serialization_seconds,process_wall_seconds,peak_working_set_bytes,sampled_peak_private_bytes,source,warnings
+cmp_qgg_regional,1,15.87,1.66,21.3565654,903024640,1185230848,build/benchmarks/manuscript-20261005-231155/cmp_qgg_regional-1,
+cmp_qgg_genome,1,13.51,0.59,18.2944362,2915573760,2946273280,build/benchmarks/manuscript-20261005-231155/cmp_qgg_genome-1,
+cmp_qgg_credible,1,4.71,0.0,8.5063817,688435200,844734464,build/benchmarks/manuscript-20261005-231155/cmp_qgg_credible-1,
+cmp_suite_prepare,1,7.5,0.529999999999999,13.8805629,334745600,346857472,build/benchmarks/manuscript-20261005-231349/cmp_suite_prepare-1,
+cmp_suite_ld,1,198.31,1.53,205.5616636,365125632,394485760,build/benchmarks/manuscript-20261005-231349/cmp_suite_ld-1,
+cmp_suite_regional,1,73.77,0.200000000000003,80.0667447,386183168,398585856,build/benchmarks/manuscript-20261005-231349/cmp_suite_regional-1,
+cmp_suite_genome,1,7.47,1.15,14.0964368,872611840,887721984,build/benchmarks/manuscript-20261005-231349/cmp_suite_genome-1,
+cmp_suite_credible_oracle,1,12.37,0.0,16.7808649,598609920,755908608,build/benchmarks/manuscript-20261005-231349/cmp_suite_credible_oracle-1,
+cmp_compare,1,3.5,0.0,7.6438694,443301888,466522112,build/benchmarks/manuscript-20261005-231349/cmp_compare-1,
+cmp_qgg_ld,1,190.53,0.659999999999997,196.5873718,883240960,1040093184,build/benchmarks/manuscript-20261005-232046/cmp_qgg_ld-1,

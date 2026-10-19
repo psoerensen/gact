@@ -1,0 +1,7 @@
+scenario,quantity,trait,max_variance_difference,negative_variances
+raw,h2,GWAS1,2.6456544711896037e-19,4
+raw,h2,GWAS2,8.16063305120315e-19,4
+raw,cov,GWAS1/GWAS2,9.595295105615121e-20,0
+partial_gc,h2,GWAS1,2.6456544711896037e-19,4
+partial_gc,h2,GWAS2,6.347453148486913e-19,4
+partial_gc,cov,GWAS1/GWAS2,8.605325348511658e-20,0

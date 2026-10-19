@@ -1,0 +1,61 @@
+args<-commandArgs(TRUE);stage<-args[1];threads<-as.integer(args[2]);out<-args[3]
+writeLines(as.character(Sys.getpid()),file.path(out,'r-process.pid'))
+.libPaths(c('build/task-packages/library','build/task-packages/ecosystem/library','build/r-library',.libPaths()))
+Sys.setenv(OMP_NUM_THREADS=threads,OPENBLAS_NUM_THREADS=threads,MKL_NUM_THREADS=threads,OMP_DYNAMIC='FALSE')
+if(requireNamespace('RhpcBLASctl',quietly=TRUE))RhpcBLASctl::blas_set_num_threads(threads)
+library(gbase)
+writeLines(c(capture.output(sessionInfo()),paste('gbase',packageVersion('gbase'),find.package('gbase')),
+ capture.output(gbase::gbase_native_info())),file.path(out,'session.txt'))
+prior<-'build/benchmarks/manuscript-chr22-ld-20261005-200555'
+cutoff<-0.0001;window<-1000L
+if(stage=='ld_gbase_filtered')G<-readRDS(file.path(prior,'prepare_gbase-1/output.rds'))
+if(stage=='validate_filtered'){
+ B<-readRDS(file.path(dirname(out),'ld_gbase_filtered-4/output.rds'))
+ original<-readRDS(file.path(prior,'ld_gbase-1/output.rds'))
+ previous_filtered<-readRDS('build/benchmarks/manuscript-chr22-filtered-ld-20261005-202118/ld_gbase_filtered-4/output.rds')
+}
+warnings<-character();started<-Sys.time();clock<-proc.time()[3]
+value<-tryCatch(withCallingHandlers(switch(stage,
+ ld_gbase_filtered=gbase::gprep(Glist=G,task='sparseld',out_prefix=file.path(out,'chr22'),
+  max_distance_bp=0,max_distance_variants=window,r2=cutoff,nthreads=threads,overwrite=FALSE),
+ validate_filtered={
+  ids<-unlist(B$rsidsLD,use.names=FALSE);m<-length(ids)
+  payload_names<-setdiff(names(B$sparseLD$checksums),'metadata')
+  stopifnot(identical(B$ldscores,previous_filtered$ldscores),
+   identical(B$sparseLD$checksums[payload_names],previous_filtered$sparseLD$checksums[payload_names]))
+  stopifnot(identical(B$idsLD,original$idsLD),identical(ids,unlist(original$rsidsLD,use.names=FALSE)),
+   B$sparseLD$nthreads==4,B$sparseLD$r2_threshold==cutoff,B$sparseLD$max_distance_variants==window,
+   B$sparseLD$max_distance_bp==0,B$sparseLD$block_size==1024)
+  starts<-unique(pmax(1L,pmin(m-31L,as.integer(c(1,1000,m/4,m/2,3*m/4,m-31)))))
+  selected<-sort(unique(unlist(lapply(starts,function(i)i+0:31))))
+  baseline_matrix<-gbase::ld_region(original,ids[selected]);R<-gbase::ld_region(B,ids[selected])
+  expected<-baseline_matrix;expected[expected^2<cutoff]<-0;diag(expected)<-1
+  delta<-max(abs(R-expected));stopifnot(delta<2e-5)
+  score_decrease<-unname(original$ldscores[[1]]-B$ldscores[[1]])
+  stopifnot(all(is.finite(score_decrease)),min(score_decrease)>-2e-5,max(score_decrease)<2*window*cutoff+2e-5)
+  con<-file(B$sparseLD$paths$values,'rb');minimum<-Inf;read_values<-0
+  repeat{
+   values<-readBin(con,'numeric',n=1000000L,size=4,endian=.Platform$endian)
+   if(!length(values))break
+   stopifnot(all(is.finite(values)));minimum<-min(minimum,min(abs(values)));read_values<-read_values+length(values)
+  }
+  close(con);stopifnot(read_values==B$sparseLD$nnz,minimum>=sqrt(cutoff)-1e-7)
+  list(markers=m,samples=B$n,window=window,r2_cutoff=cutoff,requested_threads=4,
+   block_size=B$sparseLD$block_size,stored_pairs=B$sparseLD$nnz,
+   baseline_stored_pairs=original$sparseLD$nnz,retained_fraction=B$sparseLD$nnz/original$sparseLD$nnz,
+   minimum_absolute_stored_r=minimum,sampled_markers=length(selected),
+   sampled_pairs=length(selected)^2,max_absolute_filtered_correlation_difference=delta,
+   minimum_ld_score_decrease=min(score_decrease),maximum_ld_score_decrease=max(score_decrease),
+   mean_ld_score_decrease=mean(score_decrease),ld_file_bytes=sum(file.info(unlist(B$sparseLD$paths))$size),
+   previous_filtered_scores_identical=identical(B$ldscores,previous_filtered$ldscores),
+   previous_filtered_payloads_identical=identical(B$sparseLD$checksums[payload_names],previous_filtered$sparseLD$checksums[payload_names]),
+   note='Cutoff deliberately removes correlations; results are not the unfiltered reference. Base-pair limit disabled to retain the original marker window. Default block size 1024. Preparation reused and excluded.')
+ },stop('Unknown stage')),warning=function(w){warnings<<-c(warnings,conditionMessage(w));invokeRestart('muffleWarning')}),error=function(e)e)
+seconds<-unname(proc.time()[3]-clock);failed<-inherits(value,'error')
+if(failed)warnings<-c(warnings,conditionMessage(value))
+ld_bytes<-if(!failed&&stage=='ld_gbase_filtered')sum(file.info(unlist(value$sparseLD$paths))$size)else NA_real_
+serialization<-unname(system.time(saveRDS(value,file.path(out,'output.rds')))[3])
+write.csv(data.frame(stage,threads,started=format(started,tz='Europe/Copenhagen'),analysis_seconds=seconds,
+ serialization_seconds=serialization,ld_bytes,status=if(failed)'failed'else'completed',warnings=paste(unique(warnings),collapse='; ')),file.path(out,'timing.csv'),row.names=FALSE)
+writeLines(capture.output(str(value,max.level=2)),file.path(out,'output-structure.txt'))
+if(failed)quit(status=1)

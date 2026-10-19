@@ -1,0 +1,1 @@
+Fixed sparse simulation-effect weights, unit L2 norm; not posterior weights

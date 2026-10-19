@@ -1,0 +1,175 @@
+{
+  "scope": "Bounded chromosome-22 timing of gbase after preallocating LD-score marker names. Four threads, r2 cutoff 0.0001, 1000-marker window, no base-pair window, default block size 1024. Same preparation reused. Public call includes construction, persistence, validation, scores and checksums; final descriptor serialization separate. No profiler running during this final timing. Single executions; OS caches uncontrolled. qgg row uses one thread and no cutoff, so it is a workflow comparison, not an isolated backend comparison.",
+  "measurements": [
+    {
+      "implementation": "qgg 1.1.6",
+      "chromosome": 22,
+      "samples": 503,
+      "markers": 141121,
+      "window_markers": 1000,
+      "r2_cutoff": 0,
+      "requested_threads": 1,
+      "block_size": 1000,
+      "operation_seconds": 54.11,
+      "serialization_seconds": 2.51,
+      "process_wall_seconds": 59.7958682,
+      "peak_working_set_bytes": 537931776,
+      "sampled_peak_private_bytes": 694435840,
+      "ld_files_bytes": 1129532484,
+      "source": "build\\benchmarks\\manuscript-chr22-ld-20261005-200555\\ld_qgg-1"
+    },
+    {
+      "implementation": "gbase 0.0.1 / gmat 0.6.0",
+      "chromosome": 22,
+      "samples": 503,
+      "markers": 141121,
+      "window_markers": 1000,
+      "r2_cutoff": 0,
+      "requested_threads": 1,
+      "block_size": 1000,
+      "operation_seconds": 294.5,
+      "serialization_seconds": 2.19999999999999,
+      "process_wall_seconds": 299.1629487,
+      "peak_working_set_bytes": 444813312,
+      "sampled_peak_private_bytes": 471248896,
+      "ld_files_bytes": 1132033713,
+      "source": "build\\benchmarks\\manuscript-chr22-ld-20261005-200555\\ld_gbase-1"
+    },
+    {
+      "implementation": "gbase 0.0.1 / gmat 0.6.0",
+      "chromosome": 22,
+      "samples": 503,
+      "markers": 141121,
+      "window_markers": 1000,
+      "r2_cutoff": 0.0001,
+      "requested_threads": 4,
+      "block_size": 1024,
+      "operation_seconds": 167.14,
+      "serialization_seconds": 3.37,
+      "process_wall_seconds": 172.6654786,
+      "peak_working_set_bytes": 263569408,
+      "sampled_peak_private_bytes": 1123135488,
+      "ld_files_bytes": 1039751670,
+      "source": "build\\benchmarks\\manuscript-chr22-filtered-ld-20261005-202118\\ld_gbase_filtered-4"
+    },
+    {
+      "implementation": "gbase 0.1.0 / gmat 0.6.0, preallocated LD-score names",
+      "chromosome": 22,
+      "samples": 503,
+      "markers": 141121,
+      "window_markers": 1000,
+      "r2_cutoff": 0.0001,
+      "requested_threads": 4,
+      "block_size": 1024,
+      "operation_seconds": 61.16,
+      "serialization_seconds": 5.58000000000001,
+      "process_wall_seconds": 69.0336618,
+      "peak_working_set_bytes": 248881152,
+      "sampled_peak_private_bytes": 1118490624,
+      "ld_files_bytes": 1039751674,
+      "source": "build\\benchmarks\\manuscript-chr22-ld-names-fix-20261005-203638\\ld_gbase_filtered-4"
+    }
+  ],
+  "native_binaries": [
+    {
+      "name": "gbase.dll",
+      "baseline_sha256": "3d237030350b6d60a8559ed7f1c15da482e6293780615da9ac314431663ec888",
+      "candidate_sha256": "88ab2e40b0af907fd2f999e25c4d56831b6b405a30e44a3381f22ade94fa81f1",
+      "identical": false
+    },
+    {
+      "name": "gbits.dll",
+      "baseline_sha256": "99f947fd97fd4202f152cdef8539fb1ffe618ad517b97e7ec34fc8807893f7ac",
+      "candidate_sha256": "99f947fd97fd4202f152cdef8539fb1ffe618ad517b97e7ec34fc8807893f7ac",
+      "identical": true
+    },
+    {
+      "name": "libgmat.dll",
+      "baseline_sha256": "9fe111dfe2f14c4037fc6f45f204a69c5adc6e70f01c29a240608619440004b9",
+      "candidate_sha256": "9fe111dfe2f14c4037fc6f45f204a69c5adc6e70f01c29a240608619440004b9",
+      "identical": true
+    },
+    {
+      "name": "libgsolve.dll",
+      "baseline_sha256": "33c2af616f85160ad76bd4de7919e245c1bef51e82db46b0cae01c1b658cee39",
+      "candidate_sha256": "1f6f98090fa59f2dafb72b45955b03372318a4e25f0f15aca0b22632e2828101",
+      "identical": false
+    }
+  ],
+  "native_note": "gmat and gbits DLLs are byte-identical to the baseline. The canonical rebuild bundles a different gsolve DLL, which the timed LD path does not invoke. R package baseline was installed version 0.0.1, candidate current source version 0.1.0.",
+  "validation": "List of 20\n $ markers                                     : int 141121\n $ samples                                     : num 503\n $ window                                      : int 1000\n $ r2_cutoff                                   : num 1e-04\n $ requested_threads                           : num 4\n $ block_size                                  : int 1024\n $ stored_pairs                                : num 1.29e+08\n $ baseline_stored_pairs                       : num 1.41e+08\n $ retained_fraction                           : num 0.918\n $ minimum_absolute_stored_r                   : num 0.01\n $ sampled_markers                             : int 192\n $ sampled_pairs                               : num 36864\n $ max_absolute_filtered_correlation_difference: num 0\n $ minimum_ld_score_decrease                   : num 2.38e-06\n $ maximum_ld_score_decrease                   : num 0.0303\n $ mean_ld_score_decrease                      : num 0.00547\n $ ld_file_bytes                               : num 1.04e+09\n $ previous_filtered_scores_identical          : logi TRUE\n $ previous_filtered_payloads_identical        : logi TRUE\n $ note                                        : chr \"Cutoff deliberately removes correlations; results are not the unfiltered reference. Base-pair limit disabled to\"| __truncated__\n",
+  "tests": "Canonical gbase-only private binary workflow with existing native prefix, SkipNativeBuild and SkipSourceCheck. All 90 testthat expectations passed, clean load and DLL dependency audit passed. Full R CMD check not run.",
+  "diagnostic_run": {
+    "path": "build\\benchmarks\\manuscript-chr22-ld-names-fix-20261005-203509",
+    "operation_seconds": 44.3,
+    "excluded_from_final_timing": true,
+    "reason": "Diagnostic profiler overlapped the initial candidate timing. Final run is separate."
+  },
+  "prior_evidence": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118",
+  "artifacts": [
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\after-component-timings.csv",
+      "sha256": "07fe87db4bcc29650facf1a33dcadf7e88a1118b31a4b4a411a1b07fe04edd72"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\before-component-timings.csv",
+      "sha256": "be2e2379411974c25c5181b9234c32716b402f728c9eb0399f23483e4496738b"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\chr22_filtered_ld_stage.R",
+      "sha256": "b835f6609fb27a7f3e67160e762d5be431c85b932156188a0ce95e4ef348a869"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\comparison-settings.json",
+      "sha256": "00d9332763133091bd446eab025e5726c552e954f2bea4539469545a7cd81d3c"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\hardware.json",
+      "sha256": "b588c1392046a238e41fad8864fac7f071b53b1804229a55b3554b252013e04b"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\ld-measurements.csv",
+      "sha256": "fcffcbbc2bda9a2a629f8d5642acf96f5b6b74b2b11b5d08288b969259a0267a"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\ld_gbase_filtered-output-structure.txt",
+      "sha256": "a1e77ce5faf041ee46d4b4fa301e0102735b43f3926e3d373779b7b7ad36c6b2"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\ld_gbase_filtered-session.txt",
+      "sha256": "4ae3fcd270e16a0cc336872f651e3576e6937c542bdbf103242c36341ef2239b"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\ld_gbase_filtered-timing.csv",
+      "sha256": "54927a0ead4b26fb56730758b78ff5d48a40377af7b6733081bac7cb17d58747"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\process-measurements.csv",
+      "sha256": "c5f209492ca58fda4df09137362f77cd5e7a39b76262a08368c6bf6fb3224250"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\profile_chr22_existing_ld.R",
+      "sha256": "eeff23670b2bff1b6fdd3aabf712bf0994b5d5c89ae08c48f597e4257b3aed0f"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\source-change.diff",
+      "sha256": "073c90bcfefef9bd9ff253f6d2baf438d3002404963f5ed774d87eba884cbc04"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\validate_filtered-output-structure.txt",
+      "sha256": "0e1bf87c921a89c551e05496d9f5a14a260e346447a0991792284d577703bfa6"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\validate_filtered-session.txt",
+      "sha256": "4ae3fcd270e16a0cc336872f651e3576e6937c542bdbf103242c36341ef2239b"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\validate_filtered-timing.csv",
+      "sha256": "eaf66c62bbf65c0a8284278038e111d5e8a45995e4a8496b16d25f0a36ba48ba"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-names-fix-20261005-203638\\validation-exact.txt",
+      "sha256": "149a84d3641e276033571b35afb17f98e28bf559b1332ff6d128a59092ef6f25"
+    }
+  ]
+}

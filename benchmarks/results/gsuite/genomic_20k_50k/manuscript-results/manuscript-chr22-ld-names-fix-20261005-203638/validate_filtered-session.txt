@@ -1,0 +1,66 @@
+R version 4.4.1 (2024-06-14 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26200)
+
+Matrix products: default
+
+
+locale:
+[1] C
+system code page: 65001
+
+time zone: Europe/Copenhagen
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] gbase_0.1.0
+
+loaded via a namespace (and not attached):
+[1] compiler_4.4.1      tools_4.4.1         Rcpp_1.1.1         
+[4] RhpcBLASctl_0.23-42
+gbase 0.1.0 C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbase
+$gmat
+$gmat$header_version
+[1] "0.6.0"
+
+$gmat$header_abi
+[1] 0
+
+$gmat$runtime_version
+[1] "0.6.0"
+
+$gmat$runtime_abi
+[1] 0
+
+
+$gbits
+$gbits$header_version
+[1] "0.21.0"
+
+$gbits$header_abi
+[1] 4
+
+$gbits$runtime_version
+[1] "0.21.0"
+
+$gbits$runtime_abi
+[1] 4
+
+
+$gsolve
+$gsolve$header_version
+[1] "0.22.0"
+
+$gsolve$header_abi
+[1] 4
+
+$gsolve$runtime_version
+[1] "0.22.0"
+
+$gsolve$runtime_abi
+[1] 4
+
+

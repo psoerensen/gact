@@ -1,0 +1,6 @@
+"stage","started","requested_threads","operation_thread_setting","thread_evidence","analysis_seconds","serialization_seconds","process_wall_seconds","peak_working_set_bytes","sampled_peak_private_bytes","stage_directory_bytes","output_rds_bytes","status","warnings"
+"vegas","2026-10-04 14:29:02",1,1,"reported preparation threads",6.8,0.0600000000000005,9.2522345,213217280,235507712,385637,359611,"completed",NA
+"joint","2026-10-04 14:29:11",1,1,"reported sampler threads",0.11,0.01,2.4288919,154624000,176889856,17873,12639,"completed",NA
+"mapping","2026-10-04 14:29:14",1,1,"serial R region/trait loop; no thread control",24,0.109999999999999,26.7306195,198348800,224374784,1072119,1062617,"completed",NA
+"total","2026-10-04 14:29:42",1,1,"native control setting; runtime count not reported",8.03,0.0700000000000003,12.0086117,201678848,230641664,770378,766908,"completed",NA
+"pathway","2026-10-04 14:29:54",1,1,"native control setting; runtime count not reported",6.3,0.0999999999999996,10.8249627,202133504,225787904,865209,860969,"completed",NA

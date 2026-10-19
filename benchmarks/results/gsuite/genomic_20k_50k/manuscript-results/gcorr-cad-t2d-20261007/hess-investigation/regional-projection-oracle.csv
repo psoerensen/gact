@@ -1,0 +1,4 @@
+"region","markers","reference_samples","matrix_space","retained_components","max_absolute_moment_error","dense_marker_space_error","direct_seconds"
+"chr1_178944309_178954470",25,503,"markers",3,3.93023287525995e-19,2.77826806699411e-19,0
+"chr10_134336329_134494673",451,503,"markers",20,2.16840434497101e-18,1.51788304147971e-18,0.240000000000002
+"chr6_47311898_48391125",3000,503,"samples",20,5.52943107967607e-18,NA,0.809999999999995

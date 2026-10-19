@@ -1,0 +1,30 @@
+gsim 0.16.0 C:/Users/au223366/Documents/GitHub/gsuite/build/r-library/gsim
+Package: gsim
+Type: Package
+Author: Peter Soerensen [aut, cre]
+Maintainer: Peter Soerensen <peter.sorensen@r-qgg.org>
+Title: Genomic Simulation for Validation Studies
+Version: 0.16.0
+Depends: R (>= 3.5.0)
+Authors@R: person("Peter", "Sorensen", email =
+        "peter.sorensen@r-qgg.org", role = c("aut", "cre"))
+Description: Simulates genotype, pedigree, and phenotype data for
+        validation studies. Supports independent simulated genotypes,
+        caller-provided genotype matrices, optional qgg genotype-list
+        objects, scalable multigenerational pedigrees, sparse scalar
+        observation records, incomplete multitrait patterns, and
+        longitudinal random-regression workloads.
+License: GPL-3
+Suggests: qgg, testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Encoding: UTF-8
+NeedsCompilation: yes
+SystemRequirements: C++17, zlib (provided by standard R build
+        toolchains)
+Built: R 4.4.1; x86_64-w64-mingw32; 2026-09-16 19:28:33 UTC; windows
+Archs: x64
+
+-- File: C:/Users/au223366/Documents/GitHub/gsuite/build/r-library/gsim/Meta/package.rds 
+C:/Users/au223366/Documents/GitHub/gsuite/build/r-library/gsim/libs/x64/gsim.dll 3424dcb5bd0dd58cacf2dc6697c0a314

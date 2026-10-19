@@ -1,0 +1,5 @@
+scenario,trait,z_squared_multiplier,provenance
+automatic_unadjusted,GWAS1,1,Unchanged supplied Z scale
+automatic_unadjusted,GWAS2,1,Unchanged supplied Z scale
+partial_final_meta_gc,GWAS1,1,Unchanged supplied Z scale
+partial_final_meta_gc,GWAS2,1.18,"Nikpay 2015 Figure 4: final additive meta-analysis lambda 1.18; partial undo only, cohort-specific GC remains"

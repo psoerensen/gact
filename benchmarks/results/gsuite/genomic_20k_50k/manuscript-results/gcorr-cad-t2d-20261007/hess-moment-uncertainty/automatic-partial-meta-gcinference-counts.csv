@@ -1,0 +1,9 @@
+"component","quantity","trait1","trait2","rows","available_points","available_se","negative_variance","indefinite_covariance"
+"region","cov","GWAS1","GWAS2",1702,1702,1698,4,0
+"region","h2","GWAS1",NA,1702,1702,1670,32,0
+"region","h2","GWAS2",NA,1702,1702,1626,76,0
+"region","rg","GWAS1","GWAS2",1702,945,630,0,0
+"total","cov","GWAS1","GWAS2",1,1,1,0,0
+"total","h2","GWAS1",NA,1,1,1,0,0
+"total","h2","GWAS2",NA,1,1,1,0,0
+"total","rg","GWAS1","GWAS2",1,1,1,0,0

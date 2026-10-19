@@ -1,0 +1,3 @@
+"stage","pip_correlation","mean_absolute_pip_difference","maximum_absolute_pip_difference"
+"cmp_suite_regional",0.998284592542926,0.00116121212121212,0.025
+"cmp_suite_genome",0.974326878935251,0.000476955068305651,0.1

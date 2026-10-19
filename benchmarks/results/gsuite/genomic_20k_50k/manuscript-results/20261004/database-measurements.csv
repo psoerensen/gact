@@ -1,0 +1,2 @@
+"stage","started","download_install_seconds","descriptor_save_seconds","process_wall_seconds","peak_working_set_bytes","sampled_peak_private_bytes","database_file_bytes","retained_zip_bytes","descriptor_bytes","stage_directory_bytes","status","warnings"
+"database","2026-10-04 14:31:43",544.2,12.48,575.4050446,2873872384,3089489920,3261689414,440170912,52318792,3315628347,"completed","strings not representable in native encoding will be translated to UTF-8"

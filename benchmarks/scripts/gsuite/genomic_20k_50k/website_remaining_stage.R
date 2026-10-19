@@ -1,0 +1,60 @@
+args<-commandArgs(TRUE);stage<-args[1];threads<-as.integer(args[2]);out<-args[3];root<-dirname(out)
+writeLines(as.character(Sys.getpid()),file.path(out,'r-process.pid'))
+Sys.setenv(OPENBLAS_NUM_THREADS=threads,OMP_NUM_THREADS=threads,MKL_NUM_THREADS=threads,OMP_DYNAMIC='FALSE')
+library(qgg);library(gact)
+if(requireNamespace('RhpcBLASctl',quietly=TRUE))RhpcBLASctl::blas_set_num_threads(threads)
+set.seed(20261005)
+writeLines(c(capture.output(sessionInfo()),paste('qgg',packageVersion('qgg'),find.package('qgg')),paste('gact',packageVersion('gact'),find.package('gact'))),file.path(out,'session.txt'))
+read_stage<-function(s)readRDS(file.path(root,paste0(s,'-1'),'output.rds'))
+if(stage%in%c('website_ldsc_h2','website_ldsc_rg','website_ldsc_chr','website_ldsc_reg'))input<-read_stage('website_ldsc_inputs')
+if(stage%in%c('website_sim_filter','website_sim_ld'))input<-read_stage(if(stage=='website_sim_filter')'website_sim_glist'else'website_sim_filter')
+if(stage=='website_sim_stats')input<-read_stage('website_sim_ld')
+if(stage%in%c('website_sim_regional','website_sim_genome','website_sim_credible'))input<-read_stage('website_sim_stats')
+if(stage=='website_sim_credible')fit<-read_stage('website_sim_genome')
+writeLines(capture.output(lapply(c('ldsc','gmap','gbayes','gsim','gprep'),function(n)list(name=n,defaults=formals(getExportedValue('qgg',n))))),file.path(out,'installed-defaults.txt'))
+started<-Sys.time();clock<-proc.time()[3];warn<-character()
+value<-tryCatch(withCallingHandlers(switch(stage,
+ website_ldsc_inputs={
+  GA<-readRDS('build/benchmarks/manuscript-20261004-143135/database-1/output.rds')
+  ld<-gact::getLDscoresDB(GAlist=GA,ancestry='EUR',version='1000G')
+  stat<-gact::getMarkerStat(GAlist=GA,studyID=c('GWAS1','GWAS2','GWAS6'))
+  ids<-Reduce(intersect,list(rownames(stat$z),rownames(stat$n),names(ld)))
+  z<-stat$z[ids,,drop=FALSE];n<-stat$n[ids,,drop=FALSE];ld<-ld[ids]
+  stopifnot(identical(rownames(z),rownames(n)),identical(rownames(z),names(ld)),all(is.finite(z)),all(is.finite(n)),all(n>0),all(is.finite(ld)))
+  sets_chr<-gact::getMarkerSets(GAlist=GA,feature='Chromosomes')
+  sets_reg<-gact::getMarkerSets(GAlist=GA,feature='Regulatory Categories')
+  list(z=z,n=n,ldscores=ld,chromosomes=sets_chr,regulatory=sets_reg,studies=c('GWAS1','GWAS2','GWAS6'),alignment_policy='Common named rows of z, n and stored EUR LD scores; no recomputed LD')
+ },
+ website_ldsc_h2=qgg::ldsc(z=input$z,n=input$n,ldscores=input$ldscores,what='h2'),
+ website_ldsc_rg=qgg::ldsc(z=input$z,n=input$n,ldscores=input$ldscores,what='rg'),
+ website_ldsc_chr=qgg::ldsc(z=input$z,n=input$n,ldscores=input$ldscores,sets=input$chromosomes,what='h2',residual=TRUE),
+ website_ldsc_reg=qgg::ldsc(z=input$z,n=input$n,ldscores=input$ldscores,sets=input$regulatory,what='h2',method='bayesC',residual=TRUE),
+ website_sim_glist={
+  prefix<-normalizePath('../qgdata/simulated_human_data/human',mustWork=FALSE,winslash='/')
+  files<-paste0(prefix,c('.bed','.bim','.fam'));stopifnot(all(file.exists(files)))
+  write.csv(data.frame(path=files,bytes=file.info(files)$size,md5=unname(tools::md5sum(files))),file.path(out,'source-files.csv'),row.names=FALSE)
+  qgg::gprep(study='Simulation',bedfiles=files[1],bimfiles=files[2],famfiles=files[3],ncores=1)
+ },
+ website_sim_filter={
+  ids<-qgg::gfilter(Glist=input,excludeMAF=.05,excludeMISS=.05,excludeCGAT=TRUE,excludeINDEL=TRUE,excludeDUPS=TRUE,excludeHWE=1e-12,excludeMHC=FALSE)
+  list(Glist=input,rsids=ids)
+ },
+ website_sim_ld={
+  input$Glist<-qgg::gprep(input$Glist,task='sparseld',msize=1000,rsids=input$rsids,ldfiles=file.path(out,'human.ld'),overwrite=FALSE,ncores=1)
+  input
+ },
+ website_sim_stats={
+  sim<-qgg::gsim(Glist=input$Glist,rsids=input$rsids)
+  sets<-qgg::createMarkerSets(Glist=input$Glist,rsids=sim$causal,upstream=1000,downstream=1000)
+  stat<-qgg::glma(y=sim$y,Glist=input$Glist,rsids=input$rsids)
+  list(Glist=input$Glist,rsids=input$rsids,stat=stat,sets=sets,causal=sim$causal,seed=20261005)
+ },
+ website_sim_regional=qgg::gmap(Glist=input$Glist,stat=input$stat,sets=input$sets,method='bayesC',algorithm='mcmc',output='full',verbose=TRUE),
+ website_sim_genome=qgg::gbayes(Glist=input$Glist,stat=input$stat,method='bayesC',algorithm='mcmc',verbose=TRUE),
+ website_sim_credible=qgg::getCredibleSets(Glist=input$Glist,fit=fit,sets=input$sets),
+ stop('Unknown remaining website stage')),warning=function(w){warn<<-c(warn,conditionMessage(w));invokeRestart('muffleWarning')}),error=function(e)e)
+seconds<-unname(proc.time()[3]-clock);failed<-inherits(value,'error');if(failed)warn<-c(warn,conditionMessage(value))
+serialization<-unname(system.time(saveRDS(value,file.path(out,'output.rds')))[3])
+write.csv(data.frame(stage,threads,started=format(started,tz='Europe/Copenhagen'),analysis_seconds=seconds,serialization_seconds=serialization,status=if(failed)'failed'else'completed',warnings=paste(unique(warn),collapse='; ')),file.path(out,'timing.csv'),row.names=FALSE)
+writeLines(capture.output(str(value,max.level=2)),file.path(out,'output-structure.txt'))
+if(failed)quit(status=1)

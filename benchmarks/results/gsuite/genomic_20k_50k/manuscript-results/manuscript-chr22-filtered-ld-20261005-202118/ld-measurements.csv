@@ -1,0 +1,4 @@
+implementation,chromosome,samples,markers,window_markers,r2_cutoff,requested_threads,block_size,operation_seconds,serialization_seconds,process_wall_seconds,peak_working_set_bytes,sampled_peak_private_bytes,ld_files_bytes,source
+qgg 1.1.6,22,503,141121,1000,0,1,1000,54.11,2.51,59.7958682,537931776,694435840,1129532484,build\benchmarks\manuscript-chr22-ld-20261005-200555\ld_qgg-1
+gbase 0.0.1 / gmat 0.6.0,22,503,141121,1000,0,1,1000,294.5,2.19999999999999,299.1629487,444813312,471248896,1132033713,build\benchmarks\manuscript-chr22-ld-20261005-200555\ld_gbase-1
+gbase 0.0.1 / gmat 0.6.0,22,503,141121,1000,0.0001,4,1024,167.14,3.37,172.6654786,263569408,1123135488,1039751670,build\benchmarks\manuscript-chr22-filtered-ld-20261005-202118\ld_gbase_filtered-4

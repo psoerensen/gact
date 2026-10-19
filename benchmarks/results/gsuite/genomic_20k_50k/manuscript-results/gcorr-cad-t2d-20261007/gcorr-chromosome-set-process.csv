@@ -1,0 +1,2 @@
+"stage","threads","processWallSeconds","rProcessCpuSeconds","peakWorkingSetBytes","sampledPeakPrivateBytes","exitCode","timedOut","timeoutSeconds","stageDirectoryBytes","peak_working_set_GiB","sampled_peak_private_GiB"
+"gcorr_sets",4,510.6459948,487.109375,8120844288,16770703360,0,"False",1200,84744,7.56312561035156,15.6189346313477

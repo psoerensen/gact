@@ -1,0 +1,394 @@
+{
+  "old_evidence_files_unchanged": 68,
+  "source_files_unchanged_during_run": true,
+  "components_reused": 7,
+  "payload_files": [
+    {
+      "file": "drugdb/atc.rds",
+      "same": true
+    },
+    {
+      "file": "drugdb/categories.tsv",
+      "same": true
+    },
+    {
+      "file": "drugdb/drugs.tsv",
+      "same": true
+    },
+    {
+      "file": "drugdb/genes.tsv",
+      "same": true
+    },
+    {
+      "file": "drugdb/interactions.tsv",
+      "same": true
+    },
+    {
+      "file": "gbayes/BLR1.rds",
+      "same": true
+    },
+    {
+      "file": "gbayes/BLR2.rds",
+      "same": true
+    },
+    {
+      "file": "gbayes/BLR4.rds",
+      "same": true
+    },
+    {
+      "file": "gbayes/BLR5.rds",
+      "same": true
+    },
+    {
+      "file": "gbayes/BLR6.rds",
+      "same": true
+    },
+    {
+      "file": "gbayes/BLR_information.csv",
+      "same": true
+    },
+    {
+      "file": "gsea/GWAS1_vegas.rds",
+      "same": true
+    },
+    {
+      "file": "gsea/GWAS2_vegas.rds",
+      "same": true
+    },
+    {
+      "file": "gsea/GWAS3_vegas.rds",
+      "same": true
+    },
+    {
+      "file": "gsea/GWAS4_vegas.rds",
+      "same": true
+    },
+    {
+      "file": "gsea/GWAS5_vegas.rds",
+      "same": true
+    },
+    {
+      "file": "gsea/GWAS6_vegas.rds",
+      "same": true
+    },
+    {
+      "file": "gsea/GWAS7_vegas.rds",
+      "same": true
+    },
+    {
+      "file": "gsea/GWAS8_vegas.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/atcSets1.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/atcSets2.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/atcSets3.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/atcSets4.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensg_human_disease_experiments_filtered.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensg_human_disease_experiments_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensg_human_disease_integrated_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensg_human_disease_knowledge_filtered.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensg_human_disease_knowledge_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensg_human_disease_textmining_filtered.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensg_human_disease_textmining_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensp_human_disease_experiments_filtered.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensp_human_disease_experiments_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensp_human_disease_integrated_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensp_human_disease_knowledge_filtered.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensp_human_disease_knowledge_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensp_human_disease_textmining_filtered.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/disease2ensp_human_disease_textmining_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/drug2atc.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/drug2ensg.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/eg2ensg.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/eg2ensp.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/eg2enst.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/eg2pmid.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2disease_human_disease_experiments_filtered.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2disease_human_disease_experiments_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2disease_human_disease_integrated_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2disease_human_disease_knowledge_filtered.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2disease_human_disease_knowledge_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2disease_human_disease_textmining_filtered.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2disease_human_disease_textmining_full.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2eg.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2ensp.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2ensr.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2enst.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2reactome.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2rsids.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensg2sym.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensp2eg.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensp2ensg.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensp2enst.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensr2ensg.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/ensr2rsids.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/genesplus_annotation.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/go.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/GRCh37.ensg2rsids.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/GRCh37_genesplus_annotation.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/GRCh38.ensg2rsids.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/GRCh38_genesplus_annotation.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/gwas2rsids.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/hsa.0.0.1.zip",
+      "same": true
+    },
+    {
+      "file": "gsets/map.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/pmid2eg.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/reactome2ensg.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/reactome2names.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/reg2ensr.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/reg2rsids.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/regulatory_annotation.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/rs2vep.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/stitch2ensg.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/string2ensg.rds",
+      "same": true
+    },
+    {
+      "file": "gsets/targets.rds",
+      "same": true
+    },
+    {
+      "file": "gstat/GWAS1.txt.gz",
+      "same": true
+    },
+    {
+      "file": "gstat/GWAS2.txt.gz",
+      "same": true
+    },
+    {
+      "file": "gstat/GWAS3.txt.gz",
+      "same": true
+    },
+    {
+      "file": "gstat/GWAS4.txt.gz",
+      "same": true
+    },
+    {
+      "file": "gstat/GWAS5.txt.gz",
+      "same": true
+    },
+    {
+      "file": "gstat/GWAS6.txt.gz",
+      "same": true
+    },
+    {
+      "file": "gstat/GWAS7.txt.gz",
+      "same": true
+    },
+    {
+      "file": "gstat/GWAS8.txt.gz",
+      "same": true
+    },
+    {
+      "file": "gstat/GWAS_information.csv",
+      "same": true
+    },
+    {
+      "file": "marker/cpra.txt.gz",
+      "same": true
+    },
+    {
+      "file": "marker/markers.txt.gz",
+      "same": true
+    },
+    {
+      "file": "marker/markers_1000G.txt.gz",
+      "same": true
+    },
+    {
+      "file": "marker/markers_1000G_eas_filtered.txt.gz",
+      "same": true
+    },
+    {
+      "file": "marker/markers_1000G_eur_filtered.txt.gz",
+      "same": true
+    },
+    {
+      "file": "marker/markers_1000G_sas_filtered.txt.gz",
+      "same": true
+    }
+  ],
+  "new_files": [
+    "GAlist_setup.rds"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+    "samples":  503,
+    "r2Threshold":  0,
+    "windowMarkers":  1000,
+    "ancestry":  "EUR",
+    "chromosome":  22,
+    "requestedThreads":  1,
+    "scope":  "One run per implementation on the same physical chromosome-22 BED/BIM/FAM; no downloads, genome-wide LD or package code changes",
+    "basePairWindow":  0,
+    "workerSha256":  "0EFDC37B485EE9FCD6F46B403FAD45EDE0A45CBF474D276657062E09122DFC2A"
+}

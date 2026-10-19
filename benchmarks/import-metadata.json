@@ -1,0 +1,26 @@
+{
+  "imported_utc": "2026-10-19T12:15:18.487717+00:00",
+  "import_date_copenhagen": "2026-10-19",
+  "purpose": "Copy existing GACT website and benchmark evidence; no benchmark execution",
+  "source_repositories": {
+    "gact": {
+      "head": "d4fc8b5c7a0489ab09a2bab238e63b61393f89d9",
+      "status": "?? Document/data/compare_hess_software_reference.py\n?? Document/data/gcorr-hess-diagnostic-cad-z-and-p-provenance.csv\n?? Document/data/gcorr-hess-diagnostic-genome-moment-decomposition.csv\n?? Document/data/gcorr-hess-diagnostic-joint-rank-convention-sensitivity.csv\n?? Document/data/gcorr-hess-diagnostic-reference-split-noise-diagnostic.csv\n?? Document/data/gcorr-hess-diagnostic-regional-projection-oracle.csv\n?? Document/data/gcorr-hess-diagnostic-regional-truncation-sensitivity.csv\n?? Document/data/gcorr-hess-diagnostic-reinflation-sensitivity.csv\n?? Document/data/gcorr-hess-diagnostic-sample-size-sensitivity.csv\n?? Document/data/gcorr-hess-diagnostic-uncertainty-gates.csv\n?? Document/data/gcorr-hess-diagnostic-upstream-rank-policy-comparison.csv\n?? Document/data/gcorr-hess-investigation.md\n?? Document/data/gcorr-hess-moment-analysis-input-audit.csv\n?? Document/data/gcorr-hess-moment-automatic-moment-conditioning.csv\n?? Document/data/gcorr-hess-moment-automatic-moment-estimates.csv\n?? Document/data/gcorr-hess-moment-automatic-moment-traits.csv\n?? Document/data/gcorr-hess-moment-automatic-momentinference-counts.csv\n?? Document/data/gcorr-hess-moment-automatic-partial-meta-gc-conditioning.csv\n?? Document/data/gcorr-hess-moment-automatic-partial-meta-gc-estimates.csv\n?? Document/data/gcorr-hess-moment-automatic-partial-meta-gc-traits.csv\n?? Document/data/gcorr-hess-moment-automatic-partial-meta-gcinference-counts.csv\n?? Document/data/gcorr-hess-moment-partial-scaling-checks.csv\n?? Document/data/gcorr-hess-moment-phases.csv\n?? Document/data/gcorr-hess-moment-process-memory.csv\n?? Document/data/gcorr-hess-moment-regional-phases.csv\n?? Document/data/gcorr-hess-moment-saved-cap20-moment-conditioning.csv\n?? Document/data/gcorr-hess-moment-saved-cap20-moment-estimates.csv\n?? Document/data/gcorr-hess-moment-saved-cap20-moment-traits.csv\n?? Document/data/gcorr-hess-moment-saved-cap20-momentinference-counts.csv\n?? Document/data/gcorr-hess-moment-scaling-provenance.csv\n?? Document/data/gcorr-hess-moment-uncertainty.md\n?? Document/data/gcorr-hess-software-fit-timings.csv\n?? Document/data/gcorr-hess-software-native-totals.csv\n?? Document/data/gcorr-hess-software-original-point-convention-totals.csv\n?? Document/data/gcorr-hess-software-partial_gc-estimates.csv\n?? Document/data/gcorr-hess-software-partial_gc-jackknife.csv\n?? Document/data/gcorr-hess-software-point-convention-comparison.csv\n?? Document/data/gcorr-hess-software-raw-estimates.csv\n?? Document/data/gcorr-hess-software-raw-jackknife.csv\n?? Document/data/gcorr-hess-software-uncertainty.md\n?? Document/data/gcorr-hess-software-upstream-variance-parity.csv\n?? Document/data/gcorr_hess_investigation.R\n?? Document/data/gcorr_hess_moment_uncertainty.R\n?? Document/data/gcorr_hess_software_uncertainty.R\n?? README.html\n?? benchmarks/",
+      "remote": "origin\thttps://github.com/psoerensen/gact.git (fetch)\norigin\thttps://github.com/psoerensen/gact.git (push)"
+    },
+    "gsuite": {
+      "head": {
+        "unavailable": "fatal: cannot change to 'C:\\Users\\au223366\\Documents\\GitHub\\gsuite': Permission denied"
+      },
+      "status": {
+        "unavailable": "fatal: cannot change to 'C:\\Users\\au223366\\Documents\\GitHub\\gsuite': Permission denied"
+      },
+      "remote": {
+        "unavailable": "fatal: cannot change to 'C:\\Users\\au223366\\Documents\\GitHub\\gsuite': Permission denied"
+      }
+    }
+  },
+  "copied_files": 417,
+  "copied_bytes": 15466670,
+  "note": "Import-time HEAD and working-tree state do not establish measured-run versions. Use per-run provenance and original source archives. Driver snapshots may postdate measurements."
+}

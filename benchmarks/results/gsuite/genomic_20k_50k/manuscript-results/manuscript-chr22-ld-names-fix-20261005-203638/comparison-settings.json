@@ -1,0 +1,13 @@
+{
+    "samples":  503,
+    "r2Threshold":  0.0001,
+    "windowMarkers":  1000,
+    "ancestry":  "EUR",
+    "chromosome":  22,
+    "requestedThreads":  4,
+    "blockSize":  1024,
+    "basePairWindow":  0,
+    "scope":  "One gbase run after preallocating marker names in the LD-score wrapper, same chromosome-22 fixture and settings as the prior four-thread filtered run. No downloads or genome-wide LD. Validate identical payloads and labelled LD scores.",
+    "workerSha256":  "B835F6609FB27A7F3E67160E762D5BE431C85B932156188A0CE95E4EF348A869",
+    "bridgeSha256":  "98D9E09F73E779AD6AC1F9978FA25DB014413328832D98245C8D26FD9D104CE7"
+}

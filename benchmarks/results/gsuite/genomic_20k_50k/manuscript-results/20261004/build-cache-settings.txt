@@ -1,0 +1,7 @@
+build/task-packages/native/glma/CMakeCache.txt:CMAKE_BUILD_TYPE:STRING=Release
+build/task-packages/native/glma/CMakeCache.txt:CMAKE_CXX_COMPILER:UNINITIALIZED=C:/rtools44/x86_64-w64-mingw32.static.posix/bin/g++.exe
+build/task-packages/native/glma/CMakeCache.txt:OpenMP_CXX_FLAGS:STRING=-fopenmp
+build/task-packages/native/gmap/CMakeCache.txt:CMAKE_BUILD_TYPE:STRING=Release
+build/task-packages/native/gmap/CMakeCache.txt:CMAKE_CXX_COMPILER:UNINITIALIZED=C:/rtools44/x86_64-w64-mingw32.static.posix/bin/g++.exe
+build/task-packages/native/gmap/CMakeCache.txt:OpenMP_CXX_FLAGS:STRING=-fopenmp
+g++.exe (GCC) 13.2.0

@@ -1,0 +1,21 @@
+List of 20
+ $ markers                                     : int 141121
+ $ samples                                     : num 503
+ $ window                                      : int 1000
+ $ r2_cutoff                                   : num 1e-04
+ $ requested_threads                           : num 4
+ $ block_size                                  : int 1024
+ $ stored_pairs                                : num 1.29e+08
+ $ baseline_stored_pairs                       : num 1.41e+08
+ $ retained_fraction                           : num 0.918
+ $ minimum_absolute_stored_r                   : num 0.01
+ $ sampled_markers                             : int 192
+ $ sampled_pairs                               : num 36864
+ $ max_absolute_filtered_correlation_difference: num 0
+ $ minimum_ld_score_decrease                   : num 2.38e-06
+ $ maximum_ld_score_decrease                   : num 0.0303
+ $ mean_ld_score_decrease                      : num 0.00547
+ $ ld_file_bytes                               : num 1.04e+09
+ $ previous_filtered_scores_identical          : logi TRUE
+ $ previous_filtered_payloads_identical        : logi TRUE
+ $ note                                        : chr "Cutoff deliberately removes correlations; results are not the unfiltered reference. Base-pair limit disabled to"| __truncated__

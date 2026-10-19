@@ -1,0 +1,84 @@
+---
+title: "Fine-mapping simulated data with Bayesian linear regression"
+author: "Peter Sørensen"
+date: "8 October 2026"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, eval=FALSE)
+```
+
+This example uses **gbase**, **glma**, **gmap** and **gbayes**, with the familiar
+qgg preparation and MCMC arguments. The simulated panel contains 5,000 people
+and 50,000 markers. The phenotype is shared with the
+[linear and mixed-model example](Glma_linear_and_mixed_models_simulated_data.html).
+
+## Prepare the data
+
+```{r prepare}
+library(gbase)
+library(glma)
+library(gmap)
+library(gbayes)
+
+setwd("C:/Users/Projects/Examples")
+url <- "https://github.com/psoerensen/qgdata/raw/main/simulated_human_data/"
+base <- "https://psoerensen.github.io/gact/Document/glma-simulated-data/"
+download.file(paste0(url, "human.bed"), "human.bed", mode="wb")
+download.file(paste0(base, "human.bim"), "human.bim")
+download.file(paste0(url, "human.fam"), "human.fam")
+
+Glist <- gprep(study="Simulation", bedfiles="human.bed",
+  bimfiles="human.bim", famfiles="human.fam")
+rsids <- gfilter(Glist=Glist, excludeMAF=0.05, excludeMISS=0.05,
+  excludeCGAT=TRUE, excludeINDEL=TRUE, excludeDUPS=TRUE,
+  excludeHWE=1e-12, excludeMHC=FALSE)
+Glist <- gprep(study="Simulation", bedfiles="human.bed", rsids=rsids)
+
+phenotypes <- read.csv(paste0(base, "example-phenotypes.csv"),
+  colClasses=c("character", "numeric"))
+y <- setNames(phenotypes$phenotype, phenotypes$id)
+causal <- readLines(paste0(base, "causal-markers.txt"))
+sets <- createMarkerSets(Glist=Glist, rsids=causal, upstream=1000, downstream=1000)
+
+scan <- glma(y=y, Glist=Glist, method="linear")
+stat <- checkStat(Glist=Glist, stat=scan$associations)
+```
+
+The supplied BIM corrects 13 invalid genetic-map entries without changing the
+genotypes, physical positions or alleles. `upstream` and `downstream` count
+markers within each chromosome.
+
+## Fit the regions
+
+```{r regional}
+fit <- gmap(Glist=Glist, stat=stat, sets=sets, method="bayesC",
+  nit=1000, nburn=100, nrun=2)
+head(fit$post)
+head(fit$conv)
+head(fit$stat)
+fit$cs
+```
+
+The default dense route computes full regional LD directly from BED. Posterior
+tables include hyperparameters, effects and PIPs; convergence tables contain
+native R-hat, ESS and status diagnostics. Inspect these before interpreting
+posterior results. Credible-set grouping uses marginal PIPs.
+
+## Fit genome-wide marker effects
+
+```{r genome}
+Glist <- gprep(Glist, task="sparseld", msize=1000, ldfiles="human.ld", nthreads=4)
+fit <- gbayes(Glist=Glist, stat=stat, method="bayesC", nit=100, nrun=2)
+head(fit$stat)
+```
+
+Genome-wide fitting reuses sparse LD. An eigen route is also available for
+verified independent LD blocks; regional eigen fitting can be selected with
+`gmap(..., algorithm="mcmc-eigen", eigen_threshold=0.99)` after sparse-LD
+preparation. These routes have different likelihood and variance conventions;
+the common argument names do not imply identical qgg posterior draws.
+
+See [recorded tutorial timings](Tutorial_timings_and_memory.html).

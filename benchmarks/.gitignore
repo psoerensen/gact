@@ -1,0 +1,12 @@
+# Large inputs and generated run caches stay outside version control.
+/data/
+/cache/
+/work/
+*.bed
+*.bim
+*.fam
+*.rds
+*.RDS
+*.RData
+*.zip
+!scripts/gsuite/genomic_20k_50k/EUR-fourier-ac125e47.bed

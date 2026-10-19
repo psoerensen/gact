@@ -1,0 +1,6 @@
+"stage","check","passed","detail"
+"vegas","matched substantive outputs at relative tolerance 1e-10",TRUE,"TRUE"
+"joint","matched substantive outputs at relative tolerance 1e-10",TRUE,"TRUE"
+"mapping","matched substantive outputs at relative tolerance 1e-10",TRUE,"TRUE"
+"total","matched substantive outputs at relative tolerance 1e-10",TRUE,"TRUE"
+"pathway","matched substantive outputs at relative tolerance 1e-10",TRUE,"TRUE"

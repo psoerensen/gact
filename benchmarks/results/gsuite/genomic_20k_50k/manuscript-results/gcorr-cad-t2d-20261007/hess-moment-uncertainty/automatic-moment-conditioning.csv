@@ -1,0 +1,3 @@
+"trait","sample_size","retained_rank","rank_fraction","correction_denominator","moment_amplification","status"
+"GWAS1",49071.2732949614,18696,0.380996838774096,0.619003161225904,1.61550063495565,"within_half_sample_rank"
+"GWAS2",40743.1524049809,18696,0.458874654915371,0.541125345084629,1.84800066950035,"within_half_sample_rank"

@@ -1,0 +1,8 @@
+stage,median_seconds,minimum_seconds,maximum_seconds,median_peak_working_set_gib
+cmp_qgg_regional,6.14,5.98,16.91,0.8417015075683594
+cmp_qgg_genome,9.96,9.8,10.56,2.7174453735351562
+cmp_qgg_credible,3.78,3.43,3.98,0.6579170227050781
+cmp_suite_regional,5.48,5.22,6.28,0.555908203125
+cmp_suite_genome,2.36,2.03,2.38,0.8128509521484375
+cmp_suite_credible_oracle,3.95,3.83,4.16,0.5194854736328125
+cmp_compare,1.33,1.33,1.37,0.4259147644042969

@@ -1,0 +1,82 @@
+{
+  "scope": "Single executions. Fresh setup includes network downloads; reuse verifies existing files. Network and OS caches uncontrolled. Operation excludes worker loading and final output serialization; process memory includes worker loading. Checkpoint writes are inside the operation.",
+  "measurements": [
+    {
+      "implementation": "earlier version",
+      "stage": "database_fresh",
+      "operation_seconds": 544.2,
+      "serialization_seconds": 12.48,
+      "process_wall_seconds": 575.4050446,
+      "peak_working_set_bytes": 2873872384,
+      "source": "build\\benchmarks\\manuscript-20261004-143135\\database-1"
+    },
+    {
+      "implementation": "setup restart candidate",
+      "stage": "database_fresh",
+      "operation_seconds": 1567.64,
+      "serialization_seconds": 43.45,
+      "process_wall_seconds": 1619.7645616,
+      "peak_working_set_bytes": 3042394112,
+      "status": "completed",
+      "warnings": "strings not representable in native encoding will be translated to UTF-8",
+      "source": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\database_fresh-1"
+    },
+    {
+      "implementation": "setup restart candidate",
+      "stage": "database_reuse",
+      "operation_seconds": 857.93,
+      "serialization_seconds": 49.62,
+      "process_wall_seconds": 912.3359326,
+      "peak_working_set_bytes": 1147854848,
+      "status": "completed",
+      "warnings": "",
+      "source": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\database_reuse-1"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\database_fresh-1\\database-files.csv",
+      "sha256": "1cb54ced408db46355355bd9c3a23acf7e515656ef6f3f05a66421cbbd909000"
+    },
+    {
+      "path": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\database_fresh-1\\downloads.csv",
+      "sha256": "71a827ce06e1991aa20630678da2704a15de68cbbd9820d0956765a4b56979e7"
+    },
+    {
+      "path": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\database_fresh-1\\timing.csv",
+      "sha256": "632e99f99cf0e62e2adb0a682b2f0a95e6aea8993c9129897c98aca57ad14111"
+    },
+    {
+      "path": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\database_reuse-1\\database-files.csv",
+      "sha256": "894e9bb81816183b094723f58fb7b45e64fe09b9c520fdf659252cd96246c8f4"
+    },
+    {
+      "path": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\database_reuse-1\\downloads.csv",
+      "sha256": "a66cda94530e1122aa656761e6eec0d453301143c1ee78802419152bb4870f86"
+    },
+    {
+      "path": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\database_reuse-1\\timing.csv",
+      "sha256": "a4edb89a23eee23f4f77f8e511524e16328e3faf87eb9d08c55be4959b9f1c4c"
+    },
+    {
+      "path": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\hardware.json",
+      "sha256": "9c6453ca9894cdfedee225d6139b1f4111c4e6a1db943e12fab65a0db68db336"
+    },
+    {
+      "path": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\process-measurements.csv",
+      "sha256": "47a03ea26f6627f4df75aa542e4b9ed11465a4652c787dac10d0c8a5606a3726"
+    },
+    {
+      "path": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\run_setup_restart_timing.ps1",
+      "sha256": "692e6b7ea9da90727d7fceed8b35167ee35842242e640dd1f23201692f68552c"
+    },
+    {
+      "path": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\setup_restart_stage.R",
+      "sha256": "6f847139c3a2f351edf169fec568d54c5febb8378d9b5304eb11b49cf908f7b9"
+    },
+    {
+      "path": "build\\benchmarks\\manuscript-setup-restart-20261005-185311\\source-provenance.json",
+      "sha256": "96b41bd67e2e5e5261e55e1774de2b27c61ddfada358bf074a0bf19d58e9127f"
+    }
+  ]
+}

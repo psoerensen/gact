@@ -1,0 +1,2277 @@
+[
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/dense-versus-current-eigen.csv",
+    "bytes": 366,
+    "sha256": "17601b0c1c7190bfe59946fc00ea0e7334a380a1b328c60a1b98fe7f51a7c459"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/effective-settings.json",
+    "bytes": 3888,
+    "sha256": "dabd3b49a2b525de0f969de748cfdfa465075a4403351ad9ecdaad9c7120bc82"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/full-regional-ld-audit.csv",
+    "bytes": 208,
+    "sha256": "d9dfdd745ca91d92169d1de63735e4dc17d4d5b1b1f4f373f03a41bc342f530f"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/gact-source.diff",
+    "bytes": 3667,
+    "sha256": "216b60c746ff1239a2056795b194b58a0ebadc7965e7918d2441bba3486e5654"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/gbayes-source.diff",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/genome-causal-comparison.csv",
+    "bytes": 106,
+    "sha256": "44c3459bb7a98c7994e3e002629ff02e773f4bcd0f91725aaba9e8edd3cbc0ca"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/genome-comparison.csv",
+    "bytes": 90,
+    "sha256": "c72f6b4eeecf54f6e26d128deec18b8813b393e48d4eaf45d971b5804239346a"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/gmap-source.diff",
+    "bytes": 25616,
+    "sha256": "dc3d59489ccf287702e6222989a759b68c882ebac99afaec5063611479beaa4f"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/gmat-source.diff",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/gsolve-source.diff",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/gsuite-source.diff",
+    "bytes": 61618,
+    "sha256": "435bd426756ef04cf57e2d8028e475889d504d4ed8f061ceae0d9cadd1e27348"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/median-stage-measurements.csv",
+    "bytes": 447,
+    "sha256": "4598318f81dfca09164b8745a8cc11147d4ce7c9232525d4d9b58c42b26cc79f"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/original-genotypes-preserved.json",
+    "bytes": 785,
+    "sha256": "2ee33a6f16b4f21c256fc7e68d5b4754e88eb747df905530e4b9f2f825bcfe20"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/regional-comparison.csv",
+    "bytes": 550,
+    "sha256": "f74e1e5ac04420b07191f65343c2907acccf7d3bce1ca504a08cf67ae6af8e7e"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/regional-phase-times.csv",
+    "bytes": 2076,
+    "sha256": "a862c3746142dd9e111ec107399e8134f2b605d622b8c34a7c1fab1768735447"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/source-commits.json",
+    "bytes": 341,
+    "sha256": "fb21e74c53cc0e77518c1a86a2ecdd517d9b84c61bc3e271d7d132b938a70ae2"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/sparse-ld-cache-manifest.json",
+    "bytes": 1065,
+    "sha256": "34fadd9751be93fd82fdbfb2559b23e40940cefff0b09a84f0e4865b3372a73c"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/manuscript-results/manuscript-simulated-finemapping-dense-20261006/stage-measurements.csv",
+    "bytes": 3035,
+    "sha256": "b724a259f5d12550aedb9adc79f205f9c7ad31d1479ea475d73324f516cbe5ee"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/run_manuscript.ps1",
+    "bytes": 7278,
+    "sha256": "7dc2e30c6ac36f31e1b17e3209ca053675c66137b2e41cad6d35c21c3f665cfe"
+  },
+  {
+    "path": "benchmarks/genomic_20k_50k/simulated_finemapping_comparison_stage.R",
+    "bytes": 13182,
+    "sha256": "08b485ffce8136c428d29189c85bc7aa3269582742b8d4bf2ab61748c53cd491"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261005-142319/website_sim_stats-1/output.rds",
+    "bytes": 5414412,
+    "sha256": "d6dfb8f3bb50518f14b19d1a23a9fb3d241b9aeae7e2a60e030a45320b847f0e"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261005-231349/cmp_suite_prepare-1/human-validated-map.bim",
+    "bytes": 1905260,
+    "sha256": "ff15e3934542dc2db3258a69e2818c41099cc13f8d784e095eaf5922f1ad5b57"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261005-231349/cmp_suite_prepare-1/output.rds",
+    "bytes": 1768228,
+    "sha256": "132eef02d744b39b1c04ecf89e55603e3245d2aee22bb223fa36c457cf86fbfb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/cmp_suite_regional-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/cmp_suite_regional-1/output-structure.txt",
+    "bytes": 1061,
+    "sha256": "0d5002c5dfd0d01e246b72ec18fabfd07ec98be50e9554532067b45dda30ae0d"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/cmp_suite_regional-1/output.rds",
+    "bytes": 603936,
+    "sha256": "0b5479eaa39595f3be373087be77ed6f3b34c8a072db68c4012343801b42a052"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/cmp_suite_regional-1/phase-times.csv",
+    "bytes": 430,
+    "sha256": "ea51c8d94d4a7d86e928caba40adc14025739fc32938e4df53f5f8ca8f47b382"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/cmp_suite_regional-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "92c2b7c43117c43ca5a2779e1a28c0e2b138140718b493221f635cf9c8f23446"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/cmp_suite_regional-1/regional-times.csv",
+    "bytes": 218,
+    "sha256": "4ce27d0d911f3d1fb7343bc1ee26fc837bfd817960fa7b13dd7a325a89dfbbc1"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/cmp_suite_regional-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/cmp_suite_regional-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/cmp_suite_regional-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/cmp_suite_regional-1/stdout.log",
+    "bytes": 158,
+    "sha256": "fe9b51eb8efd3027e39db404094aa363a179c55246e684c2b4ac5a022a8b6344"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/cmp_suite_regional-1/timing.csv",
+    "bytes": 175,
+    "sha256": "1ba54c2cc4cec767ad09db5220c01562d56607a19e90844077188651f7005807"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/hardware.json",
+    "bytes": 719,
+    "sha256": "1ed08fb3bd8f9aec6346492a27bd565c5085318e939b1ba0ddfc97b303adf86c"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063716/process-measurements.csv",
+    "bytes": 314,
+    "sha256": "f89e2ebc4091bf274e996e7681ec03877730ebb1843d71e02137a802127b5164"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/dense-versus-current-eigen.csv",
+    "bytes": 366,
+    "sha256": "17601b0c1c7190bfe59946fc00ea0e7334a380a1b328c60a1b98fe7f51a7c459"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/effective-settings.json",
+    "bytes": 3888,
+    "sha256": "dabd3b49a2b525de0f969de748cfdfa465075a4403351ad9ecdaad9c7120bc82"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/full-regional-ld-audit.csv",
+    "bytes": 208,
+    "sha256": "d9dfdd745ca91d92169d1de63735e4dc17d4d5b1b1f4f373f03a41bc342f530f"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/genome-causal-comparison.csv",
+    "bytes": 106,
+    "sha256": "44c3459bb7a98c7994e3e002629ff02e773f4bcd0f91725aaba9e8edd3cbc0ca"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/genome-comparison.csv",
+    "bytes": 90,
+    "sha256": "c72f6b4eeecf54f6e26d128deec18b8813b393e48d4eaf45d971b5804239346a"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/output-structure.txt",
+    "bytes": 1799,
+    "sha256": "6a50252946dc1bcdc7c4c9bf83061629e8428ab737da3f9cf86a4df75396f3bf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/output.rds",
+    "bytes": 943,
+    "sha256": "f27658d55a0a889cae281e71662e69ad59a92574467a084821cbbd61e6c26b3d"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "4f1d39e4effb0effd1e761f8082c50596e75539079621ff1b30bf415ba0ce972"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/regional-comparison.csv",
+    "bytes": 550,
+    "sha256": "f74e1e5ac04420b07191f65343c2907acccf7d3bce1ca504a08cf67ae6af8e7e"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_compare-1/timing.csv",
+    "bytes": 153,
+    "sha256": "f2987faacd7e4032ff3b870fe169422db0f3f74b66ef413b96d726a75cc1473c"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_credible-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_credible-1/output-structure.txt",
+    "bytes": 237,
+    "sha256": "4f62d4a520e5df0bce54475a22152098af27731bbecafa60b00a1770873a76a7"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_credible-1/output.rds",
+    "bytes": 151,
+    "sha256": "3cce073639cd5a700da416be2ce3055151d12013431380f4e84fc50bf8a2cfa7"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_credible-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "2bc5b8d56dd2b0392f4d3a175dc878729f096e700d0a3a8b03f6e4369692c974"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_credible-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_credible-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_credible-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_credible-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_credible-1/timing.csv",
+    "bytes": 158,
+    "sha256": "79a5c39e6db80fa7ace3bb694bcd2888e07f3e937317cdfee783470e4df2535a"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_genome-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_genome-1/output-structure.txt",
+    "bytes": 2334,
+    "sha256": "85afd1df5f1bc1047fc5df920b73ed90a8fb752874abd20a938db76a298b468d"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_genome-1/output.rds",
+    "bytes": 1481410,
+    "sha256": "ceebc6cc6534bbb85b2a0ad2a84b4b88eb3b90701392d171ab5343f2d3933d46"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_genome-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "529fb4ff1fe7122450b17380b69087b1a6d956ecc8e9ea32803194ed7ccfee41"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_genome-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_genome-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_genome-1/stderr.log",
+    "bytes": 241,
+    "sha256": "7f0f0d98ff0457b4a8aaf2558041ccd253aa8eac11d331b709a56617d17d3edb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_genome-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_genome-1/timing.csv",
+    "bytes": 173,
+    "sha256": "874214d93f5936f256d4d87ba28802cfba639f7e22a196e14fb6bca7b231690a"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_regional-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_regional-1/output-structure.txt",
+    "bytes": 7221,
+    "sha256": "f78a3d7095ba7017d6676efecd266dbc84053581dd6670bd4d9f06155a808755"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_regional-1/output.rds",
+    "bytes": 735732,
+    "sha256": "1b81699d05249fa347c1542c2033e8337589338ae5b0b5419411811e97db8647"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_regional-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "c8661a01e86c0f49a2cf736f3b68e014cd5b6f816667acc353c1c0d0c679f091"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_regional-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_regional-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_regional-1/stderr.log",
+    "bytes": 473,
+    "sha256": "feca79b8a6406f3f04135cd73f1ed0028faffb3865b39af6366ba7b7151ee18b"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_regional-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_qgg_regional-1/timing.csv",
+    "bytes": 162,
+    "sha256": "cf011cb5b0f4e8f6bb9368c744ce6fb536c9672fcc8b68076599bce9114743c8"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_credible_oracle-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_credible_oracle-1/output-structure.txt",
+    "bytes": 1212,
+    "sha256": "3d0b654fbf4aec10641e3049c9885dd3f54ada64cb1360167e9a5a157e7dab4a"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_credible_oracle-1/output.rds",
+    "bytes": 570,
+    "sha256": "d5bfc97562dd85e867ae7f458e41f3f65f8e92a9c8570274d74c11ea83aa2505"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_credible_oracle-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "189d6b71afe550990af1f9fa30b77aa0afa31a539acc009fde7086a3a0423930"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_credible_oracle-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_credible_oracle-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_credible_oracle-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_credible_oracle-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_credible_oracle-1/timing.csv",
+    "bytes": 167,
+    "sha256": "b099bbab1d662c698aaa65adcb1fe9b7d2ccd81c22b3e48524c510bf289b8608"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_genome-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_genome-1/output-structure.txt",
+    "bytes": 8080,
+    "sha256": "8a407f45b18d5004706035960ae590b135b89095d1b8a6070f4b6095b26f2894"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_genome-1/output.rds",
+    "bytes": 4059702,
+    "sha256": "f3ddf43d67b299ba49765dcd0a9419a831eff5ecfabdad720f4005e1edccdf36"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_genome-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "2a4eb2d4139fee85a73e2f79e71c57a11f15500e80cac57f553e4f28ed442540"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_genome-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_genome-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_genome-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_genome-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_genome-1/timing.csv",
+    "bytes": 161,
+    "sha256": "f6b896bd770c23955deae2603df481ae4a712e99e3b385b46e27193d5d9213fd"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_regional-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_regional-1/output-structure.txt",
+    "bytes": 2876,
+    "sha256": "91d39853a4f38ad2e7b97a994e6cc2c0aad5da3a7d41c452745c84d2b514b4ea"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_regional-1/output.rds",
+    "bytes": 1812967,
+    "sha256": "51f22a35115713ffcf30a044a3f2e17a787ff12c9f95e456a4dc2d5d4885bbab"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_regional-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "bbe4922703508431cd8a738bf9213472d95f60824490d7740bac6fff836d672c"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_regional-1/regional-times.csv",
+    "bytes": 717,
+    "sha256": "f5b2b8f423b1844dd92212021f59339316bf61875763f533075e2c128204033b"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_regional-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_regional-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_regional-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_regional-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/cmp_suite_regional-1/timing.csv",
+    "bytes": 163,
+    "sha256": "26d3b40a3d7801d965fa5c71a07625942c6f7ca757ca8bd2f96c7229f8037642"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/hardware.json",
+    "bytes": 719,
+    "sha256": "4fa8f422df8ee07e8fb7e424df0a1625c5e3d4857c5bbcf314b5323edfa4fc7c"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-063938/process-measurements.csv",
+    "bytes": 1395,
+    "sha256": "616182690de14116ae2e7bfba0f48c0e7e2aa7c9369e796dea29cfa6adef6a63"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_compare-1/genome-causal-comparison.csv",
+    "bytes": 106,
+    "sha256": "44c3459bb7a98c7994e3e002629ff02e773f4bcd0f91725aaba9e8edd3cbc0ca"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_compare-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_compare-1/output-structure.txt",
+    "bytes": 1799,
+    "sha256": "6a50252946dc1bcdc7c4c9bf83061629e8428ab737da3f9cf86a4df75396f3bf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_compare-1/output.rds",
+    "bytes": 947,
+    "sha256": "f8df38442ad958a3b16410ff745e01224009c2b01156ad2e82e07b90035a92bf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_compare-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "4af2a701e06d398058b7d4bda1be9450fc70b6440db44e5f8897e48d4e484732"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_compare-1/regional-comparison.csv",
+    "bytes": 550,
+    "sha256": "f74e1e5ac04420b07191f65343c2907acccf7d3bce1ca504a08cf67ae6af8e7e"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_compare-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_compare-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_compare-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_compare-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_compare-1/timing.csv",
+    "bytes": 153,
+    "sha256": "33e2752507ebcf938f92d9e35f58418b85defc14c4a7fbae9d3f1f5f406d5a0e"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_credible-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_credible-1/output-structure.txt",
+    "bytes": 237,
+    "sha256": "4f62d4a520e5df0bce54475a22152098af27731bbecafa60b00a1770873a76a7"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_credible-1/output.rds",
+    "bytes": 151,
+    "sha256": "3cce073639cd5a700da416be2ce3055151d12013431380f4e84fc50bf8a2cfa7"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_credible-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "f142457de17a8ac1edd9debee475bd0dc3b4a62a02f086054684e41b891319b9"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_credible-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_credible-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_credible-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_credible-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_credible-1/timing.csv",
+    "bytes": 158,
+    "sha256": "225d6d849b02d0d6b5cae5afbc7e2ddc7067772e50337a00eec3569fef5605fe"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_genome-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_genome-1/output-structure.txt",
+    "bytes": 2334,
+    "sha256": "85afd1df5f1bc1047fc5df920b73ed90a8fb752874abd20a938db76a298b468d"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_genome-1/output.rds",
+    "bytes": 1481410,
+    "sha256": "ceebc6cc6534bbb85b2a0ad2a84b4b88eb3b90701392d171ab5343f2d3933d46"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_genome-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "7e4b30aaf9714890aa73c6c06a9a7669628c2b462946a20b11137671792f2a98"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_genome-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_genome-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_genome-1/stderr.log",
+    "bytes": 241,
+    "sha256": "7f0f0d98ff0457b4a8aaf2558041ccd253aa8eac11d331b709a56617d17d3edb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_genome-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_genome-1/timing.csv",
+    "bytes": 172,
+    "sha256": "a9b52a9ed58dea014b47d7e2b48d5979b9cfff1258f6a2666bc07ed78c96b464"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_regional-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_regional-1/output-structure.txt",
+    "bytes": 7221,
+    "sha256": "f78a3d7095ba7017d6676efecd266dbc84053581dd6670bd4d9f06155a808755"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_regional-1/output.rds",
+    "bytes": 735732,
+    "sha256": "1b81699d05249fa347c1542c2033e8337589338ae5b0b5419411811e97db8647"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_regional-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "42a6b713cc09789afc1989fa8e52d73cc6a63b7f88e5641f09030d03aa207e98"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_regional-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_regional-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_regional-1/stderr.log",
+    "bytes": 473,
+    "sha256": "feca79b8a6406f3f04135cd73f1ed0028faffb3865b39af6366ba7b7151ee18b"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_regional-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_qgg_regional-1/timing.csv",
+    "bytes": 174,
+    "sha256": "1592efa6dad849f56ac96ec01957a6d4c6d83d5253e2f15575b6a4c3f1718fb9"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_credible_oracle-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_credible_oracle-1/output-structure.txt",
+    "bytes": 1213,
+    "sha256": "73ac5f9345049be2250daa873e763baecba843721ce69ec0118a513360118d69"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_credible_oracle-1/output.rds",
+    "bytes": 576,
+    "sha256": "9110784c1433c9bed5c560be02f509d06717d533872a08c605072fdb9a0d7e89"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_credible_oracle-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "0e3169ffc8385b9bd4e265bafc622eaf613e6fff110089116f09aecbab4cc2dc"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_credible_oracle-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_credible_oracle-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_credible_oracle-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_credible_oracle-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_credible_oracle-1/timing.csv",
+    "bytes": 167,
+    "sha256": "53adb3f38a11a3087692f8b277c99d8d1568dbbae339457983696e526f5207ed"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_genome-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_genome-1/output-structure.txt",
+    "bytes": 8080,
+    "sha256": "8a407f45b18d5004706035960ae590b135b89095d1b8a6070f4b6095b26f2894"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_genome-1/output.rds",
+    "bytes": 4059702,
+    "sha256": "f3ddf43d67b299ba49765dcd0a9419a831eff5ecfabdad720f4005e1edccdf36"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_genome-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "ce4c25b2ac4d0ee84cce6267514e00dbd6c0d0ddbdaca7f2591641d9757a8262"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_genome-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_genome-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_genome-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_genome-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_genome-1/timing.csv",
+    "bytes": 161,
+    "sha256": "53d78ed1f7a86b489035406a3e76b8851b6bd0237b89d98032179587f95f3ff6"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_regional-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_regional-1/output-structure.txt",
+    "bytes": 2878,
+    "sha256": "89346bcf24576c4d73dca37bbec2b8335534611b165f58fdd787fdd6fd9aa4b7"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_regional-1/output.rds",
+    "bytes": 1813021,
+    "sha256": "5225bcde5bcd99deae7af2ac858b6824568d46bda5c3cf0141eb4c7fb991d33e"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_regional-1/r-process.pid",
+    "bytes": 5,
+    "sha256": "fa50009f5a02ada72be203db39429383edfc6ae70be715f46a29e70aa3f22914"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_regional-1/regional-times.csv",
+    "bytes": 659,
+    "sha256": "6440da51dccd5bcafed41c5395c7c478a364182b35db984f7249eafbee39c6b0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_regional-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_regional-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_regional-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_regional-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/cmp_suite_regional-1/timing.csv",
+    "bytes": 176,
+    "sha256": "d5cbf889f143023c290c795b32fe6455605b11db09a975b555d682ca10d05b01"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/hardware.json",
+    "bytes": 719,
+    "sha256": "85d60c97302baa4f021a16c086a5266e61d6d68295a35a3aed5c848f554ae3ef"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064121/process-measurements.csv",
+    "bytes": 1396,
+    "sha256": "59cb00b08f360f37e07aa9af5b75e2b8e2bf12b43d70764ca61e5eaf12317f11"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_compare-1/genome-causal-comparison.csv",
+    "bytes": 106,
+    "sha256": "44c3459bb7a98c7994e3e002629ff02e773f4bcd0f91725aaba9e8edd3cbc0ca"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_compare-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_compare-1/output-structure.txt",
+    "bytes": 1799,
+    "sha256": "6a50252946dc1bcdc7c4c9bf83061629e8428ab737da3f9cf86a4df75396f3bf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_compare-1/output.rds",
+    "bytes": 928,
+    "sha256": "e3e71ab29d042b743613f2ee5503e02ca188a572703cf011cd4e4a86c59f0f99"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_compare-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "edcf0a5339b32beac688f61d84000f7e8c907e3c5fca0ac41e28e153cdbe7253"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_compare-1/regional-comparison.csv",
+    "bytes": 550,
+    "sha256": "f74e1e5ac04420b07191f65343c2907acccf7d3bce1ca504a08cf67ae6af8e7e"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_compare-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_compare-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_compare-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_compare-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_compare-1/timing.csv",
+    "bytes": 153,
+    "sha256": "cb77fd3f6ed8a4e62a9966e732c2716c656ba370530a1038bead4235f74962db"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_credible-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_credible-1/output-structure.txt",
+    "bytes": 237,
+    "sha256": "4f62d4a520e5df0bce54475a22152098af27731bbecafa60b00a1770873a76a7"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_credible-1/output.rds",
+    "bytes": 151,
+    "sha256": "3cce073639cd5a700da416be2ce3055151d12013431380f4e84fc50bf8a2cfa7"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_credible-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "64b146ac8d959f2af05466430ff1d6fcb19b81c99bde60ae092e0127570c5248"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_credible-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_credible-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_credible-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_credible-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_credible-1/timing.csv",
+    "bytes": 158,
+    "sha256": "1def47d074bfcb1ce698c5cf37f5f4f944cfbdc5357781c68f81f9400a52d371"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_genome-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_genome-1/output-structure.txt",
+    "bytes": 2334,
+    "sha256": "85afd1df5f1bc1047fc5df920b73ed90a8fb752874abd20a938db76a298b468d"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_genome-1/output.rds",
+    "bytes": 1481410,
+    "sha256": "ceebc6cc6534bbb85b2a0ad2a84b4b88eb3b90701392d171ab5343f2d3933d46"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_genome-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "e44e4186dff5561f5896d0f89bb232d085576f9561fa72f54de26095bfd182ea"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_genome-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_genome-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_genome-1/stderr.log",
+    "bytes": 241,
+    "sha256": "7f0f0d98ff0457b4a8aaf2558041ccd253aa8eac11d331b709a56617d17d3edb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_genome-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_genome-1/timing.csv",
+    "bytes": 157,
+    "sha256": "d2173fa0e6fbe191742e186ea6eabd7722ec1d0bcca7226e479ec1af3be42844"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_regional-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_regional-1/output-structure.txt",
+    "bytes": 7221,
+    "sha256": "f78a3d7095ba7017d6676efecd266dbc84053581dd6670bd4d9f06155a808755"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_regional-1/output.rds",
+    "bytes": 735732,
+    "sha256": "1b81699d05249fa347c1542c2033e8337589338ae5b0b5419411811e97db8647"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_regional-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "3ca245f06134a46f53ae572eaa39ce5b93320ab7ad388c132bd121eff1320d98"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_regional-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_regional-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_regional-1/stderr.log",
+    "bytes": 473,
+    "sha256": "feca79b8a6406f3f04135cd73f1ed0028faffb3865b39af6366ba7b7151ee18b"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_regional-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_qgg_regional-1/timing.csv",
+    "bytes": 174,
+    "sha256": "1a1925a3d11b450f821c48842e8155ed5037980c41b3a7ce24324fc40147dcb1"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_credible_oracle-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_credible_oracle-1/output-structure.txt",
+    "bytes": 1209,
+    "sha256": "6b36749c4a01394f21a1d0b52a86171f58fef14cd714477dafe916abaa6b708c"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_credible_oracle-1/output.rds",
+    "bytes": 555,
+    "sha256": "6dc9743d06e3af47599491aa708a9d58285b25822e49c56c13db448c4935ed95"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_credible_oracle-1/r-process.pid",
+    "bytes": 6,
+    "sha256": "7f3885c11578e9f03d1c36a750c5b096ad7cee2f4b6dcf906f29d24b4a67d1c4"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_credible_oracle-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_credible_oracle-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_credible_oracle-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_credible_oracle-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_credible_oracle-1/timing.csv",
+    "bytes": 167,
+    "sha256": "f87e2045c290f6fb6a384c4344e408825bf2eac4b1f21001f2f3d8880eaf2a54"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_genome-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_genome-1/output-structure.txt",
+    "bytes": 8080,
+    "sha256": "8a407f45b18d5004706035960ae590b135b89095d1b8a6070f4b6095b26f2894"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_genome-1/output.rds",
+    "bytes": 4059702,
+    "sha256": "f3ddf43d67b299ba49765dcd0a9419a831eff5ecfabdad720f4005e1edccdf36"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_genome-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "6c61950ac9c40dba9c507960cfc7a4806182cf5db6df3082898f79b86beaf395"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_genome-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_genome-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_genome-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_genome-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_genome-1/timing.csv",
+    "bytes": 161,
+    "sha256": "daaa2e106abfe283afecbc80c41250a0c1393ba48b89507d2161610a787bc219"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_regional-1/input.csv",
+    "bytes": 143,
+    "sha256": "de43f3f4cf98f889d6c6a65d9bcde4209e3f2f57374639afff317858c2e752d0"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_regional-1/output-structure.txt",
+    "bytes": 2877,
+    "sha256": "d01d1b5f573e7b90cce91ccc8e87dd3ac52a6f5a66a68ca7805f393a83bebe68"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_regional-1/output.rds",
+    "bytes": 1813011,
+    "sha256": "cc154846239db79c29d7dc6b01bb69375591d6b38a9c5bdd7e4e83747e471296"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_regional-1/r-process.pid",
+    "bytes": 7,
+    "sha256": "b9e6ababd0b8918882364ff2185174682785766800cff867975f26a63adf94fe"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_regional-1/regional-times.csv",
+    "bytes": 665,
+    "sha256": "b88d67532b91193b8f592676f83684b162029d300e61211586d6203df6958ca6"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_regional-1/regions.csv",
+    "bytes": 159,
+    "sha256": "51caea99c57f00cac43dd10db3d192646341ef01dd4d6ff530deb9d32a73e826"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_regional-1/session.txt",
+    "bytes": 1252,
+    "sha256": "0fe2de94192afec6bdfd4b002d92d4143bafdb711be9ef3722ce99ee1c826a51"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_regional-1/stderr.log",
+    "bytes": 188,
+    "sha256": "b3aad99a991f98252f3a0842635009f1fbec82b901a63d11a0168dadc69467cb"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_regional-1/stdout.log",
+    "bytes": 40,
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/cmp_suite_regional-1/timing.csv",
+    "bytes": 163,
+    "sha256": "b7ea58ebcf0a37b2e8d134dad45890b17735b0f49d2ec1f9b165b2f32a8c9199"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/hardware.json",
+    "bytes": 719,
+    "sha256": "de59c0658551bf18585f39520e8dd8c43ef03e68280d4391fb5a8c510521550f"
+  },
+  {
+    "path": "build/benchmarks/manuscript-20261006-064258/process-measurements.csv",
+    "bytes": 1396,
+    "sha256": "75344e1181ee8368cd440b02529552ece69fcaa6d414416fbe1cfade7356245f"
+  },
+  {
+    "path": "build/gact-revision-cleanup/audit_dense_mapping.R",
+    "bytes": 3788,
+    "sha256": "2dce22300ec034d8e7cd42a86df73dce1b288812af8f5b80395492feaefc714f"
+  },
+  {
+    "path": "build/gact-revision-cleanup/dense-gmap-native-tests-abi2.log",
+    "bytes": 3231,
+    "sha256": "cc96cc3a43bfca0ab96d3b9dce5e7161c9d759969ec5b07121036860d1e3b2be"
+  },
+  {
+    "path": "build/gact-revision-cleanup/dense-mapping-audit.log",
+    "bytes": 2148,
+    "sha256": "7df8d08f4b374f3d9f75f59f1cae44a56cb797e209196fa85463d2a7161a7ec9"
+  },
+  {
+    "path": "build/gact-revision-cleanup/dense-mapping-site-build.log",
+    "bytes": 3529,
+    "sha256": "2daa238a4188f98412f2974f98be66076d3f93f0ce52b20935ffeb781eec907c"
+  },
+  {
+    "path": "build/gact-revision-cleanup/gbayes-qgg-interface-clean-load.log",
+    "bytes": 214,
+    "sha256": "b7c2f803b926d2c18212fd29963bc25441c0142a6d80124fe1a4a73001cc8016"
+  },
+  {
+    "path": "build/gact-revision-cleanup/gbayes-qgg-interface-final-tests.log",
+    "bytes": 684,
+    "sha256": "f4823f21b95a6df7a8394d0353274905e2f9ab3ad0db3375ee10d2b7be37d09b"
+  },
+  {
+    "path": "build/gact-revision-cleanup/qgg-interface-doc-check-final.log",
+    "bytes": 17626,
+    "sha256": "4f0797ae05fc5c102c3ce2697c573b6fa9ef07cc01db2b150d089804e5fb987d"
+  },
+  {
+    "path": "build/gact-revision-cleanup/qgg-interface-package-build-final.log",
+    "bytes": 23127,
+    "sha256": "ccc1ee706583a0f819255fad12ae7e19985bcbaa03e6fdff6737d01d62cc7351"
+  },
+  {
+    "path": "build/gact-revision-cleanup/report_dense_mapping.py",
+    "bytes": 13119,
+    "sha256": "85136527b24c94456de92a839f51904bd45db20e70904bdda52c3d5b34fa4ade"
+  },
+  {
+    "path": "build/task-packages/library/gbase/DESCRIPTION",
+    "bytes": 1152,
+    "sha256": "eb037a84f313703e8197e414d35f60fe44c31efd4445857701c102234d262df2"
+  },
+  {
+    "path": "build/task-packages/library/gbase/INDEX",
+    "bytes": 1104,
+    "sha256": "0f26e6e39f7c063e962fb98eea1428f33355bbef0b89f8a95d52fb4a8728bcd7"
+  },
+  {
+    "path": "build/task-packages/library/gbase/MD5",
+    "bytes": 1146,
+    "sha256": "94b9201c81b15f54becb9443e91694f0cb3bd2a550f472edf6d99318705dc416"
+  },
+  {
+    "path": "build/task-packages/library/gbase/Meta/Rd.rds",
+    "bytes": 837,
+    "sha256": "3b7e928df1596e3450fc1179b8f1fb34f76c1fc1b977134a6844dff4800082d0"
+  },
+  {
+    "path": "build/task-packages/library/gbase/Meta/features.rds",
+    "bytes": 123,
+    "sha256": "7da9e0a7a5b54cede16260dccd8fad4b4af3496c1c96a34b9828307b3b02cab3"
+  },
+  {
+    "path": "build/task-packages/library/gbase/Meta/hsearch.rds",
+    "bytes": 793,
+    "sha256": "a718e054d3a0eae5222904dc615c49a6aca381757cdae7f782bdaf0b40877ec3"
+  },
+  {
+    "path": "build/task-packages/library/gbase/Meta/links.rds",
+    "bytes": 321,
+    "sha256": "f0ae64b582a73aeaa08bce126edd10ff9a3b5460e8285b8fd1579e9f4b9af8a1"
+  },
+  {
+    "path": "build/task-packages/library/gbase/Meta/nsInfo.rds",
+    "bytes": 442,
+    "sha256": "eddb927a1fcc95827ecdea68c1d93be424796761fe7070a0cede042d7a8a5112"
+  },
+  {
+    "path": "build/task-packages/library/gbase/Meta/package.rds",
+    "bytes": 1069,
+    "sha256": "083039873fb71ee51422f390dabe2989fc84f2dde6b0179a032c2f851703a1fd"
+  },
+  {
+    "path": "build/task-packages/library/gbase/NAMESPACE",
+    "bytes": 373,
+    "sha256": "e9950f5ec0c2cfbe68f7e2c62f2657b9c62f02f53bfa4a80210d7e867de6c3ae"
+  },
+  {
+    "path": "build/task-packages/library/gbase/R/gbase",
+    "bytes": 1058,
+    "sha256": "570ca456b280cdeb201ef5ebdf22dc8f80092e2c0c68e33c7f73340e420f3759"
+  },
+  {
+    "path": "build/task-packages/library/gbase/R/gbase.rdb",
+    "bytes": 114265,
+    "sha256": "a22721463afbd63807d570ab6829e2cf121cb97200dff40432c2329d8e1381ca"
+  },
+  {
+    "path": "build/task-packages/library/gbase/R/gbase.rdx",
+    "bytes": 1126,
+    "sha256": "bdad2aaf0b258b9e54f9c70a8922898eb22de5c96c916e88e7e364ef9dfc383e"
+  },
+  {
+    "path": "build/task-packages/library/gbase/help/AnIndex",
+    "bytes": 341,
+    "sha256": "4a63ed48622a8851c0eee8c5e0829996845da858f8cac80315918bb59639858a"
+  },
+  {
+    "path": "build/task-packages/library/gbase/help/aliases.rds",
+    "bytes": 225,
+    "sha256": "4694a999262f96227201bce5e9989f0771e2aec8fdc6b9fbc7074bbdf9b8f719"
+  },
+  {
+    "path": "build/task-packages/library/gbase/help/gbase.rdb",
+    "bytes": 21574,
+    "sha256": "75830032c330c3875f40fa2e01dfe964e1d566fc81f66e2368e70dd492bf0ec4"
+  },
+  {
+    "path": "build/task-packages/library/gbase/help/gbase.rdx",
+    "bytes": 490,
+    "sha256": "6287052d4769ed1491b4d01e4d2675b37d9de8c0ca3952a7f4abf122dfdaadee"
+  },
+  {
+    "path": "build/task-packages/library/gbase/help/paths.rds",
+    "bytes": 313,
+    "sha256": "c96dbabaa3cf25971497bcf76c8a7b4b203cac784cc27be96cfdf08d359ea613"
+  },
+  {
+    "path": "build/task-packages/library/gbase/html/00Index.html",
+    "bytes": 3001,
+    "sha256": "af9db9f0dbcb8bdded5552969aa1b510e629b197c538159786a71b5e11de9836"
+  },
+  {
+    "path": "build/task-packages/library/gbase/html/R.css",
+    "bytes": 1844,
+    "sha256": "52144cf4c349f7f2cf131342f81bbc43c6514ba2274556815df88918fdeb189b"
+  },
+  {
+    "path": "build/task-packages/library/gbase/libs/x64/gbase.dll",
+    "bytes": 1108992,
+    "sha256": "fc40e580ab2d4b89d5fb4a4329cd5e93f22cbda494e5fcc8590ac83d67a3e809"
+  },
+  {
+    "path": "build/task-packages/library/gbase/libs/x64/gbits.dll",
+    "bytes": 4071516,
+    "sha256": "200f845181357a8ee295599a95e9d559d2a59ea81aa4bd408d59fc73d03698bd"
+  },
+  {
+    "path": "build/task-packages/library/gbase/libs/x64/libgmat.dll",
+    "bytes": 3972235,
+    "sha256": "ddf24fe9c901e5e0678919f21d17a4de354e461319d394d9fd6a9b6ebdb19efc"
+  },
+  {
+    "path": "build/task-packages/library/gbase/libs/x64/libgsolve.dll",
+    "bytes": 4388626,
+    "sha256": "2b5e07c5fd0ff501b76a96b754db93595eff19f5290bb62f7dda3e18a2fd117a"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/DESCRIPTION",
+    "bytes": 1265,
+    "sha256": "211d586d29861f1111e4d0b722b15bfdbce7203e5022d18b477000925c8efc09"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/INDEX",
+    "bytes": 166,
+    "sha256": "5fa950d1484e7fe66f2f790d9af7e289f792670634f3949886b3787a8ea0fb86"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/MD5",
+    "bytes": 1334,
+    "sha256": "e23c271be3ae55518e9ada6599bc89f7c220be06a3b86633e7fc464e7c7280f1"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/Meta/Rd.rds",
+    "bytes": 323,
+    "sha256": "e249eab8d0da2213493de849e4306bc8c93369f54bc200a83f34672f34bd6d3b"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/Meta/features.rds",
+    "bytes": 123,
+    "sha256": "7da9e0a7a5b54cede16260dccd8fad4b4af3496c1c96a34b9828307b3b02cab3"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/Meta/hsearch.rds",
+    "bytes": 366,
+    "sha256": "e8ff6abbf610f82db6fbd09f868ce594f1a80f09351884f471e80c9a12ffe9ad"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/Meta/links.rds",
+    "bytes": 154,
+    "sha256": "194a3f5ed16c9452c8869f212e19f70ef790cb94c36b0a8a477768acf064fe4c"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/Meta/nsInfo.rds",
+    "bytes": 359,
+    "sha256": "95d97e92b75ca03bd1c46e9ac93dc6dd0fc6f0669ce1c0e6b50bfb43edfd47d7"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/Meta/package.rds",
+    "bytes": 1155,
+    "sha256": "03ba04e3a1d8d55da619242c59026a7cd7e3d41b5a6ad9a59b2a47b67bfa3bdc"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/NAMESPACE",
+    "bytes": 202,
+    "sha256": "cb5d65750174a104e992453547abe635218421cc1e6fc3bd879de082c322a7a8"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/R/gbayes",
+    "bytes": 1058,
+    "sha256": "570ca456b280cdeb201ef5ebdf22dc8f80092e2c0c68e33c7f73340e420f3759"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/R/gbayes.rdb",
+    "bytes": 143412,
+    "sha256": "2fc580eb4aaf9354b4f1305106724b56559510eb9ee4f722558e1e0f58397b04"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/R/gbayes.rdx",
+    "bytes": 1033,
+    "sha256": "ea3ad00572113c20886d10a2cc05cd5fd493be46bcf7a2905950f00ff9596e94"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/help/AnIndex",
+    "bytes": 120,
+    "sha256": "d8f55ba19f2edb48f3aa71d6ab64f9232cb0395d0d385e81b293aac6969c6bb7"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/help/aliases.rds",
+    "bytes": 130,
+    "sha256": "6db57e2e20077b9c0883c1f4b57245d334d12fd17de16ec57d855a21a65a5c33"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/help/gbayes.rdb",
+    "bytes": 8710,
+    "sha256": "408ea7139046ecb06b2e5fd243f4bd77b46bf3fe696a7124027a2de8b61f0181"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/help/gbayes.rdx",
+    "bytes": 191,
+    "sha256": "887f1defc14b91f5e93cd886c7bd8566e299247723ae78916248cc4728e1a1d5"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/help/paths.rds",
+    "bytes": 182,
+    "sha256": "f2ff087e0da95ad2b5e101cce1acce1032ef5700b95c6b14066f47c718d15471"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/html/00Index.html",
+    "bytes": 1535,
+    "sha256": "fb531d90b2326a2bd171c1f575dc4f77b7dc36aa49221a99852fa1d37efdbc74"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/html/R.css",
+    "bytes": 1844,
+    "sha256": "52144cf4c349f7f2cf131342f81bbc43c6514ba2274556815df88918fdeb189b"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/libs/x64/gbayes.dll",
+    "bytes": 1394688,
+    "sha256": "8965c2bf323fb9e0a5f8afe9fdaa6057402871e2f1b49683d0119b54f81d72b1"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/libs/x64/gbits.dll",
+    "bytes": 4071516,
+    "sha256": "200f845181357a8ee295599a95e9d559d2a59ea81aa4bd408d59fc73d03698bd"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/libs/x64/libgbayes.dll",
+    "bytes": 4983316,
+    "sha256": "939f0040b6274ef02f6129500a6dd9a34db4a79f784d84976c34e5494da29714"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/libs/x64/libgmat.dll",
+    "bytes": 3972235,
+    "sha256": "ddf24fe9c901e5e0678919f21d17a4de354e461319d394d9fd6a9b6ebdb19efc"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/libs/x64/libgscore.dll",
+    "bytes": 3096952,
+    "sha256": "0d28ccd6dc78e0654449b0e5d90789b1918e6fff2b4cf50ec94650b300dd98d4"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/libs/x64/libgscore_summary.dll",
+    "bytes": 930328,
+    "sha256": "47896271a0e91c4201e436effb0d9cc91c36d121bcd70310d7b365882a6951af"
+  },
+  {
+    "path": "build/task-packages/library/gbayes/libs/x64/libgsolve.dll",
+    "bytes": 4388626,
+    "sha256": "2b5e07c5fd0ff501b76a96b754db93595eff19f5290bb62f7dda3e18a2fd117a"
+  },
+  {
+    "path": "build/task-packages/library/gmap/DESCRIPTION",
+    "bytes": 1139,
+    "sha256": "aa3fccdcbbe3dd3ae64cd9f3b30ec42678db24f2b657157459b797d8aceacdc4"
+  },
+  {
+    "path": "build/task-packages/library/gmap/INDEX",
+    "bytes": 833,
+    "sha256": "81c40da2f979c0504bc1a4bd31c134963e9d64fa90ea57753ea4a79059b9e22c"
+  },
+  {
+    "path": "build/task-packages/library/gmap/MD5",
+    "bytes": 1254,
+    "sha256": "5f7987c4c542018353879f63a18ea81993d9632d41e2a81196495ca59cc804ee"
+  },
+  {
+    "path": "build/task-packages/library/gmap/Meta/Rd.rds",
+    "bytes": 648,
+    "sha256": "8b4b6d486ba476362de7ed17113702201d135376c76424d42b49c85a31a25a7b"
+  },
+  {
+    "path": "build/task-packages/library/gmap/Meta/features.rds",
+    "bytes": 123,
+    "sha256": "7da9e0a7a5b54cede16260dccd8fad4b4af3496c1c96a34b9828307b3b02cab3"
+  },
+  {
+    "path": "build/task-packages/library/gmap/Meta/hsearch.rds",
+    "bytes": 649,
+    "sha256": "b08e2c0c236478692b7a193a45012969db76042a487043f29dd3ad04318c3e4d"
+  },
+  {
+    "path": "build/task-packages/library/gmap/Meta/links.rds",
+    "bytes": 255,
+    "sha256": "51ce6f53666796b6d6fc3043722c09422028a1571ebaadc6bf86a678ed1afd20"
+  },
+  {
+    "path": "build/task-packages/library/gmap/Meta/nsInfo.rds",
+    "bytes": 410,
+    "sha256": "91ef5f2d135fb5dddf9c0b1a6b62bd180ccb97ff1c2f666d0d163c2d248f1d27"
+  },
+  {
+    "path": "build/task-packages/library/gmap/Meta/package.rds",
+    "bytes": 1076,
+    "sha256": "fef6779846e5fca460d7cc5e016dd171c30bff2a8e97f925d5c85f7720655cb8"
+  },
+  {
+    "path": "build/task-packages/library/gmap/NAMESPACE",
+    "bytes": 404,
+    "sha256": "fe8c63246730fd4f74e32d6e6211fd9f94f147a6eea1ca05604d653c2c22b1b1"
+  },
+  {
+    "path": "build/task-packages/library/gmap/R/gmap",
+    "bytes": 1058,
+    "sha256": "570ca456b280cdeb201ef5ebdf22dc8f80092e2c0c68e33c7f73340e420f3759"
+  },
+  {
+    "path": "build/task-packages/library/gmap/R/gmap.rdb",
+    "bytes": 110894,
+    "sha256": "704212d37f67d7f24190d1bd0362667fdb054cafce87165032cdc964230d04f4"
+  },
+  {
+    "path": "build/task-packages/library/gmap/R/gmap.rdx",
+    "bytes": 987,
+    "sha256": "2377a0dee583568ddeee1dba865b2cbdc8ae948ee216ed256c218c299635b37b"
+  },
+  {
+    "path": "build/task-packages/library/gmap/help/AnIndex",
+    "bytes": 288,
+    "sha256": "985902c174b0532bb2c768775eaee7938868175718e2b53847f97bd52a46ea0a"
+  },
+  {
+    "path": "build/task-packages/library/gmap/help/aliases.rds",
+    "bytes": 200,
+    "sha256": "eb0be1951e05ad6a31d4426ca9982566d919254c5b24fbf6b523233a5f72aa97"
+  },
+  {
+    "path": "build/task-packages/library/gmap/help/gmap.rdb",
+    "bytes": 19167,
+    "sha256": "9759ee6280ea2bad582d767f8b13036f361f2c7ecd5bbbca44c1ea259baa1b06"
+  },
+  {
+    "path": "build/task-packages/library/gmap/help/gmap.rdx",
+    "bytes": 355,
+    "sha256": "2c13aafe487f8e424486108f6fc1acb2c18f372ea07590c4381b3a07ee369fed"
+  },
+  {
+    "path": "build/task-packages/library/gmap/help/paths.rds",
+    "bytes": 244,
+    "sha256": "2d3594e2c06e2f6acd7305a82814c10a2b1cb06a10708fadfc6e773c04189fe0"
+  },
+  {
+    "path": "build/task-packages/library/gmap/html/00Index.html",
+    "bytes": 2550,
+    "sha256": "0fe55e9e6c9d7c05abd99ffb4353e09031b9bfdf8b5e6d441fd93fb3ed621091"
+  },
+  {
+    "path": "build/task-packages/library/gmap/html/R.css",
+    "bytes": 1844,
+    "sha256": "52144cf4c349f7f2cf131342f81bbc43c6514ba2274556815df88918fdeb189b"
+  },
+  {
+    "path": "build/task-packages/library/gmap/libs/x64/gbits.dll",
+    "bytes": 4071516,
+    "sha256": "200f845181357a8ee295599a95e9d559d2a59ea81aa4bd408d59fc73d03698bd"
+  },
+  {
+    "path": "build/task-packages/library/gmap/libs/x64/gmap.dll",
+    "bytes": 1183232,
+    "sha256": "118dcfd1a74d95b69677ebad455807d7f6b553ec71c12e9b890ec7ca58e5bda4"
+  },
+  {
+    "path": "build/task-packages/library/gmap/libs/x64/libgbayes.dll",
+    "bytes": 4983316,
+    "sha256": "939f0040b6274ef02f6129500a6dd9a34db4a79f784d84976c34e5494da29714"
+  },
+  {
+    "path": "build/task-packages/library/gmap/libs/x64/libgmap.dll",
+    "bytes": 985076,
+    "sha256": "3cb279095de187a0b024b6ce61a3db6f63d58020c0e70c18e013c401b7827ee0"
+  },
+  {
+    "path": "build/task-packages/library/gmap/libs/x64/libgmat.dll",
+    "bytes": 3972235,
+    "sha256": "ddf24fe9c901e5e0678919f21d17a4de354e461319d394d9fd6a9b6ebdb19efc"
+  },
+  {
+    "path": "build/task-packages/library/gmap/libs/x64/libgsolve.dll",
+    "bytes": 4388626,
+    "sha256": "2b5e07c5fd0ff501b76a96b754db93595eff19f5290bb62f7dda3e18a2fd117a"
+  },
+  {
+    "path": "gact/Document/Finemapping_bayesian_linear_regression_simulated_data.Rmd",
+    "bytes": 7361,
+    "sha256": "c244bb958c3ed6d30b81fae5bc389b6d42af6b388b654a7b95936bf23f5e0bfc"
+  },
+  {
+    "path": "installed-qgg/DESCRIPTION",
+    "bytes": 1499,
+    "sha256": "566af1734ae1a02e4cbbbd47180edbf63d9ca095e1607ddd763857ed051b1c5d"
+  },
+  {
+    "path": "installed-qgg/NAMESPACE",
+    "bytes": 2953,
+    "sha256": "f28473554e42695af2a91bad72656a50e7b533d40d920a3a6cf97be9e356c172"
+  },
+  {
+    "path": "installed-qgg/R/qgg",
+    "bytes": 1058,
+    "sha256": "570ca456b280cdeb201ef5ebdf22dc8f80092e2c0c68e33c7f73340e420f3759"
+  },
+  {
+    "path": "installed-qgg/R/qgg.rdb",
+    "bytes": 415620,
+    "sha256": "9fd002f5cfb19579000ec0d21b0844f0639a813ed0d4651e3610a7c1678fa4a4"
+  },
+  {
+    "path": "installed-qgg/R/qgg.rdx",
+    "bytes": 2037,
+    "sha256": "0cead7f13b8fb58a6ee233d4e41eafdbb2f5fc07e1fc265844dec9c212c52f0c"
+  },
+  {
+    "path": "installed-qgg/libs/x64/qgg.dll",
+    "bytes": 1882624,
+    "sha256": "6a60c3ab1258d971ef9aaf40627f0ae2ec9d32e9f986b5ece51977307dc35639"
+  },
+  {
+    "path": "native-gmap/CMakeLists.txt",
+    "bytes": 4651,
+    "sha256": "7fe363551c46aed4bc9e7748761df62019aed52359d4d54488e0b3f8a29e81ae"
+  },
+  {
+    "path": "native-gmap/LICENSE",
+    "bytes": 1529,
+    "sha256": "eaebee4932241b0036fb648dcaf2a89a79afd6f6fd9cca2f3238cf13988ec6a3"
+  },
+  {
+    "path": "native-gmap/LICENSE-GPL-3",
+    "bytes": 35149,
+    "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+  },
+  {
+    "path": "native-gmap/include/gmap/coloc.hpp",
+    "bytes": 2142,
+    "sha256": "4d240e2f95dbfcbeeba152a1f5d8d3b202d73c0bf00db5ebb160da9d7aef6e3f"
+  },
+  {
+    "path": "native-gmap/include/gmap/component_coloc.hpp",
+    "bytes": 1341,
+    "sha256": "1d86713ec75a7637b90ba88b4bb008d71306cfe267d07c34dd8c95cc1f9a4507"
+  },
+  {
+    "path": "native-gmap/include/gmap/credible_sets.hpp",
+    "bytes": 4274,
+    "sha256": "df3ce4f92160d03d026471fa49084e38b45eb188e62399bb7115077e02905632"
+  },
+  {
+    "path": "native-gmap/include/gmap/error.hpp",
+    "bytes": 450,
+    "sha256": "e837daf107c545d586c5f364645574e38e1bf654cdee1dddcc8718463107a70b"
+  },
+  {
+    "path": "native-gmap/include/gmap/export.h",
+    "bytes": 435,
+    "sha256": "7ea007c82a79d082b131dab3c83b3bcd061da531edf1b9d5cb1e1fb31b7e8a8e"
+  },
+  {
+    "path": "native-gmap/include/gmap/prepared_region.hpp",
+    "bytes": 5219,
+    "sha256": "6b85f5b89b5a8c2b7721642aa55ba3c25e79d824758d5521ecd7e724766f18eb"
+  },
+  {
+    "path": "native-gmap/include/gmap/regional_bayes.hpp",
+    "bytes": 2208,
+    "sha256": "2c028472578decfdddec29d88588d707bdf72157304ff77533cdee1c704f02f3"
+  },
+  {
+    "path": "native-gmap/include/gmap/types.hpp",
+    "bytes": 270,
+    "sha256": "54ef0f065f2ed96064a8b17db22e56a20c47196ba5af8d8103d41285fc722725"
+  },
+  {
+    "path": "native-gmap/include/gmap/version.hpp",
+    "bytes": 238,
+    "sha256": "62deadf46b8e357e3e83e45a117b1c5e16f401d8d325ca42eb1c7c70bcdb0817"
+  },
+  {
+    "path": "native-gmap/src/coloc.cpp",
+    "bytes": 6960,
+    "sha256": "4d85dd3c6d9a600bbcd538fa6cdfe55e771d0dc4564ad7ba6dced876d1dafb09"
+  },
+  {
+    "path": "native-gmap/src/component_coloc.cpp",
+    "bytes": 3124,
+    "sha256": "18b1641e56e88bb4e35c345462fd105a9fef3a79573b2fb527aef77de5825751"
+  },
+  {
+    "path": "native-gmap/src/credible_sets.cpp",
+    "bytes": 12666,
+    "sha256": "f8c3d33e8cd18b91b7fa4c807226aabfc7d161772b9dcc76cac77563aa08e278"
+  },
+  {
+    "path": "native-gmap/src/prepared_region.cpp",
+    "bytes": 14798,
+    "sha256": "8bfadf8395d156ac0f89cb5e8ae99b85809b3f42357811c86017830bdc31f58c"
+  },
+  {
+    "path": "native-gmap/src/regional_bayes.cpp",
+    "bytes": 5416,
+    "sha256": "3a24c352ae55dd5806e2d1a343e271127b71291ed2e0bf8c2dedcbd6ab4c4f82"
+  },
+  {
+    "path": "native-gmap/src/version.cpp",
+    "bytes": 176,
+    "sha256": "fe6d8b824b3d80736f101d1cdefbd467fa3ac6630447c81c2880b41849f72f4a"
+  },
+  {
+    "path": "native-gmap/tests/compare_coloc.R",
+    "bytes": 1840,
+    "sha256": "291b29ffabf706eb15b698f367116eb35fa9e8668446c68baa514d87e085c0f2"
+  },
+  {
+    "path": "native-gmap/tests/compare_credible_sets.R",
+    "bytes": 1633,
+    "sha256": "b953e53ea4d45de8fc91f55d268ea5451b5dd31f6aa73591e4b54dd385802803"
+  },
+  {
+    "path": "native-gmap/tests/installed/CMakeLists.txt",
+    "bytes": 1461,
+    "sha256": "5eac53db777b8ca4e75deb57f7a9ef35c8943b59a8d9ccd52f98fb68e7f7c23e"
+  },
+  {
+    "path": "native-gmap/tests/test_coloc.cpp",
+    "bytes": 8869,
+    "sha256": "a18b97a348f28e6e562baab796602c41a4d7b4fd44cf5b1d40f753e57d6ddd14"
+  },
+  {
+    "path": "native-gmap/tests/test_credible_sets.cpp",
+    "bytes": 9954,
+    "sha256": "6677c2d05d07b99b261571247b9bedc2437c36f3b7ea9de06dae53fcaf570a05"
+  },
+  {
+    "path": "native-gmap/tests/test_gmap_link.cpp",
+    "bytes": 571,
+    "sha256": "793a266b09a3f6666856eda0f9ed5e3549dcc6ff62e4dd62699b2f9e4c063bfe"
+  },
+  {
+    "path": "native-gmap/tests/test_regional_bayes.cpp",
+    "bytes": 11203,
+    "sha256": "4fc62b57dd697d65a24b65612f3c2835224cd80d686f126d232c8607c2d2a477"
+  },
+  {
+    "path": "packages/gbase/DESCRIPTION",
+    "bytes": 996,
+    "sha256": "9a32386f1b287c4f04b2d91fc85afe96f78083fe15faff633e04e19404f0cc8c"
+  },
+  {
+    "path": "packages/gbase/NAMESPACE",
+    "bytes": 373,
+    "sha256": "e9950f5ec0c2cfbe68f7e2c62f2657b9c62f02f53bfa4a80210d7e867de6c3ae"
+  },
+  {
+    "path": "packages/gbase/R/RcppExports.R",
+    "bytes": 2351,
+    "sha256": "ede864b16439ea5a5efaddfed7ccc331df6c4a6af6c83a3e4aba592293e92c6e"
+  },
+  {
+    "path": "packages/gbase/R/check-stat.R",
+    "bytes": 10378,
+    "sha256": "4b894588301f0cc42724a4cea9c9c9e39f108e729aa04911e64d2402d76d9bc4"
+  },
+  {
+    "path": "packages/gbase/R/eigen.R",
+    "bytes": 5516,
+    "sha256": "25863e3a330b5a084b14c24334a73906c4180fecc486a485f09394f5e4594416"
+  },
+  {
+    "path": "packages/gbase/R/gfilter.R",
+    "bytes": 10698,
+    "sha256": "58c6195225d0a3fafb9ef845e46286e398b59f4b1ca23312232a403777e1f66d"
+  },
+  {
+    "path": "packages/gbase/R/gprep.R",
+    "bytes": 27849,
+    "sha256": "7d0a288dabf8d9abee0b911026367ac6393d571bbc2b58cd3e200bc2962d4e78"
+  },
+  {
+    "path": "packages/gbase/R/ld.R",
+    "bytes": 8034,
+    "sha256": "2c022b9b046caeb13054b66ac7ec85378c759e4689a5351b64320a112d883c01"
+  },
+  {
+    "path": "packages/gbase/R/region-helpers.R",
+    "bytes": 4577,
+    "sha256": "087981f582d2e3925536c02ab415f34d0eb97e26933e20732b2af51afc29b36e"
+  },
+  {
+    "path": "packages/gbase/README.md",
+    "bytes": 3921,
+    "sha256": "e5c032d908804c57db75b5888d479edc7c658a6c0a877fb181ea1ed6acd52800"
+  },
+  {
+    "path": "packages/gbase/man/checkStat.Rd",
+    "bytes": 1007,
+    "sha256": "cf3fc272f8b1a91c9b2acb06d4770092591fb023d1847ca8c0842fb815e0e320"
+  },
+  {
+    "path": "packages/gbase/man/define_ld_blocks.Rd",
+    "bytes": 736,
+    "sha256": "35d2f6925eaf0c8d96363deb03c432c6c566235af2e92846c2708952bb75c8de"
+  },
+  {
+    "path": "packages/gbase/man/gbase-package.Rd",
+    "bytes": 191,
+    "sha256": "dfbc27e20a3120f2e8629d8f28886a15ff038a3fa33d2bd97080e03848b46822"
+  },
+  {
+    "path": "packages/gbase/man/gbase_native_info.Rd",
+    "bytes": 386,
+    "sha256": "6904cc567f9ecac7c6043da14d08a965244e946c039336099756d96431e22f76"
+  },
+  {
+    "path": "packages/gbase/man/getLD.Rd",
+    "bytes": 854,
+    "sha256": "0f474efcb72491acffd169ef78021776b62da735a7c4ace7aae8bc53346b93ad"
+  },
+  {
+    "path": "packages/gbase/man/gfilter.Rd",
+    "bytes": 823,
+    "sha256": "38ac5f64c97066267a04884ee4cbef9f4f6fe3b44c323fc507c6ae03b81d9a99"
+  },
+  {
+    "path": "packages/gbase/man/gprep.Rd",
+    "bytes": 2075,
+    "sha256": "a7e8bcbcd25867148d79497f991c1641f2745dbb699d1e468bfc1bedb2f0b97a"
+  },
+  {
+    "path": "packages/gbase/man/ld_eigen.Rd",
+    "bytes": 607,
+    "sha256": "f3fb8560a933a37d837b10e51657be087edf5238f6166be8f58f1a28c1bff854"
+  },
+  {
+    "path": "packages/gbase/man/ld_region.Rd",
+    "bytes": 592,
+    "sha256": "d8da182d943d208c310217e1612e5bc40cd90257e109be0a1202afa7524591fe"
+  },
+  {
+    "path": "packages/gbase/man/ld_scores.Rd",
+    "bytes": 614,
+    "sha256": "749996729615285cf8da6fca8a061f95dec9e7da31b129151f0d9f0cd0ceb19a"
+  },
+  {
+    "path": "packages/gbase/man/mapSets.Rd",
+    "bytes": 710,
+    "sha256": "30075c99532031cf5533d87fe2f938a7a0199458641f79e7144775c61838e976"
+  },
+  {
+    "path": "packages/gbase/man/validate_Glist.Rd",
+    "bytes": 437,
+    "sha256": "f2fb4443bdc9741b5c37e6b52178a777fb9bd0fbad52b15c1c8624e72f582253"
+  },
+  {
+    "path": "packages/gbase/man/variant_key.Rd",
+    "bytes": 389,
+    "sha256": "84e9e6473d5d24030fbbceaec42fbddadb3e686b8e10b6e21f8f7e976177461b"
+  },
+  {
+    "path": "packages/gbase/man/verify_ld.Rd",
+    "bytes": 682,
+    "sha256": "75f556836d1a6f2645534a631316780c62d082c73d71ac2c5551882df37f12dd"
+  },
+  {
+    "path": "packages/gbase/src/Makevars.win",
+    "bytes": 2366,
+    "sha256": "def222ee7c077ebdcf4b10016fc163f0ea578f0de853bdb75ebf500bf407e61e"
+  },
+  {
+    "path": "packages/gbase/src/RcppExports.cpp",
+    "bytes": 12182,
+    "sha256": "6b36f094e578e85296770cafa385e4cc1d6deb68924903062c1cf1c08eff1bd3"
+  },
+  {
+    "path": "packages/gbase/src/gprep.cpp",
+    "bytes": 21291,
+    "sha256": "71e05dbf968ba34f4201f245d10a5be9e892c868946796c8d989acddd2d1a9fd"
+  },
+  {
+    "path": "packages/gbase/src/install.libs.R",
+    "bytes": 873,
+    "sha256": "fb768fea5a2e8434422ae7c649f25f8f1ffe00dc9e0bf0139d3facd3814ed5cc"
+  },
+  {
+    "path": "packages/gbase/tests/testthat.R",
+    "bytes": 58,
+    "sha256": "f8366239d981973e849f70e514ec05429ae0d409da043beff20d43e628d3f581"
+  },
+  {
+    "path": "packages/gbase/tests/testthat/helper-gprep.R",
+    "bytes": 1892,
+    "sha256": "f323bcc96b4a72cb3997062950c84d8d5533a6f873bc6f9f2199a59e07659a99"
+  },
+  {
+    "path": "packages/gbase/tests/testthat/test-check-stat.R",
+    "bytes": 2990,
+    "sha256": "41c4efbec78a6b6c6475e4d709a63f483bbd0fb12297f3dfca31ec93de272ece"
+  },
+  {
+    "path": "packages/gbase/tests/testthat/test-eigen-preparation.R",
+    "bytes": 4302,
+    "sha256": "ace7a8f62f2a74df39f16fd0a174db25493d9c93f72e1da8e90b5ea91e3b5735"
+  },
+  {
+    "path": "packages/gbase/tests/testthat/test-genotype-ld.R",
+    "bytes": 4669,
+    "sha256": "b0173dcc23024af19c6bb4329befa72a2e296f08417d7a6ef851a455f7d3974f"
+  },
+  {
+    "path": "packages/gbase/tests/testthat/test-gprep.R",
+    "bytes": 5659,
+    "sha256": "d11d48fb5ff658101ee1d5cc20362f0777d3deb7aad439bd26818ab8da23d5d2"
+  },
+  {
+    "path": "packages/gbase/tests/testthat/test-region-helpers.R",
+    "bytes": 1130,
+    "sha256": "05a6c6c3ed8ccab8be7a4a296cd2ebbab82a30dab19e122ad12810b8da828064"
+  },
+  {
+    "path": "packages/gbayes/DESCRIPTION",
+    "bytes": 1006,
+    "sha256": "131e1de5f1631f7696da5be6f78fe495c5b28f04c793688eff06e4a3c5382eab"
+  },
+  {
+    "path": "packages/gbayes/NAMESPACE",
+    "bytes": 202,
+    "sha256": "cb5d65750174a104e992453547abe635218421cc1e6fc3bd879de082c322a7a8"
+  },
+  {
+    "path": "packages/gbayes/R/RcppExports.R",
+    "bytes": 2833,
+    "sha256": "9237fab53a8877a25b779f6d51e2a1ad693de0e2053df993a1c0d6a551d4a419"
+  },
+  {
+    "path": "packages/gbayes/R/block-eigen.R",
+    "bytes": 8088,
+    "sha256": "d16f49d609a3086d0704908bea372e4b3fa1bcf1e3251fe75324ceb02dd4b75d"
+  },
+  {
+    "path": "packages/gbayes/R/gbayes-multivariate.R",
+    "bytes": 29207,
+    "sha256": "e1e05c1936a0772adc6f832dca78925c3b052deb2335bbf3a70b30aed5261f53"
+  },
+  {
+    "path": "packages/gbayes/R/gbayes.R",
+    "bytes": 52594,
+    "sha256": "e60028c155adb7c091baa2824a30a1c60b66c337881af59dd71fc640093c1e45"
+  },
+  {
+    "path": "packages/gbayes/R/qgg-interface.R",
+    "bytes": 7561,
+    "sha256": "e0a699c1f3f4e32e53822978bbfdda5a4bedd59ab93605cdd022b5412c17ae7b"
+  },
+  {
+    "path": "packages/gbayes/man/gbayes.Rd",
+    "bytes": 6501,
+    "sha256": "39172f4c20793bfd6c37e546da87ef2f9d19cba6b6432dc697b29bc8ae982d18"
+  },
+  {
+    "path": "packages/gbayes/man/gbayes_native_info.Rd",
+    "bytes": 892,
+    "sha256": "e68602c1ff5e59bec92897986c23a737ae5ed7b6ffb5a36e04fe225375d481ee"
+  },
+  {
+    "path": "packages/gbayes/src/Makevars.win",
+    "bytes": 1487,
+    "sha256": "f05d8eb1f00d3b2862bfa0bfe9681a3734200234e38b1b3627465baf3104e5b3"
+  },
+  {
+    "path": "packages/gbayes/src/RcppExports.cpp",
+    "bytes": 16192,
+    "sha256": "91319f071883cc74ef055f648e76c39917f5fa1ee85547f50b04cd7861188e84"
+  },
+  {
+    "path": "packages/gbayes/src/gbayes.cpp",
+    "bytes": 89051,
+    "sha256": "d81ba927148bdca551375fd9c34097db144a46fb98c52b397adef5caceb97b83"
+  },
+  {
+    "path": "packages/gbayes/src/install.libs.R",
+    "bytes": 622,
+    "sha256": "50664c3f9931d41ca25b46f643cb0fa2228838b42d69336815aa96f6e3131887"
+  },
+  {
+    "path": "packages/gbayes/tests/testthat.R",
+    "bytes": 57,
+    "sha256": "ed22052a2f5cc724e5e7696b26a5885a2b12057c42bb0dd8ff229d8689eb798a"
+  },
+  {
+    "path": "packages/gbayes/tests/testthat/helper-summary.R",
+    "bytes": 2374,
+    "sha256": "426c31425f7ea9f7269aca7ecba9e29d66c71f8f0e0adb3f905ca40b54ccde40"
+  },
+  {
+    "path": "packages/gbayes/tests/testthat/test-bed-bayes.R",
+    "bytes": 3590,
+    "sha256": "5025e216e82c36a9f94684f2869c36cdde3d66a8abc1e6c8e097f5029562bbd7"
+  },
+  {
+    "path": "packages/gbayes/tests/testthat/test-block-eigen-preparation.R",
+    "bytes": 7735,
+    "sha256": "d2973fcd631e2a1a974c7a964e7d0befe263d2b9ce5e5309517497291a5b49de"
+  },
+  {
+    "path": "packages/gbayes/tests/testthat/test-learning-continuation.R",
+    "bytes": 6784,
+    "sha256": "52abda4cf3cf3282f6b99e528ac6e526074a7bdd9370a68f2fa37ea3ac47a99e"
+  },
+  {
+    "path": "packages/gbayes/tests/testthat/test-multivariate.R",
+    "bytes": 7467,
+    "sha256": "6691862276478d70df1feb0860179753095eb7f59eca3a40506859318a374feb"
+  },
+  {
+    "path": "packages/gbayes/tests/testthat/test-posterior-quantities.R",
+    "bytes": 5901,
+    "sha256": "1460ebdc8e8c92b091a4b6d72e69246a3223db70e62be41aff17e1b75eb9d2b2"
+  },
+  {
+    "path": "packages/gbayes/tests/testthat/test-qgg-interface.R",
+    "bytes": 1531,
+    "sha256": "d2d312c8c3d7871fad1838b4f8b1e8d93b0c7594ca35e88d3656070ab5d505ea"
+  },
+  {
+    "path": "packages/gbayes/tests/testthat/test-single-effect.R",
+    "bytes": 420,
+    "sha256": "ab1206ceaf5f5a86240b06d9be4e4e4497a1c42c33fe4b13fb1e5d7fc693ac0b"
+  },
+  {
+    "path": "packages/gbayes/tests/testthat/test-summary-bayes.R",
+    "bytes": 3516,
+    "sha256": "d9c64312a20da538bc90deee30e0d8187fa4b48acc3d0014d6419ea92a065afa"
+  },
+  {
+    "path": "packages/gbayes/tests/testthat/test-summary-engines.R",
+    "bytes": 3390,
+    "sha256": "24a8ee921421eced467d3a0e272a30f20d7f50257c3f9ff333145d0287ba81f2"
+  },
+  {
+    "path": "packages/gmap/DESCRIPTION",
+    "bytes": 888,
+    "sha256": "e7d81a3904bd2fd8df29d9a4a73b4aa47bde3fb78afc5f6b732c7aaa4225f939"
+  },
+  {
+    "path": "packages/gmap/NAMESPACE",
+    "bytes": 404,
+    "sha256": "fe8c63246730fd4f74e32d6e6211fd9f94f147a6eea1ca05604d653c2c22b1b1"
+  },
+  {
+    "path": "packages/gmap/R/RcppExports.R",
+    "bytes": 2243,
+    "sha256": "65e68f5b3ef04283218990a848fed232b0561a4df950dd1f5dc1669721d747a1"
+  },
+  {
+    "path": "packages/gmap/R/credible-helpers.R",
+    "bytes": 3931,
+    "sha256": "25a1fb4c87b0a6a6a3fbc1a1cf8f05a986f1fb4360566f702d7bfe02fd69ee34"
+  },
+  {
+    "path": "packages/gmap/R/gmap-bed.R",
+    "bytes": 7131,
+    "sha256": "b4f6fb344487bc94f4f1b0ae8917623917b018273c27b1ad25dc6f17da126b9a"
+  },
+  {
+    "path": "packages/gmap/R/gmap-coloc-components.R",
+    "bytes": 6869,
+    "sha256": "1817fbebc94f0dae65dcdf49eb81a020edaf3cf19f61b7fa3a38e85863ec69b9"
+  },
+  {
+    "path": "packages/gmap/R/gmap-controls.R",
+    "bytes": 5263,
+    "sha256": "4c1fe59d0d643d8b1fa435aa3531e454912f876c50f20e39d8aab815921cada1"
+  },
+  {
+    "path": "packages/gmap/R/gmap-regional.R",
+    "bytes": 22714,
+    "sha256": "38f830dbe0b56d53ecce2e6530c05f66ecce4966832047705be13fbe36f8c4fa"
+  },
+  {
+    "path": "packages/gmap/R/gmap-results.R",
+    "bytes": 8716,
+    "sha256": "b88ce75dd1a19e4459b7df7b254ea2d07f1198f3a05f6aff7c80d6e2971b0bb7"
+  },
+  {
+    "path": "packages/gmap/R/gmap-stat.R",
+    "bytes": 4907,
+    "sha256": "7f77adc57c78860b99546974e8d6c2bb80469bb470d217d20c92398c7011c2d4"
+  },
+  {
+    "path": "packages/gmap/R/gmap.R",
+    "bytes": 2691,
+    "sha256": "10faebe03407515b242760a3c519b9e93ccc4f83d9c0c091afe683e7dc145964"
+  },
+  {
+    "path": "packages/gmap/R/qgg-interface.R",
+    "bytes": 9145,
+    "sha256": "526bff7f8354928f5f43a85ea815fbc4df21442c79c85a797bc7305bc5cc3539"
+  },
+  {
+    "path": "packages/gmap/README.md",
+    "bytes": 1743,
+    "sha256": "f23cf4aff648bd42c5f40eaabc963dc3286696a6f99157d2c3ec9d49689481eb"
+  },
+  {
+    "path": "packages/gmap/man/getCredibleSets.Rd",
+    "bytes": 1483,
+    "sha256": "7bedf8a6054b20befe0278d431fccd1f4e131958667af29119da51667a42038e"
+  },
+  {
+    "path": "packages/gmap/man/gmap-regional.Rd",
+    "bytes": 4893,
+    "sha256": "8589cfe3ce63f42f52ad588594f455e385463cdce8ed543b1e7313a711b6d891"
+  },
+  {
+    "path": "packages/gmap/man/gmap.Rd",
+    "bytes": 279,
+    "sha256": "86e22af32ac4e96331aa5d0ad423497d00333804c2c85fd923de2da6f2f19dc6"
+  },
+  {
+    "path": "packages/gmap/man/gmap_bed.Rd",
+    "bytes": 709,
+    "sha256": "8e6327d2c1a3ddbfed2d1e79744be54a221b0c337d65d5638913b27c6aa52a0a"
+  },
+  {
+    "path": "packages/gmap/man/gmap_bfdr.Rd",
+    "bytes": 1054,
+    "sha256": "47587b80a3d8acd59ffa7d8b509e03a693190525180e5e0bfcfec0fe9eb89324"
+  },
+  {
+    "path": "packages/gmap/man/gmap_coloc.Rd",
+    "bytes": 873,
+    "sha256": "a8f513dcce49d37d60cc94d5c9d1e6c2a27a4670d6b455d889f36fbb4aa21631"
+  },
+  {
+    "path": "packages/gmap/man/gmap_coloc_components.Rd",
+    "bytes": 1003,
+    "sha256": "97aa1695614eedc43b5ec3d4b4d042ed6fa4aa68ccee87fe27e7e6bd0dc9b6fd"
+  },
+  {
+    "path": "packages/gmap/man/gmap_sets.Rd",
+    "bytes": 804,
+    "sha256": "75c9cc0c15810bdd2210b700b43a52a29e61281494c026e90cbe635eb6eb5bec"
+  },
+  {
+    "path": "packages/gmap/man/gmap_stat.Rd",
+    "bytes": 660,
+    "sha256": "25245520e4f5b214b13e18fdb097d0752b85fe2d51dee00059bfe1149346ccab"
+  },
+  {
+    "path": "packages/gmap/src/Makevars.win",
+    "bytes": 1212,
+    "sha256": "26ca38dbba880f3d0b7359bd902ef21b068581f2a4e5bfddd95aa4adec760e5d"
+  },
+  {
+    "path": "packages/gmap/src/RcppExports.cpp",
+    "bytes": 11923,
+    "sha256": "09f8bdf7749cfb61add135085e9f3bd7393211762ae5f7e9416196bc98db45ad"
+  },
+  {
+    "path": "packages/gmap/src/gmap.cpp",
+    "bytes": 2489,
+    "sha256": "718131f911d9dbd5a325cdfa1309aad12bef3a7fccb44ea8ef290e07f5a5e5ad"
+  },
+  {
+    "path": "packages/gmap/src/install.libs.R",
+    "bytes": 592,
+    "sha256": "fb453d7cda84e1e30d229161f4d348d97f0bd00c61165002755fc98548932bcc"
+  },
+  {
+    "path": "packages/gmap/src/mapping.cpp",
+    "bytes": 27775,
+    "sha256": "3313f28f6fd568d0cb03429f7c8ae9d3d3276dad72792ae7f79abd147232f1af"
+  },
+  {
+    "path": "packages/gmap/tests/testthat.R",
+    "bytes": 51,
+    "sha256": "da052167a4167fa1755fdb9d2c195dcfc9f369ab19c8f2db005975ed8a11fb3a"
+  },
+  {
+    "path": "packages/gmap/tests/testthat/helper-gmap.R",
+    "bytes": 1407,
+    "sha256": "9ddab24881b479712f8482b656e415494fdd4b2bcf68c23301d4c7c65350bbec"
+  },
+  {
+    "path": "packages/gmap/tests/testthat/test-coloc.R",
+    "bytes": 497,
+    "sha256": "ce6496d3f031c59a9a0b68e635a334c29668060fd8219b7a7e547ff03fd61a9e"
+  },
+  {
+    "path": "packages/gmap/tests/testthat/test-components-bed.R",
+    "bytes": 3712,
+    "sha256": "a32e96f4b5abe1546236983bf40589e1b98b4ee0e6c08f31c332603332f7610e"
+  },
+  {
+    "path": "packages/gmap/tests/testthat/test-qgg-interface.R",
+    "bytes": 2910,
+    "sha256": "bc8bdc5f99e8df300262ab98bc01c8ffe48e6b3d871e6dec1a4411f9b108ab51"
+  },
+  {
+    "path": "packages/gmap/tests/testthat/test-results.R",
+    "bytes": 3223,
+    "sha256": "db65b849e04b4f05adb716dfdbfaf82c44db4d7cd4342fd490cf48b53ab0e1fb"
+  },
+  {
+    "path": "packages/gmap/tests/testthat/test-stat.R",
+    "bytes": 4304,
+    "sha256": "917c8f0eacb040a3a6318e273b6981178acaf6e140c4fafdce785d4881c4990e"
+  }
+]

@@ -1,0 +1,108 @@
+{
+  "scope": "Single execution of four-thread filtered gbase on the same chromosome-22 PLINK fixture as the prior single-thread comparison. Public sparse-LD API includes construction, persistence, mandatory validation and LD scores. Preparation reused and excluded; descriptor serialization separate. Marker window 1000, no base-pair limit, r2 cutoff 0.0001, default block size 1024. Threads, cutoff and block size change together, so this is not an isolated threading speedup. OS caches uncontrolled. Whole-process peak working set includes R startup and descriptor loading; private bytes reported separately.",
+  "measurements": [
+    {
+      "implementation": "qgg 1.1.6",
+      "chromosome": 22,
+      "samples": 503,
+      "markers": 141121,
+      "window_markers": 1000,
+      "r2_cutoff": 0,
+      "requested_threads": 1,
+      "block_size": 1000,
+      "operation_seconds": 54.11,
+      "serialization_seconds": 2.51,
+      "process_wall_seconds": 59.7958682,
+      "peak_working_set_bytes": 537931776,
+      "sampled_peak_private_bytes": 694435840,
+      "ld_files_bytes": 1129532484,
+      "source": "build\\benchmarks\\manuscript-chr22-ld-20261005-200555\\ld_qgg-1"
+    },
+    {
+      "implementation": "gbase 0.0.1 / gmat 0.6.0",
+      "chromosome": 22,
+      "samples": 503,
+      "markers": 141121,
+      "window_markers": 1000,
+      "r2_cutoff": 0,
+      "requested_threads": 1,
+      "block_size": 1000,
+      "operation_seconds": 294.5,
+      "serialization_seconds": 2.19999999999999,
+      "process_wall_seconds": 299.1629487,
+      "peak_working_set_bytes": 444813312,
+      "sampled_peak_private_bytes": 471248896,
+      "ld_files_bytes": 1132033713,
+      "source": "build\\benchmarks\\manuscript-chr22-ld-20261005-200555\\ld_gbase-1"
+    },
+    {
+      "implementation": "gbase 0.0.1 / gmat 0.6.0",
+      "chromosome": 22,
+      "samples": 503,
+      "markers": 141121,
+      "window_markers": 1000,
+      "r2_cutoff": 0.0001,
+      "requested_threads": 4,
+      "block_size": 1024,
+      "operation_seconds": 167.14,
+      "serialization_seconds": 3.37,
+      "process_wall_seconds": 172.6654786,
+      "peak_working_set_bytes": 263569408,
+      "sampled_peak_private_bytes": 1123135488,
+      "ld_files_bytes": 1039751670,
+      "source": "build\\benchmarks\\manuscript-chr22-filtered-ld-20261005-202118\\ld_gbase_filtered-4"
+    }
+  ],
+  "prior_evidence": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-ld-20261005-200555",
+  "validation": "List of 18\n $ markers                                     : int 141121\n $ samples                                     : num 503\n $ window                                      : int 1000\n $ r2_cutoff                                   : num 1e-04\n $ requested_threads                           : num 4\n $ block_size                                  : int 1024\n $ stored_pairs                                : num 1.29e+08\n $ baseline_stored_pairs                       : num 1.41e+08\n $ retained_fraction                           : num 0.918\n $ minimum_absolute_stored_r                   : num 0.01\n $ sampled_markers                             : int 192\n $ sampled_pairs                               : num 36864\n $ max_absolute_filtered_correlation_difference: num 0\n $ minimum_ld_score_decrease                   : num 2.38e-06\n $ maximum_ld_score_decrease                   : num 0.0303\n $ mean_ld_score_decrease                      : num 0.00547\n $ ld_file_bytes                               : num 1.04e+09\n $ note                                        : chr \"Cutoff deliberately removes correlations; results are not the unfiltered reference. Base-pair limit disabled to\"| __truncated__\n",
+  "artifacts": [
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\chr22_filtered_ld_stage.R",
+      "sha256": "e703ed759f9407782c130c9f4c61e50a6e0bd61ab74b2e9191ea557271432c5d"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\comparison-settings.json",
+      "sha256": "8cde7f5d456b25323e4d2b72f72fb1f73fe6772a5d7cf903ca8744437eace5ef"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\hardware.json",
+      "sha256": "b38536aff3d5a86f93030327238c8e2e0d948533f758c31d98d43519722595f4"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\ld-measurements.csv",
+      "sha256": "e3884ed54d402e36963457702a5229a68853222d6959812e30c3755a07fec5a7"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\ld_gbase_filtered-output-structure.txt",
+      "sha256": "b30fe5239581136a92315faa67487895ebef337ef1dde59a304b94a57d2871bd"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\ld_gbase_filtered-session.txt",
+      "sha256": "45bf56ac37de2e644b2ea21e29c97947044ec1b0484c9970075ab38a4d04158a"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\ld_gbase_filtered-timing.csv",
+      "sha256": "5ff5f7f4697088f91ed5d79f7ddd7191b2fd68fda3e1566d39158202f7590d5e"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\process-measurements.csv",
+      "sha256": "07ba5cdcd53630107c3d942e70e3c1320efd1ab43af79e258448b19687a23f92"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\validate_filtered-output-structure.txt",
+      "sha256": "aa1af05a00b296cbd3ae04e362c5647ff9a2de1b3240ecfdf091e69811e5ca4f"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\validate_filtered-session.txt",
+      "sha256": "45bf56ac37de2e644b2ea21e29c97947044ec1b0484c9970075ab38a4d04158a"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\validate_filtered-timing.csv",
+      "sha256": "ad57bc3997573afb82cf7db1eaf8f32ab9da5e87d049463f5c5c16839b7d6c86"
+    },
+    {
+      "path": "benchmarks\\genomic_20k_50k\\manuscript-results\\manuscript-chr22-filtered-ld-20261005-202118\\validation-exact.txt",
+      "sha256": "7f01cf323ccb24e48544e64eecb90933dc26e2e8dffb8bdba4511b6cf50e8496"
+    }
+  ]
+}

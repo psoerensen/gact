@@ -1,0 +1,9 @@
+stage,seconds
+validation,232.74
+matching,6.89999999999998
+panel_setup,209.8609802
+decode,163.8790079
+matrix_product,231.9354375
+eigen,175.4934012
+other / cleanup,4.971173199999953
+two-trait tails,81.22

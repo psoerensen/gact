@@ -1,0 +1,78 @@
+gbase 0.0.1 C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbase
+Package: gbase
+Type: Package
+Title: Shared Data Contracts for Gsuite R Packages
+Version: 0.0.1
+Authors@R: person("Peter", "Soerensen", role = c("aut", "cre"), email =
+        "peter.soerensen@example.invalid")
+Author: Peter Soerensen [aut, cre]
+Maintainer: Peter Soerensen <peter.soerensen@example.invalid>
+Description: Task-neutral R data contracts and genotype preparation
+        shared by packages in the gsuite ecosystem. Contracts cover
+        allele-labelled summary statistics, serializable PLINK genotype
+        and sparse-LD resources, marker filtering, verified independent
+        blocks, LD scores, and regional LD matrices and eigensystems
+        without statistical fitting, cross-dataset exchange, or
+        workflow orchestration.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: Rcpp
+LinkingTo: Rcpp
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
+SystemRequirements: C++17, gmat 0.6.0 (ABI 0), gbits 0.21.0 (ABI 4),
+        gsolve 0.22.0 (ABI 4)
+NeedsCompilation: yes
+RoxygenNote: 7.3.3
+Packaged: 2026-10-01 10:27:41 UTC; CodexSandboxOffline
+Built: R 4.4.1; x86_64-w64-mingw32; 2026-10-01 10:27:43 UTC; windows
+Archs: x64
+
+-- File: C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbase/Meta/package.rds 
+$gmat
+$gmat$header_version
+[1] "0.6.0"
+
+$gmat$header_abi
+[1] 0
+
+$gmat$runtime_version
+[1] "0.6.0"
+
+$gmat$runtime_abi
+[1] 0
+
+
+$gbits
+$gbits$header_version
+[1] "0.21.0"
+
+$gbits$header_abi
+[1] 4
+
+$gbits$runtime_version
+[1] "0.21.0"
+
+$gbits$runtime_abi
+[1] 4
+
+
+$gsolve
+$gsolve$header_version
+[1] "0.22.0"
+
+$gsolve$header_abi
+[1] 4
+
+$gsolve$runtime_version
+[1] "0.22.0"
+
+$gsolve$runtime_abi
+[1] 4
+
+
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbase/libs/x64/gbase.dll d5c00c4a6daf9eb2c071a6afa6fd5a08
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbase/libs/x64/gbits.dll 26e83571a611207bc40824625a1c06a2
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbase/libs/x64/libgmat.dll 13ef867f61a9de4237b7fa98a771f307
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gbase/libs/x64/libgsolve.dll 532adc479ff1c9c6e7bdbe19efdd54ee

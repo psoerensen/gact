@@ -1,0 +1,7 @@
+{
+  "status": "reverted",
+  "reason": "Checkpoint serialization made fresh and repeated setup slower; original runtime code restored exactly to committed baseline 2510035.",
+  "retained_changes": "Documentation only: existing download logs, manual descriptor save/reopen, database size, original timing and memory.",
+  "validation": "Isolated install and 35 existing test assertions passed. Git diff against HEAD is empty for R, NAMESPACE, DESCRIPTION and man. No new timing campaign needed to restore identical runtime code.",
+  "timing_evidence": "Rejected candidate measurements remain intact in this directory. Historical scripts require that candidate; current isolated setup-r-library now contains restored original code."
+}

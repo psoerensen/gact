@@ -1,0 +1,1 @@
+Dimensions and finite VEGAS, pathway, mapping and score outputs verified. Mapping convergence statuses are reported separately; no calibration or thread-comparison run was performed.

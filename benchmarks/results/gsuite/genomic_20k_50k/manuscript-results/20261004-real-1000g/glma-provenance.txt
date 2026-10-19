@@ -1,0 +1,141 @@
+glma 0.0.1 C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/glma
+Package: glma
+Type: Package
+Title: Focused Association-Mapping Workflows
+Version: 0.0.1
+Authors@R:
+        person("Peter","Soerensen",role=c("aut","cre"),email="peter.soerensen@example.invalid")
+Description: Private independently installable interface to public
+        native glma workflows. Provides ordinary, conditional, batched
+        quantitative-trait, binary-trait, infinitesimal LOCO and
+        prior-selected LOCO scans plus LD-aware weighted quadratic
+        VEGAS marker-set tests over ordinary checked summary-statistics
+        data frames and gbase genotype resources.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: gbase (>= 0.0.1), Rcpp
+LinkingTo: Rcpp
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
+SystemRequirements: C++17, glma 0.1.0 (ABI 0), gbayes 0.1.0 (ABI 0),
+        gbits 0.21.0 (ABI 4), gmat 0.6.0 (ABI 0), greml 0.68.0 (ABI
+        40), gsolve 0.22.0 (ABI 4), portable native task closure
+NeedsCompilation: yes
+Packaged: 2026-10-01 08:22:05 UTC; CodexSandboxOffline
+Author: Peter Soerensen [aut, cre]
+Maintainer: Peter Soerensen <peter.soerensen@example.invalid>
+Built: R 4.4.1; x86_64-w64-mingw32; 2026-10-01 08:22:06 UTC; windows
+Archs: x64
+
+-- File: C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/glma/Meta/package.rds 
+$glma
+$glma$expected_version
+[1] "0.1.0"
+
+$glma$expected_abi
+[1] 0
+
+$glma$runtime_version
+[1] "0.1.0"
+
+$glma$runtime_abi
+[1] 0
+
+$glma$compatible
+[1] TRUE
+
+
+$gbayes
+$gbayes$expected_version
+[1] "0.1.0"
+
+$gbayes$expected_abi
+[1] 0
+
+$gbayes$runtime_version
+[1] "0.1.0"
+
+$gbayes$runtime_abi
+[1] 0
+
+$gbayes$compatible
+[1] TRUE
+
+
+$gbits
+$gbits$expected_version
+[1] "0.21.0"
+
+$gbits$expected_abi
+[1] 4
+
+$gbits$runtime_version
+[1] "0.21.0"
+
+$gbits$runtime_abi
+[1] 4
+
+$gbits$compatible
+[1] TRUE
+
+
+$gmat
+$gmat$expected_version
+[1] "0.6.0"
+
+$gmat$expected_abi
+[1] 0
+
+$gmat$runtime_version
+[1] "0.6.0"
+
+$gmat$runtime_abi
+[1] 0
+
+$gmat$compatible
+[1] TRUE
+
+
+$greml
+$greml$expected_version
+[1] "0.68.0"
+
+$greml$expected_abi
+[1] 40
+
+$greml$runtime_version
+[1] "0.68.0"
+
+$greml$runtime_abi
+[1] 40
+
+$greml$compatible
+[1] TRUE
+
+
+$gsolve
+$gsolve$expected_version
+[1] "0.22.0"
+
+$gsolve$expected_abi
+[1] 4
+
+$gsolve$runtime_version
+[1] "0.22.0"
+
+$gsolve$runtime_abi
+[1] 4
+
+$gsolve$compatible
+[1] TRUE
+
+
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/glma/libs/x64/gbits.dll 26e83571a611207bc40824625a1c06a2
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/glma/libs/x64/gbits_gsolve_adapter.dll de08f6385dfb1343bbb63ef888ba7da8
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/glma/libs/x64/glma.dll b34fbd7026fb0fca74777de0d25d583e
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/glma/libs/x64/libgbayes.dll b33ac303fa54b5fc1d77d9b5545b81ba
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/glma/libs/x64/libglma.dll 83632b83d9231bddb3f110a1c4835f7f
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/glma/libs/x64/libgmat.dll 13ef867f61a9de4237b7fa98a771f307
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/glma/libs/x64/libgreml.dll 2c8a44e27c0b9fc6551cb440869edd93
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/glma/libs/x64/libgsolve.dll 532adc479ff1c9c6e7bdbe19efdd54ee

@@ -1,0 +1,109 @@
+---
+title: " Gene analysis using VEGAS"
+author: "Peter Sørensen"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+Gene analysis using VEGAS (Versatile Gene-based Association Study) is a computational method used in genomics to perform gene-based association tests by aggregating SNP (single nucleotide polymorphism) data within a gene. It was developed to address challenges in genome-wide association studies (GWAS), where individual SNP-level associations can sometimes lack power to detect genes related to complex traits or diseases. VEGAS increases the statistical power by combining information from multiple SNPs within a gene and tests the joint association of these SNPs with a phenotype. VEGAS is particularly useful in studies where individual SNP signals are too weak to reach genome-wide significance but may jointly point to gene-level associations indicative of genetic risk for complex traits or diseases.
+
+This script is dedicated to gene analysis using the VEGAS (Versatile Gene-based Association Study) approach within the context of the gact and standalone gsuite packages in R. It is designed to perform gene-based association studies for multiple traits across different ancestries, specifically European (EUR), East Asian (EAS), and South Asian (SAS).
+
+<br>
+
+The database provides aligned marker statistics and gene annotations. `checkStat()`
+applies the selected QC filters; `getMarkerSets()` selects available markers.
+The existing Glist is reused, and VEGAS selects the required statistic rows internally.
+
+#### Prepare for VEGAS gene analysis shown below
+```{r, include=TRUE, eval=FALSE}
+# Load libraries
+library(gbase)
+library(glma)
+library(gact)
+
+# Load GAlist with information on gact database
+GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
+
+# Check studies in gact database
+GAlist$studies
+
+```
+
+
+<br>
+
+#### Perform VEGAS gene analysis for a single study of European ancestry (EUR)
+```{r, include=TRUE, eval=FALSE}
+# Select study
+studyID <- "GWAS6"
+
+# Load Glist with information on 1000G matched to the ancestry of GWAS data
+Glist <- readRDS(file.path(GAlist$dirs["marker"],"Glist_1000G_eur_filtered.rds"))
+
+# Get GWAS summary statistics from gact database
+stat <- getMarkerStat(GAlist=GAlist, studyID=studyID)
+
+# Check and align summary statistics based on marker information in Glist
+stat <- checkStat(Glist=Glist, stat=stat)
+
+# Get gene sets for the available checked markers.
+sets <- getMarkerSets(GAlist=GAlist, feature="Genesplus", rsids=stat$rsids)
+
+# Prepare regional eigenvalues and fit VEGAS.
+Glist <- gprep(Glist, task="eigen", sets=sets, nthreads=4)
+res <- vegas(Glist=Glist, stat=stat)
+```
+
+<br>
+
+#### Perform VEGAS gene analysis for a single study of East Asian ancestry (EAS)
+```{r, include=TRUE, eval=FALSE}
+# Select study
+studyID <- "GWAS7"
+
+# Load Glist with information on 1000G matched to the ancestry of GWAS data
+Glist <- readRDS(file.path(GAlist$dirs["marker"],"Glist_1000G_eas_filtered.rds"))
+
+# Get GWAS summary statistics from gact database
+stat <- getMarkerStat(GAlist=GAlist, studyID=studyID)
+
+# Check and align summary statistics based on marker information in Glist
+stat <- checkStat(Glist=Glist, stat=stat)
+
+# Get gene sets for the available checked markers.
+sets <- getMarkerSets(GAlist=GAlist, feature="Genesplus", rsids=stat$rsids)
+
+# Prepare regional eigenvalues and fit VEGAS.
+Glist <- gprep(Glist, task="eigen", sets=sets, nthreads=4)
+res <- vegas(Glist=Glist, stat=stat)
+```
+
+<br>
+
+#### Perform VEGAS gene analysis for multiple studies of European ancestry
+```{r, include=TRUE, eval=FALSE}
+# Select study
+studyID <- c("GWAS1","GWAS2")
+
+# Load Glist with information on 1000G (EUR)
+Glist <- readRDS(file=file.path(GAlist$dirs["marker"],"Glist_1000G_eur_filtered.rds"))
+
+# Get GWAS summary statistics from gact database
+stat <- setNames(lapply(studyID, function(id)
+  checkStat(Glist=Glist, stat=getMarkerStat(GAlist=GAlist, studyID=id))), studyID)
+
+# Get gene sets for markers available in both checked studies.
+rsids <- Reduce(intersect, lapply(stat, `[[`, "rsids"))
+sets <- getMarkerSets(GAlist=GAlist, feature="Genesplus", rsids=rsids)
+
+# Prepare eigenvalues once for both traits and fit VEGAS.
+Glist <- gprep(Glist, task="eigen", sets=sets, nthreads=4)
+res <- vegas(Glist=Glist, stat=stat)
+```

@@ -1,0 +1,32 @@
+[
+  {
+    "path": "C:\\Users\\au223366\\AppData\\Local\\R\\win-library\\4.4\\qgg\\R\\qgg",
+    "bytes": 1058,
+    "sha256": "570ca456b280cdeb201ef5ebdf22dc8f80092e2c0c68e33c7f73340e420f3759"
+  },
+  {
+    "path": "C:\\Users\\au223366\\AppData\\Local\\R\\win-library\\4.4\\qgg\\R\\qgg.rdb",
+    "bytes": 415620,
+    "sha256": "9fd002f5cfb19579000ec0d21b0844f0639a813ed0d4651e3610a7c1678fa4a4"
+  },
+  {
+    "path": "C:\\Users\\au223366\\AppData\\Local\\R\\win-library\\4.4\\qgg\\R\\qgg.rdx",
+    "bytes": 2037,
+    "sha256": "0cead7f13b8fb58a6ee233d4e41eafdbb2f5fc07e1fc265844dec9c212c52f0c"
+  },
+  {
+    "path": "C:\\Users\\au223366\\AppData\\Local\\R\\win-library\\4.4\\qgg\\DESCRIPTION",
+    "bytes": 1499,
+    "sha256": "566af1734ae1a02e4cbbbd47180edbf63d9ca095e1607ddd763857ed051b1c5d"
+  },
+  {
+    "path": "C:\\Users\\au223366\\AppData\\Local\\R\\win-library\\4.4\\qgg\\NAMESPACE",
+    "bytes": 2953,
+    "sha256": "f28473554e42695af2a91bad72656a50e7b533d40d920a3a6cf97be9e356c172"
+  },
+  {
+    "path": "C:\\Users\\au223366\\AppData\\Local\\R\\win-library\\4.4\\qgg\\libs\\x64\\qgg.dll",
+    "bytes": 1882624,
+    "sha256": "6a60c3ab1258d971ef9aaf40627f0ae2ec9d32e9f986b5ece51977307dc35639"
+  }
+]

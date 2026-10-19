@@ -1,0 +1,5 @@
+"trait","sample_size","regions","markers","maximum_components","minimum_eigenvalue","rank_upper_bound","minimum_correction_denominator","analysis"
+"GWAS1",49071.2732949614,24,96479,50,1,1200,0.975545774148004,"gcorr_chr22"
+"GWAS2",40743.1524049809,24,96479,50,1,1200,0.970547198015701,"gcorr_chr22"
+"GWAS1",49071.2732949614,1702,7221923,20,1,34040,0.30631512666505,"gcorr_genome"
+"GWAS2",40743.1524049809,1702,7221923,20,1,34040,0.164522183712064,"gcorr_genome"

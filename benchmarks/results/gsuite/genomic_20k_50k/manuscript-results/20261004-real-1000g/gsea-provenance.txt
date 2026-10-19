@@ -1,0 +1,58 @@
+gsea 0.0.1 C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gsea
+Package: gsea
+Type: Package
+Title: Focused Gene-Set Enrichment Workflows
+Version: 0.0.1
+Authors@R: person("Peter", "Soerensen", role=c("aut","cre"),
+        email="peter.soerensen@example.invalid")
+Description: Private independently installable interface to public
+        native gsea workflows. Provides over-representation, preranked,
+        competitive, bounded MAGMA, PoPS-style gene ranking and scalar
+        or multitrait Bayesian pathway analysis, and re-exports glma
+        VEGAS marker-set evidence with a validated enrichment handoff.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: gbase (>= 0.0.1), glma (>= 0.0.1), Rcpp
+LinkingTo: Rcpp
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
+SystemRequirements: C++17, gsea 0.1.0 (ABI 0) with Bayesian companion,
+        gbayes 0.1.0 (ABI 0), gsolve 0.22.0 (ABI 4), portable native
+        task closure
+NeedsCompilation: yes
+Packaged: 2026-10-01 08:10:38 UTC; CodexSandboxOffline
+Author: Peter Soerensen [aut, cre]
+Maintainer: Peter Soerensen <peter.soerensen@example.invalid>
+Built: R 4.4.1; x86_64-w64-mingw32; 2026-10-01 08:10:40 UTC; windows
+Archs: x64
+
+-- File: C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gsea/Meta/package.rds 
+$header_version
+[1] "0.1.0"
+
+$header_abi
+[1] 0
+
+$runtime_version
+[1] "0.1.0"
+
+$runtime_abi
+[1] 0
+
+$headers_match_runtime
+[1] TRUE
+
+$gsolve_version
+[1] "0.22.0"
+
+$gsolve_abi
+[1] 4
+
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gsea/libs/x64/gbits.dll 26e83571a611207bc40824625a1c06a2
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gsea/libs/x64/gsea.dll 68bece3a30159e4a87aebae9620fefde
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gsea/libs/x64/libgbayes.dll b33ac303fa54b5fc1d77d9b5545b81ba
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gsea/libs/x64/libgmat.dll 13ef867f61a9de4237b7fa98a771f307
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gsea/libs/x64/libgsea.dll bbd2dfc3530c8cbd095ff6cff03cc9be
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gsea/libs/x64/libgsea_bayes.dll 726f385ae9ded5015985c6373b387f65
+C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library/gsea/libs/x64/libgsolve.dll 532adc479ff1c9c6e7bdbe19efdd54ee
