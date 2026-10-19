@@ -1,0 +1,10 @@
+{
+  "stage": "magma_joint",
+  "status": "completed",
+  "operation_seconds": 68.86,
+  "input_loading_seconds": 0.12,
+  "serialization_seconds": 0.219999999999999,
+  "output_bytes": 482590,
+  "warnings": [],
+  "error": {}
+}

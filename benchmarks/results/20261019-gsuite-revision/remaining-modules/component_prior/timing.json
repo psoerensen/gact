@@ -1,0 +1,9 @@
+{
+  "stage": "component_prior",
+  "status": "completed",
+  "operation_seconds": 67.07,
+  "serialization_seconds": 0.24,
+  "warnings": [],
+  "error": {},
+  "output_bytes": 1758541
+}

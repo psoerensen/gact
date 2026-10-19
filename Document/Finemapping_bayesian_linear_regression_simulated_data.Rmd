@@ -36,6 +36,7 @@ rsids <- gfilter(Glist=Glist, excludeMAF=0.05, excludeMISS=0.05,
   excludeCGAT=TRUE, excludeINDEL=TRUE, excludeDUPS=TRUE,
   excludeHWE=1e-12, excludeMHC=FALSE)
 Glist <- gprep(study="Simulation", bedfiles="human.bed", rsids=rsids)
+Glist$assembly <- "simulated-human-tutorial"
 
 phenotypes <- read.csv(paste0(base, "example-phenotypes.csv"),
   colClasses=c("character", "numeric"))
@@ -71,7 +72,8 @@ posterior results. Credible-set grouping uses marginal PIPs.
 
 ```{r genome}
 Glist <- gprep(Glist, task="sparseld", msize=1000, ldfiles="human.ld", nthreads=4)
-fit <- gbayes(Glist=Glist, stat=stat, method="bayesC", nit=100, nrun=2)
+fit <- gbayes(Glist=Glist, stat=stat, method="bayesC", nit=100, nburn=0, nrun=2,
+  control=list(threads=1, max_ld_entries=1e8))
 head(fit$stat)
 ```
 
@@ -82,3 +84,5 @@ preparation. These routes have different likelihood and variance conventions;
 the common argument names do not imply identical qgg posterior draws.
 
 See [recorded tutorial timings](Tutorial_timings_and_memory.html).
+
+The assembly label identifies this synthetic tutorial panel; it is not a claim of a specific human reference assembly. The explicit LD-entry budget supports the previously prepared sparse descriptor. The [benchmark overview](Benchmark_overview.html) distinguishes earlier one-chain repeats from current two-chain checks and records any failed preparation guards. Successful execution does not establish convergence.

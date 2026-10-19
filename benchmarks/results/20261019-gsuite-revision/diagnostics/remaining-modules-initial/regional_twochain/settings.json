@@ -1,0 +1,11 @@
+{
+  "stage": "regional_twochain",
+  "individuals": 5000,
+  "markers": 37991,
+  "chromosomes": 22,
+  "threads": 1,
+  "regional_sizes": [850, 785, 1091, 1399],
+  "nit": 1000,
+  "nburn": 100,
+  "nrun": 2
+}

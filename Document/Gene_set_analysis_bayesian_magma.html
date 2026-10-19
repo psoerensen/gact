@@ -11,7 +11,7 @@
 
 <meta name="author" content="Peter Sørensen" />
 
-<meta name="date" content="2026-10-08" />
+<meta name="date" content="2026-10-19" />
 
 <title>Pathway prioritization using a Bayesian MAGMA model and gene-level statistics from VEGAS</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">Pathway prioritization using a Bayesian
 MAGMA model and gene-level statistics from VEGAS</h1>
 <h4 class="author">Peter Sørensen</h4>
-<h4 class="date">2026-10-08</h4>
+<h4 class="date">2026-10-19</h4>
 
 </div>
 
@@ -475,6 +475,21 @@ different covariance model. This does not run the external MAGMA
 executable. Bayesian posterior coefficients and PIPs are in
 <code>fit$pathways</code>; inspect native chain diagnostics as well.</p>
 </div>
+</div>
+<div id="recorded-computational-workload" class="section level2">
+<h2>Recorded computational workload</h2>
+<p>The <a href="Benchmark_overview.html">benchmark overview</a> records
+rerun single-trait and joint Bayesian models using 17,955 saved gene
+scores and 1,324 Reactome sets from the existing hsa.0.0.1 installation.
+Gene statistics are reused; KEGG extraction shown above is not timed.
+Scalar independent-gene set preparation now uses direct cross-products
+without forming X; the joint model retains projected preparation.</p>
+<p><code>fit$timing</code> separates preparation, native BLR and
+posterior summaries. Upstream gene-statistic computation is unmeasured
+(NA), not zero. The <a href="../benchmarks/results/20261019-direct-cross-products/README.md">dated
+rerun report</a> records both two-chain settings and whole-R-process
+memory. Successful execution is not evidence of convergence or
+equivalence to the external MAGMA executable.</p>
 </div>
 
 

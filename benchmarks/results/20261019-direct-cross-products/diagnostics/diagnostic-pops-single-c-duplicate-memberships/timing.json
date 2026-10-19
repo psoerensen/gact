@@ -1,0 +1,10 @@
+{
+  "stage": "pops_single_c",
+  "status": "failed",
+  "operation_seconds": 0.01,
+  "input_loading_seconds": 0.11,
+  "serialization_seconds": 0,
+  "output_bytes": 177,
+  "warnings": [],
+  "error": "set members must contain unique nonempty character IDs."
+}

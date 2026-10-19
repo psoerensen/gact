@@ -1,0 +1,122 @@
+[
+  {
+    "case": "n2000-m10000-k0-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 2000,
+    "columns": 1
+  },
+  {
+    "case": "n2000-m10000-k20-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 2000,
+    "columns": 20
+  },
+  {
+    "case": "n2000-m10000-k20-o50-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 2000,
+    "columns": 20
+  },
+  {
+    "case": "n2000-m10000-k3-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 2000,
+    "columns": 3
+  },
+  {
+    "case": "n2000-m10000-k3-o50-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 2000,
+    "columns": 3
+  },
+  {
+    "case": "n2000-m50000-k0-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 2000,
+    "columns": 1
+  },
+  {
+    "case": "n2000-m50000-k20-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 2000,
+    "columns": 20
+  },
+  {
+    "case": "n2000-m50000-k20-o50-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 2000,
+    "columns": 20
+  },
+  {
+    "case": "n2000-m50000-k3-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 2000,
+    "columns": 3
+  },
+  {
+    "case": "n2000-m50000-k3-o50-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 2000,
+    "columns": 3
+  },
+  {
+    "case": "n500-m10000-k0-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 500,
+    "columns": 1
+  },
+  {
+    "case": "n500-m10000-k20-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 500,
+    "columns": 20
+  },
+  {
+    "case": "n500-m10000-k20-o50-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 500,
+    "columns": 20
+  },
+  {
+    "case": "n500-m10000-k3-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 500,
+    "columns": 3
+  },
+  {
+    "case": "n500-m10000-k3-o50-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 500,
+    "columns": 3
+  },
+  {
+    "case": "n500-m50000-k0-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 500,
+    "columns": 1
+  },
+  {
+    "case": "n500-m50000-k20-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 500,
+    "columns": 20
+  },
+  {
+    "case": "n500-m50000-k20-o50-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 500,
+    "columns": 20
+  },
+  {
+    "case": "n500-m50000-k3-o0-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 500,
+    "columns": 3
+  },
+  {
+    "case": "n500-m50000-k3-o50-t1",
+    "max_absolute_thread_difference": 0,
+    "rows": 500,
+    "columns": 3
+  }
+]

@@ -1,6 +1,6 @@
 {
   "consolidated_date": "2026-10-19",
-  "new_analyses_run": false,
+  "new_analyses_run": true,
   "sources": [
     {
       "path": "results/gsuite/genomic_20k_50k/manuscript-results/20261005-structured/completed-stage-measurements-current.csv",
@@ -61,7 +61,64 @@
     {
       "path": "results/gsuite/genomic_20k_50k/manuscript-results/20261004-real-1000g/README.md",
       "sha256": "543ab999f2ce3beab686da212a5430294bc185bc07f7dacb221c53eaa12bce47"
+    },
+    {
+      "path": "results/20261019-gsuite-revision/README.md",
+      "sha256": "6fb3f87224886a9709db5ae3f9c68fc80454c039de9ff326a08a4077b0b37f36"
+    },
+    {
+      "path": "results/20261019-gsuite-revision/model-measurements.json",
+      "sha256": "d364a9358ce4d2fca72e37f4499c06bcdd429f9278451132648cae4df397cdce"
+    },
+    {
+      "path": "results/20261019-gsuite-revision/scoring-grid-measurements.json",
+      "sha256": "b87bb3a19bcabeea4bc51c221933e1c62a0af891985c8f5a61781be52af1cde9"
+    },
+    {
+      "path": "results/20261019-gsuite-revision/remaining-module-measurements.json",
+      "sha256": "91d23c752f5063b3dd546005b314d6ab78061579761455d4c30a4e914512ad07"
+    },
+    {
+      "path": "results/20261019-gsuite-revision/provenance.json",
+      "sha256": "2e2dcff658d173017033699bdcd5a2e2f3388590e614ed0898cdf29184c7a5e9"
+    },
+    {
+      "path": "results/20261019-gsuite-revision/single-blr/measurement.json",
+      "sha256": "6f9b0e5fbc08ef2efcdcd447d575894d7af9efe449885c6db0026617c44148c0"
+    },
+    {
+      "path": "results/20261019-gsuite-revision/single-blr/provenance.json",
+      "sha256": "d1cc8f72acbb00056c62d72a26cff8e3271e15f73d3927f9299c8d99dbc681a7"
+    },
+    {
+      "path": "results/20261019-gsuite-revision/validation-measurements.json",
+      "sha256": "b5ad1891289218e0c480b83b7818e19a0a666aae0f8a736bea5fc643a59d110f"
+    },
+    {
+      "path": "results/20261019-gsuite-revision/summary-blr-qgg-settings/README.md",
+      "sha256": "5488a1c87095c5eda8cf7342ff3a819a69ea7db68705fbfce22e202b50e721dc"
+    },
+    {
+      "path": "results/20261019-gsuite-revision/summary-blr-qgg-settings/measurement.json",
+      "sha256": "ec1bf56f7ae79368d4f1ac2c1c6102b4f65a0c569a2333db47afbfde35d95247"
+    },
+    {
+      "path": "results/20261019-gsuite-revision/summary-blr-qgg-settings/provenance.json",
+      "sha256": "0d239a767cc09d453def85f62055e38cbfbdfc48d57788f376239040d551d9b9"
+    },
+    {
+      "path": "results/20261019-direct-cross-products/measurements.json",
+      "sha256": "50be9733b1b0b3db01b3923ade8705dcda168303bce52c6b4efb4480a18fa809"
+    },
+    {
+      "path": "results/20261019-direct-cross-products/measurements.csv",
+      "sha256": "2109cd9f54a570e5f32729b710faf3636b16ab60137e983b950b91d6c6b5e19d"
+    },
+    {
+      "path": "results/20261019-direct-cross-products/README.md",
+      "sha256": "f0d393dc5c4149f8419241f5e6ea08df0e252a9241ae2023452e7edd5726edcf"
     }
   ],
-  "saved_record_audit_date": "2026-10-19"
+  "saved_record_audit_date": "2026-10-19",
+  "new_analysis_scope": "Authorized 19 October gsuite ecosystem measurements; earlier imports remain unchanged."
 }

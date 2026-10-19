@@ -1,0 +1,90 @@
+{
+  "date": "2026-10-19",
+  "scope": "One native gsuite gbayes BayesR fit from precomputed dense XX/Xy with matched qgg PoPS/blr model and sampling settings. No gene association computation, chromosome-held-out validation or prediction.",
+  "prefix": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\task-packages\\prefix",
+  "native_build": "Existing task-packages-portable prefix; native gbayes 0.1.0 ABI 0. This is a different recorded binary collection from the earlier gsea R-worker benchmark. Do not infer an identical-binary speedup ratio.",
+  "compiler": "C:/rtools44/x86_64-w64-mingw32.static.posix/bin/g++.exe",
+  "build_arguments": "-O3 -std=c++17 -I <prefix>/include fit_precomputed.cpp -L <prefix>/lib -lgbayes -o fit_precomputed.exe",
+  "driver_scope": "Thin external consumer of installed public gbayes headers/import library; no inference implementation copied or changed. Only the benchmark driver was compiled, outside all reported clocks. Runtime PATH starts with <prefix>/bin.",
+  "raw_ignored_directory": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\benchmarks\\work\\revision-20261019\\summary-blr-qgg-settings",
+  "files": [
+    {
+      "path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\input\\XX.bin",
+      "bytes": 14023808,
+      "sha256": "0dfc6e6ffad103530b9aa6f90498c33d865e5ff1cd4f95294a0e61101ec249bc"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\input\\Xy.bin",
+      "bytes": 10592,
+      "sha256": "4ed4b32038eb1116e876ae100e49f327f8a053469a4911556a66238576ac7498"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\input\\meta.txt",
+      "bytes": 125,
+      "sha256": "23482427abaf08c45f5926fd4f438cb68b7a60e7aceb2081776cc1a3a9863c24"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\fit_precomputed.exe",
+      "bytes": 2974000,
+      "sha256": "9526556ed8bb4df6a706ca86adc17e29f03b3bc55c5d26d345677ec10934573b"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\task-packages\\prefix\\lib\\libgbayes.dll.a",
+      "bytes": 172462,
+      "sha256": "4856ae4b988b8f090d37528180186fa72db887a5c273302b1fcd5d05456d64b4"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\task-packages\\prefix\\bin\\libgbayes.dll",
+      "bytes": 4985448,
+      "sha256": "a6efbf9e19e2d29546a3e29c57a34ac0fb510f8aa1b8fad335f781e1699338b7"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\task-packages\\prefix\\bin\\libgmat.dll",
+      "bytes": 3975480,
+      "sha256": "8fbfad720ec89b0277d433e6005e716d3e181512aa2054dd4ff3c97d15a83be8"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\task-packages\\prefix\\bin\\gbits.dll",
+      "bytes": 4071516,
+      "sha256": "200f845181357a8ee295599a95e9d559d2a59ea81aa4bd408d59fc73d03698bd"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\task-packages\\prefix\\bin\\libgsolve.dll",
+      "bytes": 4434646,
+      "sha256": "375a2f0d828ccb0568915571255820c89d9f3619332f548e58f2556fdcef3f19"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\task-packages\\prefix\\manifest\\qualification-manifest.mk",
+      "bytes": 544,
+      "sha256": "f53ce793e56494aa6360705fa8aaef912849ba7277d3e27b409e884fd6ebe34b"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\native-fit\\coefficients.csv",
+      "bytes": 101027,
+      "sha256": "992c687e51eafcbe6e4bd8cea4596769e1fb1d5486d6adaa269f81b3c8132d49"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\native-fit\\parameter-trace.csv",
+      "bytes": 660528,
+      "sha256": "af0db8356b9b14f0d34db5fa5056129aa31aff2db9856bf9244f3ae8c75115cf"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\input-preparation\\output.rds",
+      "bytes": 1382110,
+      "sha256": "0b3d415a7f8b71868efd32205bb343846e3a17becf0a638b165ff5062572b388"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\qgg\\R\\genomic_bayes.R",
+      "bytes": 186389,
+      "sha256": "0af0d44995dddbd92847d7ee98820fd6e7514ceead2e6f1bdc334019e7c41702"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\qgg\\R\\multiple_marker_test.R",
+      "bytes": 33880,
+      "sha256": "f146cabb28a2cf541c4adb00360c72b6ba1f5cd711eb3255a83f9a85a7766aa2"
+    }
+  ],
+  "matching": "Same summary scale, one chain, sweeps, initial parameters, variance/weight priors and learning flags. With dense XX every LD neighborhood includes all features, so qgg adjustE contributes zero and updateG cannot affect coefficient sampling. Native marker visit order/RNG consumption and retained output differ; not bitwise qgg trajectory equivalence.",
+  "output_scope": "Posterior means, variances, PIPs and retained parameter traces. Unlike qgg, the driver does not retain all 5,000 full coefficient vectors; therefore output/trajectory equivalence and matched qgg speedup are not claimed.",
+  "failed_attempt": "Initial driver input parsing stopped before sampling because integer metadata were formatted as decimals. Diagnostic retained; corrected without changing numerical inputs or rerunning preparation."
+}

@@ -1,0 +1,73 @@
+{
+  "input": "Frozen local installed hsa.0.0.1 saved gene statistics and Reactome sets",
+  "no_gene_testing": true,
+  "loading_separate": true,
+  "single_runs": true,
+  "files": [
+    {
+      "path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\input-preparation\\output.rds",
+      "bytes": 1382110,
+      "sha256": "0b3d415a7f8b71868efd32205bb343846e3a17becf0a638b165ff5062572b388"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\packages\\gsea\\R\\pops.R",
+      "bytes": 9864,
+      "sha256": "5033f970b1dc444bb77fcac4cc67bc5d6db434e5201281ee67d935e6ae9d56a2"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\packages\\gsea\\R\\pops-bayesian.R",
+      "bytes": 9956,
+      "sha256": "c6a614f6b7f39fba2e2e1d54f2d7f013ce9b71ccd7d420e63f1c9f8fcca3a95b"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\packages\\gsea\\R\\pathways.R",
+      "bytes": 23129,
+      "sha256": "f0ba4486941aa44f77aee0fb63e33c3b290853d381c306ad4de493e75e6d2cca"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\packages\\gsea\\R\\qgg-interface.R",
+      "bytes": 6405,
+      "sha256": "2ab1d7e200c0a36d1983ebc2afef56ebd9d9bdf6b71c1202789e47480f873882"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\packages\\gsea\\src\\pathways.cpp",
+      "bytes": 21459,
+      "sha256": "6c9c9a0515ffe67f1d078c9761672b91f84fca6dce86ba21d9bd1fce06a1c261"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\task-packages\\prefix\\bin\\libgsea.dll",
+      "bytes": 3361932,
+      "sha256": "7870d7e8f69038842897eac9637f87cc2065e41d524306db33e131bb06d40ac1"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\task-packages\\prefix\\bin\\libgsea_bayes.dll",
+      "bytes": 806854,
+      "sha256": "3c17ad51b314336cdd360ab8d8d3000247e5c777027525c248f9ac413c2f45a2"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\task-packages\\prefix\\bin\\libgbayes.dll",
+      "bytes": 4985448,
+      "sha256": "a6efbf9e19e2d29546a3e29c57a34ac0fb510f8aa1b8fad335f781e1699338b7"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\task-packages\\library\\gsea\\libs\\x64\\gsea.dll",
+      "bytes": 1259520,
+      "sha256": "34516a0d677206a8859b77780d261bffe509f1408e91b6d50d1788c989878a51"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsea\\src\\set_cross_products.cpp",
+      "bytes": 4023,
+      "sha256": "1831a40133a9dd4c17f38fe93eb74ec370b18efce6c241eddcddc1b687f0fb69"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsea\\src\\bayesian_pathways.cpp",
+      "bytes": 20555,
+      "sha256": "66b2816f27bea61d464726d4d372f040547caa2bfacb37805aacbb6b23c3bf19"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsea\\include\\gsea\\bayesian_pathways.hpp",
+      "bytes": 3117,
+      "sha256": "d3ee460ad66032bbaab7e0a5e7359ecef17fb8d9cd4ee689361470446b5ec0ff"
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-19",
+  "database_version": "hsa.0.0.1",
+  "database_files": 96,
+  "database_bytes": 3261689414,
+  "database_archive_bytes": 440170912,
+  "database_non_archive_bytes": 2821518502,
+  "database_original_retained": true,
+  "database_local_ignored_path": "benchmarks/data/hsa.0.0.1",
+  "database_copy_provenance_sha256": "12958a3216e518ef4d7ba0ebe2eac62add62cd861c0a98b366e67a6a3ecbc6aa",
+  "retained_raw_directory": "benchmarks/work/revision-20261019 (Git ignored)",
+  "inputs": [
+    {
+      "path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fixture.rds",
+      "bytes": 1382092,
+      "sha256": "247ca4b35e0c38346347adf1d4bbc444cd3a7743fb400fe023b4ffd664d8e076"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\benchmarks\\data\\hsa.0.0.1\\GAlist_local.rds",
+      "bytes": 52318681,
+      "sha256": "555e8f9454de580b427b7da0906294b5066727460b97e6ca2cf5783f988f266f"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\benchmarks\\genomic-20k-50k\\data_simulation.rds",
+      "bytes": 3131691,
+      "sha256": "5f4606d10e0bbd3be012121f540ed4c93663796abbceadcf44825e63ca8d2f66"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\benchmarks\\genomic-20k-50k\\genotypes.bed",
+      "bytes": 250000003,
+      "sha256": "9464f200c7b4497884830ae6ea3203ec6d6bb29e10e89b2444f14e65f60e1697"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\benchmarks\\manuscript-20261005-142319\\website_sim_stats-1\\output.rds",
+      "bytes": 5414412,
+      "sha256": "d6dfb8f3bb50518f14b19d1a23a9fb3d241b9aeae7e2a60e030a45320b847f0e"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\benchmarks\\manuscript-20261005-231349\\cmp_suite_ld-1\\output.rds",
+      "bytes": 3563781,
+      "sha256": "c29c8e4ed0031de592219be6b99d9b10a62477237971b8230704e89b0aa7f152"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\qgdata\\simulated_human_data\\human.bed",
+      "bytes": 62500003,
+      "sha256": "831b33866e4e6382e7ce80ce99e85bbc4d3ada6e00fabd3da97c2db16a8fc74e"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\qgdata\\simulated_human_data\\human.fam",
+      "bytes": 122786,
+      "sha256": "3ec886498fc333334e5d33f259f17767a012df8c119b023b338e81b6b5fa40da"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\Document\\glma-simulated-data\\human.bim",
+      "bytes": 1905260,
+      "sha256": "ff15e3934542dc2db3258a69e2818c41099cc13f8d784e095eaf5922f1ad5b57"
+    },
+    {
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\Document\\glma-simulated-data\\example-phenotypes.csv",
+      "bytes": 143770,
+      "sha256": "a75b81ea177a39d25de0f6064cec2c62a7c2c77b0b54706e496c4d89d46bed48"
+    }
+  ],
+  "measurements": "One successful execution per setting, fresh R process; model/scoring workers serialized; whole-process R PID peak working set polled at 100 ms.",
+  "thread_policy": "OpenMP requested as recorded; BLAS limited to one thread; actual thread utilization not inferred.",
+  "data_scope": "Installed public summary database and simulated genotypes only; no UK Biobank data used in new benchmarks.",
+  "script_scope": "Measured worker snapshots retain original task paths. Refactor paths and choose fresh output directories before rerunning; do not run all scripts by discovery.",
+  "package_scope": "gsea 0.1.1, gbase 0.1.3, gscore 0.1.1 from existing source-repository library; effects for scoring come from the frozen earlier gsim 0.16.0-generated fixture.",
+  "interpretation": "Execution timings do not establish Bayesian convergence, calibration, external-tool concordance or repeated-run uncertainty.",
+  "pops_stage_boundaries": "Gene-association statistics are computed once upstream and reused as the response for BLR fitting. They are not recomputed for each chromosome fold, prior or chain. Here, the 17,955 saved gene statistics were loaded from the existing database. The separate 17.95-second input-preparation measurement retrieves cached scores and annotations; it does not perform gene testing. PoPS clocks include feature construction, fold-specific model fitting and prediction across all 22 held-out chromosome folds. They exclude upstream gene-association computation and are not timings of a single full-data BLR fit or of the sampler alone. The 17,862-gene VEGAS measurement is a different workload and must not be added to these PoPS times.",
+  "single_blr_stage_boundaries": "Gene-association statistics are computed once upstream and reused as the BLR response. No gene testing was run for this measurement: all 17,955 cached gene scores and 1,324 Reactome features come from the existing hsa.0.0.1 database. One full-data BayesR BLR model, fitted with the public gsuite `gsea::gsea()` engine, took **162.87 s**. It used two chains of the same model, 1,000 burn-in sweeps, 5,000 sampling sweeps, pi=.001 and one requested thread, with variance and mixture-weight learning enabled. There were no held-out folds or prediction steps.\n\nLoading the prepared cached fixture took **0.22 s**; construction of the binary gene-feature matrix took **0.74 s**. Both clocks are separate from the BLR fitting time. The 17.95-second earlier input-preparation record loads the installed descriptor, scores and annotations; it is not gene-association computation. The BLR clock includes internal normalization, design preparation, MCMC and result assembly, rather than sampler-only time. The 0.83 GiB peak covers the complete R worker, not one preparation phase. The separately timed 17,862-gene VEGAS workload has different inputs and must not be added to this BLR timing.\n\nThe earlier 22-fold PoPS validation clocks are reported separately below and are excluded from the main benchmark table. They repeat feature preparation, fitting and prediction across chromosomes while reusing the same gene statistics. Successful execution does not establish convergence.\n\n",
+  "main_table_excludes_held_out_validation": true
+}

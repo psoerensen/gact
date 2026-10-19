@@ -1,0 +1,19 @@
+.libPaths(c('C:/Users/au223366/Documents/GitHub/gsuite/build/source-repository/library',
+ 'C:/Users/au223366/Documents/GitHub/gsuite/build/r-library',
+ 'C:/Users/au223366/AppData/Local/R/win-library/4.4',.libPaths()))
+library(gact);library(gsea)
+dir.create('work/revision-benchmark',recursive=TRUE,showWarnings=FALSE)
+GA<-readRDS('C:/Users/au223366/Documents/GitHub/gact/benchmarks/data/hsa.0.0.1/GAlist_local.rds')
+stat<-gact::getVEGAS(GAlist=GA,studyID=c('GWAS1','GWAS2'))
+sets<-gact::getFeatureSets(GAlist=GA,feature='Pathways',minsets=50)
+ann<-readRDS(file.path(GA$dirs['gsets'],'genesplus_annotation.rds'))
+cat('STAT',dim(stat),'SETS',length(sets),'\n');print(names(ann))
+idcol<-intersect(c('EnsemblID','gene_id'),names(ann))[1]
+stopifnot(!is.na(idcol))
+chromosome<-ann$chr[match(rownames(stat),ann[[idcol]])]
+cat('MISSING CHROMOSOME',sum(is.na(chromosome)),'\n')
+print(table(chromosome,useNA='ifany'))
+saveRDS(list(stat=stat,sets=sets,chromosome=chromosome,annotation_id=idcol),
+ 'work/revision-benchmark/fixture.rds')
+writeLines(capture.output(sessionInfo()),'work/revision-benchmark/preparation-session.txt')
+cat('FIXTURE_SAVED\n')

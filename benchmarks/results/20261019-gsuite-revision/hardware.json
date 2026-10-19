@@ -1,0 +1,8 @@
+{
+  "cpu": "13th Gen Intel(R) Core(TM) i7-1365U",
+  "physical_cores": 10,
+  "logical_processors": 12,
+  "ram_bytes": 16794288128,
+  "os": "Microsoft Windows 11 Enterprise",
+  "version": "10.0.26200"
+}

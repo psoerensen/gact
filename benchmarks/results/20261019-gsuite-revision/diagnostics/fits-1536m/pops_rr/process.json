@@ -1,0 +1,9 @@
+{
+  "stage": "pops_rr",
+  "process_seconds": 3.0142028,
+  "peak_working_set_bytes": 508928000,
+  "sampled_private_bytes": 3490152448,
+  "cpu_seconds": 1.828125,
+  "exit_code": 1,
+  "memory_definition": "R PID lifetime peak working set observed at 100ms polling"
+}

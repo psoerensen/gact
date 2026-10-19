@@ -1,0 +1,33 @@
+.libPaths(c('C:/Users/au223366/Documents/GitHub/gsuite/build/task-packages/library','C:/Users/au223366/Documents/GitHub/gsuite/build/source-repository/library','C:/Users/au223366/AppData/Local/R/win-library/4.4',.libPaths()))
+library(jsonlite)
+root<-'work/direct-workflow-rerun-20261019'
+f<-readRDS('work/revision-benchmark/input-preparation/output.rds')
+results<-list()
+for(stage in c('magma_single','magma_joint','pops_single_c','pops_single_r','pops_validation_c','pops_validation_r')){
+ fit<-readRDS(file.path(root,stage,'output.rds'))
+ stopifnot(!inherits(fit,'error'),!fit$timing$gene_statistics$computed,is.na(fit$timing$gene_statistics$seconds))
+ if(grepl('validation',stage)){
+  stopifnot(nrow(fit$folds)==22,identical(fit$predictions$gene,rownames(f$stat)),all(is.finite(fit$predictions$score)),length(fit$fits)==22)
+  heldout<-as.character(f$chromosome)
+  stopifnot(all(fit$folds$training_gene_count==vapply(as.character(fit$folds$chromosome),function(chr)sum(heldout!=chr),integer(1))))
+  per_fold<-lapply(seq_along(fit$fits),function(i){
+   model<-fit$fits[[i]];chains<-model$chains[[1]]
+   stopifnot(length(chains)==2,all(vapply(chains,`[[`,numeric(1),'retained_draws')==5000),
+    identical(model$timing$native[[1]]$preparation_route,'direct_set_cross_products'),
+    all(is.finite(model$pathways$mean)),all(model$pathways$pip>=0&model$pathways$pip<=1))
+   list(chromosome=names(fit$fits)[i],features=nrow(model$pathways),
+    seeds=vapply(chains,`[[`,numeric(1),'seed'),prior=model$prior,
+    preparation=model$timing$native[[1]]$preparation_route)
+  })
+  write_json(per_fold,file.path(root,stage,'fold-effective-settings.json'),pretty=TRUE,auto_unbox=TRUE,digits=NA)
+  results[[stage]]<-list(folds=22,finite_predictions=TRUE,training_universes_checked=TRUE,
+   feature_count_range=range(fit$folds$selected_features),training_gene_count_range=range(fit$folds$training_gene_count),
+   chains_per_fold=2,retained_draws_per_chain=5000,
+   fit_sum_difference=fit$timing$blr_fit_seconds-sum(fit$timing$folds$blr_fit_seconds))
+ }else{
+  stopifnot(all(is.finite(fit$pathways$mean)),all(fit$pathways$pip>=0&fit$pathways$pip<=1))
+  results[[stage]]<-list(pathway_rows=nrow(fit$pathways),preparation_route=fit$timing$native[[1]]$preparation_route,finite_posteriors=TRUE)
+ }
+}
+write_json(results,'work/direct-workflow-rerun-20261019/validation-checks.json',pretty=TRUE,auto_unbox=TRUE,digits=NA)
+cat('All six model outputs and both 22-fold validation records checked.\n')

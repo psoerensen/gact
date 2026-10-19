@@ -1,0 +1,10 @@
+{
+  "stage": "magma_single",
+  "status": "completed",
+  "operation_seconds": 6.07,
+  "input_loading_seconds": 0.16,
+  "serialization_seconds": 0.12,
+  "output_bytes": 412264,
+  "warnings": [],
+  "error": {}
+}

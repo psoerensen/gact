@@ -1,0 +1,26 @@
+R version 4.4.1 (2024-06-14 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26200)
+
+Matrix products: default
+
+
+locale:
+[1] C
+system code page: 65001
+
+time zone: Europe/Copenhagen
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] jsonlite_2.0.0 gbase_0.1.3    Matrix_1.7-0  
+
+loaded via a namespace (and not attached):
+ [1] lattice_0.22-6     coda_0.19-4.1      splines_4.4.1      parallel_4.4.1    
+ [5] qgg_1.1.6          grid_4.4.1         data.table_1.18.4  corpcor_1.6.10    
+ [9] statmod_1.5.0      compiler_4.4.1     quantreg_5.98      tools_4.4.1       
+[13] SparseM_1.84-2     Rcpp_1.1.1         survival_3.6-4     MCMCpack_1.7-0    
+[17] mcmc_0.9-8         MASS_7.3-60.2      MatrixModels_0.5-3

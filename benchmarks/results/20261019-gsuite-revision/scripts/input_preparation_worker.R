@@ -1,0 +1,19 @@
+args<-commandArgs(TRUE);out<-args[1]
+dir.create(out,recursive=TRUE,showWarnings=FALSE);writeLines(as.character(Sys.getpid()),file.path(out,'pid.txt'))
+.libPaths(c('C:/Users/au223366/Documents/GitHub/gsuite/build/source-repository/library','C:/Users/au223366/Documents/GitHub/gsuite/build/r-library','C:/Users/au223366/AppData/Local/R/win-library/4.4',.libPaths()))
+library(gact);library(jsonlite)
+start<-proc.time()[3]
+GA<-readRDS('C:/Users/au223366/Documents/GitHub/gact/benchmarks/data/hsa.0.0.1/GAlist_local.rds')
+stat<-gact::getVEGAS(GAlist=GA,studyID=c('GWAS1','GWAS2'))
+sets<-gact::getFeatureSets(GAlist=GA,feature='Pathways',minsets=50)
+ann<-readRDS(file.path(GA$dirs['gsets'],'genesplus_annotation.rds'))
+chromosome<-as.character(ann$chr[match(rownames(stat),ann$EnsemblID)])
+stopifnot(!anyNA(chromosome))
+seconds<-unname(proc.time()[3]-start)
+old<-readRDS('work/revision-benchmark/fixture.rds')
+stopifnot(identical(stat,old$stat),identical(sets,old$sets),identical(chromosome,as.character(old$chromosome)))
+saveRDS(list(stat=stat,sets=sets,chromosome=chromosome),file.path(out,'output.rds'))
+write_json(list(stage='input_preparation',status='completed',operation_seconds=seconds,genes=nrow(stat),sets=length(sets),
+ scope='Load local installed descriptor, saved gene statistics, Reactome sets and chromosome annotation; no model fitting or new gene testing',identical_to_measured_fixture=TRUE,
+ output_bytes=file.info(file.path(out,'output.rds'))$size),file.path(out,'timing.json'),auto_unbox=TRUE,pretty=TRUE)
+writeLines(capture.output(sessionInfo()),file.path(out,'session.txt'))

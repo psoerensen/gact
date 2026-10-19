@@ -1,0 +1,442 @@
+[
+  {
+    "chromosome": "1",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "2",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "3",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "4",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "5",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "6",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "7",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "8",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "9",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "11",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "10",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "12",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "13",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "14",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "15",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "16",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "17",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "18",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "20",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "19",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "22",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  },
+  {
+    "chromosome": "21",
+    "features": 1324,
+    "seeds": [10, 11],
+    "prior": {
+      "residual_variance": 0.5,
+      "effect_variance": 0.377643504531722,
+      "effect_variance_prior": {
+        "df": 4,
+        "scale": 0.377643504531722
+      },
+      "residual_variance_prior": {
+        "df": 4,
+        "scale": 0.5
+      },
+      "weight_prior": [1, 1],
+      "inclusion_probability": 0.001
+    },
+    "preparation": "direct_set_cross_products"
+  }
+]

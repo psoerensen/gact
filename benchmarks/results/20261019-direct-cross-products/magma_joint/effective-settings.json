@@ -1,0 +1,41 @@
+{
+  "prior": {
+    "effect_covariance": [
+      [0.0377643504531722, 0],
+      [0, 0.0377643504531722]
+    ],
+    "patterns": [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1]
+    ],
+    "pattern_weights": [0.9801, 0.0099, 0.0099, 0.0001],
+    "component_scales": 1,
+    "component_weights": 1,
+    "covariance_prior": {},
+    "pattern_prior": {},
+    "component_prior": {}
+  },
+  "control": {
+    "maximum_features": 4096,
+    "maximum_covariates": 128,
+    "maximum_block_size": 2048,
+    "maximum_preparation_bytes": 1610612736,
+    "minimum_reciprocal_condition": 1e-10,
+    "burnin": 200,
+    "sampling_sweeps": 1000,
+    "thinning": 1,
+    "seeds": [10, 11],
+    "threads": 1,
+    "retain_diagnostics": true,
+    "scale_response": true,
+    "scale_features": true,
+    "pip_range_threshold": 0.1,
+    "estimate_covariance": false,
+    "estimate_pattern_weights": false,
+    "estimate_component_weights": false,
+    "retain_pattern_probabilities": false,
+    "memory_limit_bytes": 1610612736
+  }
+}

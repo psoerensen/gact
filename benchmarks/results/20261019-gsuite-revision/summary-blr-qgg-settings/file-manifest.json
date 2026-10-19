@@ -1,0 +1,62 @@
+[
+  {
+    "path": "fit_precomputed.cpp",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\fit_precomputed.cpp",
+    "bytes": 4279,
+    "sha256": "6aa13653681a2f59c08c5a27cc3de5e673f4a3be6edf8efdf1e7b5666a5ff68c"
+  },
+  {
+    "path": "prepare_summary.R",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\prepare_summary.R",
+    "bytes": 3298,
+    "sha256": "6d9b0a64518869775aa9fb7dda7a78ea70e6b25e3d2872bf92c60d0f108b6e31"
+  },
+  {
+    "path": "run_native_fit.ps1",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\run_native_fit.ps1",
+    "bytes": 1615,
+    "sha256": "35b1bc811765095aee6f67adb18e8ed3d173b8a75b6d932279d6c12d347a8f5d"
+  },
+  {
+    "path": "input/preparation.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\input\\preparation.json",
+    "bytes": 1295,
+    "sha256": "17cda18ae85ac544bc0f1d3fa88fb7ce131da599a5b7ce4be54f9b0a8555ffd6"
+  },
+  {
+    "path": "input/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\input\\session.txt",
+    "bytes": 861,
+    "sha256": "9a11019b8a143a09cbbcbcb99467b7bb04dce152b4989a20479cdda3ba01862d"
+  },
+  {
+    "path": "native-fit/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\native-fit\\timing.json",
+    "bytes": 398,
+    "sha256": "f42a7bf1981539c8fd419e098b6f814c2626c3f5b3302444264384960a9d7db1"
+  },
+  {
+    "path": "native-fit/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\native-fit\\process.json",
+    "bytes": 244,
+    "sha256": "b386ff678c4c8bd89ee895ccaf8537ae4a55bb0317045a9b93fc22c83f4858c0"
+  },
+  {
+    "path": "native-fit/stdout.log",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\native-fit\\stdout.log",
+    "bytes": 71,
+    "sha256": "5b8d12849bb3e94abae557a7d9c542e178c961825e94c2dfdcfc3d62adb41779"
+  },
+  {
+    "path": "native-fit/stderr.log",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\native-fit\\stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "native-fit-input-diagnostic/failure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\summary-blr-benchmark\\native-fit-input-diagnostic\\failure.txt",
+    "bytes": 28,
+    "sha256": "c7091331bdf84d7172b227003cc41a843af5e10180e92b54ec3ec2c883bad4b7"
+  }
+]

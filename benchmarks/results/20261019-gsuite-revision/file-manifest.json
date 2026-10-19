@@ -1,0 +1,1364 @@
+[
+  {
+    "path": "input-preparation/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\input-preparation\\timing.json",
+    "sha256": "d1432fd5b84501896439330034ba4e707e1be4b5b73425593a20854a3a22317d",
+    "bytes": 350
+  },
+  {
+    "path": "input-preparation/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\input-preparation\\process.json",
+    "sha256": "916d591d2fed06da0161e2c1b6b5a65ab45855a48124fd9345da197e4f607575",
+    "bytes": 139
+  },
+  {
+    "path": "input-preparation/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\input-preparation\\session.txt",
+    "sha256": "8c7f5e9fbc3cc463a3df8ea7d90c84b83ac4e1d567ac2fe1bbe973d99dd07155",
+    "bytes": 1025
+  },
+  {
+    "path": "models/gene_single/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\gene_single\\timing.json",
+    "sha256": "47b3cc40bd6b09b738a1b4649f057e828d612f966ca350cf13c985a03f57cf04",
+    "bytes": 184
+  },
+  {
+    "path": "models/gene_single/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\gene_single\\process.json",
+    "sha256": "1673752d43349007304d1b2150552a834a0e047672ac6d46ff3bf4b38f8b951e",
+    "bytes": 279
+  },
+  {
+    "path": "models/gene_single/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\gene_single\\settings.json",
+    "sha256": "67cbca171b57066913c0f6898839ea2f4590543626008cf92e6d127afbca815e",
+    "bytes": 302
+  },
+  {
+    "path": "models/gene_single/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\gene_single\\session.txt",
+    "sha256": "16dc58bb429b8623bb302fdc031eccc4578672487d765179cb50da28d04540ee",
+    "bytes": 676
+  },
+  {
+    "path": "models/gene_single/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\gene_single\\structure.txt",
+    "sha256": "2e96cbdc11931170d88b183258c96a17d1df27d92447ef2f1b4bf7f3143e98b7",
+    "bytes": 13852
+  },
+  {
+    "path": "models/gene_joint/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\gene_joint\\timing.json",
+    "sha256": "9aaadcd5601e81f8f9e708224e04a4b6f894a507c18d3441dd1f807c91f52886",
+    "bytes": 184
+  },
+  {
+    "path": "models/gene_joint/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\gene_joint\\process.json",
+    "sha256": "7a7a15a9a2879573af1b29912d2db0ce0f0da1963748804e423405f4db6822e4",
+    "bytes": 275
+  },
+  {
+    "path": "models/gene_joint/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\gene_joint\\settings.json",
+    "sha256": "437914b2d8c93526a19fa5a9d12745cd04c5c79e3e930ca54340e94928b4a1e6",
+    "bytes": 300
+  },
+  {
+    "path": "models/gene_joint/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\gene_joint\\session.txt",
+    "sha256": "16dc58bb429b8623bb302fdc031eccc4578672487d765179cb50da28d04540ee",
+    "bytes": 676
+  },
+  {
+    "path": "models/gene_joint/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\gene_joint\\structure.txt",
+    "sha256": "06f2c3fea623621b9087fdcf8afa2a22d751fef646612111b7356464aa625a8f",
+    "bytes": 14529
+  },
+  {
+    "path": "models/pops_rr/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_rr\\timing.json",
+    "sha256": "071647a55bcf0c0f6aa3359961ae3302a9406825dc0fdb430bd7ab223c93a06e",
+    "bytes": 180
+  },
+  {
+    "path": "models/pops_rr/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_rr\\process.json",
+    "sha256": "5870c576f2b45f2d796c13f6d88c776b4ba6e2b77e99f7c6327585711b5946f3",
+    "bytes": 272
+  },
+  {
+    "path": "models/pops_rr/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_rr\\settings.json",
+    "sha256": "9b96b1a1cf3eab449c2c9c8e7c547e80398f56a25c46c1ce49dcd3a7a01a42ff",
+    "bytes": 298
+  },
+  {
+    "path": "models/pops_rr/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_rr\\session.txt",
+    "sha256": "16dc58bb429b8623bb302fdc031eccc4578672487d765179cb50da28d04540ee",
+    "bytes": 676
+  },
+  {
+    "path": "models/pops_rr/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_rr\\structure.txt",
+    "sha256": "56a00f3e697955a60b280ec488e06c635bcefa14f8ca4dcc5857d59eeb25c45c",
+    "bytes": 3204
+  },
+  {
+    "path": "models/pops_rr/folds.csv",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_rr\\folds.csv",
+    "sha256": "5ce06eee564d7fdd988c97af1fddb9c33c52251f2181840579484a055e1572ed",
+    "bytes": 1470
+  },
+  {
+    "path": "models/pops_c/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_c\\timing.json",
+    "sha256": "a7a3adc3e57b8fe31e3c91b244a98ce004af1e97013446560d1ea21852f9d2c7",
+    "bytes": 182
+  },
+  {
+    "path": "models/pops_c/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_c\\process.json",
+    "sha256": "dd32bc1372161931a684b40cac632b4b65c88c3980b4935564e1c95f6eda1514",
+    "bytes": 274
+  },
+  {
+    "path": "models/pops_c/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_c\\settings.json",
+    "sha256": "16ce7ab1678c4e6023d94b5cdc9a89022629d1211ebb757ce29ac2e35b5ef599",
+    "bytes": 297
+  },
+  {
+    "path": "models/pops_c/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_c\\session.txt",
+    "sha256": "16dc58bb429b8623bb302fdc031eccc4578672487d765179cb50da28d04540ee",
+    "bytes": 676
+  },
+  {
+    "path": "models/pops_c/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_c\\structure.txt",
+    "sha256": "2851834a6bedd8976cc1c89e8f64ae30c18eb46c252d704128385a22de56ae47",
+    "bytes": 4560
+  },
+  {
+    "path": "models/pops_c/folds.csv",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_c\\folds.csv",
+    "sha256": "d53c36a113a841ed645b171abeef4def8986f41f7639c5c5b0581e8ad3bbb241",
+    "bytes": 628
+  },
+  {
+    "path": "models/pops_r/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_r\\timing.json",
+    "sha256": "931d62fa9c488516f4f0fca5d9ee082eb4a2be38963f566e5ffca9a3e98cc148",
+    "bytes": 184
+  },
+  {
+    "path": "models/pops_r/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_r\\process.json",
+    "sha256": "7dcbe61a64755d24273ed1802c60669c52a34442979f73b52e52b5fb96b86ff7",
+    "bytes": 279
+  },
+  {
+    "path": "models/pops_r/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_r\\settings.json",
+    "sha256": "ffe95cacdf903a82443dc875f35cbbaf2e2d1ee35b5cc422267228468c035c8c",
+    "bytes": 297
+  },
+  {
+    "path": "models/pops_r/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_r\\session.txt",
+    "sha256": "16dc58bb429b8623bb302fdc031eccc4578672487d765179cb50da28d04540ee",
+    "bytes": 676
+  },
+  {
+    "path": "models/pops_r/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_r\\structure.txt",
+    "sha256": "e9c053c3dac7e5dbe66df175c97f9c0eb07fd4610ec760ff0759b2acfc005e7c",
+    "bytes": 4578
+  },
+  {
+    "path": "models/pops_r/folds.csv",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-pops\\pops_r\\folds.csv",
+    "sha256": "1a8f83a022b6fcc404d288adc7299fe9c7d6182f81a5fe9696285e9d826820a9",
+    "bytes": 628
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k0-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k0-o0-t1\\timing.json",
+    "sha256": "6598afd70eb74392a846f0c0c6885068f4392563cba1207d164394fee1ca6b45",
+    "bytes": 440
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k0-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k0-o0-t1\\process.json",
+    "sha256": "d615d71af0bba0994646362c8005906e50b6ea4e944ee34a13baa15338f9dd08",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k0-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k0-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k0-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k0-o0-t4\\timing.json",
+    "sha256": "71f9bc958031aa6a83a78c6bc3e81e092823bed74e7b920eb7bbd6ac42e78367",
+    "bytes": 440
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k0-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k0-o0-t4\\process.json",
+    "sha256": "1ce28ca33f9c46446ca3db16ffd1f4adfb2e249832d5bd09e457fef05879b2fa",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k0-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k0-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o0-t1\\timing.json",
+    "sha256": "b3be1de8ca338b5e6846e4df9711dac39d3c4540894bd96c019db159394ca52d",
+    "bytes": 444
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o0-t1\\process.json",
+    "sha256": "16431ccd0101f60a5c04f04b1579d39a28a5448a92b0dd94c84e882b4601caa1",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o0-t4\\timing.json",
+    "sha256": "34132c719a9c330f8e7631e6cb8cfb6e02c6fedd2eccfb8f44267ba0622ee436",
+    "bytes": 444
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o0-t4\\process.json",
+    "sha256": "368a0ec2fceb72fb2bc45591c294c9780ce06716f84727f0cab64a1bd2eafe1c",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o50-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o50-t1\\timing.json",
+    "sha256": "3095024021f93ceaccc89b6ea364c0f85ae282c2651c4f95fb03ef04cafbf4e5",
+    "bytes": 445
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o50-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o50-t1\\process.json",
+    "sha256": "8a34ec23ade5210744a41d396ffe8c16915b8a2c99e5e66a213c6e326a46c30f",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o50-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o50-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o50-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o50-t4\\timing.json",
+    "sha256": "d4b75e37827b6378ca18afb3aa98a543f52d723beb7c41e99f67d33cf63bd49f",
+    "bytes": 445
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o50-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o50-t4\\process.json",
+    "sha256": "6691b3e05bd081674cd7bcdd81857268bbb83da30692bd91ffbaeab9a483c8f1",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k20-o50-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k20-o50-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o0-t1\\timing.json",
+    "sha256": "4d5da3207a0017f1490274e52166b4e65a04652eeb45a6a4c5e6a5aba21b988e",
+    "bytes": 441
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o0-t1\\process.json",
+    "sha256": "dea429ebbdab04d8ef87f3a9d1e341383883548e2a39af2b46e21cce64648079",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o0-t4\\timing.json",
+    "sha256": "cf18081908384b0ea931a260f209a32f1021efdbc9f955b7d61bbd3bc125c1d8",
+    "bytes": 441
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o0-t4\\process.json",
+    "sha256": "13554e4f2cfd96f49b74ea4d95ede27efef804ffa5f1d895e613c520f4819979",
+    "bytes": 136
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o50-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o50-t1\\timing.json",
+    "sha256": "16fe19397d80367e60093d5468f2c9688cf8d9b48056fb6465baa1a9e573e650",
+    "bytes": 443
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o50-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o50-t1\\process.json",
+    "sha256": "1c2d6d71fe4bf667e9f8b3d522e7ccf8a607de9caf3ecfe0b44edc3685e958e3",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o50-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o50-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o50-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o50-t4\\timing.json",
+    "sha256": "7244b9269fc3da36bb7fb04a1f6a364b321823a7e30ac82eceb7eaa241630611",
+    "bytes": 443
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o50-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o50-t4\\process.json",
+    "sha256": "4914242424ccdbd123467892322c0bbbc88855d698d18e013d067c28543dcf65",
+    "bytes": 136
+  },
+  {
+    "path": "scoring-grid/n2000-m10000-k3-o50-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m10000-k3-o50-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k0-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k0-o0-t1\\timing.json",
+    "sha256": "f722b2a4bff8402cc8c5b2920623b8946ab6630d7734929d3d6332854af45539",
+    "bytes": 441
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k0-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k0-o0-t1\\process.json",
+    "sha256": "e58265092c9370e51c1f013b788cff5f108ce87e555f89dcac4d6e1327e74c12",
+    "bytes": 138
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k0-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k0-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k0-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k0-o0-t4\\timing.json",
+    "sha256": "88bbde14fae59724a86425ef9603d3efec63d3fcc12d996616aad1facaac5b5e",
+    "bytes": 440
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k0-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k0-o0-t4\\process.json",
+    "sha256": "a5074a3d9471c26266faa7cafa4131ba3c20c6fdb753e4c9e59e3fa8e5d862f8",
+    "bytes": 136
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k0-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k0-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o0-t1\\timing.json",
+    "sha256": "a94732bd8a86c12cbf8fb486ffcf838b0c65467b5fb34de22cad3d16ece52565",
+    "bytes": 444
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o0-t1\\process.json",
+    "sha256": "0de5681e65ad95912f582bb1e2ef9071adb0d955d73b6253033017d059aaa4ea",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o0-t4\\timing.json",
+    "sha256": "89bed4d73e670d88dbd46df9350f708fd0cbb9132d826741c55957e99c1c3bb7",
+    "bytes": 444
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o0-t4\\process.json",
+    "sha256": "77b7f95deb53e62bf1dcb9381095cee467b0b487ca481051c983715d6c2e9456",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o50-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o50-t1\\timing.json",
+    "sha256": "887e178cb5c6c777af8b8133992d07c687f4af21e8e9e248400b6c053a3977cd",
+    "bytes": 445
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o50-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o50-t1\\process.json",
+    "sha256": "03283fd99f03fa555d685471b29b0ff2710eadb2a9b28906e8e9fc9d751d27db",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o50-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o50-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o50-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o50-t4\\timing.json",
+    "sha256": "edb9c0bd867038dd20f9ffdeb1fbe55f6ec55ddd6f585a5a9e8846d26eb7ad32",
+    "bytes": 445
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o50-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o50-t4\\process.json",
+    "sha256": "20a8b0d7b69761911ff6c10d82435e1fb5aefca1fac7cda4db899b2659ebc579",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k20-o50-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k20-o50-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o0-t1\\timing.json",
+    "sha256": "691620125f35e07c04f162006ab6756f9ca44cebea5033e12d15121c1b8dba56",
+    "bytes": 441
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o0-t1\\process.json",
+    "sha256": "cbdb5420c372d3a29cc665d269cd691ec32a1cfa4529001b6df060ff82796e7c",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o0-t4\\timing.json",
+    "sha256": "fd563fef4eddb6e6b72c22bad82b7adf668c1195d2414280581efcf903b753f3",
+    "bytes": 441
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o0-t4\\process.json",
+    "sha256": "e2d8beb3b9c9cb11addc09eabad2dde6a0049cb520d6d7ad8319273d6934ada9",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o50-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o50-t1\\timing.json",
+    "sha256": "55bfd05ec9c6f2e7313f65aede864171e36fb7d00e9cfb366ae9ef9de5217b8d",
+    "bytes": 443
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o50-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o50-t1\\process.json",
+    "sha256": "11e4bc4f90e8f053cc1426f2dbc3d2d9358de2909fc144bba7bab0864bd1a6ac",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o50-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o50-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o50-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o50-t4\\timing.json",
+    "sha256": "0d37e10c3636f77359ce8932ea43f3c881e88c113865ff1bd56a34470b8c2604",
+    "bytes": 442
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o50-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o50-t4\\process.json",
+    "sha256": "4a6787eff4f956cdb37c5119d93126c88ec285c605e00d09b5ebe4c48c8e5680",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n2000-m50000-k3-o50-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n2000-m50000-k3-o50-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k0-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k0-o0-t1\\timing.json",
+    "sha256": "bb257cdff146ed8348916c075278048784e78ffed8b14c7900061d253a9f3d47",
+    "bytes": 439
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k0-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k0-o0-t1\\process.json",
+    "sha256": "5ed1818abb83ca4f5a470d4a39f117361dae392fe768c5cd09e33a8bbf4f98ac",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k0-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k0-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k0-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k0-o0-t4\\timing.json",
+    "sha256": "7fa637af3c1809e64a7c8084125b0ed1d7b937c9e86f448dcff5f675ca3aa2e2",
+    "bytes": 439
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k0-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k0-o0-t4\\process.json",
+    "sha256": "221fcb741acd643abdf0585fa63f9bf07c854a78444179d8ce0e3abb07d29b14",
+    "bytes": 136
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k0-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k0-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o0-t1\\timing.json",
+    "sha256": "c230d1e92f40f27595445ec0a8275de2f67e5679e60083eed8595c24cd79bc72",
+    "bytes": 443
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o0-t1\\process.json",
+    "sha256": "8c7556fa93e05e7ae3c68736b79536aec0d204457a9e58a348b67cc1cdebbebf",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o0-t4\\timing.json",
+    "sha256": "d1635df64293086bfb8e083fca70dc5457e012235933223ce6151b31c3bfa40b",
+    "bytes": 443
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o0-t4\\process.json",
+    "sha256": "69baef9a57cfd0119f999e82fff2e0621df3c89f1392a9c5da9e2a5edc72be5f",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o50-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o50-t1\\timing.json",
+    "sha256": "c37d078787e8bdc93620361c729d91806591fa046b36b5b12f84a652fd6e759f",
+    "bytes": 444
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o50-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o50-t1\\process.json",
+    "sha256": "ef04b51e97826b74191f15e80527c8e5ed36891762744fbcd2005f8dca2baa16",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o50-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o50-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o50-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o50-t4\\timing.json",
+    "sha256": "708d8d22f4b0d83f186a00e0b2fa8efd0d82b5d64da807679edf223f567da1aa",
+    "bytes": 444
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o50-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o50-t4\\process.json",
+    "sha256": "448a9f8dfba8b1e7c6fdd77f808580d35e625d1bef7af2c5d533f1602d332508",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k20-o50-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k20-o50-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o0-t1\\timing.json",
+    "sha256": "9807b5b54706b336739e872f6ccb92e54450f24781df6429da7c0676f8adf2f7",
+    "bytes": 440
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o0-t1\\process.json",
+    "sha256": "b98ef4dd4ac1aa0c382f1447d87aba2f943e171547fceef8f670b0bad51b1b54",
+    "bytes": 136
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o0-t4\\timing.json",
+    "sha256": "65881cc47cadd4f96667f4e5709d4ef1d017f2182ebe5dd78d57bd84021e57cb",
+    "bytes": 440
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o0-t4\\process.json",
+    "sha256": "b9bbc0db1dd033899415ed24edfa3e474970391439f9b56d76666f9e991c6289",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o50-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o50-t1\\timing.json",
+    "sha256": "9b32651e43e5311431ab14689ac5270c5e07685f2747f841e0806a5412f2dee1",
+    "bytes": 442
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o50-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o50-t1\\process.json",
+    "sha256": "2e7e150d094efa1e29e6fef9f6e1c0b5ae9bf1a7c4a7f3b6a41f055e0af655f8",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o50-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o50-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o50-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o50-t4\\timing.json",
+    "sha256": "72e8242b006562936f8c0471af8aec8f13a275d09a28cc8595721e5985b07bd4",
+    "bytes": 442
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o50-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o50-t4\\process.json",
+    "sha256": "a5c7c35b7922d99646c0532c1367a3344372544a9ac2ac435494242ae4fdbeaf",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m10000-k3-o50-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m10000-k3-o50-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k0-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k0-o0-t1\\timing.json",
+    "sha256": "96bbb9932deaaf530e9fb8e7e22962e1d3425aaa3ebda771d3e78071a4c9f95e",
+    "bytes": 440
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k0-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k0-o0-t1\\process.json",
+    "sha256": "fd3952927666e5d01b8f4be8506f3e088d7a39ac92aa2d833f1a4dc653f9a0c8",
+    "bytes": 138
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k0-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k0-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k0-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k0-o0-t4\\timing.json",
+    "sha256": "e6a078f733eabb9f0528a0fee88ea09464608870f26aa7d45217be7c97be820e",
+    "bytes": 438
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k0-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k0-o0-t4\\process.json",
+    "sha256": "4badb913adf3d17a6320bbd4c3af61a634253b0701c309176a079ddeb552e926",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k0-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k0-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o0-t1\\timing.json",
+    "sha256": "bb316fd91358df2db0253538dad249e80236921706366a1bce218855b443472b",
+    "bytes": 443
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o0-t1\\process.json",
+    "sha256": "cb98bc9ac166a36facab61ed9028ce67dd555101fa25f2b5e3cd98b7a87d490d",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o0-t4\\timing.json",
+    "sha256": "f4d72c2c26173c28108ca980637cdb0aa439cc40a0cc8c46ec6d87991066aae0",
+    "bytes": 443
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o0-t4\\process.json",
+    "sha256": "7a01bf73066c465dee26dd7d32b696f152e033f3cc55e61f345dc5ff2a839426",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o50-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o50-t1\\timing.json",
+    "sha256": "5c15dbbcf33a3caa299bcb9798bb070fd5a0f83b3bdbfdada1e42e81c542de6f",
+    "bytes": 443
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o50-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o50-t1\\process.json",
+    "sha256": "813862b2478eb4a9e8661d6d19a35423ce8f807802b9d35273d09aba43716ca4",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o50-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o50-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o50-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o50-t4\\timing.json",
+    "sha256": "5119a459ea6a9d516d7bf94b041d3a78b9b021d32c3a2fe661dc188a0be5a069",
+    "bytes": 444
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o50-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o50-t4\\process.json",
+    "sha256": "fc3f86b187021ebf30121179127bb7139e0a1b9c712381046a73c82f68ef3c7e",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k20-o50-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k20-o50-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o0-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o0-t1\\timing.json",
+    "sha256": "3d478c9ca78f9c19dd31032086df3540dfbc7aac72429b2324be847541cfa93f",
+    "bytes": 440
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o0-t1\\process.json",
+    "sha256": "29d97e61fa271acb55a7f12b298a3f01026c016cea1d39f76d72f76756d26c59",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o0-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o0-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o0-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o0-t4\\timing.json",
+    "sha256": "871d4c803445956acc10f5f840dff80dd2567eed5b668d5c246c06a1e3b169de",
+    "bytes": 440
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o0-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o0-t4\\process.json",
+    "sha256": "763c56424f2b2a612b7c0e66add520038f84b92db7f86d5807af2c167f103184",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o0-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o0-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o50-t1/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o50-t1\\timing.json",
+    "sha256": "9faee7ae86d2b15ad30241c1f167c55e4eddb710fa9678634f46b94435f1a969",
+    "bytes": 442
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o50-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o50-t1\\process.json",
+    "sha256": "137697aac5cda990fa72fa8f4ae6dc18a098be150e35a906108d46aaa833d74c",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o50-t1/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o50-t1\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o50-t4/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o50-t4\\timing.json",
+    "sha256": "8d1dceb7635835d6f631dc84f6d079c7951e00cb886cad28206b67d7cc67ce84",
+    "bytes": 442
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o50-t4/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o50-t4\\process.json",
+    "sha256": "57c4f00c2da4e1f0b32fba191269cd5ce66b86b390189f6c13b5e69e3c21a067",
+    "bytes": 137
+  },
+  {
+    "path": "scoring-grid/n500-m50000-k3-o50-t4/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid\\n500-m50000-k3-o50-t4\\session.txt",
+    "sha256": "19698805a07165a8c5e7b25bc7cb01fbb738e3e2b6d4da97d473818666769342",
+    "bytes": 560
+  },
+  {
+    "path": "remaining-modules/component_gaussian/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\component_gaussian\\timing.json",
+    "sha256": "dedca7d5c5aa6969b28caf463afc351caf566905d367c13e726daaed7aa68e0c",
+    "bytes": 192
+  },
+  {
+    "path": "remaining-modules/component_gaussian/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\component_gaussian\\process.json",
+    "sha256": "af1af4a03de14b358449a5c4b157e6e7dcdebf25bb4190de74a195da27afb310",
+    "bytes": 138
+  },
+  {
+    "path": "remaining-modules/component_gaussian/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\component_gaussian\\settings.json",
+    "sha256": "6a0cdd7e8b777425737a67094f83f68d786ddbdb26700bda744d726a591a7f14",
+    "bytes": 434
+  },
+  {
+    "path": "remaining-modules/component_gaussian/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\component_gaussian\\session.txt",
+    "sha256": "17ffe5cf6b08c38bfce796b4524b308572f6f778b06367a16a42ed720eea11e4",
+    "bytes": 590
+  },
+  {
+    "path": "remaining-modules/component_gaussian/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\component_gaussian\\structure.txt",
+    "sha256": "5c93f855e3e4ede490d5996ddb19caf295e7c1fc1b19d6b7696ea8d9f2f88e5d",
+    "bytes": 4166
+  },
+  {
+    "path": "remaining-modules/component_prior/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\component_prior\\timing.json",
+    "sha256": "0bca04b47396b6eccf7441ca01d73cd84393aa5c03776a23e4b2183a1f21b1ad",
+    "bytes": 190
+  },
+  {
+    "path": "remaining-modules/component_prior/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\component_prior\\process.json",
+    "sha256": "8688aacbe15176ff3125fa248423354d7964e5e141e4093dd97d9a95f6520a25",
+    "bytes": 138
+  },
+  {
+    "path": "remaining-modules/component_prior/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\component_prior\\settings.json",
+    "sha256": "3a1493f8851e543dbad7d2e384dfea185978ee9201cb114712c9cd1830f99b1c",
+    "bytes": 431
+  },
+  {
+    "path": "remaining-modules/component_prior/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\component_prior\\session.txt",
+    "sha256": "17ffe5cf6b08c38bfce796b4524b308572f6f778b06367a16a42ed720eea11e4",
+    "bytes": 590
+  },
+  {
+    "path": "remaining-modules/component_prior/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\component_prior\\structure.txt",
+    "sha256": "6b1f945329f28a31e7b70c97d15c3a109a212233c34ba038a59a47f1a866ee05",
+    "bytes": 4183
+  },
+  {
+    "path": "remaining-modules/genome_twochain/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\genome_twochain\\timing.json",
+    "sha256": "6e0b21c26cf171cd2d470ba61f8bdd42edcb652f8a34a9402ba97703a409af31",
+    "bytes": 189
+  },
+  {
+    "path": "remaining-modules/genome_twochain/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\genome_twochain\\process.json",
+    "sha256": "86931044bc52698aefad9ee7a961f25e8243e9d7becf8a0186742e035b2cee3e",
+    "bytes": 137
+  },
+  {
+    "path": "remaining-modules/genome_twochain/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\genome_twochain\\settings.json",
+    "sha256": "9477d84e928060c6f51e6c9b7847e98afaef9d97feacb9a6de9eee5dda655db6",
+    "bytes": 333
+  },
+  {
+    "path": "remaining-modules/genome_twochain/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\genome_twochain\\session.txt",
+    "sha256": "17ffe5cf6b08c38bfce796b4524b308572f6f778b06367a16a42ed720eea11e4",
+    "bytes": 590
+  },
+  {
+    "path": "remaining-modules/genome_twochain/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\genome_twochain\\structure.txt",
+    "sha256": "de9572ba56b4d3f0d7fcc5c2e4fc9a07e251d0297218a34c2d42bb719ba1acf3",
+    "bytes": 8451
+  },
+  {
+    "path": "remaining-modules/regional_twochain/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\regional_twochain\\timing.json",
+    "sha256": "e51220002ad44a829cbfe9d2271df8abeeb807d054141f7f95eb0a61eea61d9d",
+    "bytes": 191
+  },
+  {
+    "path": "remaining-modules/regional_twochain/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\regional_twochain\\process.json",
+    "sha256": "918befaa592fe2d9abc488f744af7bbf91b198907b57c69e049f30713d11eb1d",
+    "bytes": 138
+  },
+  {
+    "path": "remaining-modules/regional_twochain/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\regional_twochain\\settings.json",
+    "sha256": "00d8995ab95c5c498e4ff126f92f54459acd37764344cb7f5ca270c29182b460",
+    "bytes": 257
+  },
+  {
+    "path": "remaining-modules/regional_twochain/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\regional_twochain\\session.txt",
+    "sha256": "17ffe5cf6b08c38bfce796b4524b308572f6f778b06367a16a42ed720eea11e4",
+    "bytes": 590
+  },
+  {
+    "path": "remaining-modules/regional_twochain/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules\\regional_twochain\\structure.txt",
+    "sha256": "609cb9ea75b840ebaf041546ac40ca196ac406713867e3e24476f8a8b12afd49",
+    "bytes": 11819
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/component_mapping_worker.R",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\component_mapping_worker.R",
+    "sha256": "32476cd13c1b0b2236b1074f523d0f657e37e2dc272a932c1873dd3976f79495",
+    "bytes": 3671
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/genome_twochain/pid.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\genome_twochain\\pid.txt",
+    "sha256": "8ac504eebec426ef3e714a8551f1f1e43f5fb673c9108a8a710b906b1a87d096",
+    "bytes": 7
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/genome_twochain/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\genome_twochain\\process.json",
+    "sha256": "d8fdd6185f0f894492ceb55ceceb932c790aa98fc4af2dd98582add2da936077",
+    "bytes": 137
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/genome_twochain/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\genome_twochain\\session.txt",
+    "sha256": "17ffe5cf6b08c38bfce796b4524b308572f6f778b06367a16a42ed720eea11e4",
+    "bytes": 590
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/genome_twochain/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\genome_twochain\\settings.json",
+    "sha256": "498699be243c9728e689cd716bfcfc372138b8f8ea1f7701ddd08b5eb5cb02eb",
+    "bytes": 258
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/genome_twochain/stderr.log",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\genome_twochain\\stderr.log",
+    "sha256": "a3a4a22917f8e08a79abb74307f065abc5ea8697fb59b025d033cb1ff7f36e71",
+    "bytes": 259
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/genome_twochain/stdout.log",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\genome_twochain\\stdout.log",
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf",
+    "bytes": 40
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/genome_twochain/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\genome_twochain\\structure.txt",
+    "sha256": "6b93e4e3d5ed0243032a5b6b02b8eabddebb05a4ec14117c30af8d8547b6df2b",
+    "bytes": 199
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/genome_twochain/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\genome_twochain\\timing.json",
+    "sha256": "e9a97adc4b85f863bb084bf4cb517c745538490f20de453408f40fa978a5f493",
+    "bytes": 227
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/regional_twochain/pid.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\regional_twochain\\pid.txt",
+    "sha256": "4f152e2734e78de16c5964ed48522141b9b02e1cd4fa94f1844c299cf12fc2e8",
+    "bytes": 7
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/regional_twochain/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\regional_twochain\\process.json",
+    "sha256": "85230f24f8c5c14604fcf9603ce01e0e6aad77e487f51f9be742790c1a105de4",
+    "bytes": 137
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/regional_twochain/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\regional_twochain\\session.txt",
+    "sha256": "17ffe5cf6b08c38bfce796b4524b308572f6f778b06367a16a42ed720eea11e4",
+    "bytes": 590
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/regional_twochain/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\regional_twochain\\settings.json",
+    "sha256": "ced76645ad69846d741332bca022b6f5235e63b71c6cc402185ce49f8794b232",
+    "bytes": 214
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/regional_twochain/stderr.log",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\regional_twochain\\stderr.log",
+    "sha256": "a3a4a22917f8e08a79abb74307f065abc5ea8697fb59b025d033cb1ff7f36e71",
+    "bytes": 259
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/regional_twochain/stdout.log",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\regional_twochain\\stdout.log",
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf",
+    "bytes": 40
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/regional_twochain/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\regional_twochain\\structure.txt",
+    "sha256": "652072674759f27b117c3db18667f7d441ed2a18bb395fbd66cec984ab5f365a",
+    "bytes": 163
+  },
+  {
+    "path": "diagnostics/remaining-modules-initial/regional_twochain/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\remaining-modules-initial-diagnostics\\regional_twochain\\timing.json",
+    "sha256": "9e17bdacf73a3936b2b31656e18b12121b780b6536e92d8af3981bfff95b1405",
+    "bytes": 232
+  },
+  {
+    "path": "diagnostics/gene_single/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\gene_single\\timing.json",
+    "sha256": "c26878256827a77a147e111f9d670aee67ae365e67e29a5f6743f41f7e2cc748",
+    "bytes": 228
+  },
+  {
+    "path": "diagnostics/gene_single/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\gene_single\\process.json",
+    "sha256": "c0d1f4b2e4d60e05b0a04d1e4f961408bd7ee0e184599836b8bc8a3e394dfabc",
+    "bytes": 276
+  },
+  {
+    "path": "diagnostics/gene_single/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\gene_single\\settings.json",
+    "sha256": "a2ee58a333a3b8c2f69981979499f38ae8238cb56de608c22a9ae73ff65b06a7",
+    "bytes": 258
+  },
+  {
+    "path": "diagnostics/gene_single/stderr.log",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\gene_single\\stderr.log",
+    "sha256": "a3a4a22917f8e08a79abb74307f065abc5ea8697fb59b025d033cb1ff7f36e71",
+    "bytes": 259
+  },
+  {
+    "path": "diagnostics/fits-2g/gene_single/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-2g\\gene_single\\timing.json",
+    "sha256": "aeb4871ae2c3451d561866033b9cd777ef436279e9572d32c9aeaa0a02234391",
+    "bytes": 225
+  },
+  {
+    "path": "diagnostics/fits-2g/gene_single/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-2g\\gene_single\\process.json",
+    "sha256": "65beaa593a6c1f3e80fe876827ccd929015f511f551c73dd0d94202cf8554019",
+    "bytes": 275
+  },
+  {
+    "path": "diagnostics/fits-2g/gene_single/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-2g\\gene_single\\settings.json",
+    "sha256": "f56a5c20b25af8a472aa93f0891d5726f93b8e6e9679104f3d7ea8c56980becc",
+    "bytes": 302
+  },
+  {
+    "path": "diagnostics/fits-2g/gene_single/stderr.log",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-2g\\gene_single\\stderr.log",
+    "sha256": "a3a4a22917f8e08a79abb74307f065abc5ea8697fb59b025d033cb1ff7f36e71",
+    "bytes": 259
+  },
+  {
+    "path": "diagnostics/fits-1536m/pops_rr/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\pops_rr\\timing.json",
+    "sha256": "66459d2a32d3acab0169e2e6809c450620be88b0af327987feba0797884477f3",
+    "bytes": 230
+  },
+  {
+    "path": "diagnostics/fits-1536m/pops_rr/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\pops_rr\\process.json",
+    "sha256": "c860747d00afced68f35e03ab2ab59d309be09b90ac7cac8b4a3841bcf4cb633",
+    "bytes": 273
+  },
+  {
+    "path": "diagnostics/fits-1536m/pops_rr/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\pops_rr\\settings.json",
+    "sha256": "9b96b1a1cf3eab449c2c9c8e7c547e80398f56a25c46c1ce49dcd3a7a01a42ff",
+    "bytes": 298
+  },
+  {
+    "path": "diagnostics/fits-1536m/pops_rr/stderr.log",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\pops_rr\\stderr.log",
+    "sha256": "a3a4a22917f8e08a79abb74307f065abc5ea8697fb59b025d033cb1ff7f36e71",
+    "bytes": 259
+  },
+  {
+    "path": "diagnostics/scoring-initial/scoring_grid_worker_failed.R",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid-initial-diagnostic\\scoring_grid_worker_failed.R",
+    "sha256": "1fb0be80bb10a19079d552c4685104d41e3d29188bce50fb984f7a303966be7b",
+    "bytes": 2802
+  },
+  {
+    "path": "diagnostics/scoring-initial/n500-m10000-k0-o0-t1/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid-initial-diagnostic\\n500-m10000-k0-o0-t1\\process.json",
+    "sha256": "4985ca1253c80a064fcb6ed2edb306163054c6df50a1fd55aace38e443fa3005",
+    "bytes": 137
+  },
+  {
+    "path": "diagnostics/scoring-initial/n500-m10000-k0-o0-t1/stderr.log",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid-initial-diagnostic\\n500-m10000-k0-o0-t1\\stderr.log",
+    "sha256": "c4b76848889be6ba6b7f1cc3333916f41267c5fa68983b7a109b269bc94b5c4a",
+    "bytes": 306
+  },
+  {
+    "path": "diagnostics/scoring-initial/n500-m10000-k0-o0-t1/stdout.log",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-grid-initial-diagnostic\\n500-m10000-k0-o0-t1\\stdout.log",
+    "sha256": "b7e638084d432e6eb1752236edebfab8555eaecbcd7901f7c23cb45dfc143fdf",
+    "bytes": 40
+  },
+  {
+    "path": "hardware.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\hardware.json",
+    "sha256": "55d555a6c458ddd8945cc959e4d194b6dcc4446c6427034aaa4cce301b728320",
+    "bytes": 209
+  },
+  {
+    "path": "installed-package-files.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\installed-package-files.json",
+    "sha256": "a43e6d872478842a162df7e7b334715d4e1837c09e272361940e3ff2919293d1",
+    "bytes": 3397
+  },
+  {
+    "path": "scoring-thread-validation.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\scoring-thread-validation.json",
+    "sha256": "6904f49dc94666572d1ac9e3b7a75271117dd8ae36d3a581cc57ab422721d342",
+    "bytes": 2569
+  },
+  {
+    "path": "scripts/validate_revision_outputs.R",
+    "original_path": "work\\validate_revision_outputs.R",
+    "sha256": "666d6a96d8cbabc0027bdbc5084dad997f068382dacbe17705195591c7bffae5",
+    "bytes": 1127
+  },
+  {
+    "path": "scripts/prepare_revision_fixture.R",
+    "original_path": "work\\prepare_revision_fixture.R",
+    "sha256": "292b1735cb0a9f61a4da0bcc7eec8f831f8217f8ffa62d3d8ab98ad6909a6ea2",
+    "bytes": 1140
+  },
+  {
+    "path": "scripts/input_preparation_worker.R",
+    "original_path": "work\\input_preparation_worker.R",
+    "sha256": "1b55fe7789176e481b5280e5bfc454ec1146486dc044fa3775208a91cd2e5408",
+    "bytes": 1591
+  },
+  {
+    "path": "scripts/run_input_preparation.ps1",
+    "original_path": "work\\run_input_preparation.ps1",
+    "sha256": "c5e31295aca6df1878afb1e86d6df717f88d7a7e76c1c1de84cfd4605fa64a2f",
+    "bytes": 1390
+  },
+  {
+    "path": "scripts/revision_fit_worker.R",
+    "original_path": "work\\revision_fit_worker.R",
+    "sha256": "6c3aa8b5878fc83570f6a84584812bd2b203c7265267e68386e8a3ce3a72fa29",
+    "bytes": 3222
+  },
+  {
+    "path": "scripts/run_revision_fits.ps1",
+    "original_path": "work\\run_revision_fits.ps1",
+    "sha256": "d3fbb4981859bb0669fdca81f1aa5d28f495e15c985386bb6e6d0ebc4dd3cefd",
+    "bytes": 1811
+  },
+  {
+    "path": "scripts/scoring_grid_worker.R",
+    "original_path": "work\\scoring_grid_worker.R",
+    "sha256": "569d15895cf8942befa58e8694f44663117948ad766355a6e81a7890163169b4",
+    "bytes": 2854
+  },
+  {
+    "path": "scripts/run_scoring_grid.ps1",
+    "original_path": "work\\run_scoring_grid.ps1",
+    "sha256": "8ad652d9085a4e3838e6f3f73c1c98afe7bd66cb93ba8280dde68e172db9e35d",
+    "bytes": 2211
+  },
+  {
+    "path": "scripts/component_mapping_worker.R",
+    "original_path": "work\\component_mapping_worker.R",
+    "sha256": "32476cd13c1b0b2236b1074f523d0f657e37e2dc272a932c1873dd3976f79495",
+    "bytes": 3671
+  },
+  {
+    "path": "scripts/run_component_mapping.ps1",
+    "original_path": "work\\run_component_mapping.ps1",
+    "sha256": "82ecac71f9c86b23c31f969018aaf8624d01cedd5d111a2c72bcd991d3dbf9c4",
+    "bytes": 1954
+  },
+  {
+    "path": "scripts/component_mapping_worker_retry.R",
+    "original_path": "work\\component_mapping_worker_retry.R",
+    "sha256": "ba1ab4c9a6bf34b7f8d40acdefb572c96046f7eeec478ac1c9de24c07fd12182",
+    "bytes": 3832
+  },
+  {
+    "path": "scripts/run_mapping_retry.ps1",
+    "original_path": "work\\run_mapping_retry.ps1",
+    "sha256": "e61a55d1f5d1482744ad3cbe150818e6991b5c14e1fe1a1842e1885a42c7d296",
+    "bytes": 1946
+  },
+  {
+    "path": "scripts/measured-gene-set-worker.R",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-1536m\\revision_fit_worker.R",
+    "sha256": "ebde2315026b01c93eaac592da5f5e401980a5247353129d8a2563392eaa0cb6",
+    "bytes": 3208
+  },
+  {
+    "path": "single-blr/timing.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-single-blr\\single_blr_bayesr\\timing.json",
+    "sha256": "f16578ac0e7ecdb85573fa8f0a86a198c2298754d294345218b89b7f62d39192",
+    "bytes": 625
+  },
+  {
+    "path": "single-blr/process.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-single-blr\\single_blr_bayesr\\process.json",
+    "sha256": "d7a154b75c5c9e7f99c1e0284e4c51596cec300f9d43d3b42f2fa60bf665f0c5",
+    "bytes": 287
+  },
+  {
+    "path": "single-blr/settings.json",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-single-blr\\single_blr_bayesr\\settings.json",
+    "sha256": "9904b0be3e31feac9949cdab1b73314da7295105da7a013abe06d0c495ffe3ab",
+    "bytes": 1395
+  },
+  {
+    "path": "single-blr/session.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-single-blr\\single_blr_bayesr\\session.txt",
+    "sha256": "c36200b3a18106d27da630ee4dd1b2da1b4bd9d6d881342fe0f42d401b1a3312",
+    "bytes": 580
+  },
+  {
+    "path": "single-blr/structure.txt",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\fits-single-blr\\single_blr_bayesr\\structure.txt",
+    "sha256": "29517abb2ab7645ef36cf4cdb5d1370fd0b7b165aea2790356fcc4d9336da5c4",
+    "bytes": 3006
+  },
+  {
+    "path": "single-blr/single_blr_worker.R",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\single_blr_worker.R",
+    "sha256": "6c5fe1d0485b74cd3f35817479bd8d0283fd032732c20a7a1569b395bf040875",
+    "bytes": 3900
+  },
+  {
+    "path": "single-blr/run_single_blr.ps1",
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\run_single_blr.ps1",
+    "sha256": "c3d07c37adb32ef49059091a9f0200aa7116aa461a3228a8dd20ee01ae73eec9",
+    "bytes": 1807
+  }
+]

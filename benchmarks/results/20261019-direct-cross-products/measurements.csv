@@ -1,0 +1,7 @@
+stage,label,scope,preparation_seconds,blr_fit_seconds,posterior_summary_seconds,prediction_seconds,operation_seconds,input_loading_seconds,peak_working_set_gib,chains,threads,sampling_sweeps,burnin,gene_statistics_seconds
+magma_single,Bayesian MAGMA: single-trait BayesC,one full-data model,1.3250122,4.746837,0.0089627,0,6.07,0.16,0.15822982788085938,2,1,5000,1000,
+magma_joint,Bayesian MAGMA: joint GWAS1/GWAS2 BayesC,one full-data model,37.8075274,30.9887456,0.014022,0,68.86,0.12,0.5224380493164062,2,1,1000,200,
+pops_single_c,PoPS: one full-data BayesC model,one full-data model,1.015414,6.7718281,0.0171064,0,7.82,0.09,0.149139404296875,2,1,5000,1000,
+pops_single_r,PoPS: one full-data BayesR model,one full-data model,1.8059705,84.8787265,0.0162834,0,86.72,0.14,0.1467742919921875,2,1,5000,1000,
+pops_validation_c,PoPS BayesC: 22 held-out chromosome folds,22-fold validation,33.6412155,156.9001951,0.3365785,1.27000000000003,192.97,0.24,0.24142837524414062,2,1,5000,1000,
+pops_validation_r,PoPS BayesR: 22 held-out chromosome folds,22-fold validation,35.8189043000004,1555.2348734,0.3131191,1.29999999999994,1593.5,0.1,0.2607078552246094,2,1,5000,1000,

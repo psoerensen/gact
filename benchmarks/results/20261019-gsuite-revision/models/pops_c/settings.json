@@ -1,0 +1,13 @@
+{
+  "stage": "pops_c",
+  "genes": 17955,
+  "pathways": 1324,
+  "annotation": "Reactome from installed database",
+  "database": "hsa.0.0.1 installed 4 October 2026",
+  "seed": 10,
+  "threads": 1,
+  "nit": 5000,
+  "nburn": 1000,
+  "nrun": 2,
+  "maximum_preparation_bytes": 1610612736
+}

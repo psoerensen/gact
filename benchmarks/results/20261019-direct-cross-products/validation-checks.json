@@ -1,0 +1,42 @@
+{
+  "magma_single": {
+    "pathway_rows": 1324,
+    "preparation_route": "direct_set_cross_products",
+    "finite_posteriors": true
+  },
+  "magma_joint": {
+    "pathway_rows": 2648,
+    "preparation_route": "projected_design",
+    "finite_posteriors": true
+  },
+  "pops_single_c": {
+    "pathway_rows": 1324,
+    "preparation_route": "direct_set_cross_products",
+    "finite_posteriors": true
+  },
+  "pops_single_r": {
+    "pathway_rows": 1324,
+    "preparation_route": "direct_set_cross_products",
+    "finite_posteriors": true
+  },
+  "pops_validation_c": {
+    "folds": 22,
+    "finite_predictions": true,
+    "training_universes_checked": true,
+    "feature_count_range": [1324, 1324],
+    "training_gene_count_range": [16015, 17767],
+    "chains_per_fold": 2,
+    "retained_draws_per_chain": 5000,
+    "fit_sum_difference": 0
+  },
+  "pops_validation_r": {
+    "folds": 22,
+    "finite_predictions": true,
+    "training_universes_checked": true,
+    "feature_count_range": [1324, 1324],
+    "training_gene_count_range": [16015, 17767],
+    "chains_per_fold": 2,
+    "retained_draws_per_chain": 5000,
+    "fit_sum_difference": 0
+  }
+}

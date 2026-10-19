@@ -1,0 +1,50 @@
+[
+  {
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\direct-workflow-rerun-20261019\\magma_single\\output.rds",
+    "local_ignored_copy": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\benchmarks\\work\\direct-workflow-rerun-20261019\\magma_single\\output.rds",
+    "bytes": 412264,
+    "sha256": "ab7c6aebc13bb6f22499b402c98b22dea188655892907feb38cdb6de12b573e7"
+  },
+  {
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\direct-workflow-rerun-20261019\\magma_joint\\output.rds",
+    "local_ignored_copy": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\benchmarks\\work\\direct-workflow-rerun-20261019\\magma_joint\\output.rds",
+    "bytes": 482590,
+    "sha256": "789274ecbc529a8af21f3e12411ee1561dcd73d23e6e456b82a4aaa30ce2f54e"
+  },
+  {
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\direct-workflow-rerun-20261019\\pops_single_c\\output.rds",
+    "local_ignored_copy": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\benchmarks\\work\\direct-workflow-rerun-20261019\\pops_single_c\\output.rds",
+    "bytes": 689096,
+    "sha256": "034dc510b560d0def458a6676b7ce3f58c163e0a4b3449a675f9ec304c2c1351"
+  },
+  {
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\direct-workflow-rerun-20261019\\pops_single_r\\output.rds",
+    "local_ignored_copy": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\benchmarks\\work\\direct-workflow-rerun-20261019\\pops_single_r\\output.rds",
+    "bytes": 866982,
+    "sha256": "c8932211beed080f4c81c32642510f11c5a38ae5677f391acc124dbdf37b515e"
+  },
+  {
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\direct-workflow-rerun-20261019\\pops_validation_c\\output.rds",
+    "local_ignored_copy": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\benchmarks\\work\\direct-workflow-rerun-20261019\\pops_validation_c\\output.rds",
+    "bytes": 10323821,
+    "sha256": "afca423281735a1b7e44ed6ffa93531fcce2af16500b20d723c98f52d55b54f7"
+  },
+  {
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\direct-workflow-rerun-20261019\\pops_validation_c\\predictions.csv",
+    "local_ignored_copy": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\benchmarks\\work\\direct-workflow-rerun-20261019\\pops_validation_c\\predictions.csv",
+    "bytes": 960181,
+    "sha256": "5bd6f15a1150cda5366c8cd50301c83a60df2517fc14e830c1b7a41ac910f3a5"
+  },
+  {
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\direct-workflow-rerun-20261019\\pops_validation_r\\output.rds",
+    "local_ignored_copy": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\benchmarks\\work\\direct-workflow-rerun-20261019\\pops_validation_r\\output.rds",
+    "bytes": 14314509,
+    "sha256": "14a5de4216e9ecc7b2f5bc9bb00e986e68f0219cbd8de8fdd66406f09ab2ef38"
+  },
+  {
+    "original_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\direct-workflow-rerun-20261019\\pops_validation_r\\predictions.csv",
+    "local_ignored_copy": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\benchmarks\\work\\direct-workflow-rerun-20261019\\pops_validation_r\\predictions.csv",
+    "bytes": 959167,
+    "sha256": "5d1af76793bf483dd0826fce0c253ce96d2016ec813e32d6b34893100859f46a"
+  }
+]

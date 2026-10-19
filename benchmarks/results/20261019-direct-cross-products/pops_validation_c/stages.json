@@ -1,0 +1,214 @@
+{
+  "gene_statistics": {
+    "computed": false,
+    "seconds": null,
+    "source": "Caller-supplied gene scores reused across folds; upstream computation excluded"
+  },
+  "interface_preparation_seconds": 0.48,
+  "folds": [
+    {
+      "chromosome": "1",
+      "selection_preparation_seconds": 0.31,
+      "model_preparation_seconds": 0.4943372,
+      "blr_fit_seconds": 8.5825935,
+      "posterior_summary_seconds": 0.0143309,
+      "prediction_seconds": 0.120000000000001,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "2",
+      "selection_preparation_seconds": 0.879999999999999,
+      "model_preparation_seconds": 1.0231738,
+      "blr_fit_seconds": 9.9739144,
+      "posterior_summary_seconds": 0.0137712,
+      "prediction_seconds": 0.110000000000003,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "3",
+      "selection_preparation_seconds": 0.809999999999999,
+      "model_preparation_seconds": 1.1074211,
+      "blr_fit_seconds": 8.8193083,
+      "posterior_summary_seconds": 0.0227344,
+      "prediction_seconds": 0.0899999999999963,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "4",
+      "selection_preparation_seconds": 1.01,
+      "model_preparation_seconds": 1.1729434,
+      "blr_fit_seconds": 9.2948912,
+      "posterior_summary_seconds": 0.0174678,
+      "prediction_seconds": 0.0599999999999952,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "5",
+      "selection_preparation_seconds": 0.859999999999999,
+      "model_preparation_seconds": 1.197983,
+      "blr_fit_seconds": 9.647182,
+      "posterior_summary_seconds": 0.0162926,
+      "prediction_seconds": 0.0700000000000003,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "6",
+      "selection_preparation_seconds": 0.770000000000003,
+      "model_preparation_seconds": 1.1014043,
+      "blr_fit_seconds": 8.6453029,
+      "posterior_summary_seconds": 0.0148638,
+      "prediction_seconds": 0.0799999999999983,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "7",
+      "selection_preparation_seconds": 0.700000000000003,
+      "model_preparation_seconds": 0.971415699999986,
+      "blr_fit_seconds": 8.8024604,
+      "posterior_summary_seconds": 0.018826,
+      "prediction_seconds": 0.0699999999999932,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "8",
+      "selection_preparation_seconds": 0.77000000000001,
+      "model_preparation_seconds": 1.0095637,
+      "blr_fit_seconds": 8.6146065,
+      "posterior_summary_seconds": 0.0147256,
+      "prediction_seconds": 0.0499999999999972,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "9",
+      "selection_preparation_seconds": 0.759999999999991,
+      "model_preparation_seconds": 1.0933661,
+      "blr_fit_seconds": 8.2169817,
+      "posterior_summary_seconds": 0.0194817,
+      "prediction_seconds": 0.0499999999999972,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "11",
+      "selection_preparation_seconds": 0.719999999999999,
+      "model_preparation_seconds": 0.966245599999999,
+      "blr_fit_seconds": 9.4867271,
+      "posterior_summary_seconds": 0.0372381,
+      "prediction_seconds": 0.0800000000000125,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "10",
+      "selection_preparation_seconds": 0.739999999999995,
+      "model_preparation_seconds": 0.882155799999993,
+      "blr_fit_seconds": 9.4032897,
+      "posterior_summary_seconds": 0.0176628,
+      "prediction_seconds": 0.0800000000000125,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "12",
+      "selection_preparation_seconds": 0.849999999999994,
+      "model_preparation_seconds": 0.990206800000006,
+      "blr_fit_seconds": 8.5304474,
+      "posterior_summary_seconds": 0.0175187,
+      "prediction_seconds": 0.0699999999999932,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "13",
+      "selection_preparation_seconds": 0.75,
+      "model_preparation_seconds": 1.22857680000001,
+      "blr_fit_seconds": 9.4460888,
+      "posterior_summary_seconds": 0.0151035,
+      "prediction_seconds": 0.0600000000000023,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "14",
+      "selection_preparation_seconds": 0.780000000000001,
+      "model_preparation_seconds": 1.0267716,
+      "blr_fit_seconds": 3.047347,
+      "posterior_summary_seconds": 0.0083304,
+      "prediction_seconds": 0.0300000000000011,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "15",
+      "selection_preparation_seconds": 0.330000000000013,
+      "model_preparation_seconds": 0.48996349999998,
+      "blr_fit_seconds": 2.9034018,
+      "posterior_summary_seconds": 0.0073297,
+      "prediction_seconds": 0.00999999999999091,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "16",
+      "selection_preparation_seconds": 0.360000000000014,
+      "model_preparation_seconds": 0.467753099999998,
+      "blr_fit_seconds": 2.904908,
+      "posterior_summary_seconds": 0.0088624,
+      "prediction_seconds": 0.0200000000000102,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "17",
+      "selection_preparation_seconds": 0.449999999999989,
+      "model_preparation_seconds": 0.435252399999997,
+      "blr_fit_seconds": 2.8838272,
+      "posterior_summary_seconds": 0.008263,
+      "prediction_seconds": 0.0300000000000011,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "18",
+      "selection_preparation_seconds": 0.330000000000013,
+      "model_preparation_seconds": 0.480824299999989,
+      "blr_fit_seconds": 3.0929861,
+      "posterior_summary_seconds": 0.0083454,
+      "prediction_seconds": 0.0100000000000193,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "20",
+      "selection_preparation_seconds": 0.349999999999994,
+      "model_preparation_seconds": 0.429794900000006,
+      "blr_fit_seconds": 2.9129733,
+      "posterior_summary_seconds": 0.0077521,
+      "prediction_seconds": 0.0199999999999818,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "19",
+      "selection_preparation_seconds": 0.320000000000022,
+      "model_preparation_seconds": 0.404781399999995,
+      "blr_fit_seconds": 2.8731242,
+      "posterior_summary_seconds": 0.0081737,
+      "prediction_seconds": 0.0300000000000011,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "22",
+      "selection_preparation_seconds": 0.370000000000005,
+      "model_preparation_seconds": 0.883651899999982,
+      "blr_fit_seconds": 9.7771283,
+      "posterior_summary_seconds": 0.017127,
+      "prediction_seconds": 0.0800000000000125,
+      "preparation_route": "direct_set_cross_products"
+    },
+    {
+      "chromosome": "21",
+      "selection_preparation_seconds": 0.969999999999999,
+      "model_preparation_seconds": 1.1136291,
+      "blr_fit_seconds": 9.0407053,
+      "posterior_summary_seconds": 0.0223777,
+      "prediction_seconds": 0.0500000000000114,
+      "preparation_route": "direct_set_cross_products"
+    }
+  ],
+  "preparation_seconds": 33.6412155,
+  "blr_fit_seconds": 156.9001951,
+  "posterior_summary_seconds": 0.3365785,
+  "prediction_seconds": 1.27000000000003,
+  "total_seconds": 192.92,
+  "scope": "Chromosome-held-out validation; sum of fold fits, not one full-data BLR fit"
+}

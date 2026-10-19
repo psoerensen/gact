@@ -1,0 +1,9 @@
+{
+  "stage": "gene_joint",
+  "process_seconds": 94.3402755,
+  "peak_working_set_bytes": 554676224,
+  "sampled_private_bytes": 3534581760,
+  "cpu_seconds": 87.125,
+  "exit_code": 0,
+  "memory_definition": "R PID lifetime peak working set observed at 100ms polling"
+}

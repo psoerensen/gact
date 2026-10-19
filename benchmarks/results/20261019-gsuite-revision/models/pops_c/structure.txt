@@ -1,0 +1,95 @@
+List of 11
+ $ call            : language gsea::pops(stat = stat, control = ctrl, sets = f$sets, method = "bayesC",      pi = 0.001, nit = 5000, nburn = 10| __truncated__
+ $ predictions     :'data.frame':	17955 obs. of  5 variables:
+  ..$ gene           : chr [1:17955] "ENSG00000160072" "ENSG00000142611" "ENSG00000157911" "ENSG00000142655" ...
+  ..$ chromosome     : chr [1:17955] "1" "1" "1" "1" ...
+  ..$ score          : num [1:17955] -0.00285 -0.00286 -0.00283 -0.00283 -0.00285 ...
+  ..$ genome_rank    : int [1:17955] 5853 5942 4648 4648 4777 4659 5853 4777 5952 4777 ...
+  ..$ chromosome_rank: num [1:17955] 1523 1606 339 339 450 ...
+ $ folds           :'data.frame':	22 obs. of  4 variables:
+  ..$ chromosome         : chr [1:22] "1" "2" "3" "4" ...
+  ..$ training_gene_count: int [1:22] 16015 16749 16916 17235 17149 16956 17089 17323 17239 16695 ...
+  ..$ selected_features  : int [1:22] 1324 1324 1324 1324 1324 1324 1324 1324 1324 1324 ...
+  ..$ method             : chr [1:22] "bayesc" "bayesc" "bayesc" "bayesc" ...
+ $ features        :'data.frame':	29128 obs. of  6 variables:
+  ..$ chromosome   : chr [1:29128] "1" "1" "1" "1" ...
+  ..$ feature      : chr [1:29128] "R-HSA-1059683" "R-HSA-109704" "R-HSA-110056" "R-HSA-110312" ...
+  ..$ marginal_p   : num [1:29128] NA NA NA NA NA NA NA NA NA NA ...
+  ..$ mean         : num [1:29128] -2.58e-06 7.57e-05 8.24e-06 4.33e-05 3.68e-05 ...
+  ..$ pip          : num [1:29128] 1e-04 2e-04 1e-04 2e-04 4e-04 3e-04 1e-04 3e-04 1e-04 0e+00 ...
+  ..$ training_mean: num [1:29128] 0.000562 0.00231 0.0005 0.000874 0.001623 ...
+ $ fits            :List of 22
+  ..$ 1 :List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 2 :List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 3 :List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 4 :List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 5 :List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 6 :List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 7 :List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 8 :List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 9 :List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 11:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 10:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 12:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 13:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 14:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 15:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 16:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 17:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 18:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 20:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 19:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 22:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+  ..$ 21:List of 14
+  .. ..- attr(*, "class")= chr "gsea_fit"
+ $ genes           : chr [1:17955] "ENSG00000160072" "ENSG00000142611" "ENSG00000157911" "ENSG00000142655" ...
+ $ chromosomes     : chr [1:17955] "1" "1" "1" "1" ...
+ $ control_features: chr(0) 
+ $ control         :List of 17
+  ..$ maximum_features            : num 4096
+  ..$ maximum_covariates          : num 128
+  ..$ maximum_block_size          : num 2048
+  ..$ maximum_preparation_bytes   : num 1.61e+09
+  ..$ minimum_reciprocal_condition: num 1e-10
+  ..$ burnin                      : num 1000
+  ..$ sampling_sweeps             : num 5000
+  ..$ thinning                    : int 1
+  ..$ seeds                       : num [1:2] 10 11
+  ..$ threads                     : num 1
+  ..$ retain_diagnostics          : logi TRUE
+  ..$ scale_response              : logi TRUE
+  ..$ scale_features              : logi TRUE
+  ..$ pip_range_threshold         : num 0.1
+  ..$ estimate_effect_variance    : logi TRUE
+  ..$ estimate_residual_variance  : logi TRUE
+  ..$ estimate_weights            : logi TRUE
+ $ sampling        :List of 2
+  ..$ independent    : logi TRUE
+  ..$ gene_provenance: chr "Caller-supplied gene working covariance"
+ $ provenance      :List of 4
+  ..$ method        : chr "PoPS-style LOCO bayesc"
+  ..$ interpretation: chr "Chromosome-held-out feature predictions; not causal probabilities"
+  ..$ gene_evidence : chr "Caller-supplied checked gene score"
+  ..$ covariance    : chr "Caller-supplied gene working covariance"
+ - attr(*, "class")= chr [1:2] "pops_fit" "list"

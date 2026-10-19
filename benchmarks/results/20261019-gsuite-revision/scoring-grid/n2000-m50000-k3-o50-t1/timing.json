@@ -1,0 +1,16 @@
+{
+  "individuals": 2000,
+  "markers": 50000,
+  "score_union_markers": 1000,
+  "sets": 3,
+  "set_size": 500,
+  "adjacent_overlap": 0.5,
+  "threads": 1,
+  "operation_seconds": 0.45,
+  "preparation_seconds": 1.42,
+  "score_columns": 3,
+  "status": "completed",
+  "input": "Frozen 20K/50K artificial-LD genotypes with gsim-generated effects; no new simulation or fitting",
+  "gscore_version": "0.1.1",
+  "gbase_version": "0.1.3"
+}

@@ -111,3 +111,9 @@ Joint Bayesian traits use independent residual trait errors by default;
 supply `sampling` for a different covariance model. This does not run the
 external MAGMA executable. Bayesian posterior coefficients and PIPs are in
 `fit$pathways`; inspect native chain diagnostics as well.
+
+## Recorded computational workload
+
+The [benchmark overview](Benchmark_overview.html) records rerun single-trait and joint Bayesian models using 17,955 saved gene scores and 1,324 Reactome sets from the existing hsa.0.0.1 installation. Gene statistics are reused; KEGG extraction shown above is not timed. Scalar independent-gene set preparation now uses direct cross-products without forming X; the joint model retains projected preparation.
+
+`fit$timing` separates preparation, native BLR and posterior summaries. Upstream gene-statistic computation is unmeasured (NA), not zero. The [dated rerun report](../benchmarks/results/20261019-direct-cross-products/README.md) records both two-chain settings and whole-R-process memory. Successful execution is not evidence of convergence or equivalence to the external MAGMA executable.

@@ -1,0 +1,9 @@
+{
+  "stage": "regional_twochain",
+  "status": "failed",
+  "operation_seconds": 0.88,
+  "serialization_seconds": 0.02,
+  "warnings": [],
+  "error": "Glist must declare one nonempty genome assembly.",
+  "output_bytes": 170
+}

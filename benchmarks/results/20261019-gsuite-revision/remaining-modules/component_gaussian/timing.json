@@ -1,0 +1,9 @@
+{
+  "stage": "component_gaussian",
+  "status": "completed",
+  "operation_seconds": 90.26,
+  "serialization_seconds": 0.2,
+  "warnings": [],
+  "error": {},
+  "output_bytes": 1758427
+}

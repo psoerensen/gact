@@ -1,0 +1,44 @@
+{
+  "stage": "single_blr_bayesr",
+  "api": "gsea::gsea",
+  "method": "bayesr",
+  "models": 1,
+  "held_out_folds": 0,
+  "genes": 17955,
+  "features": 1324,
+  "trait": "GWAS1",
+  "annotation": "Reactome from existing installed hsa.0.0.1 database",
+  "input": "work/revision-benchmark/input-preparation/output.rds",
+  "gene_association_computation": "Not run; existing cached scores reused",
+  "chains": 2,
+  "prior": {
+    "residual_variance": 0.5,
+    "effect_variance": 1.0207,
+    "weights": [0.999, 0.0003, 0.0003, 0.0003],
+    "variance_multipliers": [0, 0.01, 0.1, 1],
+    "effect_variance_prior": {
+      "df": 4,
+      "scale": 1.0207
+    },
+    "residual_variance_prior": {
+      "df": 4,
+      "scale": 0.5
+    },
+    "weight_prior": [1, 1, 1, 1]
+  },
+  "control": {
+    "threads": 1,
+    "burnin": 1000,
+    "sampling_sweeps": 5000,
+    "thinning": 1,
+    "seeds": [10, 11],
+    "estimate_effect_variance": true,
+    "estimate_residual_variance": true,
+    "estimate_weights": true,
+    "retain_diagnostics": true,
+    "scale_response": true,
+    "scale_features": true,
+    "maximum_preparation_bytes": 1610612736
+  },
+  "fit_scope": "One full-data BLR API call, including native normalization/design preparation, MCMC and result assembly; no held-out validation or prediction. External feature construction and loading separately timed."
+}

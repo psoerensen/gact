@@ -1,0 +1,91 @@
+{
+  "input_path": "C:\\Users\\au223366\\Documents\\Codex\\2026-10-05\\please-find-the-recently-completed-timing\\work\\revision-benchmark\\input-preparation\\output.rds",
+  "input_sha256": "0b3d415a7f8b71868efd32205bb343846e3a17becf0a638b165ff5062572b388",
+  "raw_output_ignored_path": "C:\\Users\\au223366\\Documents\\GitHub\\gact\\benchmarks\\work\\revision-20261019\\fits-single-blr\\single_blr_bayesr",
+  "models": 1,
+  "held_out_folds": 0,
+  "chains_of_same_model": 2,
+  "gene_statistic_computation_performed": false,
+  "api": "gsea::gsea",
+  "memory_scope": "Whole fresh R worker lifetime peak working set including loading, external feature construction and serialization; not isolated fitting allocation.",
+  "package_files": [
+    {
+      "package": "gact",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\gact\\DESCRIPTION",
+      "bytes": 832,
+      "sha256": "3b5d00c30c900ee14a3f842fc4d096b99ef0510bc061414c8deeaef0170b33fd"
+    },
+    {
+      "package": "gbase",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\gbase\\DESCRIPTION",
+      "bytes": 1223,
+      "sha256": "7dbf07fada151ec10d4a5c799cb2390839682c54565cf08269e6df9e28bbb41d"
+    },
+    {
+      "package": "gbase",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\gbase\\libs\\x64\\gbase.dll",
+      "bytes": 3572736,
+      "sha256": "07eee56571bcd1efc890e7808eb9656ce4c2c096b841d1992846a0b2ad0febb6"
+    },
+    {
+      "package": "gsea",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\gsea\\DESCRIPTION",
+      "bytes": 1130,
+      "sha256": "b21d91a4c8652fd0dc65a8ef906781c270c66fd8a2c834f1f6b94e7ffcaaa8d8"
+    },
+    {
+      "package": "gsea",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\gsea\\libs\\x64\\gsea.dll",
+      "bytes": 5069312,
+      "sha256": "37862499fb659bbfbf497198f55d078a875f79ca254a44753ae9319f638131e4"
+    },
+    {
+      "package": "gscore",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\gscore\\DESCRIPTION",
+      "bytes": 1014,
+      "sha256": "c6ee9ab8211b6735bf69f780438141e497bf371acdf066003e65eeb9d8c760b2"
+    },
+    {
+      "package": "gscore",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\gscore\\libs\\x64\\gscore.dll",
+      "bytes": 4705280,
+      "sha256": "96442e2fffd62e0a58a267cabf0c427f5936d13c82304986d038c8c852b0af8a"
+    },
+    {
+      "package": "gbayes",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\gbayes\\DESCRIPTION",
+      "bytes": 1229,
+      "sha256": "3c5c7ddc7e345c8e3de9e58c9ce1ee1efd0a19d7116b675c5e64ebd0a44935c7"
+    },
+    {
+      "package": "gbayes",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\gbayes\\libs\\x64\\gbayes.dll",
+      "bytes": 4929536,
+      "sha256": "5c9c018aeb1cc40d5e40438ba3bfda0d98df1e909fe6ce194e86e449ecf88858"
+    },
+    {
+      "package": "gmap",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\gmap\\DESCRIPTION",
+      "bytes": 1124,
+      "sha256": "e3e567f058f1be559930b8c617eaa319493d882121e451668ebc3f0c99e77ea1"
+    },
+    {
+      "package": "gmap",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\gmap\\libs\\x64\\gmap.dll",
+      "bytes": 4902400,
+      "sha256": "0552a72be0ceea95ab7ae67f397dd493775751bfc9f34fcef13d75728a36ca06"
+    },
+    {
+      "package": "glma",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\glma\\DESCRIPTION",
+      "bytes": 1103,
+      "sha256": "0ca80ea2eaa2401ea79e4c2ca4609c7162f01e57cbdb2f0c81eb658a76e242f8"
+    },
+    {
+      "package": "glma",
+      "path": "C:\\Users\\au223366\\Documents\\GitHub\\gsuite\\build\\source-repository\\library\\glma\\libs\\x64\\glma.dll",
+      "bytes": 5565952,
+      "sha256": "985a9c2ed42effaaff544f7e5005674fec2d156f5031b30bf67fc7641e80dc15"
+    }
+  ]
+}

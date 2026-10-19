@@ -1,0 +1,9 @@
+{
+  "stage": "magma_joint",
+  "process_seconds": 71.2446771,
+  "peak_working_set_bytes": 560963584,
+  "sampled_private_bytes": 3540660224,
+  "cpu_seconds": 68.078125,
+  "exit_code": 0,
+  "memory_definition": "R PID lifetime peak working set observed at 100ms polling"
+}

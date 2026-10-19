@@ -1,0 +1,10 @@
+{
+  "stage": "component_gaussian",
+  "individuals": 5000,
+  "markers": 37991,
+  "chromosomes": 22,
+  "threads": 4,
+  "chromosome_sets": 22,
+  "other_controls": "Installed public defaults; non-MCMC model",
+  "public_defaults": ["$phenotype", "NULL", "", "$Glist", "", "", "$...", "", "", "$method", "c(\"linear\", \"logistic\", \"infinitesimal_loco\", \"prior_selected_loco\")", "", "$y", "NULL", "", "$rsids", "NULL", ""]
+}

@@ -1,0 +1,202 @@
+List of 27
+ $ schema_version    : int 1
+ $ source            : chr "regional_summary"
+ $ estimates         :'data.frame':	4125 obs. of  8 variables:
+  ..$ reference: chr [1:4125] "full-regional-BED" "full-regional-BED" "full-regional-BED" "full-regional-BED" ...
+  ..$ region   : chr [1:4125] "19:55551662" "19:55551662" "19:55551662" "19:55551662" ...
+  ..$ trait    : chr [1:4125] "trait" "trait" "trait" "trait" ...
+  ..$ marker   : chr [1:4125] "19:4758022" "19:4834596" "19:4958225" "19:5016585" ...
+  ..$ position : num [1:4125] 4758022 4834596 4958225 5016585 5062488 ...
+  ..$ mean     : num [1:4125] 0.00 0.00 -2.93e-03 -3.37e-07 7.67e-05 ...
+  ..$ variance : num [1:4125] 0.00 0.00 1.34e-04 2.27e-10 3.34e-06 ...
+  ..$ pip      : num [1:4125] 0 0 0.065 0.0005 0.002 0 0.0005 0 0.0015 0.0005 ...
+ $ sets              :List of 4
+  ..$ 19:55551662:List of 1
+  ..$ 11:935343  :List of 1
+  ..$ 13:92838400:List of 1
+  ..$ 11:92296987:List of 1
+ $ details           :List of 4
+  ..$ 19:55551662:List of 1
+  ..$ 11:935343  :List of 1
+  ..$ 13:92838400:List of 1
+  ..$ 11:92296987:List of 1
+ $ diagnostic_summary:'data.frame':	4 obs. of  17 variables:
+  ..$ region                          : chr [1:4] "19:55551662" "11:935343" "13:92838400" "11:92296987"
+  ..$ trait                           : chr [1:4] "trait" "trait" "trait" "trait"
+  ..$ converged                       : logi [1:4] TRUE TRUE TRUE TRUE
+  ..$ status                          : chr [1:4] "accepted" "accepted" "accepted" "accepted"
+  ..$ incomplete_ld_reference         : logi [1:4] FALSE FALSE FALSE FALSE
+  ..$ imported_eigensystem            : logi [1:4] FALSE FALSE FALSE FALSE
+  ..$ requested_retained_positive_mass: num [1:4] 1 1 1 1
+  ..$ achieved_retained_positive_mass : num [1:4] 1 1 1 1
+  ..$ retained_rank                   : int [1:4] 850 785 1091 1399
+  ..$ full_rank                       : int [1:4] 850 785 1091 1399
+  ..$ minimum_retained_eigenvalue     : num [1:4] NaN NaN NaN NaN
+  ..$ maximum_score_projection_change : num [1:4] 0 0 0 0
+  ..$ attempts                        : int [1:4] 1 1 1 1
+  ..$ fallback_required               : logi [1:4] FALSE FALSE FALSE FALSE
+  ..$ chains                          : int [1:4] 2 2 2 2
+  ..$ max_pip_range                   : num [1:4] 0.014 0.029 0.041 0.017
+  ..$ sweeps                          : num [1:4] NA NA NA NA
+ $ eigen_attempts    :'data.frame':	4 obs. of  12 variables:
+  ..$ region                          : chr [1:4] "19:55551662" "11:935343" "13:92838400" "11:92296987"
+  ..$ trait                           : chr [1:4] "trait" "trait" "trait" "trait"
+  ..$ attempt                         : int [1:4] 1 1 1 1
+  ..$ requested_retained_positive_mass: num [1:4] 1 1 1 1
+  ..$ achieved_retained_positive_mass : num [1:4] 1 1 1 1
+  ..$ retained_rank                   : int [1:4] 850 785 1091 1399
+  ..$ full_rank                       : int [1:4] 850 785 1091 1399
+  ..$ minimum_retained_eigenvalue     : num [1:4] NaN NaN NaN NaN
+  ..$ maximum_score_projection_change : num [1:4] 0 0 0 0
+  ..$ pass                            : logi [1:4] TRUE TRUE TRUE TRUE
+  ..$ selected                        : logi [1:4] TRUE TRUE TRUE TRUE
+  ..$ status                          : chr [1:4] "chain PIP range accepted" "chain PIP range accepted" "chain PIP range accepted" "chain PIP range accepted"
+ $ timings           :'data.frame':	4 obs. of  10 variables:
+  ..$ region               : chr [1:4] "19:55551662" "11:935343" "13:92838400" "11:92296987"
+  ..$ trait                : chr [1:4] "trait" "trait" "trait" "trait"
+  ..$ ld_validation_seconds: num [1:4] 0.2 0.28 0.21 0.21
+  ..$ decode_seconds       : num [1:4] 0.27 0.25 0.28 0.37
+  ..$ product_seconds      : num [1:4] 0.23 0.22 0.33 0.44
+  ..$ ld_total_seconds     : num [1:4] 0.7 0.75 0.82 1.02
+  ..$ prepare_seconds      : num [1:4] 0.03 0.03 0.03 0.11
+  ..$ binding_seconds      : num [1:4] 0.00533 0.00499 0.01177 0.01802
+  ..$ sampling_seconds     : num [1:4] 0.343 0.332 0.487 0.571
+  ..$ sets_seconds         : num [1:4] 0.00641 0.00649 0.01543 0.02235
+ $ algorithm         : chr "mcmc"
+ $ ld_swap           :'data.frame':	4 obs. of  5 variables:
+  ..$ region         : chr [1:4] "19:55551662" "11:935343" "13:92838400" "11:92296987"
+  ..$ trait          : chr [1:4] "trait" "trait" "trait" "trait"
+  ..$ attempted      : num [1:4] 0 0 0 0
+  ..$ accepted       : num [1:4] 0 0 0 0
+  ..$ acceptance_rate: num [1:4] NA NA NA NA
+ $ parameters        :'data.frame':	16 obs. of  7 variables:
+  ..$ region      : chr [1:16] "19:55551662" "19:55551662" "19:55551662" "19:55551662" ...
+  ..$ trait       : chr [1:16] "trait" "trait" "trait" "trait" ...
+  ..$ parameter   : chr [1:16] "residual_variance" "effect_variance" "weight" "weight" ...
+  ..$ component   : int [1:16] NA NA 0 1 NA NA 0 1 NA NA ...
+  ..$ estimate    : num [1:16] 1.09553 0.02078 0.99642 0.00358 1.11981 ...
+  ..$ learned     : logi [1:16] TRUE TRUE TRUE TRUE TRUE TRUE ...
+  ..$ summary_type: chr [1:16] "posterior_mean" "posterior_mean" "posterior_mean" "posterior_mean" ...
+ $ normalization     :List of 1
+  ..$ trait:List of 3
+ $ region_metadata   :List of 4
+  ..$ 19:55551662:List of 6
+  ..$ 11:935343  :List of 6
+  ..$ 13:92838400:List of 6
+  ..$ 11:92296987:List of 6
+ $ reference         :List of 4
+  ..$ reference: chr "full-regional-BED"
+  ..$ assembly : chr "simulated-human-tutorial"
+  ..$ checksums: NULL
+  ..$ prefix   : NULL
+ $ selection         :List of 2
+  ..$ regions:List of 4
+  ..$ traits : chr "trait"
+ $ prior             :List of 6
+  ..$ residual_variance      : num 0.575
+  ..$ effect_variance        : num 0.0115
+  ..$ inclusion_probability  : num 0.01
+  ..$ effect_variance_prior  :List of 2
+  ..$ residual_variance_prior:List of 2
+  ..$ weight_prior           : num [1:2] 1 1
+ $ control           :List of 14
+  ..$ burnin                    : num 100
+  ..$ sampling_sweeps           : num 1000
+  ..$ thinning                  : int 1
+  ..$ seeds                     : num [1:2] 10 11
+  ..$ retain_diagnostics        : logi TRUE
+  ..$ pip_range_threshold       : num 0.1
+  ..$ estimate_effect_variance  : logi TRUE
+  ..$ estimate_weights          : logi TRUE
+  ..$ ld_swap                   :List of 4
+  ..$ estimate_residual_variance: logi TRUE
+  ..$ sets                      :List of 10
+  ..$ eigen                     :List of 5
+  ..$ qgg_sets                  : logi TRUE
+  ..$ fitted_variance           : logi TRUE
+ $ input_provenance  :List of 1
+  ..$ trait:List of 1
+ $ method            : chr "bayesc"
+ $ call              : language gmap::gmap(stat = f$stat, Glist = G, method = "bayesC", sets = regions,      nit = 1000, nburn = 100, nrun = 2)
+ $ output            : chr "summary"
+ $ interface         : chr "qgg-style"
+ $ stat              :'data.frame':	4125 obs. of  20 variables:
+  ..$ rsids      : chr [1:4125] "19:4758022" "19:4834596" "19:4958225" "19:5016585" ...
+  ..$ chr        : chr [1:4125] "19" "19" "19" "19" ...
+  ..$ pos        : num [1:4125] 4758022 4834596 4958225 5016585 5062488 ...
+  ..$ ea         : chr [1:4125] "G" "A" "A" "A" ...
+  ..$ nea        : chr [1:4125] "A" "C" "G" "G" ...
+  ..$ eaf        : num [1:4125] 0.193 0.411 0.174 0.407 0.226 ...
+  ..$ b          : num [1:4125] -0.00345 -0.00935 -0.05075 0.01092 0.02967 ...
+  ..$ seb        : num [1:4125] 0.0151 0.0152 0.0151 0.0153 0.0152 ...
+  ..$ stat       : num [1:4125] -0.229 -0.614 -3.353 0.715 1.953 ...
+  ..$ p          : num [1:4125] 0.819054 0.538918 0.000806 0.474662 0.050854 ...
+  ..$ n          : num [1:4125] 4998 4998 4998 4998 4998 ...
+  ..$ ww         : num [1:4125] 5069 4969 5009 4933 4981 ...
+  ..$ wy         : num [1:4125] -17.5 -46.5 -254.2 53.8 147.8 ...
+  ..$ score      : num [1:4125] -17.5 -46.5 -254.2 53.8 147.8 ...
+  ..$ information: num [1:4125] 5069 4969 5009 4933 4981 ...
+  ..$ region     : chr [1:4125] "19:55551662" "19:55551662" "19:55551662" "19:55551662" ...
+  ..$ trait      : chr [1:4125] "trait" "trait" "trait" "trait" ...
+  ..$ bm         : num [1:4125] 0.00 0.00 -2.93e-03 -3.37e-07 7.67e-05 ...
+  ..$ dm         : num [1:4125] 0 0 0.065 0.0005 0.002 0 0.0005 0 0.0015 0.0005 ...
+  ..$ vm         : num [1:4125] 0.00 0.00 2.47e-06 5.48e-14 2.06e-09 ...
+ $ csets             :List of 4
+  ..$ 19:55551662:List of 1
+  ..$ 11:935343  :List of 1
+  ..$ 13:92838400:List of 1
+  ..$ 11:92296987:List of 1
+ $ post              :'data.frame':	4 obs. of  16 variables:
+  ..$ region: chr [1:4] "19:55551662" "11:935343" "13:92838400" "11:92296987"
+  ..$ trait : chr [1:4] "trait" "trait" "trait" "trait"
+  ..$ ve    : num [1:4] 1.1 1.12 1.12 1.13
+  ..$ vg    : num [1:4] 0.0537 0.0291 0.0264 0.0234
+  ..$ vb    : num [1:4] 0.0208 0.0113 0.0112 0.0109
+  ..$ pi    : num [1:4] 0.00358 0.00564 0.00375 0.00285
+  ..$ pip   : num [1:4] 2.04 3.36 3.17 3
+  ..$ minb  : num [1:4] -0.00293 -0.00771 -0.15356 -0.00551
+  ..$ maxb  : num [1:4] 0.23042 0.16092 0.00513 0.14298
+  ..$ m     : int [1:4] 850 785 1091 1399
+  ..$ mb    : num [1:4] 54.3 51.1 77.1 100.6
+  ..$ chr   : chr [1:4] "19" "11" "13" "11"
+  ..$ minmb : num [1:4] 4758022 218141 37925662 34367522
+  ..$ maxmb : num [1:4] 5.91e+07 5.13e+07 1.15e+08 1.35e+08
+  ..$ pi0   : num [1:4] 0.996 0.994 0.996 0.997
+  ..$ pi1   : num [1:4] 0.00358 0.00564 0.00375 0.00285
+  ..- attr(*, "definitions")= Named chr [1:5] "Posterior mean b' C b / likelihood sample count; derived joint-effect quantity, not a separate variance hyperparameter draw" "Posterior mean total non-null mixture probability" "Sum of marginal marker PIPs; expected active count" "Minimum base-pair position (qgg column name)" ...
+  .. ..- attr(*, "names")= chr [1:5] "vg" "pi" "pip" "minmb" ...
+ $ conv              :'data.frame':	4 obs. of  27 variables:
+  ..$ region       : chr [1:4] "19:55551662" "11:935343" "13:92838400" "11:92296987"
+  ..$ trait        : chr [1:4] "trait" "trait" "trait" "trait"
+  ..$ nrun         : int [1:4] 2 2 2 2
+  ..$ draws        : num [1:4] 2000 2000 2000 2000
+  ..$ max_pip_range: num [1:4] 0.014 0.029 0.041 0.017
+  ..$ ntrials      : int [1:4] 1 1 1 1
+  ..$ cutoff       : num [1:4] 1 1 1 1
+  ..$ rhat_ve      : num [1:4] 0.999 1.001 1 1
+  ..$ ess_ve       : num [1:4] 1898 1701 1822 1897
+  ..$ mcse_ve      : num [1:4] 0.000511 0.000544 0.000533 0.000519
+  ..$ status_ve    : chr [1:4] "available" "available" "available" "available"
+  ..$ rhat_vg      : num [1:4] 1 1 1 1
+  ..$ ess_vg       : num [1:4] 1692 1220 1607 1391
+  ..$ mcse_vg      : num [1:4] 0.00017 0.000165 0.000141 0.000139
+  ..$ status_vg    : chr [1:4] "available" "available" "available" "available"
+  ..$ rhat_vb      : num [1:4] 1 1.002 1 0.999
+  ..$ ess_vb       : num [1:4] 1312 1015 1140 977
+  ..$ mcse_vb      : num [1:4] 0.000561 0.000371 0.000331 0.000355
+  ..$ status_vb    : chr [1:4] "available" "available" "available" "available"
+  ..$ rhat_pi      : num [1:4] 0.999 1.003 1.002 1
+  ..$ ess_pi       : num [1:4] 1045 567 574 605
+  ..$ mcse_pi      : num [1:4] 7.78e-05 1.78e-04 1.17e-04 9.81e-05
+  ..$ status_pi    : chr [1:4] "available" "available" "available" "available"
+  ..$ rhat_pip     : num [1:4] 1 1 1.01 1
+  ..$ ess_pip      : num [1:4] 957 495 556 537
+  ..$ mcse_pip     : num [1:4] 0.0422 0.1124 0.1004 0.1132
+  ..$ status_pip   : chr [1:4] "available" "available" "available" "available"
+  ..- attr(*, "diagnostics")= chr "Native rank/split R-hat, bulk ESS and mean MCSE; statuses preserve single-chain, fixed and unavailable cases. T"| __truncated__
+ $ cs                :List of 4
+  ..$ 19:55551662:List of 1
+  ..$ 11:935343  :List of 1
+  ..$ 13:92838400:List of 1
+  ..$ 11:92296987:List of 1
+ - attr(*, "class")= chr [1:2] "gmap_fit" "list"

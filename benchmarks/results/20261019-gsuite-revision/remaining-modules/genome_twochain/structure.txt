@@ -1,0 +1,160 @@
+List of 26
+ $ call                        : language gbayes::gbayes(stat = f$stat, Glist = G, method = "bayesC", control = list(threads = 1,      max_ld_entries = 1e+| __truncated__
+ $ method                      : chr "bayesc"
+ $ trait                       : chr "trait"
+ $ likelihood                  : chr "summary_statistics"
+ $ algorithm                   : chr "mcmc"
+ $ fitted_variance             : logi TRUE
+ $ estimates                   :'data.frame':	37991 obs. of  9 variables:
+  ..$ marker          : chr [1:37991] "1:568670" "1:761732" "1:830791" "1:867663" ...
+  ..$ chromosome      : chr [1:37991] "1" "1" "1" "1" ...
+  ..$ position        : num [1:37991] 568670 761732 830791 867663 916549 ...
+  ..$ effect_allele   : chr [1:37991] "C" "C" "T" "T" ...
+  ..$ other_allele    : chr [1:37991] "T" "T" "C" "C" ...
+  ..$ allele_frequency: num [1:37991] 0.103 0.355 0.264 0.495 0.475 ...
+  ..$ mean            : num [1:37991] 0 0 -0.00079 0 0 ...
+  ..$ variance        : num [1:37991] 0.00 0.00 4.27e-05 0.00 0.00 ...
+  ..$ pip             : num [1:37991] 0 0 0.015 0 0 0 0 0 0 0 ...
+ $ weights                     :'data.frame':	37991 obs. of  7 variables:
+  ..$ marker          : chr [1:37991] "1:568670" "1:761732" "1:830791" "1:867663" ...
+  ..$ chromosome      : chr [1:37991] "1" "1" "1" "1" ...
+  ..$ position        : num [1:37991] 568670 761732 830791 867663 916549 ...
+  ..$ effect_allele   : chr [1:37991] "C" "C" "T" "T" ...
+  ..$ other_allele    : chr [1:37991] "T" "T" "C" "C" ...
+  ..$ allele_frequency: num [1:37991] 0.103 0.355 0.264 0.495 0.475 ...
+  ..$ trait           : num [1:37991] 0 0 -0.00079 0 0 ...
+ $ component_probability       : NULL
+ $ parameter_mean              :List of 3
+  ..$ residual_variance: num 0.875
+  ..$ effect_variance  : num 0.0121
+  ..$ weights          : num [1:2] 0.99955 0.00045
+ $ posterior                   :'data.frame':	6 obs. of  15 variables:
+  ..$ parameter        : chr [1:6] "residual_variance" "effect_variance" "active_markers" "weight_0" ...
+  ..$ estimated        : logi [1:6] TRUE TRUE TRUE TRUE TRUE TRUE
+  ..$ status           : chr [1:6] "available" "available" "available" "available" ...
+  ..$ draws            : num [1:6] 200 200 200 200 200 200
+  ..$ mean             : num [1:6] 0.87516 0.01213 16.265 0.99955 0.00045 ...
+  ..$ sd               : num [1:6] 3.34e-02 8.07e-03 2.44e+01 6.36e-04 6.36e-04 ...
+  ..$ median           : num [1:6] 0.87801 0.010304 9 0.999713 0.000287 ...
+  ..$ lower            : num [1:6] 0.809672 0.002292 4 0.997273 0.000086 ...
+  ..$ upper            : num [1:6] 9.15e-01 3.93e-02 1.05e+02 1.00 2.73e-03 ...
+  ..$ hpd_lower        : num [1:6] 8.20e-01 1.64e-03 4.00 9.98e-01 5.32e-05 ...
+  ..$ hpd_upper        : num [1:6] 0.91497 0.02999 77 0.99995 0.00197 ...
+  ..$ diagnostic_status: chr [1:6] "available" "available" "available" "available" ...
+  ..$ rhat             : num [1:6] 1 1.01 1.01 1.04 1.04 ...
+  ..$ ess_bulk         : num [1:6] 76.9 36.7 25.5 30.2 30.2 ...
+  ..$ mcse_mean        : num [1:6] 0.004346 0.001104 4.874137 0.000126 0.000126 ...
+ $ quantities                  :List of 4
+  ..$ genetic   :List of 9
+  ..$ partition : list()
+  ..$ prediction: list()
+  ..$ chains    :List of 2
+ $ chains                      :List of 2
+  ..$ :List of 9
+  ..$ :List of 9
+ $ annotations                 : list()
+ $ annotation                  : list()
+ $ continuation                :List of 4
+  ..$ version  : int 1
+  ..$ signature:List of 7
+  ..$ seeds    : num [1:2] 10 11
+  ..$ states   :List of 2
+ $ block_residual_variance_mean: num(0) 
+ $ ld_swap                     :List of 3
+  ..$ attempted      : num 0
+  ..$ accepted       : num 0
+  ..$ acceptance_rate: num NA
+ $ control                     :List of 17
+  ..$ burnin                    : num 0
+  ..$ sampling_sweeps           : num 100
+  ..$ thinning                  : num 1
+  ..$ seeds                     : num [1:2] 10 11
+  ..$ threads                   : num 1
+  ..$ retain_diagnostics        : logi TRUE
+  ..$ probability               : num 0.95
+  ..$ estimate_effect_variance  : logi TRUE
+  ..$ estimate_residual_variance: logi TRUE
+  ..$ estimate_weights          : logi TRUE
+  ..$ ld_swap                   :List of 4
+  ..$ residual_policy           : chr "reference_ld"
+  ..$ residual_adjustment       : num 0.9
+  ..$ normalization             :List of 3
+  ..$ sample_size               : chr "common"
+  ..$ storage                   : chr "memory"
+  ..$ max_ld_entries            : num 1e+08
+ $ prior                       :List of 6
+  ..$ residual_variance      : num 0.5
+  ..$ effect_variance        : num 0.0132
+  ..$ effect_variance_prior  :List of 2
+  ..$ residual_variance_prior:List of 2
+  ..$ weight_prior           : num [1:2] 1 1
+  ..$ inclusion_probability  : num 0.001
+ $ diagnostics                 :List of 3
+  ..$ between_chain       :List of 2
+  ..$ truncated_likelihood: logi FALSE
+  ..$ block_eigen         : NULL
+ $ provenance                  :List of 6
+  ..$ preparation           : chr "standalone gbayes reference-LD residual adjustment with inferred y'y=N"
+  ..$ native_version        : chr "0.1.0"
+  ..$ reference_sample_count: int 5000
+  ..$ sample_size_range     : num [1:2] 4998 4998
+  ..$ checksums             : Named chr [1:5] "42b01203bdaee1e088ee625e57e96b4e" "18ce220eb1c74975a6cc3b72711bed92" "0ee3806e8f7f8789a2a573e7fef01b7e" "7975ff3eb0788c10f46d611d1c1a55e8" ...
+  .. ..- attr(*, "names")= chr [1:5] "row_ptr" "col_idx" "values" "metadata" ...
+  ..$ native                :List of 12
+ $ interface                   : chr "qgg-style"
+ $ post                        :'data.frame':	1 obs. of  10 variables:
+  ..$ ve  : num 0.875
+  ..$ vg  : num 0.126
+  ..$ vb  : num 0.0121
+  ..$ pi  : num 0.00045
+  ..$ pip : num 16.3
+  ..$ minb: num -0.147
+  ..$ maxb: num 0.212
+  ..$ m   : int 37991
+  ..$ pi0 : num 1
+  ..$ pi1 : num 0.00045
+  ..- attr(*, "definitions")= Named chr [1:3] "Posterior mean b' C b / common sample size on the fitted likelihood; unavailable with a distinct explicit poste"| __truncated__ "Posterior mean total non-null mixture probability" "Sum of marginal marker PIPs; expected active count"
+  .. ..- attr(*, "names")= chr [1:3] "vg" "pi" "pip"
+ $ conv                        :'data.frame':	1 obs. of  23 variables:
+  ..$ nrun         : int 2
+  ..$ draws        : num 200
+  ..$ max_pip_range: num 0.1
+  ..$ rhat_ve      : num 1
+  ..$ ess_ve       : num 76.9
+  ..$ mcse_ve      : num 0.00435
+  ..$ status_ve    : chr "available"
+  ..$ rhat_vg      : num 1.01
+  ..$ ess_vg       : num 60.7
+  ..$ mcse_vg      : num 0.00461
+  ..$ status_vg    : chr "available"
+  ..$ rhat_vb      : num 1.01
+  ..$ ess_vb       : num 36.7
+  ..$ mcse_vb      : num 0.0011
+  ..$ status_vb    : chr "available"
+  ..$ rhat_pi      : num 1.04
+  ..$ ess_pi       : num 30.2
+  ..$ mcse_pi      : num 0.000126
+  ..$ status_pi    : chr "available"
+  ..$ rhat_pip     : num 1.01
+  ..$ ess_pip      : num 25.5
+  ..$ mcse_pip     : num 4.87
+  ..$ status_pip   : chr "available"
+  ..- attr(*, "diagnostics")= chr "Native rank/split R-hat, bulk ESS and mean MCSE; statuses preserve single-chain, fixed and unavailable cases. T"| __truncated__
+ $ stat                        :'data.frame':	37991 obs. of  15 variables:
+  ..$ rsids: chr [1:37991] "1:568670" "1:761732" "1:830791" "1:867663" ...
+  ..$ chr  : chr [1:37991] "1" "1" "1" "1" ...
+  ..$ pos  : num [1:37991] 568670 761732 830791 867663 916549 ...
+  ..$ ea   : chr [1:37991] "C" "C" "T" "T" ...
+  ..$ nea  : chr [1:37991] "T" "T" "C" "C" ...
+  ..$ eaf  : num [1:37991] 0.103 0.355 0.264 0.495 0.475 ...
+  ..$ b    : num [1:37991] -0.0266 0.0106 -0.0445 0.0172 -0.0125 ...
+  ..$ seb  : num [1:37991] 0.0153 0.0152 0.0152 0.0152 0.0152 ...
+  ..$ stat : num [1:37991] -1.735 0.7 -2.933 1.133 -0.822 ...
+  ..$ p    : num [1:37991] 0.08286 0.48406 0.00337 0.25747 0.41113 ...
+  ..$ n    : num [1:37991] 4998 4998 4998 4998 4998 ...
+  ..$ ww   : num [1:37991] 4893 4974 4992 4963 4967 ...
+  ..$ wy   : num [1:37991] -130.1 52.9 -222.1 85.6 -62.1 ...
+  ..$ bm   : num [1:37991] 0 0 -0.00079 0 0 ...
+  ..$ dm   : num [1:37991] 0 0 0.015 0 0 0 0 0 0 0 ...
+  ..- attr(*, "effect_scale")= chr "native standalone model; summary effects use standardized genotype/phenotype units"
+ - attr(*, "class")= chr [1:2] "gbayes_fit" "list"

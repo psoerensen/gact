@@ -1,0 +1,66 @@
+List of 5
+ $ method        : chr "prior_selected_loco"
+ $ statistic_type: chr "chi_square_1"
+ $ associations  :'data.frame':	37991 obs. of  17 variables:
+  ..$ file                      : int [1:37991] 1 1 1 1 1 1 1 1 1 1 ...
+  ..$ source_marker_index_0based: num [1:37991] 0 1 2 3 4 5 7 9 10 11 ...
+  ..$ marker                    : chr [1:37991] "1:568670" "1:761732" "1:830791" "1:867663" ...
+  ..$ chromosome                : chr [1:37991] "1" "1" "1" "1" ...
+  ..$ position                  : num [1:37991] 568670 761732 830791 867663 916549 ...
+  ..$ a1                        : chr [1:37991] "C" "C" "T" "T" ...
+  ..$ a2                        : chr [1:37991] "T" "T" "C" "C" ...
+  ..$ n                         : num [1:37991] 5000 5000 5000 5000 5000 5000 5000 5000 5000 5000 ...
+  ..$ observed_n                : num [1:37991] 5000 5000 5000 5000 5000 5000 5000 5000 5000 5000 ...
+  ..$ case_n                    : num [1:37991] NA NA NA NA NA NA NA NA NA NA ...
+  ..$ control_n                 : num [1:37991] NA NA NA NA NA NA NA NA NA NA ...
+  ..$ allele_frequency          : num [1:37991] 0.103 0.355 0.264 0.495 0.475 ...
+  ..$ beta                      : num [1:37991] -0.0348 0.0173 -0.0618 0.0283 -0.0071 ...
+  ..$ se                        : num [1:37991] 0.0296 0.0186 0.0202 0.0178 0.0179 ...
+  ..$ statistic                 : num [1:37991] 1.382 0.863 9.395 2.523 0.158 ...
+  ..$ p                         : num [1:37991] 0.23979 0.35296 0.00218 0.11222 0.6909 ...
+  ..$ status                    : chr [1:37991] "ok" "ok" "ok" "ok" ...
+ $ fit           :List of 7
+  ..$ selected_prior   : chr "elastic_p0.010000_f0.500000"
+  ..$ components       :'data.frame':	22 obs. of  6 variables:
+  ..$ loco_components  :'data.frame':	484 obs. of  6 variables:
+  ..$ loco             :'data.frame':	22 obs. of  5 variables:
+  ..$ validation_mse   : num 1.02
+  ..$ genetic_variance : num 0.216
+  ..$ residual_variance: num 0.933
+ $ diagnostics   :List of 35
+  ..$ background_marker_count                  : num 37991
+  ..$ fitting_engine                           : chr "joint_full_panel"
+  ..$ variance_estimator                       : chr "component_rhe_profile_mc_grid"
+  ..$ component_count                          : num 22
+  ..$ component_ratios_fixed_after_rhe         : logi TRUE
+  ..$ component_normalization                  : chr "global_marker_count"
+  ..$ component_initial_variance_floor         : num 1.15e-08
+  ..$ component_rhe_condition_estimate         : num 433
+  ..$ variance_shared_across_chromosomes       : logi TRUE
+  ..$ candidate_model_count                    : num 10
+  ..$ marker_power                             : num -1
+  ..$ heritability                             : num 0.188
+  ..$ heritability_grid_used_initial           : logi FALSE
+  ..$ scaling_factor                           : num 1
+  ..$ scaling_source                           : chr "low_structure"
+  ..$ structure_mean_excess_correlation_squared: num 1.69e-06
+  ..$ structure_z_score                        : num 2.1
+  ..$ structure_pairs                          : num 123179
+  ..$ ridge_scaling_factor                     : num NA
+  ..$ calibration_markers                      : num 0
+  ..$ gamma_markers                            : num 0
+  ..$ product_backend                          : chr "decoded"
+  ..$ marker_schedule                          : chr "full"
+  ..$ skipped_model_markers                    : num 0
+  ..$ variational_block_reads                  : num 2818
+  ..$ initial_variance_seconds                 : num 25.1
+  ..$ candidate_seconds                        : num 10.6
+  ..$ refit_seconds                            : num 24.2
+  ..$ candidate_score_seconds                  : num 1.46
+  ..$ candidate_coordinate_seconds             : num 1.03
+  ..$ refit_score_seconds                      : num 3.34
+  ..$ refit_coordinate_seconds                 : num 2.45
+  ..$ fit_seconds                              : num 60
+  ..$ scan_seconds                             : num 2.49
+  ..$ shared_prepared_genotypes                : logi TRUE
+ - attr(*, "class")= chr [1:2] "glma_fit" "list"

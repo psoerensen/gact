@@ -1,6 +1,6 @@
 # Consolidated GACT timing evidence
 
-Existing measurements for website documentation and manuscript revision, consolidated on 19 October 2026. No analyses were executed. The tables describe representative workflows, not a systematic scaling study or timings of the original UK Biobank manuscript analyses.
+Saved tutorial evidence and authorized gsuite ecosystem measurements from 19 October 2026 are identified separately. The tables describe representative workloads, including a bounded simulated scoring grid, rather than timings of the original UK Biobank manuscript analyses.
 
 ## Available measurements
 
@@ -68,6 +68,34 @@ The R collection superseded A for the real-LD benchmark objective. A remains exp
 
 R also supplies a joint Bayesian gene-set fit: **0.10 s and 102.9 MiB**, two synthetic traits and three pathways, one thread. Four chains use 200 burn-in and 800 sampling sweeps with fixed covariance and pattern settings. It is a bounded historical standalone model, not the exact current website call or a manuscript Reactome reproduction.
 
+## Current Bayesian MAGMA and single full-data PoPS models
+
+These reruns use **17,955 saved gene scores and 1,324 Reactome sets** from the already installed hsa.0.0.1 database, gsea 0.1.2 and gbayes 0.1.6. **Gene-association statistics were not recomputed**: their upstream cost is excluded, not measured as zero. Cached fixture loading is separate from the calls below; no new database acquisition, genotype processing or simulation was performed.
+
+| Full-data model | Preparation (s) | BLR fit (s) | Whole call (s) | Process peak (GiB) |
+| --- | ---: | ---: | ---: | ---: |
+| Bayesian MAGMA: single-trait BayesC | 1.33 | 4.75 | 6.07 | 0.16 |
+| Bayesian MAGMA: joint GWAS1/GWAS2 BayesC | 37.81 | 30.99 | 68.86 | 0.52 |
+| PoPS: one full-data BayesC model | 1.02 | 6.77 | 7.82 | 0.15 |
+| PoPS: one full-data BayesR model | 1.81 | 84.88 | 86.72 | 0.15 |
+
+Preparation includes input checks, set mapping and model-specific summaries. Scalar independent-gene set models compute cross-products directly without forming X. The joint-trait model retains its general projected preparation. Native BLR time includes checks, sampling, posterior accumulation and original-unit coefficient back-transformation. Whole-call time also includes posterior summaries, prediction where relevant and remaining interface overhead; serialization and process startup are excluded. Memory is the complete R worker's lifetime peak, including loading and saving, and cannot be assigned to an individual phase.
+
+All rows use two chains, seeds 10/11 and one requested thread. Single-trait MAGMA uses BayesC with pi=.01 and 5,000 sampling plus 1,000 burn-in sweeps; joint MAGMA uses 1,000 plus 200. MAGMA retains its default fixed hyperparameters; PoPS learns slab variance, residual variance and mixture weights. The two single full-data PoPS models use their current PoPS priors and learning flags, pi=.001, 5,000 sampling plus 1,000 burn-in sweeps. For BayesR that scalar pi is divided among three active components; it is not the .95/.02/.02/.01 mixture from the earlier qgg-oriented probe. Pathway residual normalization remains n-1 for an intercept-only fit. These are representative current workflows, not original manuscript model reruns or convergence evidence.
+
+## Separate 22-fold chromosome-held-out validation
+
+| Validation workflow | Preparation (s) | Sum of BLR fits (s) | Prediction (s) | Whole call (s) | Process peak (GiB) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PoPS BayesC: 22 held-out chromosome folds | 33.64 | 156.90 | 1.27 | 192.97 | 0.24 |
+| PoPS BayesR: 22 held-out chromosome folds | 35.82 | 1555.23 | 1.30 | 1593.50 | 0.26 |
+
+These are **22 training models**, each with two chains and 5,000 sampling plus 1,000 burn-in sweeps. They are validation costs and are excluded from the single-fit table. Saved gene scores are reused in every fold; preparation uses only training genes. The native fitting column is the sum over folds, with preparation and held-out prediction recorded separately. Each setting has one execution; there is no repeated-run timing uncertainty estimate.
+
+The updated independent set path needs no dense gene-by-feature matrix. The 1,536 MiB preparation limit is retained for consistency; it is a matrix-payload guard, not measured process memory. The joint model still uses projected preparation. Earlier preparation-included runs and the separate one-chain 14.21-second native probe remain historical evidence, not current rows or matched speedup baselines. A direct sufficient-statistic R interface is now available as `gsea::blr()`, backed by native gbayes. The qgg R/native vb/vg positional mismatch is not reproduced; these timings make no external qgg or MAGMA/FUMA comparison.
+
+See the [rerun report and phase records](../results/20261019-direct-cross-products/README.md) for settings, per-fold timing, binary/input hashes, memory definitions and the excluded duplicate-membership harness diagnostic.
+
 ## Historical supplementary evidence
 
 These completed results support the evidence archive but require version and workload checks before inclusion as current website timings. They are not a matched external MAGMA executable comparison.
@@ -92,20 +120,10 @@ Historical joint Bayesian gene-set fits used KEGG and short tutorial controls; t
 
 ## Remaining gaps
 
-General scoring memory and separate total/pathway clocks are available in the recovered records. Only the narrower gaps below remain.
+- Separate per-phase VEGAS memory remains unavailable; complete-worker memory is already measured.
+- Scoring has a controlled 40-cell grid, but each cell has one execution; repeated-run uncertainty, larger cohorts and broader workload extrapolation remain unmeasured.
 
-| Item | Existing coverage | Still missing |
-| --- | --- | --- |
-| Current Bayesian gene-set calls | Historical joint KEGG and synthetic models are timed | No verified record matching the exact current website implementation and controls |
-| Current chromosome-held-out Bayesian PoPS | Historical qgg ridge, BayesC and BayesR have time and memory | No tutorial-scale timing/memory record for the updated held-out workflow; test durations are not benchmark timings |
-| Memory for combined total plus 20-set run | 14.88 s / 5.31 s are preserved; other scoring workloads have memory | No captured memory for this specific run; use the separately measured scoring workloads instead |
-| Systematic scoring scalability | Two simulated marker scales and selected one/four-thread executions | No controlled grid of recipient count, markers, set count and overlap; existing runs remain representative examples |
-| Chromosome-component glma examples | Regression and LOCO measurements exist | Component-example time and memory |
-| Two-chain fine-mapping calls | One-chain time and memory exist | Matching two-chain measurements; retain one-chain qualification if using existing results |
-| VEGAS component memory | Complete-worker peak exists | Separate preparation/fit peaks; not required for whole-workflow reporting |
-| Storage and final revision selection | Several records already contain output bytes | Consistent storage definitions and final version-labeled row selection; documentation work rather than a model rerun |
-
-No UK Biobank scoring timing is required. External MAGMA concordance and biological sensitivity analyses are separate reviewer-response tasks. No benchmark, model fit, simulation or test was run for this update.
+Current Reactome gene-set fits, chromosome-held-out PoPS, separate scoring memory and a bounded scoring grid are now measured. External-method comparisons remain separate from this ecosystem benchmark.
 
 ## Sources
 

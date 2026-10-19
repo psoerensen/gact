@@ -1,0 +1,9 @@
+{
+  "stage": "gene_single",
+  "operation_seconds": 50.37,
+  "serialization_seconds": 0.1,
+  "status": "completed",
+  "warnings": [],
+  "error": {},
+  "output_bytes": 413867
+}

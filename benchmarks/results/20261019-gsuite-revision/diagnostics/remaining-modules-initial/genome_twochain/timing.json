@@ -1,0 +1,9 @@
+{
+  "stage": "genome_twochain",
+  "status": "failed",
+  "operation_seconds": 1.66,
+  "serialization_seconds": 0,
+  "warnings": [],
+  "error": "Sparse-LD entries exceed control$max_ld_entries.",
+  "output_bytes": 190
+}

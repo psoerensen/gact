@@ -1,0 +1,36 @@
+{
+  "prior": {
+    "residual_variance": 0.5,
+    "effect_variance": 1.02065812035601,
+    "effect_variance_prior": {
+      "df": 4,
+      "scale": 1.02065812035601
+    },
+    "residual_variance_prior": {
+      "df": 4,
+      "scale": 0.5
+    },
+    "weight_prior": [1, 1, 1, 1],
+    "weights": [0.999, 0.000333333333333333, 0.000333333333333333, 0.000333333333333333],
+    "variance_multipliers": [0, 0.01, 0.1, 1]
+  },
+  "control": {
+    "maximum_features": 4096,
+    "maximum_covariates": 128,
+    "maximum_block_size": 2048,
+    "maximum_preparation_bytes": 1610612736,
+    "minimum_reciprocal_condition": 1e-10,
+    "burnin": 1000,
+    "sampling_sweeps": 5000,
+    "thinning": 1,
+    "seeds": [10, 11],
+    "threads": 1,
+    "retain_diagnostics": true,
+    "scale_response": true,
+    "scale_features": true,
+    "pip_range_threshold": 0.1,
+    "estimate_effect_variance": true,
+    "estimate_residual_variance": true,
+    "estimate_weights": true
+  }
+}

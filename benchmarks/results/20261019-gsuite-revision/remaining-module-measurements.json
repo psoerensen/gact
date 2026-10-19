@@ -1,0 +1,58 @@
+[
+  {
+    "stage": "component_gaussian",
+    "status": "completed",
+    "operation_seconds": 90.26,
+    "serialization_seconds": 0.2,
+    "warnings": [],
+    "error": {},
+    "output_bytes": 1758427,
+    "peak_working_set_bytes": 378519552,
+    "sampled_private_bytes": 3358027776,
+    "process_seconds": 93.1602576,
+    "exit_code": 0,
+    "output_sha256": "8bd60d9327f0a7ade82d9d379496406924d68f253b4b5202acb603861bb3d450"
+  },
+  {
+    "stage": "component_prior",
+    "status": "completed",
+    "operation_seconds": 67.07,
+    "serialization_seconds": 0.24,
+    "warnings": [],
+    "error": {},
+    "output_bytes": 1758541,
+    "peak_working_set_bytes": 395796480,
+    "sampled_private_bytes": 3366690816,
+    "process_seconds": 70.3165983,
+    "exit_code": 0,
+    "output_sha256": "fcf186bc5dbc27aa185e69a56431874365aa2298f450fcfbeeb6b1237c4d76c4"
+  },
+  {
+    "stage": "genome_twochain",
+    "status": "completed",
+    "operation_seconds": 2.91,
+    "serialization_seconds": 0.69,
+    "warnings": [],
+    "error": {},
+    "output_bytes": 4516823,
+    "peak_working_set_bytes": 715169792,
+    "sampled_private_bytes": 3687649280,
+    "process_seconds": 7.6189627,
+    "exit_code": 0,
+    "output_sha256": "d08536779c5ffecbcea94347dfc39e6e95906d50e31c5b20d72c11e47442e412"
+  },
+  {
+    "stage": "regional_twochain",
+    "status": "completed",
+    "operation_seconds": 6.13,
+    "serialization_seconds": 0.12,
+    "warnings": [],
+    "error": {},
+    "output_bytes": 1213150,
+    "peak_working_set_bytes": 369856512,
+    "sampled_private_bytes": 3486466048,
+    "process_seconds": 10.0588168,
+    "exit_code": 0,
+    "output_sha256": "330ac1e44822ca9746d6d283d1da2770e869eb3333e982abdc3faa08bf3794ea"
+  }
+]

@@ -1,0 +1,4 @@
+List of 2
+ $ message: chr "Glist must declare one nonempty genome assembly."
+ $ call   : NULL
+ - attr(*, "class")= chr [1:3] "simpleError" "error" "condition"

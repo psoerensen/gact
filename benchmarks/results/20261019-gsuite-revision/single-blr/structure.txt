@@ -1,0 +1,65 @@
+List of 17
+ $ call       : language gsea::gsea(stat = stat, sets = x, method = "bayesr", sampling = list(gene_covariance = "independent"),      prior| __truncated__
+ $ method     : chr "bayesr"
+ $ traits     : chr "trait"
+ $ genes      : chr [1:17955] "ENSG00000160072" "ENSG00000142611" "ENSG00000157911" "ENSG00000142655" ...
+ $ prior      :List of 7
+  ..$ residual_variance      : num 0.5
+  ..$ effect_variance        : num 1.02
+  ..$ effect_variance_prior  :List of 2
+  ..$ residual_variance_prior:List of 2
+  ..$ weight_prior           : num [1:4] 1 1 1 1
+  ..$ weights                : num [1:4] 0.999 0.000333 0.000333 0.000333
+  ..$ variance_multipliers   : num [1:4] 0 0.01 0.1 1
+ $ control    :List of 17
+  ..$ maximum_features            : num 4096
+  ..$ maximum_covariates          : num 128
+  ..$ maximum_block_size          : num 2048
+  ..$ maximum_preparation_bytes   : num 1.61e+09
+  ..$ minimum_reciprocal_condition: num 1e-10
+  ..$ burnin                      : num 1000
+  ..$ sampling_sweeps             : num 5000
+  ..$ thinning                    : num 1
+  ..$ seeds                       : num [1:2] 10 11
+  ..$ threads                     : num 1
+  ..$ retain_diagnostics          : logi TRUE
+  ..$ scale_response              : logi TRUE
+  ..$ scale_features              : logi TRUE
+  ..$ pip_range_threshold         : num 0.1
+  ..$ estimate_effect_variance    : logi TRUE
+  ..$ estimate_residual_variance  : logi TRUE
+  ..$ estimate_weights            : logi TRUE
+ $ sets       : num [1:17955, 1:1324] 0 0 0 0 0 0 0 0 0 0 ...
+  ..- attr(*, "dimnames")=List of 2
+ $ covariates : num[1:17955, 0 ] 
+  ..- attr(*, "dimnames")=List of 2
+ $ sampling   :List of 6
+  ..$ gene_covariance : chr "independent"
+  ..$ trait_covariance: NULL
+  ..$ gene_provenance : chr "Caller-supplied gene working covariance"
+  ..$ trait_provenance: chr "Caller-supplied fixed residual trait covariance"
+  ..$ blocks          : list()
+  ..$ independent     : logi TRUE
+ $ pathways   :'data.frame':	1324 obs. of  5 variables:
+  ..$ trait   : chr [1:1324] "trait" "trait" "trait" "trait" ...
+  ..$ pathway : chr [1:1324] "R-HSA-1059683" "R-HSA-109704" "R-HSA-110056" "R-HSA-110312" ...
+  ..$ mean    : num [1:1324] -5.63e-04 9.45e-04 -7.25e-04 2.01e-05 -1.86e-04 ...
+  ..$ variance: num [1:1324] 0.000525 0.000453 0.000702 0.000184 0.000107 ...
+  ..$ pip     : num [1:1324] 0.0042 0.0052 0.0042 0.0021 0.0027 0.0022 0.0047 0.0045 0.0039 0.004 ...
+ $ joint      : NULL
+ $ provenance :List of 4
+  ..$ native_version : chr "0.1.0"
+  ..$ joint_traits   : logi FALSE
+  ..$ parameter_units: chr "Prepared coordinates"
+  ..$ pathway_units  : chr "Original response/feature units"
+ $ parameters :List of 1
+  ..$ trait:List of 3
+ $ diagnostics:List of 1
+  ..$ trait:List of 3
+ $ details    :List of 1
+  ..$ trait:List of 2
+ $ preparation:List of 1
+  ..$ trait:List of 10
+ $ chains     :List of 1
+  ..$ trait:List of 2
+ - attr(*, "class")= chr "gsea_fit"

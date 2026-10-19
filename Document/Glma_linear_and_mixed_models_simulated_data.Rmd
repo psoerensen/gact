@@ -130,7 +130,7 @@ Recorded one-component fits on Windows 11 with R 4.4.1 and four threads.
 Time covers the R analysis; downloading, data preparation and process startup
 are excluded. Memory is the whole R process's peak resident working set.
 These simulated data had low structure; other datasets can require additional
-automatic calibration. The component examples above have no recorded timings.
+automatic calibration. Current completion status, controls and any timings for these component examples are provided in the [benchmark overview](Benchmark_overview.html).
 
 | Method | Time | Peak resident memory |
 | :--- | ---: | ---: |

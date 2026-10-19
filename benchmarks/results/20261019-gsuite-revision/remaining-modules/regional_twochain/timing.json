@@ -1,0 +1,9 @@
+{
+  "stage": "regional_twochain",
+  "status": "completed",
+  "operation_seconds": 6.13,
+  "serialization_seconds": 0.12,
+  "warnings": [],
+  "error": {},
+  "output_bytes": 1213150
+}

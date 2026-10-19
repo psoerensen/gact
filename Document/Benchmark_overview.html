@@ -364,8 +364,14 @@ workflows</a></li>
 and fine mapping</a></li>
 <li><a href="#existing-simulated-scoring-evidence" id="toc-existing-simulated-scoring-evidence">Existing simulated scoring
 evidence</a></li>
-<li><a href="#historical-gene-set-and-pops-evidence" id="toc-historical-gene-set-and-pops-evidence">Historical gene set and
-PoPS evidence</a></li>
+<li><a href="#current-bayesian-magma-and-single-full-data-pops-models" id="toc-current-bayesian-magma-and-single-full-data-pops-models">Current
+Bayesian MAGMA and single full-data PoPS models</a></li>
+<li><a href="#separate-22-fold-chromosome-held-out-validation" id="toc-separate-22-fold-chromosome-held-out-validation">Separate
+22-fold chromosome-held-out validation</a></li>
+<li><a href="#controlled-simulated-scoring-grid" id="toc-controlled-simulated-scoring-grid">Controlled simulated scoring
+grid</a></li>
+<li><a href="#additional-tutorial-measurements" id="toc-additional-tutorial-measurements">Additional tutorial
+measurements</a></li>
 <li><a href="#remaining-measurement-gaps" id="toc-remaining-measurement-gaps">Remaining measurement gaps</a></li>
 <li><a href="#evidence-and-reproducibility" id="toc-evidence-and-reproducibility">Evidence and
 reproducibility</a></li>
@@ -382,8 +388,9 @@ tbody tr:nth-child(even) {background:#f8fafb;}
 simulated workloads. They were recorded on an Intel Core i7-1365U
 workstation with approximately 16 GiB RAM and R 4.4.1 on Windows. Exact
 software versions vary between runs; historical evidence is labeled
-separately. Timings do not measure the original UK Biobank manuscript
-analyses or establish a systematic scaling study.</p>
+separately. These timings describe updated workflows, not the original
+UK Biobank manuscript analyses. The scoring grid below varies a bounded
+set of simulated workload controls.</p>
 <div id="database-and-cad-t2d-workflows" class="section level2">
 <h2>Database and CAD T2D workflows</h2>
 <table>
@@ -458,10 +465,11 @@ analyses or establish a systematic scaling study.</p>
 </tr>
 </tbody>
 </table>
-<p>Database setup transfers 2.57 GiB and installs a 3.04 GiB basic
-database; its 544.20-second clock is a published earlier-version
-download/setup measurement, separate from package installation. Network
-conditions affect this measurement.</p>
+<p>Database setup transfers 2.57 GiB and retains 3.04 GiB locally (2.63
+GiB non-ZIP files and a 0.41 GiB ZIP archive, excluding the separate
+genotype reference and serialized descriptor); its 544.20-second clock
+is a published earlier-version download/setup measurement, separate from
+package installation. Network conditions affect this measurement.</p>
 <p>VEGAS covers 17,862 genes, two traits and a 503-person EUR reference.
 The 899.94-second complete initial analysis includes regional spectra,
 prepared-object conversion and alignment; input-file loading is
@@ -634,117 +642,423 @@ gene-marker sets in 14.88 s at one thread and 5.31 s at four threads.
 Its driver did not record peak memory; memory from the rows above cannot
 be assigned to that combined workload.</p>
 </div>
-<div id="historical-gene-set-and-pops-evidence" class="section level2">
-<h2>Historical gene set and PoPS evidence</h2>
-<p>These earlier runs do not match all current website model interfaces
-and settings. PoPS produces gene rankings, not individual polygenic
-scores.</p>
-<table>
-<thead>
-<tr>
-<th>Operation</th>
-<th>Threads requested</th>
-<th>Wall time</th>
-<th>Process peak memory</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Joint two-trait, three-set simulated model</td>
-<td>1</td>
-<td>0.10 s</td>
-<td>102.9 MiB</td>
-</tr>
-<tr>
-<td>Joint CAD/T2D gene-set model, KEGG</td>
-<td>4</td>
-<td>3.11 s</td>
-<td>2997.7 MiB</td>
-</tr>
-<tr>
-<td>qgg full-data PoPS ridge</td>
-<td>1</td>
-<td>2.04 s</td>
-<td>410.5 MiB</td>
-</tr>
-<tr>
-<td>qgg full-data PoPS BayesC</td>
-<td>1</td>
-<td>3.21 s</td>
-<td>498.5 MiB</td>
-</tr>
-<tr>
-<td>qgg full-data PoPS BayesR</td>
-<td>1</td>
-<td>7.71 s</td>
-<td>498.3 MiB</td>
-</tr>
-</tbody>
-</table>
-<p>The simulated joint model uses four chains, 200 burn-in and 800
-sampling sweeps, independent gene covariance and fixed trait/effect
-covariance and inclusion-pattern settings. It is not an equivalence
-claim for qgg BLR-MAGMA. The CAD/T2D joint timing is an earlier
-standalone KEGG counterpart, not the manuscript Reactome fit. Historical
-qgg PoPS fits the full dataset; the updated <a href="Gene_ranking_bayesian_pops.html">PoPS tutorial</a> excludes the
-predicted chromosome from training and specifies two chains for its
-Bayesian calls.</p>
-</div>
-<div id="remaining-measurement-gaps" class="section level2">
-<h2>Remaining measurement gaps</h2>
+<div id="current-bayesian-magma-and-single-full-data-pops-models" class="section level2">
+<h2>Current Bayesian MAGMA and single full-data PoPS models</h2>
+<p>These reruns use <strong>17,955 saved gene scores and 1,324 Reactome
+sets</strong> from the already installed hsa.0.0.1 database, gsea 0.1.2
+and gbayes 0.1.6. <strong>Gene-association statistics were not
+recomputed</strong>: their upstream cost is excluded, not measured as
+zero. Cached fixture loading is separate from the calls below; no new
+database acquisition, genotype processing or simulation was
+performed.</p>
 <table>
 <colgroup>
-<col width="50%" />
-<col width="50%" />
+<col width="15%" />
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
 </colgroup>
 <thead>
 <tr>
-<th>Item</th>
-<th>What remains</th>
+<th>Full-data model</th>
+<th align="right">Preparation (s)</th>
+<th align="right">BLR fit (s)</th>
+<th align="right">Whole call (s)</th>
+<th align="right">Process peak (GiB)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Current Bayesian gene-set calls</td>
-<td>No verified record matching the exact current website implementation
-and controls</td>
+<td>Bayesian MAGMA: single-trait BayesC</td>
+<td align="right">1.33</td>
+<td align="right">4.75</td>
+<td align="right">6.07</td>
+<td align="right">0.16</td>
 </tr>
 <tr>
-<td>Current chromosome-held-out Bayesian PoPS</td>
-<td>No tutorial-scale timing/memory record for the updated held-out
-workflow; test durations are not benchmark timings</td>
+<td>Bayesian MAGMA: joint GWAS1/GWAS2 BayesC</td>
+<td align="right">37.81</td>
+<td align="right">30.99</td>
+<td align="right">68.86</td>
+<td align="right">0.52</td>
 </tr>
 <tr>
-<td>Memory for combined total plus 20-set run</td>
-<td>No captured memory for this specific run; use the separately
-measured scoring workloads instead</td>
+<td>PoPS: one full-data BayesC model</td>
+<td align="right">1.02</td>
+<td align="right">6.77</td>
+<td align="right">7.82</td>
+<td align="right">0.15</td>
 </tr>
 <tr>
-<td>Systematic scoring scalability</td>
-<td>No controlled grid of recipient count, markers, set count and
-overlap; existing runs remain representative examples</td>
-</tr>
-<tr>
-<td>Chromosome-component glma examples</td>
-<td>Component-example time and memory</td>
-</tr>
-<tr>
-<td>Two-chain fine-mapping calls</td>
-<td>Matching two-chain measurements; retain one-chain qualification if
-using existing results</td>
-</tr>
-<tr>
-<td>VEGAS component memory</td>
-<td>Separate preparation/fit peaks; not required for whole-workflow
-reporting</td>
+<td>PoPS: one full-data BayesR model</td>
+<td align="right">1.81</td>
+<td align="right">84.88</td>
+<td align="right">86.72</td>
+<td align="right">0.15</td>
 </tr>
 </tbody>
 </table>
-<p>Scoring time, memory and separate total/pathway costs are already
-available for the workloads above. More measurements would be needed for
-a controlled scaling grid, not to fill a general absence of scoring
-evidence. Final output-size reporting can use saved artifact inventories
-with consistent definitions.</p>
+<p>Preparation includes input checks, set mapping and model-specific
+summaries. Scalar independent-gene set models compute cross-products
+directly without forming X. The joint-trait model retains its general
+projected preparation. Native BLR time includes checks, sampling,
+posterior accumulation and original-unit coefficient
+back-transformation. Whole-call time also includes posterior summaries,
+prediction where relevant and remaining interface overhead;
+serialization and process startup are excluded. Memory is the complete R
+worker’s lifetime peak, including loading and saving, and cannot be
+assigned to an individual phase.</p>
+<p>All rows use two chains, seeds 10/11 and one requested thread.
+Single-trait MAGMA uses BayesC with pi=.01 and 5,000 sampling plus 1,000
+burn-in sweeps; joint MAGMA uses 1,000 plus 200. MAGMA retains its
+default fixed hyperparameters; PoPS learns slab variance, residual
+variance and mixture weights. The two single full-data PoPS models use
+their current PoPS priors and learning flags, pi=.001, 5,000 sampling
+plus 1,000 burn-in sweeps. For BayesR that scalar pi is divided among
+three active components; it is not the .95/.02/.02/.01 mixture from the
+earlier qgg-oriented probe. Pathway residual normalization remains n-1
+for an intercept-only fit. These are representative current workflows,
+not original manuscript model reruns or convergence evidence.</p>
+</div>
+<div id="separate-22-fold-chromosome-held-out-validation" class="section level2">
+<h2>Separate 22-fold chromosome-held-out validation</h2>
+<table>
+<colgroup>
+<col width="13%" />
+<col width="17%" />
+<col width="17%" />
+<col width="17%" />
+<col width="17%" />
+<col width="17%" />
+</colgroup>
+<thead>
+<tr>
+<th>Validation workflow</th>
+<th align="right">Preparation (s)</th>
+<th align="right">Sum of BLR fits (s)</th>
+<th align="right">Prediction (s)</th>
+<th align="right">Whole call (s)</th>
+<th align="right">Process peak (GiB)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PoPS BayesC: 22 held-out chromosome folds</td>
+<td align="right">33.64</td>
+<td align="right">156.90</td>
+<td align="right">1.27</td>
+<td align="right">192.97</td>
+<td align="right">0.24</td>
+</tr>
+<tr>
+<td>PoPS BayesR: 22 held-out chromosome folds</td>
+<td align="right">35.82</td>
+<td align="right">1555.23</td>
+<td align="right">1.30</td>
+<td align="right">1593.50</td>
+<td align="right">0.26</td>
+</tr>
+</tbody>
+</table>
+<p>These are <strong>22 training models</strong>, each with two chains
+and 5,000 sampling plus 1,000 burn-in sweeps. They are validation costs
+and are excluded from the single-fit table. Saved gene scores are reused
+in every fold; preparation uses only training genes. The native fitting
+column is the sum over folds, with preparation and held-out prediction
+recorded separately. Each setting has one execution; there is no
+repeated-run timing uncertainty estimate.</p>
+<p>The updated independent set path needs no dense gene-by-feature
+matrix. The 1,536 MiB preparation limit is retained for consistency; it
+is a matrix-payload guard, not measured process memory. The joint model
+still uses projected preparation. Earlier preparation-included runs and
+the separate one-chain 14.21-second native probe remain historical
+evidence, not current rows or matched speedup baselines. A direct
+sufficient-statistic R interface is now available as
+<code>gsea::blr()</code>, backed by native gbayes. The qgg R/native
+vb/vg positional mismatch is not reproduced; these timings make no
+external qgg or MAGMA/FUMA comparison.</p>
+<p>See the <a href="../benchmarks/results/20261019-direct-cross-products/README.md">rerun
+report and phase records</a> for settings, per-fold timing, binary/input
+hashes, memory definitions and the excluded duplicate-membership harness
+diagnostic.</p>
+</div>
+<div id="controlled-simulated-scoring-grid" class="section level2">
+<h2>Controlled simulated scoring grid</h2>
+<table style="width:100%;">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<thead>
+<tr>
+<th>People</th>
+<th>Available SNPs</th>
+<th>Sets</th>
+<th>Adjacent overlap</th>
+<th>Union SNPs</th>
+<th>Seconds 1 / 4 threads</th>
+<th>Process MiB 1 / 4 threads</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>500</td>
+<td>10000</td>
+<td>0</td>
+<td>0</td>
+<td>10000</td>
+<td>1.77 / 0.72</td>
+<td>129.3 / 129.6</td>
+</tr>
+<tr>
+<td>500</td>
+<td>10000</td>
+<td>3</td>
+<td>0</td>
+<td>1500</td>
+<td>0.47 / 0.28</td>
+<td>128.3 / 129.4</td>
+</tr>
+<tr>
+<td>500</td>
+<td>10000</td>
+<td>3</td>
+<td>0.5</td>
+<td>1000</td>
+<td>0.36 / 0.21</td>
+<td>129.7 / 129.4</td>
+</tr>
+<tr>
+<td>500</td>
+<td>10000</td>
+<td>20</td>
+<td>0</td>
+<td>10000</td>
+<td>3.57 / 1.11</td>
+<td>134.3 / 135.4</td>
+</tr>
+<tr>
+<td>500</td>
+<td>10000</td>
+<td>20</td>
+<td>0.5</td>
+<td>5250</td>
+<td>1.66 / 0.64</td>
+<td>132.2 / 136.1</td>
+</tr>
+<tr>
+<td>500</td>
+<td>50000</td>
+<td>0</td>
+<td>0</td>
+<td>50000</td>
+<td>13.62 / 3.77</td>
+<td>155.7 / 155.8</td>
+</tr>
+<tr>
+<td>500</td>
+<td>50000</td>
+<td>3</td>
+<td>0</td>
+<td>1500</td>
+<td>0.53 / 0.28</td>
+<td>155.7 / 156.2</td>
+</tr>
+<tr>
+<td>500</td>
+<td>50000</td>
+<td>3</td>
+<td>0.5</td>
+<td>1000</td>
+<td>0.42 / 0.27</td>
+<td>155.5 / 155.7</td>
+</tr>
+<tr>
+<td>500</td>
+<td>50000</td>
+<td>20</td>
+<td>0</td>
+<td>10000</td>
+<td>4.17 / 1.19</td>
+<td>158.8 / 159.0</td>
+</tr>
+<tr>
+<td>500</td>
+<td>50000</td>
+<td>20</td>
+<td>0.5</td>
+<td>5250</td>
+<td>2.10 / 0.75</td>
+<td>167.9 / 159.2</td>
+</tr>
+<tr>
+<td>2000</td>
+<td>10000</td>
+<td>0</td>
+<td>0</td>
+<td>10000</td>
+<td>1.75 / 0.68</td>
+<td>129.6 / 125.4</td>
+</tr>
+<tr>
+<td>2000</td>
+<td>10000</td>
+<td>3</td>
+<td>0</td>
+<td>1500</td>
+<td>0.48 / 0.25</td>
+<td>129.5 / 129.7</td>
+</tr>
+<tr>
+<td>2000</td>
+<td>10000</td>
+<td>3</td>
+<td>0.5</td>
+<td>1000</td>
+<td>0.37 / 0.19</td>
+<td>129.9 / 130.1</td>
+</tr>
+<tr>
+<td>2000</td>
+<td>10000</td>
+<td>20</td>
+<td>0</td>
+<td>10000</td>
+<td>3.83 / 1.04</td>
+<td>134.8 / 135.4</td>
+</tr>
+<tr>
+<td>2000</td>
+<td>10000</td>
+<td>20</td>
+<td>0.5</td>
+<td>5250</td>
+<td>1.67 / 0.66</td>
+<td>134.0 / 132.2</td>
+</tr>
+<tr>
+<td>2000</td>
+<td>50000</td>
+<td>0</td>
+<td>0</td>
+<td>50000</td>
+<td>13.67 / 3.78</td>
+<td>156.2 / 155.7</td>
+</tr>
+<tr>
+<td>2000</td>
+<td>50000</td>
+<td>3</td>
+<td>0</td>
+<td>1500</td>
+<td>0.59 / 0.31</td>
+<td>156.3 / 156.3</td>
+</tr>
+<tr>
+<td>2000</td>
+<td>50000</td>
+<td>3</td>
+<td>0.5</td>
+<td>1000</td>
+<td>0.45 / 0.27</td>
+<td>156.3 / 155.8</td>
+</tr>
+<tr>
+<td>2000</td>
+<td>50000</td>
+<td>20</td>
+<td>0</td>
+<td>10000</td>
+<td>4.75 / 1.35</td>
+<td>159.0 / 166.4</td>
+</tr>
+<tr>
+<td>2000</td>
+<td>50000</td>
+<td>20</td>
+<td>0.5</td>
+<td>5250</td>
+<td>2.39 / 0.73</td>
+<td>159.2 / 159.7</td>
+</tr>
+</tbody>
+</table>
+<p>The new grid uses current gbase 0.1.3 and gscore 0.1.1 on frozen
+gsim-derived effects and artificial-LD genotypes. Each synthetic set
+contains 500 SNPs. Available SNP count and the number actually
+contributing to set scores are distinct. Weights are fixed, coding is
+standardized, and completed scores are unscaled. Each of 40 cells is one
+execution; the grid supplies bounded workload sensitivity, not
+repeated-run confidence intervals or a universal scaling law.
+Preparation and loading precede the operation clock; peaks cover the
+entire R worker including serialization. No UK Biobank data or new model
+fitting is used for scoring.</p>
+</div>
+<div id="additional-tutorial-measurements" class="section level2">
+<h2>Additional tutorial measurements</h2>
+<table>
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Status</th>
+<th>Seconds</th>
+<th>Process peak GiB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chromosome-component Gaussian LOCO</td>
+<td>completed</td>
+<td>90.26</td>
+<td>0.35</td>
+</tr>
+<tr>
+<td>Chromosome-component prior-selected LOCO</td>
+<td>completed</td>
+<td>67.07</td>
+<td>0.37</td>
+</tr>
+<tr>
+<td>Two-chain genome-wide BayesC from cached LD</td>
+<td>completed</td>
+<td>2.91</td>
+<td>0.67</td>
+</tr>
+<tr>
+<td>Two-chain regional BayesC</td>
+<td>completed</td>
+<td>6.13</td>
+<td>0.34</td>
+</tr>
+</tbody>
+</table>
+<p>See the <a href="../benchmarks/results/20261019-gsuite-revision/README.md">dated
+evidence report</a> for controls, validation and failures.</p>
+</div>
+<div id="remaining-measurement-gaps" class="section level2">
+<h2>Remaining measurement gaps</h2>
+<ul>
+<li>Per-phase memory for VEGAS, gene-set preparation and BLR is not
+separately measured; whole-worker peaks are available for the listed
+workflows.</li>
+<li>Scoring has a controlled 40-cell grid, but each cell has one
+execution; repeated-run uncertainty, larger cohorts and broader workload
+extrapolation remain unmeasured.</li>
+</ul>
+<p>The overview focuses on gsuite ecosystem workflows. It does not
+measure or compare external MAGMA/FUMA execution.</p>
 </div>
 <div id="evidence-and-reproducibility" class="section level2">
 <h2>Evidence and reproducibility</h2>
@@ -762,9 +1076,10 @@ simulation measurements</a>, <a href="../benchmarks/results/gsuite/genomic_20k_5
 gene-set and PoPS records</a>, and <a href="../benchmarks/results/website-data/gcorr-current-timings-memory.csv">correlation
 timing and memory</a>.</p>
 <p>Memory is resident working set, not result size, incremental solver
-allocation or machine RAM. Missing memory stays missing. These evidence
-tables reuse existing measurements; no new analysis was run to produce
-this overview.</p>
+allocation or machine RAM. Missing memory stays missing. Historical
+records and the new 19 October ecosystem runs are identified separately.
+No benchmark result is a claim of Bayesian convergence or external-tool
+equivalence.</p>
 </div>
 
 

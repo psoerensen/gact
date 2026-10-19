@@ -1,0 +1,22 @@
+{
+  "gene_statistics": {
+    "computed": false,
+    "seconds": null,
+    "source": "Caller-supplied gene scores; upstream computation excluded"
+  },
+  "r_preparation_seconds": 0.48,
+  "native": {
+    "trait": {
+      "preparation_seconds": 0.035414,
+      "blr_fit_seconds": 6.7718281,
+      "posterior_summary_seconds": 0.0171064,
+      "preparation_route": "direct_set_cross_products"
+    }
+  },
+  "preparation_seconds": 1.015414,
+  "blr_fit_seconds": 6.7718281,
+  "posterior_summary_seconds": 0.0171064,
+  "total_seconds": 7.82,
+  "fit_boundary": "Native fit call including checks, sampling, accumulation and coefficient back-transformation",
+  "set_mapping_seconds": 0.5
+}

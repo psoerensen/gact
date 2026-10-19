@@ -1,0 +1,5 @@
+List of 3
+ $ message : chr "Sparse-LD entries exceed control$max_ld_entries."
+ $ call    : NULL
+ $ cppstack: NULL
+ - attr(*, "class")= chr [1:4] "Rcpp::exception" "C++Error" "error" "condition"

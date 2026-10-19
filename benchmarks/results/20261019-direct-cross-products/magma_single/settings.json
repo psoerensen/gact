@@ -1,0 +1,12 @@
+{
+  "stage": "magma_single",
+  "genes": 17955,
+  "features": 1324,
+  "threads": 1,
+  "chains": 2,
+  "seed": 10,
+  "sampling_sweeps": 5000,
+  "burnin": 1000,
+  "maximum_preparation_bytes": 1610612736,
+  "gene_statistics": "Saved GWAS1/GWAS2 scores; no recomputation"
+}

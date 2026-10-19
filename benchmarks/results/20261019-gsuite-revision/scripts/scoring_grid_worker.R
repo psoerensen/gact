@@ -1,0 +1,34 @@
+args<-commandArgs(TRUE);n<-as.integer(args[1]);m<-as.integer(args[2]);k<-as.integer(args[3]);overlap<-as.numeric(args[4]);threads<-as.integer(args[5]);out<-args[6]
+dir.create(out,recursive=TRUE,showWarnings=FALSE);writeLines(as.character(Sys.getpid()),file.path(out,'pid.txt'))
+Sys.setenv(OMP_NUM_THREADS=threads,OPENBLAS_NUM_THREADS=1,MKL_NUM_THREADS=1,OMP_DYNAMIC='FALSE')
+.libPaths(c('C:/Users/au223366/Documents/GitHub/gsuite/build/source-repository/library','C:/Users/au223366/Documents/GitHub/gsuite/build/r-library','C:/Users/au223366/AppData/Local/R/win-library/4.4',.libPaths()))
+library(gbase);library(gscore);library(jsonlite)
+if(requireNamespace('RhpcBLASctl',quietly=TRUE))RhpcBLASctl::blas_set_num_threads(1)
+base<-'C:/Users/au223366/Documents/GitHub/gsuite/build/benchmarks/genomic-20k-50k'
+f<-readRDS(file.path(base,'data_simulation.rds'))$value
+markers<-sprintf('m%05d',seq_len(m));recipients<-sprintf('id%05d',18000+seq_len(n))
+stopifnot(max(18000+seq_len(n))<=20000)
+prep<-system.time(G<-gbase::gprep(bedfiles=file.path(base,'genotypes.bed'),ids=recipients,rsids=markers,nthreads=threads))[3]
+stopifnot(length(G$study_ids)==n,identical(G$study_ids,recipients),length(unlist(G$rsids,use.names=FALSE))==m)
+weights<-data.frame(marker=unlist(G$rsids,use.names=FALSE),chromosome=unlist(G$chr,use.names=FALSE),position=unlist(G$pos,use.names=FALSE),
+ effect_allele=unlist(G$a1,use.names=FALSE),other_allele=unlist(G$a2,use.names=FALSE),allele_frequency=unlist(G$af,use.names=FALSE),
+ score=f$simulation$B[match(unlist(G$rsids,use.names=FALSE),rownames(f$simulation$B)),1])
+stopifnot(all(is.finite(weights$score)))
+sets<-NULL
+if(k>0){
+ width<-500L;stride<-as.integer(width*(1-overlap))
+ sets<-setNames(lapply(seq_len(k),function(i)markers[(1+(i-1)*stride):(width+(i-1)*stride)]),sprintf('set%02d',seq_len(k)))
+ stopifnot(!anyNA(unlist(sets)),all(lengths(sets)==500))
+}
+rm(f);gc()
+start<-proc.time()[3]
+fit<-gscore::gscore(weights=weights,Glist=G,sets=sets,include_total=k==0,coding='standardized',scale_scores=FALSE,control=list(threads=threads))
+seconds<-unname(proc.time()[3]-start)
+stopifnot(nrow(fit$scores)==n,all(is.finite(fit$scores)))
+write_json(list(individuals=n,markers=m,score_union_markers=if(k>0)length(unique(unlist(sets,use.names=FALSE)))else m,sets=k,set_size=if(k>0)500 else 0,adjacent_overlap=overlap,threads=threads,
+ operation_seconds=seconds,preparation_seconds=unname(prep),score_columns=ncol(fit$scores),status='completed',
+ input='Frozen 20K/50K artificial-LD genotypes with gsim-generated effects; no new simulation or fitting',
+ gscore_version=as.character(packageVersion('gscore')),gbase_version=as.character(packageVersion('gbase'))),file.path(out,'timing.json'),auto_unbox=TRUE,pretty=TRUE)
+writeLines(capture.output(sessionInfo()),file.path(out,'session.txt'))
+saveRDS(fit$scores,file.path(out,'scores.rds'))
+

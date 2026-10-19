@@ -1,0 +1,18 @@
+{
+  "stage": "single_blr_bayesr",
+  "status": "completed",
+  "operation_seconds": 162.87,
+  "input_loading_seconds": 0.22,
+  "feature_preparation_seconds": 0.74,
+  "serialization_seconds": 2.36,
+  "gene_association_computed": false,
+  "model_count": 1,
+  "held_out_folds": 0,
+  "chains": 2,
+  "genes": 17955,
+  "features": 1324,
+  "warnings": [],
+  "error": {},
+  "output_bytes": 1121880,
+  "scope": "One full-data BLR API call, including native normalization/design preparation, MCMC and result assembly; no held-out validation or prediction. External feature construction and loading separately timed."
+}

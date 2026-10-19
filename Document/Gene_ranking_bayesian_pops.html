@@ -362,6 +362,11 @@ PoPS</h1>
 <strong>gsea</strong> fits each model after excluding the chromosome of
 the genes it predicts. Features, optional marginal selection and
 posterior fitting use the training chromosomes.</p>
+<p>Gene-association statistics are computed once upstream. The example
+below retrieves saved scores; the BLR stage reuses those responses.
+Chromosome-held-out fitting repeats feature selection, model fitting and
+prediction for each target chromosome, without recomputing gene
+associations.</p>
 <div id="prepare-gene-scores-and-sets" class="section level2">
 <h2>Prepare gene scores and sets</h2>
 <pre class="r"><code>library(gact)
@@ -371,7 +376,7 @@ GAlist &lt;- readRDS(&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 scores &lt;- getVEGAS(GAlist=GAlist, studyID=&quot;GWAS1&quot;)
 annotation &lt;- readRDS(file.path(GAlist$dirs[&quot;gsets&quot;], &quot;genesplus_annotation.rds&quot;))
 stat &lt;- data.frame(gene=rownames(scores),
-  chromosome=annotation$chr[match(rownames(scores), annotation$EnsemblID)],
+  chromosome=as.character(annotation$chr[match(rownames(scores), annotation$EnsemblID)]),
   score=scores[,1])
 sets &lt;- getFeatureSets(GAlist=GAlist, feature=&quot;Pathways&quot;, minsets=50)</code></pre>
 </div>
@@ -381,12 +386,14 @@ sets &lt;- getFeatureSets(GAlist=GAlist, feature=&quot;Pathways&quot;, minsets=5
 head(fit$predictions)
 
 fit &lt;- pops(stat=stat, sets=sets, method=&quot;bayesC&quot;,
-  pi=0.001, nit=5000, nburn=1000, nrun=2)
+  pi=0.001, nit=5000, nburn=1000, nrun=2,
+  control=list(maximum_preparation_bytes=1536*1024^2))
 head(fit$predictions)
 fit$folds
 
 fit &lt;- pops(stat=stat, sets=sets, method=&quot;bayesR&quot;,
-  pi=0.001, nit=5000, nburn=1000, nrun=2)
+  pi=0.001, nit=5000, nburn=1000, nrun=2,
+  control=list(maximum_preparation_bytes=1536*1024^2))
 head(fit$predictions)
 head(fit$features)</code></pre>
 <p>Bayesian PoPS reuses the native gsea/gbayes sampler. BayesC has a
@@ -402,6 +409,30 @@ are fitted. Scores use training-centered features and posterior mean
 coefficients. They are gene priorities, not causal probabilities or
 individual polygenic scores. The chromosome-held-out prediction rule
 differs from qgg’s ordinary full-data <code>pops()</code> fit.</p>
+</div>
+<div id="recorded-computational-workload" class="section level2">
+<h2>Recorded computational workload</h2>
+<p>The <a href="Benchmark_overview.html">benchmark overview</a> records
+preparation and one full-data BayesC/BayesR fit separately from the
+22-fold validation calls above. All reruns use 17,955 saved gene scores
+and 1,324 Reactome sets. Gene-association statistics are reused, not
+recomputed in each fold.</p>
+<p>With independent genes, no extra covariates and no screening,
+set-based Bayesian PoPS now computes training cross-products and
+held-out predictions directly from memberships. Adjusted and screened
+models retain general preparation. <code>fit$timing$folds</code>
+separates preparation, native BLR, posterior summaries and prediction
+for each fold. <code>fit$timing$gene_statistics$seconds</code> is NA
+because upstream gene-statistic computation is not measured by this
+call.</p>
+<p>The full-data comparison uses two chains and the same PoPS prior and
+learning settings as validation, with 1,000 burn-in plus 5,000 sampling
+sweeps. The <a href="../benchmarks/results/20261019-direct-cross-products/README.md">dated
+rerun report</a> contains exact phase clocks and provenance. A direct R
+interface is also available as <code>gsea::blr()</code>; the earlier
+one-chain qgg-oriented native probe uses different controls and is
+retained only as historical evidence. Timings do not establish
+convergence or prediction accuracy.</p>
 </div>
 
 

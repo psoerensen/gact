@@ -1,0 +1,13 @@
+{
+  "stage": "genome_twochain",
+  "assembly": "simulated-human-tutorial",
+  "individuals": 5000,
+  "markers": 37991,
+  "chromosomes": 22,
+  "threads": 1,
+  "nit": 100,
+  "nburn": 0,
+  "nrun": 2,
+  "max_ld_entries": 100000000,
+  "LD": "Reused validated sparse descriptor from manuscript-20261005-231349/cmp_suite_ld-1"
+}

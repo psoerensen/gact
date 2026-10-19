@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "process_seconds": 14.9909428,
+  "cpu_seconds": 14.0625,
+  "peak_working_set_bytes": 22618112,
+  "sampled_private_bytes": 17489920,
+  "memory_scope": "Native executable only; R preparation is a separate process"
+}

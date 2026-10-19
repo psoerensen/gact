@@ -1,0 +1,16 @@
+{
+"status":"completed",
+"statistics_loading_seconds":0.015317600000000001,
+"statistics_binding_seconds":0.0037031999999999998,
+"sampling_seconds":14.212385299999999,
+"serialization_seconds":0.042390799999999999,
+"genes":17955,
+"features":1324,
+"chains":1,
+"burnin":1000,
+"sampling_sweeps":5000,
+"seed":32132745,
+"threads_used":1,
+"retained_draws":5000,
+"maximum_residual_drift":0
+}

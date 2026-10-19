@@ -383,6 +383,7 @@ rsids &lt;- gfilter(Glist=Glist, excludeMAF=0.05, excludeMISS=0.05,
   excludeCGAT=TRUE, excludeINDEL=TRUE, excludeDUPS=TRUE,
   excludeHWE=1e-12, excludeMHC=FALSE)
 Glist &lt;- gprep(study=&quot;Simulation&quot;, bedfiles=&quot;human.bed&quot;, rsids=rsids)
+Glist$assembly &lt;- &quot;simulated-human-tutorial&quot;
 
 phenotypes &lt;- read.csv(paste0(base, &quot;example-phenotypes.csv&quot;),
   colClasses=c(&quot;character&quot;, &quot;numeric&quot;))
@@ -414,7 +415,8 @@ marginal PIPs.</p>
 <div id="fit-genome-wide-marker-effects" class="section level2">
 <h2>Fit genome-wide marker effects</h2>
 <pre class="r"><code>Glist &lt;- gprep(Glist, task=&quot;sparseld&quot;, msize=1000, ldfiles=&quot;human.ld&quot;, nthreads=4)
-fit &lt;- gbayes(Glist=Glist, stat=stat, method=&quot;bayesC&quot;, nit=100, nrun=2)
+fit &lt;- gbayes(Glist=Glist, stat=stat, method=&quot;bayesC&quot;, nit=100, nburn=0, nrun=2,
+  control=list(threads=1, max_ld_entries=1e8))
 head(fit$stat)</code></pre>
 <p>Genome-wide fitting reuses sparse LD. An eigen route is also
 available for verified independent LD blocks; regional eigen fitting can
@@ -425,6 +427,13 @@ variance conventions; the common argument names do not imply identical
 qgg posterior draws.</p>
 <p>See <a href="Tutorial_timings_and_memory.html">recorded tutorial
 timings</a>.</p>
+<p>The assembly label identifies this synthetic tutorial panel; it is
+not a claim of a specific human reference assembly. The explicit
+LD-entry budget supports the previously prepared sparse descriptor. The
+<a href="Benchmark_overview.html">benchmark overview</a> distinguishes
+earlier one-chain repeats from current two-chain checks and records any
+failed preparation guards. Successful execution does not establish
+convergence.</p>
 </div>
 
 

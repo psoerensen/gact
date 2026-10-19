@@ -1,0 +1,9 @@
+{
+  "stage": "single_blr_bayesr",
+  "process_seconds": 167.9136386,
+  "peak_working_set_bytes": 889188352,
+  "sampled_private_bytes": 3870777344,
+  "cpu_seconds": 162.921875,
+  "exit_code": 0,
+  "memory_definition": "R PID lifetime peak working set observed at 100ms polling"
+}

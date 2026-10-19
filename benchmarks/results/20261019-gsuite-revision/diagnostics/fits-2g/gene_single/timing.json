@@ -1,0 +1,9 @@
+{
+  "stage": "gene_single",
+  "operation_seconds": 1.65,
+  "serialization_seconds": 0,
+  "status": "failed",
+  "warnings": [],
+  "error": "Invalid integer control: maximum_preparation_bytes",
+  "output_bytes": 175
+}

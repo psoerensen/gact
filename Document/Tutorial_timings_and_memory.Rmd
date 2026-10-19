@@ -18,7 +18,7 @@ Core i7-1365U with about 16 GiB RAM. Memory is the whole R process's peak
 resident working set, including required inputs. It is not the size of the
 returned result or the additional memory needed by the solver.
 
-The [benchmark overview](Benchmark_overview.html) also includes recovered separate simulated scoring timings and memory, historical gene-set and PoPS measurements, and the remaining measurement gaps.
+The [benchmark overview](Benchmark_overview.html) also includes recovered separate simulated scoring timings and memory, updated Reactome Bayesian MAGMA and full-data PoPS models with separate preparation/BLR clocks, and separately timed 22-fold PoPS validation, a controlled 40-cell scoring grid, and remaining measurement gaps.
 
 ## Database and simulated data
 
@@ -40,9 +40,7 @@ Regional mapping used one chain, 1,000 post-burn sweeps and 100 burn-in sweeps;
 the four regions contained 850, 785, 1,091 and 1,399 markers. Its observed
 time range was 5.22–6.28 s. Genome fitting used one chain and 100 sweeps without
 burn-in (2.03–2.38 s); grouping took 3.83–4.16 s. The tutorial shows two-chain
-calls; those have not been timed here. The chromosome-component glma examples
-also have no recorded timings. Database setup covers 2.57 GiB of transfers and
-a 3.04 GiB basic database; package installation is separate.
+calls; their separate current measurements and completion status are in the benchmark overview. The overview also records the chromosome-component glma checks. Database setup covers 2.57 GiB of transfers and retains 3.04 GiB locally, including a 0.41 GiB ZIP archive; non-ZIP files occupy 2.63 GiB. The separate genotype reference, serialized descriptor and package installation are excluded from that footprint.
 
 ## CAD and T2D
 
@@ -80,5 +78,4 @@ per-stage peaks were not recorded. Its preparation used four decoding threads;
 gene regions and the eigensolver were serial. The complete-workflow time is
 not the VEGAS fit time. Refitting excludes loading the restored preparation.
 
-Runtimes depend on the data and settings. Bayesian PoPS and the new chromosome
-component examples remain to be timed.
+Runtimes depend on the data and settings. The native prepared-summary BLR timing, supplementary PoPS validation timings and the status of chromosome-component examples are reported in the benchmark overview. The earlier rows above retain their original settings and measurement boundaries.

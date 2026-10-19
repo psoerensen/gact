@@ -1,0 +1,10 @@
+{
+  "stage": "pops_single_r",
+  "status": "completed",
+  "operation_seconds": 86.72,
+  "input_loading_seconds": 0.14,
+  "serialization_seconds": 0.25,
+  "output_bytes": 866982,
+  "warnings": [],
+  "error": {}
+}

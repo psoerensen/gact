@@ -1,0 +1,9 @@
+{
+  "stage": "gene_joint",
+  "operation_seconds": 91.36,
+  "serialization_seconds": 0.17,
+  "status": "completed",
+  "warnings": [],
+  "error": {},
+  "output_bytes": 481890
+}

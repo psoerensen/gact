@@ -1,0 +1,9 @@
+{
+  "stage": "gene_single",
+  "operation_seconds": 1.06,
+  "serialization_seconds": 0.01,
+  "status": "failed",
+  "warnings": [],
+  "error": "Bayesian preparation exceeds matrix payload budget",
+  "output_bytes": 197
+}

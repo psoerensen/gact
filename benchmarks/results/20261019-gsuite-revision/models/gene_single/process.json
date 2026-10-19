@@ -1,0 +1,9 @@
+{
+  "stage": "gene_single",
+  "process_seconds": 53.0491724,
+  "peak_working_set_bytes": 546721792,
+  "sampled_private_bytes": 3514441728,
+  "cpu_seconds": 50.453125,
+  "exit_code": 0,
+  "memory_definition": "R PID lifetime peak working set observed at 100ms polling"
+}

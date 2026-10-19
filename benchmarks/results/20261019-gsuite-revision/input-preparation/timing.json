@@ -1,0 +1,10 @@
+{
+  "stage": "input_preparation",
+  "status": "completed",
+  "operation_seconds": 17.95,
+  "genes": 17955,
+  "sets": 1324,
+  "scope": "Load local installed descriptor, saved gene statistics, Reactome sets and chromosome annotation; no model fitting or new gene testing",
+  "identical_to_measured_fixture": true,
+  "output_bytes": 1382110
+}

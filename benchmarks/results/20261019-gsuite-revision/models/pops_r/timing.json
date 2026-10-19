@@ -1,0 +1,9 @@
+{
+  "stage": "pops_r",
+  "operation_seconds": 1908.66,
+  "serialization_seconds": 1.28,
+  "status": "completed",
+  "warnings": [],
+  "error": {},
+  "output_bytes": 14350758
+}

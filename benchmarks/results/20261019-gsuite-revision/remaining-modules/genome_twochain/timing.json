@@ -1,0 +1,9 @@
+{
+  "stage": "genome_twochain",
+  "status": "completed",
+  "operation_seconds": 2.91,
+  "serialization_seconds": 0.69,
+  "warnings": [],
+  "error": {},
+  "output_bytes": 4516823
+}

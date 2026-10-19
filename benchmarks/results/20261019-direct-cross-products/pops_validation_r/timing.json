@@ -1,0 +1,10 @@
+{
+  "stage": "pops_validation_r",
+  "status": "completed",
+  "operation_seconds": 1593.5,
+  "input_loading_seconds": 0.1,
+  "serialization_seconds": 1.30999999999995,
+  "output_bytes": 14314509,
+  "warnings": [],
+  "error": {}
+}

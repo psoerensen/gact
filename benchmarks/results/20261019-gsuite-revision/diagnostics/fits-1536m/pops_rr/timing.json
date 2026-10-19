@@ -1,0 +1,9 @@
+{
+  "stage": "pops_rr",
+  "operation_seconds": 0.94,
+  "serialization_seconds": 0,
+  "status": "failed",
+  "warnings": [],
+  "error": "Expecting a string vector: [type=integer; required=STRSXP].",
+  "output_bytes": 209
+}

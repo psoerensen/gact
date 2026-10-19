@@ -1,0 +1,22 @@
+{
+  "gene_statistics": {
+    "computed": false,
+    "seconds": null,
+    "source": "Caller-supplied gene scores; upstream computation excluded"
+  },
+  "r_preparation_seconds": 0.75,
+  "native": {
+    "GWAS1": {
+      "preparation_seconds": 0.0450122,
+      "blr_fit_seconds": 4.746837,
+      "posterior_summary_seconds": 0.0089627,
+      "preparation_route": "direct_set_cross_products"
+    }
+  },
+  "preparation_seconds": 1.3250122,
+  "blr_fit_seconds": 4.746837,
+  "posterior_summary_seconds": 0.0089627,
+  "total_seconds": 6.07,
+  "fit_boundary": "Native fit call including checks, sampling, accumulation and coefficient back-transformation",
+  "interface_preparation_seconds": 0.53
+}
