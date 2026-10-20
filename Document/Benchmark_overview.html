@@ -771,18 +771,8 @@ pathway model was rerun.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Gene ranking is very similar, but gene p-values are not
-numerically equivalent.</strong> Maximum absolute log10(p) differences
-are <strong>19.931 (GWAS1)</strong> and <strong>2.975 (GWAS2)</strong>;
-their medians are 0.00764 and 0.00623. Thus excellent rank agreement
-must not hide substantial differences in some extreme-tail
-probabilities. The saved gsuite results predominantly use saddlepoint
-evaluation, with <strong>1 and 2 recorded moment-matched chi-square
-fallbacks</strong>; MAGMA uses its standard integration/simulation
-route. The reported gsuite <code>effective_parameters</code> and MAGMA
-<code>NPARAM</code> fields differ for <strong>4,505 genes per
-trait</strong>. These are observed output differences, not a claim that
-only tail evaluation explains every discrepancy.</p>
+<p>The saved gene results show <strong>strong overall agreement</strong>, with Spearman rank correlations of approximately <strong>0.999 in both traits</strong> and median absolute log10(p) differences of only <strong>0.00764 and 0.00623</strong>. Some extreme-tail p-values differ substantially: the maximum absolute log10(p) differences are <strong>19.931 (GWAS1)</strong> and <strong>2.975 (GWAS2)</strong>. These differences can change the reported strength of evidence while leaving a gene significant in both methods; the results support strong overall concordance rather than exact numerical equivalence.</p>
+<p>The saved gsuite results predominantly use saddlepoint evaluation, with <strong>1 and 2 recorded moment-matched chi-square fallbacks</strong>; MAGMA uses its standard integration/simulation route. None of the 17 additional MAGMA significance calls used the gsuite moment-matched fallback. The reported gsuite <code>effective_parameters</code> and MAGMA <code>NPARAM</code> fields differ for <strong>4,505 genes per trait</strong>, so tail evaluation alone has not been established as the explanation for every discrepancy.</p>
 <p>For a <strong>descriptive Bonferroni threshold of 0.05/17,862 =
 2.79924e-6</strong>, the significant-gene overlap is:</p>
 <table>
@@ -809,14 +799,7 @@ only tail evaluation explains every discrepancy.</p>
 </tr>
 </tbody>
 </table>
-<p>All 166 and 38 gsuite-significant genes are also significant in
-MAGMA; MAGMA has 15 and 2 additional significant genes, respectively.
-These are summaries at an explicitly stated conventional threshold, not
-a prespecified equivalence test or a calibration assessment. The
-near-identical <strong>classical pathway</strong> results below use
-shared saved MAGMA statistics and are a different comparison; their 2e-4
-tolerance and approximately 5e-6 p differences must not be attributed to
-this gene-level comparison.</p>
+<p>All <strong>166 and 38 gsuite-significant genes are also significant in MAGMA</strong>; MAGMA has <strong>15 and 2 additional significant genes</strong>, respectively, out of 17,862 genes per trait. This shows strong overlap in significant findings, with a small number of method-dependent significance calls. Some discordant calls involve substantial p-value differences rather than marginal threshold crossings. These counts are descriptive summaries at the stated conventional threshold, not a calibration assessment or proof of numerical equivalence. The near-identical <strong>classical pathway</strong> results below use shared saved MAGMA statistics and are a different comparison; their 2e-4 tolerance and approximately 5e-6 p differences do not describe this gene-level comparison.</p>
 <p>See the <a href="../benchmarks/results/20261020-classical-magma-comparison/gene-agreement-summary.json">gene-agreement
 summary</a>, <a href="../benchmarks/results/20261020-classical-magma-comparison/gene-agreement-summary.csv">aggregate
 gene-agreement table</a> and <a href="../benchmarks/results/20261020-classical-magma-comparison/compare_saved_gene_results.py">read-only
