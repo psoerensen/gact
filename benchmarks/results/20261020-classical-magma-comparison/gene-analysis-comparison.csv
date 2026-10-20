@@ -1,0 +1,5 @@
+scope,operation,gsuite_seconds,magma_seconds,gsuite_clock,magma_clock
+GWAS1,initial_gene_analysis,,4333.4691059,not timed separately,whole gene process including gene correlations
+GWAS2,initial_gene_analysis,,4029.865202500001,not timed separately,whole gene process including gene correlations
+both_traits,initial_gene_analysis,899.94,8363.3343084,shared preparation and initial analysis; excludes input loading and gene correlations,sum of the two recorded gene processes; not a jointly fitted trait analysis
+both_traits,alternative_prepared_refit,71.44,,alternative refit; excludes separate prepared-object loading of 17.26 s,not timed

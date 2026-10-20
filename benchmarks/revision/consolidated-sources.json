@@ -144,15 +144,19 @@
     },
     {
       "path": "results/20261020-classical-magma-comparison/provenance.json",
-      "sha256": "4a6bb8147a128aeef54bd609913a5c9b5cac21a28d782060f7cf730f1f0988b5"
+      "sha256": "d81186fba11b71d05e1bf1c9a9289abad31ce85903589d4d8f460b5e46622241"
     },
     {
       "path": "results/20261020-classical-magma-comparison/README.md",
-      "sha256": "d2d288c430667920989e175c95a1e12c286e14939fc724ea22dd7ce28d3a17c9"
+      "sha256": "c3aaecec5eeb171799d6f7fd5faeffd07a8b8bd2e58e16c09de95d3e38725fcb"
     },
     {
       "path": "results/20261020-classical-magma-comparison/status.json",
       "sha256": "afabffd2b829c92d7453d55612cbe71062067ca1be560e561ac6f8220ab8f0d2"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/gene-analysis-comparison.csv",
+      "sha256": "e41bea57a7140f65275bd422d4b094564a67045aa6560e614c1f6f618c35e865"
     }
   ],
   "saved_record_audit_date": "2026-10-20",
@@ -161,6 +165,6 @@
     "date": "2026-10-20",
     "new_analyses_run": false,
     "gene_statistics_recomputed": false,
-    "scope": "Import completed classical gsuite direct-set timings and official MAGMA reference clocks; render only the static benchmark overview."
+    "scope": "Add earlier saved two-trait gsuite VEGAS and alternative refit beside official MAGMA gene clocks, keeping separate classical pathway phases and timing-boundary qualifications. Static overview render only; no analyses rerun."
   }
 }

@@ -655,21 +655,96 @@ classical pathway check</strong>, separate from the Bayesian models
 below, which use a different 17,955-gene score collection. <strong>No
 gene statistics were recomputed for these gsuite fits or this website
 update.</strong></p>
-<div id="gsuite-preparation-and-fitting" class="section level3">
-<h3>gsuite preparation and fitting</h3>
+<div id="gene-based-analysis-saved-gsuite-vegas-and-magma-timings" class="section level3">
+<h3>Gene-based analysis: saved gsuite VEGAS and MAGMA timings</h3>
 <table>
 <colgroup>
-<col width="20%" />
-<col width="26%" />
-<col width="26%" />
-<col width="26%" />
+<col width="27%" />
+<col width="36%" />
+<col width="36%" />
+</colgroup>
+<thead>
+<tr>
+<th>Trait scope / operation</th>
+<th align="right">gsuite VEGAS analysis clock (s)</th>
+<th align="right">Official MAGMA gene-process clock (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GWAS1 initial analysis</td>
+<td align="right">Not timed separately</td>
+<td align="right">4333.469</td>
+</tr>
+<tr>
+<td>GWAS2 initial analysis</td>
+<td align="right">Not timed separately</td>
+<td align="right">4029.865</td>
+</tr>
+<tr>
+<td>Both traits: initial analysis</td>
+<td align="right"><strong>899.94</strong>, shared preparation and
+initial gene analysis</td>
+<td align="right"><strong>8363.334</strong>, sum of the two processes
+above</td>
+</tr>
+<tr>
+<td>Both traits: alternative prepared refit</td>
+<td align="right"><strong>71.44</strong>, prepared-object loading
+excluded</td>
+<td align="right">Not timed</td>
+</tr>
+</tbody>
+</table>
+<p>The saved gsuite VEGAS measurement covers 17,862 genes and a
+503-person EUR reference. Its <strong>899.94 s is an analysis clock, not
+a whole-process or fitting-only clock</strong>: it includes shared
+regional spectra, prepared-object conversion, alignment, initial gene
+analysis and intermediate checkpoint/cleanup overhead. Input-file
+loading (<strong>110.45 s</strong>) and neighbouring-gene correlation
+preparation are excluded. Preparation uses four decoding threads while
+regional products/eigensolvers are serial. Recorded components include
+<strong>643.36 s</strong> for spectra, <strong>79.52 s</strong> for
+conversion and <strong>97.69 s</strong> for the initial two-trait VEGAS
+call; these overlap the complete analysis and must not be added to
+it.</p>
+<p>The <strong>71.44-second refit is an alternative reuse
+measurement</strong>, not an additional initial-analysis stage. It
+excludes a separately measured <strong>17.26 s</strong> to load the
+prepared object. Per-trait gsuite gene times are unavailable; the
+two-trait total has not been split or duplicated. The archived reference
+contains 9,985,562 physical markers, whereas 3,192,403 SNPs were
+selected for the later matched MAGMA input; physical reference size and
+selected GWAS SNP count are different quantities.</p>
+<p><strong>The timing boundaries are different.</strong> MAGMA’s
+gene-process clocks include startup, loading, gene analysis,
+gene-correlation work and output. Standard gsuite and MAGMA also retain
+different gene-tail algorithms. The earlier VEGAS clock is not a matched
+identical-work speedup comparison with MAGMA. These gene-stage records
+and the pathway-stage records below come from separate saved runs and
+must not be added into a purported measured end-to-end workflow. No
+analyses were rerun to add this table.</p>
+<p>See the <a href="../benchmarks/results/gsuite/genomic_20k_50k/manuscript-results/manuscript-vegas-complete-20261005/README.md">saved
+VEGAS report</a> and <a href="../benchmarks/results/gsuite/genomic_20k_50k/manuscript-results/manuscript-vegas-complete-20261005/phase-summary.csv">component
+clocks</a>.</p>
+</div>
+<div id="classical-gene-set-analysis-separate-preparation-and-fitting" class="section level3">
+<h3>Classical gene-set analysis: separate preparation and fitting</h3>
+<table>
+<colgroup>
+<col width="15%" />
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
 </colgroup>
 <thead>
 <tr>
 <th>Trait</th>
-<th align="right">Preparation (s)</th>
-<th align="right">Classical fitting (s)</th>
-<th align="right">Whole-process wall (s)</th>
+<th align="right">gsuite preparation (s)</th>
+<th align="right">gsuite fitting (s)</th>
+<th align="right">gsuite process wall (s)</th>
+<th align="right">MAGMA gene-set process wall (s)</th>
 </tr>
 </thead>
 <tbody>
@@ -678,12 +753,14 @@ update.</strong></p>
 <td align="right">32.691</td>
 <td align="right">0.0226</td>
 <td align="right">50.299</td>
+<td align="right">29.451</td>
 </tr>
 <tr>
 <td>GWAS2</td>
 <td align="right">31.123</td>
 <td align="right">0.0195</td>
 <td align="right">32.395</td>
+<td align="right">79.332</td>
 </tr>
 </tbody>
 </table>
@@ -706,40 +783,6 @@ outside all internal loading/preparation/fitting clocks and has not been
 attributed to individual causes. These excess times are retained in the
 process totals. Peak memory was not measured for these classical
 runs.</p>
-</div>
-<div id="saved-official-magma-reference" class="section level3">
-<h3>Saved official MAGMA reference</h3>
-<table>
-<colgroup>
-<col width="20%" />
-<col width="26%" />
-<col width="26%" />
-<col width="26%" />
-</colgroup>
-<thead>
-<tr>
-<th>Trait</th>
-<th align="right">MAGMA gene analysis: process wall (s)</th>
-<th align="right">MAGMA classical gene-set analysis: process wall
-(s)</th>
-<th align="right"></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GWAS1</td>
-<td align="right">4333.469</td>
-<td align="right">29.451</td>
-<td align="right"></td>
-</tr>
-<tr>
-<td>GWAS2</td>
-<td align="right">4029.865</td>
-<td align="right">79.332</td>
-<td align="right"></td>
-</tr>
-</tbody>
-</table>
 <p>The official MAGMA 1.10 gene-set clocks include loading, correlation
 preparation, regression and output. <strong>Separate MAGMA preparation
 and fitting clocks are unavailable</strong>; its whole-process time must

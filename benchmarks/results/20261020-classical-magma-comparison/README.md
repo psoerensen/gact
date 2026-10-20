@@ -2,23 +2,33 @@
 
 These completed 20 October runs use **17,862 saved genes and 1,324 Reactome pathways per trait**, with the same saved MAGMA gene statistics, gene properties and gene correlations in both classical pathway implementations. The underlying matched inputs used 3,192,403 SNPs and a 503-person EUR reference. This is a **shared-input classical pathway check**, separate from the website's Bayesian models, which use a different 17,955-gene score collection. **No gene statistics were recomputed for these gsuite fits or this website update.**
 
-### gsuite preparation and fitting
+### Gene-based analysis: saved gsuite VEGAS and MAGMA timings
 
-| Trait | Preparation (s) | Classical fitting (s) | Whole-process wall (s) |
-| --- | ---: | ---: | ---: |
-| GWAS1 | 32.691 | 0.0226 | 50.299 |
-| GWAS2 | 31.123 | 0.0195 | 32.395 |
+| Trait scope / operation | gsuite VEGAS analysis clock (s) | Official MAGMA gene-process clock (s) |
+| --- | ---: | ---: |
+| GWAS1 initial analysis | Not timed separately | 4333.469 |
+| GWAS2 initial analysis | Not timed separately | 4029.865 |
+| Both traits: initial analysis | **899.94**, shared preparation and initial gene analysis | **8363.334**, sum of the two processes above |
+| Both traits: alternative prepared refit | **71.44**, prepared-object loading excluded | Not timed |
+
+The saved gsuite VEGAS measurement covers 17,862 genes and a 503-person EUR reference. Its **899.94 s is an analysis clock, not a whole-process or fitting-only clock**: it includes shared regional spectra, prepared-object conversion, alignment, initial gene analysis and intermediate checkpoint/cleanup overhead. Input-file loading (**110.45 s**) and neighbouring-gene correlation preparation are excluded. Preparation uses four decoding threads while regional products/eigensolvers are serial. Recorded components include **643.36 s** for spectra, **79.52 s** for conversion and **97.69 s** for the initial two-trait VEGAS call; these overlap the complete analysis and must not be added to it.
+
+The **71.44-second refit is an alternative reuse measurement**, not an additional initial-analysis stage. It excludes a separately measured **17.26 s** to load the prepared object. Per-trait gsuite gene times are unavailable; the two-trait total has not been split or duplicated. The archived reference contains 9,985,562 physical markers, whereas 3,192,403 SNPs were selected for the later matched MAGMA input; physical reference size and selected GWAS SNP count are different quantities.
+
+**The timing boundaries are different.** MAGMA's gene-process clocks include startup, loading, gene analysis, gene-correlation work and output. Standard gsuite and MAGMA also retain different gene-tail algorithms. The earlier VEGAS clock is not a matched identical-work speedup comparison with MAGMA. These gene-stage records and the pathway-stage records below come from separate saved runs and must not be added into a purported measured end-to-end workflow. No analyses were rerun to add this table.
+
+See the [saved VEGAS report](../gsuite/genomic_20k_50k/manuscript-results/manuscript-vegas-complete-20261005/README.md) and [component clocks](../gsuite/genomic_20k_50k/manuscript-results/manuscript-vegas-complete-20261005/phase-summary.csv).
+
+### Classical gene-set analysis: separate preparation and fitting
+
+| Trait | gsuite preparation (s) | gsuite fitting (s) | gsuite process wall (s) | MAGMA gene-set process wall (s) |
+| --- | ---: | ---: | ---: | ---: |
+| GWAS1 | 32.691 | 0.0226 | 50.299 | 29.451 |
+| GWAS2 | 31.123 | 0.0195 | 32.395 | 79.332 |
 
 Preparation includes set mapping, gene-response/property transformations, powered regional correlation eigensystems/generalized inverses, internal-covariate adjustment, and cached shared/member-index cross-products. Fitting uses those sufficient statistics for the small pathway regressions and inference. The prepared weights are reused across all pathways: the marginal preparation uses 33 shared block applications and 223,548 within-set precision entries. The two traits were run as separate processes, so regional preparation was measured twice; no cross-trait reuse is claimed here.
 
 These are **native C++ gsea/gsolve Release/MKL measurements with a one-thread limit**. They do not measure R interface conversion overhead. Input loading is separate: 0.849 s for GWAS1 and 0.850 s for GWAS2. The process clock also includes startup, output and cleanup; it is not the sum of the two displayed phase columns. An additional **16.736 s (GWAS1) and 0.403 s (GWAS2)** falls outside all internal loading/preparation/fitting clocks and has not been attributed to individual causes. These excess times are retained in the process totals. Peak memory was not measured for these classical runs.
-
-### Saved official MAGMA reference
-
-| Trait | MAGMA gene analysis: process wall (s) | MAGMA classical gene-set analysis: process wall (s) |
-| --- | ---: | ---: | ---: |
-| GWAS1 | 4333.469 | 29.451 |
-| GWAS2 | 4029.865 | 79.332 |
 
 The official MAGMA 1.10 gene-set clocks include loading, correlation preparation, regression and output. **Separate MAGMA preparation and fitting clocks are unavailable**; its whole-process time must not be compared with gsuite fitting alone. The saved MAGMA gene-analysis clocks are a separate upstream stage, include gene-correlation work, and are not added to the gene-set clocks. The earlier 899.94-second gsuite two-trait gene analysis excludes file loading and gene correlations; it is not an identical-work speed comparison with these MAGMA gene-process clocks.
 

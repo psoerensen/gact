@@ -20,5 +20,15 @@
     "code-provenance.json": "b58f70c8ad6445994f024310af52887dc6d78992a3f15f045644bc1ca1eae1cc",
     "process-timings.json": "d2828177df28063fe2c5e289b337f8fe17a25e30d399282897d84833ab431851",
     "RESULTS.md": "84e85de80e69b29da6e199bbb4bbdb484b54231ace206e09e4e14592caf4a76b"
+  },
+  "gene_analysis_table_update": {
+    "new_analyses_run": false,
+    "source_report": "benchmarks/results/gsuite/genomic_20k_50k/manuscript-results/manuscript-vegas-complete-20261005/README.md",
+    "source_phase_table": "benchmarks/results/gsuite/genomic_20k_50k/manuscript-results/manuscript-vegas-complete-20261005/phase-summary.csv",
+    "source_report_sha256": "79f265e1230bf80314ef123bbce2bb44cd976cce244446bc0a600703d9297a0a",
+    "source_phase_table_sha256": "3eada2341533512313f286d603f71323bde8dd5712fdb6bee0a5aa85efb883a7",
+    "gsuite_seconds": 899.94,
+    "gsuite_alternative_refit_seconds": 71.44,
+    "boundary": "Earlier gsuite two-trait analysis excluding input loading and gene correlations; MAGMA whole gene processes include additional work. No per-trait gsuite split or identical-work speedup is inferred."
   }
 }
