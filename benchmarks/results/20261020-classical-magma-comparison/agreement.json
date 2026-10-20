@@ -1,0 +1,129 @@
+{
+  "purpose": "Classical pathway fit parity on shared saved MAGMA gene statistics and correlations; no gene analyses run",
+  "settings": {
+    "correlation_power": 1.1,
+    "covariance_eigenvalue_cutoff": 0.1,
+    "residualize_internal": true,
+    "absolute_tolerance": 0.0002,
+    "tolerance_source": "Existing saved-input fixture validation uses 2e-4 absolute coefficient/SE/p tolerance; unchanged"
+  },
+  "studies": {
+    "GWAS1": {
+      "pathways": 1324,
+      "identical_pathway_ids": true,
+      "absolute_tolerance": 0.0002,
+      "columns": {
+        "beta": {
+          "median_absolute_difference": 1.2497220950036247e-06,
+          "maximum_absolute_difference": 3.7308558191284646e-05,
+          "maximum_difference_pathway": "R-HSA-195399",
+          "spearman": 0.9999999922445156,
+          "within_tolerance": true
+        },
+        "se": {
+          "median_absolute_difference": 2.4308982261578294e-06,
+          "maximum_absolute_difference": 4.993980222633976e-06,
+          "maximum_difference_pathway": "R-HSA-9842640",
+          "spearman": 0.9999999625151585,
+          "within_tolerance": true
+        },
+        "p": {
+          "median_absolute_difference": 2.122554786820885e-06,
+          "maximum_absolute_difference": 5.002620248717449e-06,
+          "maximum_difference_pathway": "R-HSA-191859",
+          "spearman": 0.9999999896593542,
+          "within_tolerance": true
+        }
+      },
+      "passed": true,
+      "timing": {
+        "input_loading_seconds": 0.8492881,
+        "covariance_rank": 13814,
+        "shared_block_applications": 33,
+        "membership_quadratic_entries": 223548,
+        "preparation_seconds": 32.6913977,
+        "classical_fit_seconds": 0.0225518,
+        "genes": 17862,
+        "pathways": 1324,
+        "batch_size": 1324,
+        "shared_gene_input": true
+      },
+      "previous_gsuite_agreement": {
+        "maximum_absolute_differences": {
+          "beta": 1.6375789613221059e-15,
+          "se": 2.220446049250313e-16,
+          "p": 1.887379141862766e-15
+        },
+        "absolute_tolerance": 1e-10,
+        "passed": true
+      },
+      "genes": 17862,
+      "unique_gene_ids": 17862,
+      "all_pathway_members_in_background": true,
+      "pathway_size_mismatches": 0,
+      "covariance_discarded_dimensions": 4048,
+      "pathway_residual_df": 13812,
+      "process_wall_seconds": 50.29949519999718,
+      "outside_internal_phase_clocks_seconds": 16.73625759999718
+    },
+    "GWAS2": {
+      "pathways": 1324,
+      "identical_pathway_ids": true,
+      "absolute_tolerance": 0.0002,
+      "columns": {
+        "beta": {
+          "median_absolute_difference": 1.034583881592832e-06,
+          "maximum_absolute_difference": 3.8062058832721846e-05,
+          "maximum_difference_pathway": "R-HSA-1253288",
+          "spearman": 0.9999999961222578,
+          "within_tolerance": true
+        },
+        "se": {
+          "median_absolute_difference": 2.351701895136893e-06,
+          "maximum_absolute_difference": 4.9970787842079645e-06,
+          "maximum_difference_pathway": "R-HSA-9772755",
+          "spearman": 0.9999999612225777,
+          "within_tolerance": true
+        },
+        "p": {
+          "median_absolute_difference": 2.178889279114138e-06,
+          "maximum_absolute_difference": 5.004912207617895e-06,
+          "maximum_difference_pathway": "R-HSA-1234158",
+          "spearman": 0.9999999844890313,
+          "within_tolerance": true
+        }
+      },
+      "passed": true,
+      "timing": {
+        "input_loading_seconds": 0.8501813,
+        "covariance_rank": 13814,
+        "shared_block_applications": 33,
+        "membership_quadratic_entries": 223548,
+        "preparation_seconds": 31.1226351,
+        "classical_fit_seconds": 0.0194883,
+        "genes": 17862,
+        "pathways": 1324,
+        "batch_size": 1324,
+        "shared_gene_input": true
+      },
+      "previous_gsuite_agreement": {
+        "maximum_absolute_differences": {
+          "beta": 1.2351231148954867e-15,
+          "se": 2.220446049250313e-16,
+          "p": 1.5543122344752192e-15
+        },
+        "absolute_tolerance": 1e-10,
+        "passed": true
+      },
+      "genes": 17862,
+      "unique_gene_ids": 17862,
+      "all_pathway_members_in_background": true,
+      "pathway_size_mismatches": 0,
+      "covariance_discarded_dimensions": 4048,
+      "pathway_residual_df": 13812,
+      "process_wall_seconds": 32.39519350000046,
+      "outside_internal_phase_clocks_seconds": 0.4028888000004578
+    }
+  },
+  "passed": true
+}

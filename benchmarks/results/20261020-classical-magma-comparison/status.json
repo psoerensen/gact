@@ -1,0 +1,12 @@
+{
+  "status": "completed",
+  "genes_recomputed": false,
+  "traits": 2,
+  "pathways_per_trait": 1324,
+  "magma_comparison_passed": true,
+  "previous_gsuite_comparison_passed": true,
+  "native_tests": "5 passed",
+  "r_tests": "correlation oracle and dispatcher passed",
+  "committed": false,
+  "pushed": false
+}

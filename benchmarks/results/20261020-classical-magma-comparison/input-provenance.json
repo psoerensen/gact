@@ -1,0 +1,22 @@
+{
+  "sets.tsv": {
+    "bytes": 650364,
+    "sha256": "ffd9d57060ca2e91cc37455f511b9f4a353e1209a98a1af3c967e9224692e647"
+  },
+  "standard-GWAS1.genes.raw": {
+    "bytes": 11144588,
+    "sha256": "119a608935850161151e6b895b50a0dbf7273ba78b126687bfb590e38baac7aa"
+  },
+  "standard-GWAS2.genes.raw": {
+    "bytes": 11147971,
+    "sha256": "62a3335f6f21fab45f4fb01c84978f3e7bf3004940849953c5179111c8573c08"
+  },
+  "standard-GWAS1-sets.gsa.out.txt": {
+    "bytes": 112829,
+    "sha256": "3614ee1a6bef8230fffc312ff2e0d40a31826220ba1e808862df9e91c2138b2a"
+  },
+  "standard-GWAS2-sets.gsa.out.txt": {
+    "bytes": 112829,
+    "sha256": "67440d78e9b733cd99734ad3bf7cd92f307270d1de4f365f2ca371e5dbfcfc63"
+  }
+}

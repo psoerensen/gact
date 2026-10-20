@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.22)
+project(matched_classical LANGUAGES CXX)
+find_package(gsea CONFIG REQUIRED)
+add_executable(classical_driver classical_driver.cpp)
+target_compile_features(classical_driver PRIVATE cxx_std_17)
+target_link_libraries(classical_driver PRIVATE gsea::gsea)

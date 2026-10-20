@@ -1,0 +1,24 @@
+{
+  "recorded_date": "2026-10-20",
+  "import_date": "2026-10-20",
+  "source_run": "matched-magma-gsuite-20261019/classical-direct-sets-20261020",
+  "source_kind": "Saved completed native classical pathway runs and completed official MAGMA 1.10 reference runs",
+  "software": "Native gsea with gsolve Release/MKL; updated gsea 0.1.2 R interface tested separately, not timed by native phase clocks",
+  "thread_limit": 1,
+  "correlation_power": 1.1,
+  "covariance_eigenvalue_cutoff": 0.1,
+  "reference_executable_version": "MAGMA 1.10",
+  "reference_executable_sha256": "e05e3d963215a973064852ec33640118d65745884cc800a5119ca7cffe6cb859",
+  "website_update_runs_new_analyses": false,
+  "website_update_recomputes_gene_statistics": false,
+  "benchmark_gene_statistics_recomputed": false,
+  "included": "Aggregate timing and agreement records, input/code hashes and existing native comparison driver",
+  "excluded": "Database, gene statistics, reference genotypes, correlation matrices, per-pathway fits, binary/raw fit files and executables",
+  "source_file_sha256": {
+    "agreement.json": "3e22b4ee5e7bd6b2c1430b3958ef91ec9ade3585518fa73e5e581efa57a08bec",
+    "input-provenance.json": "c0d1bdd867bb10195a23686e1d2509a7faac663f06c89b43ed086eaaae4eb304",
+    "code-provenance.json": "b58f70c8ad6445994f024310af52887dc6d78992a3f15f045644bc1ca1eae1cc",
+    "process-timings.json": "d2828177df28063fe2c5e289b337f8fe17a25e30d399282897d84833ab431851",
+    "RESULTS.md": "84e85de80e69b29da6e199bbb4bbdb484b54231ace206e09e4e14592caf4a76b"
+  }
+}

@@ -8,6 +8,7 @@ The [consolidated timing table and missing evidence](revision/consolidated-timin
 
 | Collection | Location | Intended use |
 | --- | --- | --- |
+| Classical gsuite and official MAGMA reference | [20 October comparison](results/20261020-classical-magma-comparison/README.md) | Shared saved gene statistics/correlations; separate preparation/fitting, process clocks and numerical agreement |
 | Current direct-cross-product reruns | [Rerun report](results/20261019-direct-cross-products/README.md) | Separate preparation, full-data MAGMA/PoPS models and 22-fold PoPS validation |
 | Earlier revision measurements | [19 October report](results/20261019-gsuite-revision/README.md) | Current Reactome gene-set/PoPS, 40-cell scoring grid and additional module checks |
 | Website timing source snapshot | [Tutorial timings](scripts/website-snapshot/Tutorial_timings_and_memory.Rmd) | Published timing definitions and reported workloads as imported |

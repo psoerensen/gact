@@ -1,0 +1,3 @@
+trait,genes,pathways,thread_limit,gsuite_input_loading_seconds,gsuite_preparation_seconds,gsuite_classical_fit_seconds,gsuite_process_wall_seconds,gsuite_outside_phase_clocks_seconds,magma_gene_process_wall_seconds,magma_gene_set_process_wall_seconds,covariance_rank,pathway_residual_df,shared_block_applications,membership_quadratic_entries,peak_memory
+GWAS1,17862,1324,1,0.8492881,32.6913977,0.0225518,50.29949519999718,16.73625759999718,4333.4691059,29.450609400002577,13814,13812,33,223548,not measured
+GWAS2,17862,1324,1,0.8501813,31.1226351,0.0194883,32.39519350000046,0.4028888000004578,4029.865202500001,79.33203869999852,13814,13812,33,223548,not measured

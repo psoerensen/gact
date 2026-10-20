@@ -68,6 +68,45 @@ The R collection superseded A for the real-LD benchmark objective. A remains exp
 
 R also supplies a joint Bayesian gene-set fit: **0.10 s and 102.9 MiB**, two synthetic traits and three pathways, one thread. Four chains use 200 burn-in and 800 sampling sweeps with fixed covariance and pattern settings. It is a bounded historical standalone model, not the exact current website call or a manuscript Reactome reproduction.
 
+## Classical gsuite pathway fits and official MAGMA comparison
+
+These completed 20 October runs use **17,862 saved genes and 1,324 Reactome pathways per trait**, with the same saved MAGMA gene statistics, gene properties and gene correlations in both classical pathway implementations. The underlying matched inputs used 3,192,403 SNPs and a 503-person EUR reference. This is a **shared-input classical pathway check**, separate from the Bayesian models below, which use a different 17,955-gene score collection. **No gene statistics were recomputed for these gsuite fits or this website update.**
+
+### gsuite preparation and fitting
+
+| Trait | Preparation (s) | Classical fitting (s) | Whole-process wall (s) |
+| --- | ---: | ---: | ---: |
+| GWAS1 | 32.691 | 0.0226 | 50.299 |
+| GWAS2 | 31.123 | 0.0195 | 32.395 |
+
+Preparation includes set mapping, gene-response/property transformations, powered regional correlation eigensystems/generalized inverses, internal-covariate adjustment, and cached shared/member-index cross-products. Fitting uses those sufficient statistics for the small pathway regressions and inference. The prepared weights are reused across all pathways: the marginal preparation uses 33 shared block applications and 223,548 within-set precision entries. The two traits were run as separate processes, so regional preparation was measured twice; no cross-trait reuse is claimed here.
+
+These are **native C++ gsea/gsolve Release/MKL measurements with a one-thread limit**. They do not measure R interface conversion overhead. Input loading is separate: 0.849 s for GWAS1 and 0.850 s for GWAS2. The process clock also includes startup, output and cleanup; it is not the sum of the two displayed phase columns. An additional **16.736 s (GWAS1) and 0.403 s (GWAS2)** falls outside all internal loading/preparation/fitting clocks and has not been attributed to individual causes. These excess times are retained in the process totals. Peak memory was not measured for these classical runs.
+
+### Saved official MAGMA reference
+
+| Trait | MAGMA gene analysis: process wall (s) | MAGMA classical gene-set analysis: process wall (s) |
+| --- | ---: | ---: | ---: |
+| GWAS1 | 4333.469 | 29.451 |
+| GWAS2 | 4029.865 | 79.332 |
+
+The official MAGMA 1.10 gene-set clocks include loading, correlation preparation, regression and output. **Separate MAGMA preparation and fitting clocks are unavailable**; its whole-process time must not be compared with gsuite fitting alone. The saved MAGMA gene-analysis clocks are a separate upstream stage, include gene-correlation work, and are not added to the gene-set clocks. The earlier 899.94-second gsuite two-trait gene analysis excludes file loading and gene correlations; it is not an identical-work speed comparison with these MAGMA gene-process clocks.
+
+### Numerical agreement and interpretation
+
+| Trait | Maximum absolute beta difference | Maximum absolute SE difference | Maximum absolute p difference |
+| --- | ---: | ---: | ---: |
+| GWAS1 | 3.731e-05 | 4.994e-06 | 5.003e-06 |
+| GWAS2 | 3.806e-05 | 4.997e-06 | 5.005e-06 |
+
+**All 2,648 pathway fits pass the unchanged 2e-4 absolute beta/SE/p tolerance** against the rounded MAGMA text outputs; p-value Spearman agreement exceeds 0.99999998 in both traits. Gene backgrounds and pathway IDs match, with zero pathway-size mismatches. The working correlation power is 1.1 and the absolute eigenvalue cutoff is 0.1, retaining rank 13,814 and marginal residual degrees of freedom 13,812. All gene rows remain in the background; pruning removes correlation directions.
+
+The direct-set refactor differs from the previous correlated gsuite route by less than 2e-15 in beta and p (less than 3e-16 in SE). Its fitting phase replaces repeated dense products with cached cross-products; the shared work is now included in preparation. Previous preparation/fitting times were 27.558/88.300 s and 27.527/86.257 s. Whole-process times changed from 117.195 to 50.299 s and from 115.025 to 32.395 s. These are single runs, not estimates of repeated-run uncertainty or a universal speedup.
+
+This agreement isolates the classical pathway model on **shared saved MAGMA statistics**. It does not establish equivalence between the different gene-tail algorithms used by standard gsuite and MAGMA, or validate Bayesian MAGMA/PoPS against the external executable. No calibration or convergence claim follows from these timings.
+
+See the [dated comparison report and aggregate records](../results/20261020-classical-magma-comparison/README.md), [exact timing table](../results/20261020-classical-magma-comparison/measurements.csv), and [agreement checks](../results/20261020-classical-magma-comparison/agreement.json). Input/code hashes and the comparison driver are preserved; databases, gene-level data, raw fits and executables are excluded.
+
 ## Current Bayesian MAGMA and single full-data PoPS models
 
 These reruns use **17,955 saved gene scores and 1,324 Reactome sets** from the already installed hsa.0.0.1 database, gsea 0.1.2 and gbayes 0.1.6. **Gene-association statistics were not recomputed**: their upstream cost is excluded, not measured as zero. Cached fixture loading is separate from the calls below; no new database acquisition, genotype processing or simulation was performed.
@@ -92,7 +131,7 @@ All rows use two chains, seeds 10/11 and one requested thread. Single-trait MAGM
 
 These are **22 training models**, each with two chains and 5,000 sampling plus 1,000 burn-in sweeps. They are validation costs and are excluded from the single-fit table. Saved gene scores are reused in every fold; preparation uses only training genes. The native fitting column is the sum over folds, with preparation and held-out prediction recorded separately. Each setting has one execution; there is no repeated-run timing uncertainty estimate.
 
-The updated independent set path needs no dense gene-by-feature matrix. The 1,536 MiB preparation limit is retained for consistency; it is a matrix-payload guard, not measured process memory. The joint model still uses projected preparation. Earlier preparation-included runs and the separate one-chain 14.21-second native probe remain historical evidence, not current rows or matched speedup baselines. A direct sufficient-statistic R interface is now available as `gsea::blr()`, backed by native gbayes. The qgg R/native vb/vg positional mismatch is not reproduced; these timings make no external qgg or MAGMA/FUMA comparison.
+The updated independent set path needs no dense gene-by-feature matrix. The 1,536 MiB preparation limit is retained for consistency; it is a matrix-payload guard, not measured process memory. The joint model still uses projected preparation. Earlier preparation-included runs and the separate one-chain 14.21-second native probe remain historical evidence, not current rows or matched speedup baselines. A direct sufficient-statistic R interface is now available as `gsea::blr()`, backed by native gbayes. The qgg R/native vb/vg positional mismatch is not reproduced; the Bayesian and PoPS rows make no external qgg or MAGMA/FUMA comparison; the classical comparison above uses shared saved statistics.
 
 See the [rerun report and phase records](../results/20261019-direct-cross-products/README.md) for settings, per-fold timing, binary/input hashes, memory definitions and the excluded duplicate-membership harness diagnostic.
 
@@ -121,9 +160,10 @@ Historical joint Bayesian gene-set fits used KEGG and short tutorial controls; t
 ## Remaining gaps
 
 - Separate per-phase VEGAS memory remains unavailable; complete-worker memory is already measured.
+- Classical correlated gsuite/MAGMA peak memory, repeated-run timing uncertainty and separate MAGMA preparation/fitting clocks remain unavailable; the first gsuite process has an unattributed excess outside internal clocks.
 - Scoring has a controlled 40-cell grid, but each cell has one execution; repeated-run uncertainty, larger cohorts and broader workload extrapolation remain unmeasured.
 
-Current Reactome gene-set fits, chromosome-held-out PoPS, separate scoring memory and a bounded scoring grid are now measured. External-method comparisons remain separate from this ecosystem benchmark.
+Current Reactome gene-set fits, chromosome-held-out PoPS, separate scoring memory and a bounded scoring grid are now measured. The dated classical MAGMA reference comparison is separate from the main ecosystem rows, with whole-process and internal-phase clocks distinguished.
 
 ## Sources
 
@@ -140,3 +180,5 @@ All paths are relative to `benchmarks/`; imported-file provenance is in [provena
 
 - A: [Artificial-LD measurements](../results/gsuite/genomic_20k_50k/manuscript-results/20261004/measurements.csv) and [scope](../results/gsuite/genomic_20k_50k/manuscript-results/20261004/README.md).
 - R: [Reference-derived simulation measurements](../results/gsuite/genomic_20k_50k/manuscript-results/20261004-real-1000g/measurements.csv) and [scope](../results/gsuite/genomic_20k_50k/manuscript-results/20261004-real-1000g/README.md).
+
+- M: [20 October classical comparison](../results/20261020-classical-magma-comparison/README.md), [timings](../results/20261020-classical-magma-comparison/measurements.csv) and [agreement](../results/20261020-classical-magma-comparison/agreement.json).

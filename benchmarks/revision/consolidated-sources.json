@@ -1,5 +1,5 @@
 {
-  "consolidated_date": "2026-10-19",
+  "consolidated_date": "2026-10-20",
   "new_analyses_run": true,
   "sources": [
     {
@@ -117,8 +117,50 @@
     {
       "path": "results/20261019-direct-cross-products/README.md",
       "sha256": "f0d393dc5c4149f8419241f5e6ea08df0e252a9241ae2023452e7edd5726edcf"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/agreement.json",
+      "sha256": "3e22b4ee5e7bd6b2c1430b3958ef91ec9ade3585518fa73e5e581efa57a08bec"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/classical_driver.cpp",
+      "sha256": "ac96e36a2927cdf3b8774e4885f5ddf6506adb1a937d77c4076dfb4867c9b7cb"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/CMakeLists.txt",
+      "sha256": "03b1a3f4d488b352a80f7940f2990e09a560f6aa59592326c114c5c5a1ae1ee0"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/code-hashes.json",
+      "sha256": "85058aead221f21054979a56dd2258afc579dd4596eb26e1f68e240ddfbf7fb7"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/input-provenance.json",
+      "sha256": "c0d1bdd867bb10195a23686e1d2509a7faac663f06c89b43ed086eaaae4eb304"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/measurements.csv",
+      "sha256": "69b859e443b4388a3b71931437aa04304b899148351447e2f80d7c47dcd38dc8"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/provenance.json",
+      "sha256": "4a6bb8147a128aeef54bd609913a5c9b5cac21a28d782060f7cf730f1f0988b5"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/README.md",
+      "sha256": "d2d288c430667920989e175c95a1e12c286e14939fc724ea22dd7ce28d3a17c9"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/status.json",
+      "sha256": "afabffd2b829c92d7453d55612cbe71062067ca1be560e561ac6f8220ab8f0d2"
     }
   ],
-  "saved_record_audit_date": "2026-10-19",
-  "new_analysis_scope": "Authorized 19 October gsuite ecosystem measurements; earlier imports remain unchanged."
+  "saved_record_audit_date": "2026-10-20",
+  "new_analysis_scope": "Authorized 19 October gsuite ecosystem measurements; earlier imports remain unchanged.",
+  "website_update": {
+    "date": "2026-10-20",
+    "new_analyses_run": false,
+    "gene_statistics_recomputed": false,
+    "scope": "Import completed classical gsuite direct-set timings and official MAGMA reference clocks; render only the static benchmark overview."
+  }
 }
