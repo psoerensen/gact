@@ -144,11 +144,11 @@
     },
     {
       "path": "results/20261020-classical-magma-comparison/provenance.json",
-      "sha256": "d81186fba11b71d05e1bf1c9a9289abad31ce85903589d4d8f460b5e46622241"
+      "sha256": "352249d3575384d893bf79fce941e3b824b8f23f25ef33a82f1fb4a3d7b90a7c"
     },
     {
       "path": "results/20261020-classical-magma-comparison/README.md",
-      "sha256": "c3aaecec5eeb171799d6f7fd5faeffd07a8b8bd2e58e16c09de95d3e38725fcb"
+      "sha256": "b5a770bf3eff1e148d0a968c7d21e068da3ef499cc4c92f8d701c942060f7b20"
     },
     {
       "path": "results/20261020-classical-magma-comparison/status.json",
@@ -157,6 +157,18 @@
     {
       "path": "results/20261020-classical-magma-comparison/gene-analysis-comparison.csv",
       "sha256": "e41bea57a7140f65275bd422d4b094564a67045aa6560e614c1f6f618c35e865"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/compare_saved_gene_results.py",
+      "sha256": "899e5060b67d870d0e9cf3af6e94a4ee1798c3f0c2f3adb5751d003ef81c6c3b"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/gene-agreement-summary.csv",
+      "sha256": "4b826699cbbb185e84dfa534c349011c1cb3f01d294360f314a338826e7e5987"
+    },
+    {
+      "path": "results/20261020-classical-magma-comparison/gene-agreement-summary.json",
+      "sha256": "a6b9559e3b26472fe6c6a7ab782c015abba911396404ef569df26066843862c2"
     }
   ],
   "saved_record_audit_date": "2026-10-20",
@@ -165,6 +177,6 @@
     "date": "2026-10-20",
     "new_analyses_run": false,
     "gene_statistics_recomputed": false,
-    "scope": "Add earlier saved two-trait gsuite VEGAS and alternative refit beside official MAGMA gene clocks, keeping separate classical pathway phases and timing-boundary qualifications. Static overview render only; no analyses rerun."
+    "scope": "Read-only verification of saved standard gsuite VEGAS versus MAGMA gene results, aggregate agreement and significance overlap beside saved timings; static overview render; no model reruns."
   }
 }

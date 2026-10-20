@@ -30,5 +30,32 @@
     "gsuite_seconds": 899.94,
     "gsuite_alternative_refit_seconds": 71.44,
     "boundary": "Earlier gsuite two-trait analysis excluding input loading and gene correlations; MAGMA whole gene processes include additional work. No per-trait gsuite split or identical-work speedup is inferred."
+  },
+  "gene_result_agreement_update": {
+    "gene_or_pathway_analyses_rerun": false,
+    "operation": "Independently recompute descriptive summaries from existing gene result files only",
+    "existing_summary_verified_to_absolute_tolerance": 1e-12,
+    "gsuite_export_source": "Earlier gsuite/build/gbase-eigen/complete-vegas/fit.rds; existing CSV exports reused",
+    "source_files": {
+      "GWAS1-standard-gsuite-genes.csv": {
+        "sha256": "ccaa6247ac97d721566cdefc1349892359d7cd236bb040fbbf95a33f9ed51fac",
+        "bytes": 2466940
+      },
+      "standard-GWAS1.genes.out.txt": {
+        "sha256": "0b2dd338d63b46dd585e3e7606b3ff9d7109efcec16738fb389c0bd7fd531740",
+        "bytes": 1661259
+      },
+      "GWAS2-standard-gsuite-genes.csv": {
+        "sha256": "11c976c0cf5c691aacacf1f8014b4454b503880a45cc374636004e7014692926",
+        "bytes": 2467671
+      },
+      "standard-GWAS2.genes.out.txt": {
+        "sha256": "5734f910c8e4d9a8904b8a48d315f2d7f4f08b40994343677b3f4396f40621ae",
+        "bytes": 1661259
+      }
+    },
+    "existing_summary_sha256": "8b2332bc6c8c31d374f5a2db94f9a39b45f1bf0d8756a60e1b4c4d393ef39db3",
+    "reader_sha256": "899e5060b67d870d0e9cf3af6e94a4ee1798c3f0c2f3adb5751d003ef81c6c3b",
+    "qualification": "Descriptive rank/p-value/significance overlap across standard methods; not gene-level numerical equivalence. Fallbacks, reported-parameter differences and extreme-tail differences retained."
   }
 }

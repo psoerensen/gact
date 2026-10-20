@@ -1,0 +1,3 @@
+trait,genes,valid_p_pairs,snp_count_mismatches,reported_parameter_count_mismatches,spearman_negative_log10_p,median_absolute_p_difference,maximum_absolute_p_difference,median_absolute_log10_p_difference,maximum_absolute_log10_p_difference,bonferroni_p_threshold,MAGMA_significant,gsuite_significant,both_significant,MAGMA_only,gsuite_only,gsuite_moment_fallback_count
+GWAS1,17862,17862,0,4505,0.9989471803804009,0.003550791050639504,0.19708097049589202,0.007637756116524078,19.930501424952112,2.7992386070988693e-06,181,166,166,15,0,1
+GWAS2,17862,17862,0,4505,0.9987907081713051,0.0040875055859099785,0.227723254785684,0.006231348914597784,2.9746118346962493,2.7992386070988693e-06,40,38,38,2,0,2

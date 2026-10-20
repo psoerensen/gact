@@ -728,6 +728,101 @@ analyses were rerun to add this table.</p>
 VEGAS report</a> and <a href="../benchmarks/results/gsuite/genomic_20k_50k/manuscript-results/manuscript-vegas-complete-20261005/phase-summary.csv">component
 clocks</a>.</p>
 </div>
+<div id="gene-result-agreement-from-saved-outputs" class="section level3">
+<h3>Gene-result agreement from saved outputs</h3>
+<p>The saved standard gsuite VEGAS and official MAGMA gene outputs were
+independently checked by <strong>gene ID</strong>, not row position. All
+<strong>17,862 genes per trait</strong> have finite positive p-values in
+both outputs; the gene backgrounds match and there are <strong>zero
+per-gene SNP-count mismatches</strong>. The recomputed descriptive
+summaries reproduce the existing saved agreement report. No gene or
+pathway model was rerun.</p>
+<table>
+<colgroup>
+<col width="15%" />
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+<col width="21%" />
+</colgroup>
+<thead>
+<tr>
+<th>Trait</th>
+<th align="right">Gene p-value pairs</th>
+<th align="right">Spearman of -log10(p)</th>
+<th align="right">Median absolute p difference</th>
+<th align="right">Maximum absolute p difference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GWAS1</td>
+<td align="right">17,862</td>
+<td align="right">0.998947</td>
+<td align="right">0.003551</td>
+<td align="right">0.197081</td>
+</tr>
+<tr>
+<td>GWAS2</td>
+<td align="right">17,862</td>
+<td align="right">0.998791</td>
+<td align="right">0.004088</td>
+<td align="right">0.227723</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gene ranking is very similar, but gene p-values are not
+numerically equivalent.</strong> Maximum absolute log10(p) differences
+are <strong>19.931 (GWAS1)</strong> and <strong>2.975 (GWAS2)</strong>;
+their medians are 0.00764 and 0.00623. Thus excellent rank agreement
+must not hide substantial differences in some extreme-tail
+probabilities. The saved gsuite results predominantly use saddlepoint
+evaluation, with <strong>1 and 2 recorded moment-matched chi-square
+fallbacks</strong>; MAGMA uses its standard integration/simulation
+route. The reported gsuite <code>effective_parameters</code> and MAGMA
+<code>NPARAM</code> fields differ for <strong>4,505 genes per
+trait</strong>. These are observed output differences, not a claim that
+only tail evaluation explains every discrepancy.</p>
+<p>For a <strong>descriptive Bonferroni threshold of 0.05/17,862 =
+2.79924e-6</strong>, the significant-gene overlap is:</p>
+<table>
+<thead>
+<tr>
+<th>Trait</th>
+<th align="right">MAGMA significant</th>
+<th align="right">gsuite significant</th>
+<th align="right">Significant in both</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GWAS1</td>
+<td align="right">181</td>
+<td align="right">166</td>
+<td align="right">166</td>
+</tr>
+<tr>
+<td>GWAS2</td>
+<td align="right">40</td>
+<td align="right">38</td>
+<td align="right">38</td>
+</tr>
+</tbody>
+</table>
+<p>All 166 and 38 gsuite-significant genes are also significant in
+MAGMA; MAGMA has 15 and 2 additional significant genes, respectively.
+These are summaries at an explicitly stated conventional threshold, not
+a prespecified equivalence test or a calibration assessment. The
+near-identical <strong>classical pathway</strong> results below use
+shared saved MAGMA statistics and are a different comparison; their 2e-4
+tolerance and approximately 5e-6 p differences must not be attributed to
+this gene-level comparison.</p>
+<p>See the <a href="../benchmarks/results/20261020-classical-magma-comparison/gene-agreement-summary.json">gene-agreement
+summary</a>, <a href="../benchmarks/results/20261020-classical-magma-comparison/gene-agreement-summary.csv">aggregate
+gene-agreement table</a> and <a href="../benchmarks/results/20261020-classical-magma-comparison/compare_saved_gene_results.py">read-only
+comparison code</a>. Only aggregate metrics, method flags and input
+fingerprints are archived; gene-level results remain outside GitHub.</p>
+</div>
 <div id="classical-gene-set-analysis-separate-preparation-and-fitting" class="section level3">
 <h3>Classical gene-set analysis: separate preparation and fitting</h3>
 <table>

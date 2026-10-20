@@ -92,6 +92,28 @@ The **71.44-second refit is an alternative reuse measurement**, not an additiona
 
 See the [saved VEGAS report](../benchmarks/results/gsuite/genomic_20k_50k/manuscript-results/manuscript-vegas-complete-20261005/README.md) and [component clocks](../benchmarks/results/gsuite/genomic_20k_50k/manuscript-results/manuscript-vegas-complete-20261005/phase-summary.csv).
 
+### Gene-result agreement from saved outputs
+
+The saved standard gsuite VEGAS and official MAGMA gene outputs were independently checked by **gene ID**, not row position. All **17,862 genes per trait** have finite positive p-values in both outputs; the gene backgrounds match and there are **zero per-gene SNP-count mismatches**. The recomputed descriptive summaries reproduce the existing saved agreement report. No gene or pathway model was rerun.
+
+| Trait | Gene p-value pairs | Spearman of -log10(p) | Median absolute p difference | Maximum absolute p difference |
+| --- | ---: | ---: | ---: | ---: |
+| GWAS1 | 17,862 | 0.998947 | 0.003551 | 0.197081 |
+| GWAS2 | 17,862 | 0.998791 | 0.004088 | 0.227723 |
+
+**Gene ranking is very similar, but gene p-values are not numerically equivalent.** Maximum absolute log10(p) differences are **19.931 (GWAS1)** and **2.975 (GWAS2)**; their medians are 0.00764 and 0.00623. Thus excellent rank agreement must not hide substantial differences in some extreme-tail probabilities. The saved gsuite results predominantly use saddlepoint evaluation, with **1 and 2 recorded moment-matched chi-square fallbacks**; MAGMA uses its standard integration/simulation route. The reported gsuite `effective_parameters` and MAGMA `NPARAM` fields differ for **4,505 genes per trait**. These are observed output differences, not a claim that only tail evaluation explains every discrepancy.
+
+For a **descriptive Bonferroni threshold of 0.05/17,862 = 2.79924e-6**, the significant-gene overlap is:
+
+| Trait | MAGMA significant | gsuite significant | Significant in both |
+| --- | ---: | ---: | ---: |
+| GWAS1 | 181 | 166 | 166 |
+| GWAS2 | 40 | 38 | 38 |
+
+All 166 and 38 gsuite-significant genes are also significant in MAGMA; MAGMA has 15 and 2 additional significant genes, respectively. These are summaries at an explicitly stated conventional threshold, not a prespecified equivalence test or a calibration assessment. The near-identical **classical pathway** results below use shared saved MAGMA statistics and are a different comparison; their 2e-4 tolerance and approximately 5e-6 p differences must not be attributed to this gene-level comparison.
+
+See the [gene-agreement summary](../benchmarks/results/20261020-classical-magma-comparison/gene-agreement-summary.json), [aggregate gene-agreement table](../benchmarks/results/20261020-classical-magma-comparison/gene-agreement-summary.csv) and [read-only comparison code](../benchmarks/results/20261020-classical-magma-comparison/compare_saved_gene_results.py). Only aggregate metrics, method flags and input fingerprints are archived; gene-level results remain outside GitHub.
+
 ### Classical gene-set analysis: separate preparation and fitting
 
 | Trait | gsuite preparation (s) | gsuite fitting (s) | gsuite process wall (s) | MAGMA gene-set process wall (s) |

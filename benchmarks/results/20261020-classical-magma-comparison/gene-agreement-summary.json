@@ -1,0 +1,89 @@
+{
+  "scope": "Descriptive verification from saved results only; no gene or gene-set model rerun",
+  "alignment": "Gene IDs, not row positions",
+  "gene_tail_methods": {
+    "gsuite": "standard saddlepoint with recorded moment-matched chi-square fallbacks",
+    "MAGMA": "standard integration/simulation"
+  },
+  "traits": {
+    "GWAS1": {
+      "genes": 17862,
+      "identical_gene_background": true,
+      "per_gene_snp_count_mismatches": 0,
+      "effective_parameter_count_mismatches": 4505,
+      "valid_p_value_pairs": 17862,
+      "invalid_or_unavailable_pairs": 0,
+      "median_absolute_p_difference": 0.003550791050639504,
+      "maximum_absolute_p_difference": 0.19708097049589202,
+      "spearman_negative_log10_p": 0.9989471803804009,
+      "median_absolute_log10_p_difference": 0.007637756116524078,
+      "maximum_absolute_log10_p_difference": 19.930501424952112,
+      "descriptive_bonferroni": {
+        "alpha": 0.05,
+        "denominator": 17862,
+        "p_threshold": 2.7992386070988693e-06,
+        "MAGMA_significant": 181,
+        "gsuite_significant": 166,
+        "both_significant": 166,
+        "MAGMA_only": 15,
+        "gsuite_only": 0,
+        "same_threshold_decision": 17847
+      },
+      "gsuite_tail_method_counts": {
+        "saddlepoint": 17861,
+        "moment-matched-chi-square": 1
+      },
+      "gsuite_recorded_moment_fallback_count": 1,
+      "qualification": "Strong rank concordance across different standard gene-tail evaluators, not numerical equivalence. Bonferroni counts are a descriptive summary at a stated conventional threshold, not a prespecified equivalence gate."
+    },
+    "GWAS2": {
+      "genes": 17862,
+      "identical_gene_background": true,
+      "per_gene_snp_count_mismatches": 0,
+      "effective_parameter_count_mismatches": 4505,
+      "valid_p_value_pairs": 17862,
+      "invalid_or_unavailable_pairs": 0,
+      "median_absolute_p_difference": 0.0040875055859099785,
+      "maximum_absolute_p_difference": 0.227723254785684,
+      "spearman_negative_log10_p": 0.9987907081713051,
+      "median_absolute_log10_p_difference": 0.006231348914597784,
+      "maximum_absolute_log10_p_difference": 2.9746118346962493,
+      "descriptive_bonferroni": {
+        "alpha": 0.05,
+        "denominator": 17862,
+        "p_threshold": 2.7992386070988693e-06,
+        "MAGMA_significant": 40,
+        "gsuite_significant": 38,
+        "both_significant": 38,
+        "MAGMA_only": 2,
+        "gsuite_only": 0,
+        "same_threshold_decision": 17860
+      },
+      "gsuite_tail_method_counts": {
+        "saddlepoint": 17860,
+        "moment-matched-chi-square": 2
+      },
+      "gsuite_recorded_moment_fallback_count": 2,
+      "qualification": "Strong rank concordance across different standard gene-tail evaluators, not numerical equivalence. Bonferroni counts are a descriptive summary at a stated conventional threshold, not a prespecified equivalence gate."
+    }
+  },
+  "source_files": {
+    "GWAS1-standard-gsuite-genes.csv": {
+      "sha256": "ccaa6247ac97d721566cdefc1349892359d7cd236bb040fbbf95a33f9ed51fac",
+      "bytes": 2466940
+    },
+    "standard-GWAS1.genes.out.txt": {
+      "sha256": "0b2dd338d63b46dd585e3e7606b3ff9d7109efcec16738fb389c0bd7fd531740",
+      "bytes": 1661259
+    },
+    "GWAS2-standard-gsuite-genes.csv": {
+      "sha256": "11c976c0cf5c691aacacf1f8014b4454b503880a45cc374636004e7014692926",
+      "bytes": 2467671
+    },
+    "standard-GWAS2.genes.out.txt": {
+      "sha256": "5734f910c8e4d9a8904b8a48d315f2d7f4f08b40994343677b3f4396f40621ae",
+      "bytes": 1661259
+    }
+  },
+  "existing_summary_verified": true
+}
