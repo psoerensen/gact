@@ -216,7 +216,7 @@ Database setup transfers **2.57 GiB** and retains **3.04 GiB** locally: 2.63 GiB
 
 Correlation fits use **7,221,923 common marker rows**. Memory is a sampled analysis peak with inputs loaded before the clock. HESS prepares **1,702 regions and 18,696 components**; refits reuse compact moments. SumHer is an equal-marker baseline. Estimator assumptions are described in the [correlation tutorial](Genetic_correlation_CAD_T2D_gcorr.html).
 
-**Evidence:** [database and tutorial measurement records](Tutorial_timings_and_memory.html), [correlation timing and memory](../benchmarks/results/website-data/gcorr-current-timings-memory.csv).
+**Evidence:** [database and tutorial measurement records](../benchmarks/scripts/website-snapshot/Tutorial_timings_and_memory.Rmd), [correlation timing and memory](../benchmarks/results/website-data/gcorr-current-timings-memory.csv).
 
 ## Measurement definitions and reproducibility
 

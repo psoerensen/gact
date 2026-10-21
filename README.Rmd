@@ -134,8 +134,6 @@ regional HESS/rho-HESS, timing and memory.
 
 [Benchmark overview](Document/Benchmark_overview.html): consolidated runtime, memory, simulated scoring evidence and remaining measurement gaps.
 
-[Tutorial timings and memory](Document/Tutorial_timings_and_memory.html)
-
 ### Workflow requirements and interpretation
 
 Use a genetic reference panel matched to the GWAS ancestry and genome build.

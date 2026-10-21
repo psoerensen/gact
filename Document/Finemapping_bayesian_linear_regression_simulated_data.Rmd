@@ -83,6 +83,6 @@ verified independent LD blocks; regional eigen fitting can be selected with
 preparation. These routes have different likelihood and variance conventions;
 the common argument names do not imply identical qgg posterior draws.
 
-See [recorded tutorial timings](Tutorial_timings_and_memory.html).
+See [benchmark timings](Benchmark_overview.html#association-and-fine-mapping).
 
 The assembly label identifies this synthetic tutorial panel; it is not a claim of a specific human reference assembly. The explicit LD-entry budget supports the previously prepared sparse descriptor. The [benchmark overview](Benchmark_overview.html) distinguishes earlier one-chain repeats from current two-chain checks and records any failed preparation guards. Successful execution does not establish convergence.

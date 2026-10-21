@@ -187,8 +187,6 @@ gcorr](Document/Genetic_correlation_CAD_T2D_gcorr.html)
 runtime, memory, simulated scoring evidence and remaining measurement
 gaps.
 
-[Tutorial timings and memory](Document/Tutorial_timings_and_memory.html)
-
 ### Workflow requirements and interpretation
 
 Use a genetic reference panel matched to the GWAS ancestry and genome
