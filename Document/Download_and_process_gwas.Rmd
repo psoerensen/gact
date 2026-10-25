@@ -10,6 +10,17 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Workflow requirements {#workflow-requirements}
+
+Use a genetic reference panel matched to the GWAS ancestry and genome build.
+The default database uses GRCh37; summary statistics from another build require
+coordinate conversion and checks of marker identity and allele orientation before
+ingestion. Review the mappings returned by `detectStatSchema()` and provide an
+explicit schema when a required field is ambiguous. `normalizeStatSchema()` and
+`validateStatSchema()` support checking the resulting canonical fields before
+writing to the database.
+
+
 ## Introduction
 This tutorial is designed for incorporating new genetic association data into an existing gact database. The example below is for the UK Biobank 2021 Glycated Hemoglobin (HbA1c) GWAS data for European ancestry.
 

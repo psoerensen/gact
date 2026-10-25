@@ -358,6 +358,16 @@ statistics for ingestion into existing GACT database</h1>
 </div>
 
 
+<div id="workflow-requirements" class="section level2">
+<h2>Workflow requirements</h2>
+<p>Use a genetic reference panel matched to the GWAS ancestry and genome build.
+The default database uses GRCh37; summary statistics from another build require
+coordinate conversion and checks of marker identity and allele orientation before
+ingestion. Review the mappings returned by <code>detectStatSchema()</code> and provide an
+explicit schema when a required field is ambiguous. <code>normalizeStatSchema()</code> and
+<code>validateStatSchema()</code> support checking the resulting canonical fields before
+writing to the database.</p>
+</div>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p>This tutorial is designed for incorporating new genetic association

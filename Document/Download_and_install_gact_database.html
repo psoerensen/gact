@@ -357,6 +357,27 @@ display: none;
 </div>
 
 
+<div id="workflow-requirements" class="section level2">
+<h2>Workflow requirements</h2>
+<p>The analysis tutorials use the standalone gsuite R packages with familiar
+qgg-style arguments. gact imports gbase for shared preparation and marker-set
+helpers; <code>install_gsuite()</code> installs the analysis packages explicitly. BLR-MAGMA in these
+tutorials is
+the Bayesian gene-set workflow; it is distinct from running the standalone
+MAGMA executable. PoPS prioritizes genes and does not produce individual
+polygenic scores. Fine-mapping and polygenic-scoring examples have different
+inputs and model controls; retain the arguments and diagnostics for each run.
+Successful execution alone does not establish MCMC convergence.</p>
+<p>See the <a href="Gene_set_analysis_bayesian_magma.html">Bayesian MAGMA tutorial</a>,
+<a href="Gene_ranking_bayesian_pops.html">PoPS tutorial</a>,
+<a href="Finemapping_bayesian_linear_regression_real_data.html">fine-mapping tutorial</a> and
+<a href="Polygenic_scoring_bayesian_linear_regression.html">polygenic-scoring tutorial</a>
+for method-specific inputs and diagnostics.</p>
+<p>See <a href="Download_and_process_gwas.html#workflow-requirements">GWAS ingestion requirements</a>,
+<a href="Impute_summary_statistics.html#workflow-requirements">summary-statistics checking and imputation</a>
+and <a href="Compute_sparseLD_1000G.html#workflow-requirements">LD resource requirements</a>
+before preparing inputs.</p>
+</div>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p>This tutorial is designed to download and set up the gact database,

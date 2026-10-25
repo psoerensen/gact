@@ -10,6 +10,24 @@ output:
 knitr::opts_chunk$set(echo=TRUE, eval=FALSE)
 ```
 
+## Workflow requirements {#workflow-requirements}
+
+For optional LD consistency checking and missing Z-score imputation, keep gaps
+when extracting statistics and use an ancestry-matched Glist reference:
+
+```{r, eval=FALSE, echo=TRUE}
+stat <- getMarkerStat(GAlist, studyID=c("GWAS1", "GWAS2"), rm.na=FALSE)
+stat <- gbase::checkStat(Glist, stat, ldcheck=TRUE, impute=TRUE)
+```
+
+The same call handles all trait columns. Accepted observed scores remain intact;
+poor-quality predictions stay missing. See the
+[summary preparation guide](https://psoerensen.github.io/gtools/gsuite/docs/genotype-preparation.html#summary-statistics-checking-and-imputation)
+for ancestry groups, explicit meta-analysis mixtures and diagnostic flags.
+The [gact imputation example](Impute_summary_statistics.html) shows the
+CAD/T2D workflow. Missing sample sizes and effect estimates are not inferred.
+
+
 ## Prepare the data
 
 This example checks and imputes Z-scores for type 2 diabetes (GWAS1) and

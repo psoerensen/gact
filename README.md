@@ -189,52 +189,7 @@ gcorr](Document/Genetic_correlation_CAD_T2D_gcorr.html)
 runtime, memory, simulated scoring evidence and remaining measurement
 gaps.
 
-### Workflow requirements and interpretation
-
-Use a genetic reference panel matched to the GWAS ancestry and genome
-build. The default database uses GRCh37; summary statistics from another
-build require coordinate conversion and checks of marker identity and
-allele orientation before ingestion. Review the mappings returned by
-`detectStatSchema()` and provide an explicit schema when a required
-field is ambiguous. `normalizeStatSchema()` and `validateStatSchema()`
-support checking the resulting canonical fields before writing to the
-database.
-
-The analysis tutorials use the standalone gsuite R packages with
-familiar qgg-style arguments. gact imports gbase for shared preparation
-and marker-set helpers; `install_gsuite()` installs the analysis
-packages explicitly. BLR-MAGMA in these tutorials is the Bayesian
-gene-set workflow; it is distinct from running the standalone MAGMA
-executable. PoPS prioritizes genes and does not produce individual
-polygenic scores. Fine-mapping and polygenic-scoring examples have
-different inputs and model controls; retain the arguments and
-diagnostics for each run. Successful execution alone does not establish
-MCMC convergence.
-
-For optional LD consistency checking and missing Z-score imputation,
-keep gaps when extracting statistics and use an ancestry-matched Glist
-reference:
-
-``` r
-stat <- getMarkerStat(GAlist, studyID=c("GWAS1", "GWAS2"), rm.na=FALSE)
-stat <- gbase::checkStat(Glist, stat, ldcheck=TRUE, impute=TRUE)
-```
-
-The same call handles all trait columns. Accepted observed scores remain
-intact; poor-quality predictions stay missing. See the [summary
-preparation
-guide](https://psoerensen.github.io/gtools/gsuite/docs/genotype-preparation.html#summary-statistics-checking-and-imputation)
-for ancestry groups, explicit meta-analysis mixtures and diagnostic
-flags. The [gact imputation
-example](Document/Impute_summary_statistics.html) shows the CAD/T2D
-workflow. Missing sample sizes and effect estimates are not inferred.
-
-Reference preparation, LD computation, model fitting, and scoring have
-separate resource requirements. Check disk and memory capacity before
-computing genome-wide LD. Runtime depends on marker counts, reference
-sample size, model settings, and thread limits. Measurements of a
-tutorial example do not establish completion of every analysis reported
-in a manuscript.
+[Workflow requirements and interpretation](Document/Download_and_install_gact_database.html#workflow-requirements)
 
 ### Workshop and Course Materials
 

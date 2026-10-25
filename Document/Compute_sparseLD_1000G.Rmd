@@ -10,6 +10,15 @@ output:
 knitr::opts_chunk$set(echo=TRUE, eval=FALSE)
 ```
 
+## Workflow requirements {#workflow-requirements}
+
+Reference preparation, LD computation, model fitting, and scoring have separate
+resource requirements. Check disk and memory capacity before computing
+genome-wide LD. Runtime depends on marker counts, reference sample size, model
+settings, and thread limits. Measurements of a tutorial example do not establish
+completion of every analysis reported in a manuscript.
+
+
 Use Glist from the [1000G preparation example](Process_1000G.html).
 The reference already selects markers available in the gact database.
 

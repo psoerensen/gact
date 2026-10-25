@@ -10,6 +10,30 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Workflow requirements {#workflow-requirements}
+
+The analysis tutorials use the standalone gsuite R packages with familiar
+qgg-style arguments. gact imports gbase for shared preparation and marker-set
+helpers; `install_gsuite()` installs the analysis packages explicitly. BLR-MAGMA in these
+tutorials is
+the Bayesian gene-set workflow; it is distinct from running the standalone
+MAGMA executable. PoPS prioritizes genes and does not produce individual
+polygenic scores. Fine-mapping and polygenic-scoring examples have different
+inputs and model controls; retain the arguments and diagnostics for each run.
+Successful execution alone does not establish MCMC convergence.
+
+See the [Bayesian MAGMA tutorial](Gene_set_analysis_bayesian_magma.html),
+[PoPS tutorial](Gene_ranking_bayesian_pops.html),
+[fine-mapping tutorial](Finemapping_bayesian_linear_regression_real_data.html) and
+[polygenic-scoring tutorial](Polygenic_scoring_bayesian_linear_regression.html)
+for method-specific inputs and diagnostics.
+
+See [GWAS ingestion requirements](Download_and_process_gwas.html#workflow-requirements),
+[summary-statistics checking and imputation](Impute_summary_statistics.html#workflow-requirements)
+and [LD resource requirements](Compute_sparseLD_1000G.html#workflow-requirements)
+before preparing inputs.
+
+
 ## Introduction
 This tutorial is designed to download and set up the gact database, which is focused on genomic associations for complex traits. The tutorial is structured into two main parts: downloading and installing the database, and then providing an overview of its contents:   
 
