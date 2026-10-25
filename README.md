@@ -75,6 +75,23 @@ biological databases including:
 
 <br>
 
+### gact AI assistant
+
+Open the [gact AI assistant](help.html) to **Ingest GWAS data**, **Add biological
+annotations**, **Analyze genomic data**, or **Extend gact**. All four entry points
+use one shared instruction source and start a conversation in your own AI account.
+You can also [download the portable instructions](assistant/instructions.txt) for
+another AI platform. Use synthetic examples and non-identifying summaries; do not
+upload confidential data or credentials. Conversations are not automatically sent
+to gtools or gact maintainers. The assistant provides guidance from public sources;
+it does not grant access to private repositories or maintainer environments.
+Use the gsuite ecosystem's owning packages for statistical analyses with gact data
+and annotations. You can also **Report a bug or suggest a feature** through the same
+assistant, review its draft, then follow the existing
+[gtools submission guidance](https://psoerensen.github.io/gtools/support.html).
+Drafting does not submit a request. Verify suggested commands and scientific
+assumptions against your installed version.
+
 ### Installation of the gact package
 
 Install gact from GitHub and the standalone gsuite analysis packages
