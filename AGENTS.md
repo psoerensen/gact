@@ -31,3 +31,11 @@ Check Git status before editing and preserve unrelated work. Do not download
 GWAS/reference data, run ingestion campaigns, modify databases, render the
 whole website or change dependencies merely to check documentation. Keep data
 and credentials out of reports. Commit/push and publication require a request.
+
+## Documentation and capability status
+
+At each implementation milestone, assess documentation impact in the owning sources
+(such as README.Rmd and roxygen) and update existing capability/status descriptions
+where affected. Keep implementation, validation evidence, qualification scope and
+release status distinct. Scientific validation remains workflow- and method-specific;
+successful acquisition or integration does not qualify a downstream analysis.
