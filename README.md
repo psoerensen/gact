@@ -88,12 +88,12 @@ gsuite packages are distributed as source packages; their R dependencies
 are installed automatically.
 
 ``` r
-install.packages(c("devtools", "remotes"), repos="https://cloud.r-project.org")
+install.packages("remotes", repos="https://cloud.r-project.org")
 options(repos=c(
   gsuite="https://psoerensen.github.io/gtools/gsuite/repository",
   CRAN="https://cloud.r-project.org"
 ))
-devtools::install_github("psoerensen/gact")
+remotes::install_github("psoerensen/gact")
 gact::install_gsuite()
 ```
 

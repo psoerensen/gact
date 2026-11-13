@@ -6,5 +6,5 @@
 * Remove the unused inline Shiny application and its eager `readxl` attachment
   from package loading. The packaged ingestion application remains available.
 * Require the repaired gbase source release. Installation still uses the public
-  gsuite R repository followed by `devtools::install_github("psoerensen/gact")`
+  gsuite R repository followed by `remotes::install_github("psoerensen/gact")`
   and `gact::install_gsuite()`.
