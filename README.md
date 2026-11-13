@@ -82,13 +82,13 @@ biological databases including:
 Install gact from GitHub and the standalone gsuite analysis packages
 with:
 
-You need `devtools` (install it with `install.packages("devtools")`) and
-a C++17 build toolchain: matching Rtools on Windows, Xcode Command Line
-Tools on macOS, or R’s configured compiler on Linux. The gsuite packages
-are distributed as source packages; their R dependencies are installed
-automatically.
+You need a C++17 build toolchain: matching Rtools on Windows, Xcode
+Command Line Tools on macOS, or R’s configured compiler on Linux. The
+gsuite packages are distributed as source packages; their R dependencies
+are installed automatically.
 
 ``` r
+install.packages(c("devtools", "remotes"), repos="https://cloud.r-project.org")
 options(repos=c(
   gsuite="https://psoerensen.github.io/gtools/gsuite/repository",
   CRAN="https://cloud.r-project.org"
