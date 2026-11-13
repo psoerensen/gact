@@ -936,6 +936,13 @@ updateStatDB <- function(GAlist=NULL,
  studyID <- paste0("GWAS", next_id_num)
  recipeID <- paste0("REC", next_id_num)
 
+ # Extend existing optional metadata as well as the standard fields. This
+ # preserves a rectangular study table when successive studies omit fields.
+ GAlist$study <- lapply(GAlist$study, function(column) {
+  length(column) <- study_number
+  column
+ })
+
  GAlist$study$id[study_number] <- studyID
  GAlist$study$file[study_number] <- paste0(studyID,".txt")
  GAlist$study$trait[study_number] <- trait
@@ -945,9 +952,9 @@ updateStatDB <- function(GAlist=NULL,
  GAlist$study$gender[study_number] <- gender
  GAlist$study$ancestry[study_number] <- ancestry
  GAlist$study$build[study_number] <- build
- GAlist$study$n[study_number] <- n
- GAlist$study$ncase[study_number] <- ncase
- GAlist$study$ncontrol[study_number] <- ncontrol
+ GAlist$study$n[study_number] <- if (is.null(n)) NA_real_ else n
+ GAlist$study$ncase[study_number] <- if (is.null(ncase)) NA_real_ else ncase
+ GAlist$study$ncontrol[study_number] <- if (is.null(ncontrol)) NA_real_ else ncontrol
  GAlist$study$comments[study_number] <- comments
 
  # After studyID creation
@@ -970,7 +977,7 @@ updateStatDB <- function(GAlist=NULL,
 
  } else if(type == "quantitative") {
 
-  GAlist$study$neff[study_number] <- n
+  GAlist$study$neff[study_number] <- if (is.null(n)) NA_real_ else n
 
  } else {
   GAlist$study$neff[study_number] <- NA
@@ -979,7 +986,6 @@ updateStatDB <- function(GAlist=NULL,
  GAlist$study$source[study_number] <- source
 
  file_stat_information <- file.path(GAlist$dirs["gstat"],"GWAS_information.csv")
- write.csv2(as.data.frame(GAlist$study),file=file_stat_information,row.names=FALSE)
  GAlist$studyfiles <- file.path(GAlist$dirs["gstat"],paste0(GAlist$study$file,".gz"))
  names(GAlist$studyfiles) <- GAlist$study$id
 
@@ -1028,6 +1034,7 @@ updateStatDB <- function(GAlist=NULL,
  }
  GAlist$studies <- as.data.frame(GAlist$study)
  rownames(GAlist$studies) <- GAlist$studies$id
+ write.csv2(GAlist$studies, file=file_stat_information, row.names=FALSE)
  return(GAlist)
 }
 

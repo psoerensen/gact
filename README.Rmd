@@ -61,6 +61,12 @@ The R package ***gact*** is designed for establishing and populating a comprehen
 ### Installation of the gact package
 
 Install gact from GitHub and the standalone gsuite analysis packages with:
+
+You need `devtools` (install it with `install.packages("devtools")`) and a
+C++17 build toolchain: matching Rtools on Windows, Xcode Command Line Tools on
+macOS, or R's configured compiler on Linux. The gsuite packages are distributed
+as source packages; their R dependencies are installed automatically.
+
 ```{r,  eval=FALSE, echo=TRUE}
 options(repos=c(
   gsuite="https://psoerensen.github.io/gtools/gsuite/repository",

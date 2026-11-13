@@ -4,7 +4,7 @@ test_that("gsuite installation is explicit and uses both repositories", {
   testthat::local_mocked_bindings(install.packages=function(pkgs,lib,repos,...) {
     requested <<- list(packages=pkgs,lib=lib,repos=repos)
     ready <<- TRUE
-  }, packageVersion=function(pkg,lib.loc) package_version(if(ready) "0.1.3" else "0.0.0"), .package="utils")
+  }, packageVersion=function(pkg,lib.loc) package_version(if(ready) "0.1.3.1" else "0.0.0"), .package="utils")
   lib <- dirname(system.file(package="gbase"))
   expect_identical(install_gsuite(packages="gbase",lib=lib,repos=c(CRAN="@CRAN@")), "gbase")
   expect_identical(requested$packages, "gbase")

@@ -82,6 +82,12 @@ biological databases including:
 Install gact from GitHub and the standalone gsuite analysis packages
 with:
 
+You need `devtools` (install it with `install.packages("devtools")`) and
+a C++17 build toolchain: matching Rtools on Windows, Xcode Command Line
+Tools on macOS, or R’s configured compiler on Linux. The gsuite packages
+are distributed as source packages; their R dependencies are installed
+automatically.
+
 ``` r
 options(repos=c(
   gsuite="https://psoerensen.github.io/gtools/gsuite/repository",
@@ -103,18 +109,18 @@ database](Document/Download_and_install_gact_database.html)
 
 Download and process genotype data from the 1000 Genomes Project (1000G)
 for different ancestries (European, East Asian, South Asian) used in
-different genomic analysis:  
+different genomic analysis:\
 [Download and process of 1000G data](Document/Process_1000G.html)
 
 Computing sparse Linkage Disequilibrium (LD) matrices for 1000 Genomes
 Project (1000G) data across different ancestries and exploring the LD
 data which is used in a number of genomic analysis (LD score regression,
-Vegas gene analysis, Bayesian Linear Regression models):  
+Vegas gene analysis, Bayesian Linear Regression models):\
 [Compute sparse LD matrices for 1000G
 data](Document/Compute_sparseLD_1000G.html)
 
 Downloading and processing genome-wide association summary statistic and
-ingest into database:  
+ingest into database:\
 [Download and process new GWAS summary
 statistics](Document/Download_and_process_gwas.html)
 
@@ -126,17 +132,17 @@ Z-scores for multiple studies:
 [Summary-statistics imputation](Document/Impute_summary_statistics.html)
 
 Gene analysis using the VEGAS (Versatile Gene-based Association Study)
-approach using the 1000G LD reference data processed above:  
+approach using the 1000G LD reference data processed above:\
 [Gene analysis using VEGAS](Document/Gene_analysis_vegas.html)
 
 Gene set enrichment analysis (GSEA) based on BLR (Bayesian Linear
 Regression) model derived gene-level statistics and MAGMA (Multi-marker
-Analysis of GenoMic Annotation) (Bai et al. 2024).  
+Analysis of GenoMic Annotation) (Bai et al. 2024).\
 [Gene set analysis using MAGMA](Document/Gene_set_analysis_magma.html)
 
 Pathway prioritization using a single and multiple trait Bayesian MAGMA
 models and gene-level statistics derived from VEGAS (Gholipourshahraki
-et al. 2024).  
+et al. 2024).\
 [Gene set analysis using Bayesian
 MAGMA](Document/Gene_set_analysis_bayesian_magma.html)
 
@@ -156,27 +162,27 @@ polygenic simulated traits: [Individual-level Bayesian regression with
 gbayes](Document/Gbayes_individual_level_simulated_data.html)
 
 Finemapping with single trait Bayesian Linear Regression models and
-simulated data (Shrestha et al. 2023).  
+simulated data (Shrestha et al. 2023).\
 [Finemapping using BLR models on simulated
 data](Document/Finemapping_bayesian_linear_regression_simulated_data.html)
 
 Finemapping of gene and LD regions using single trait Bayesian Linear
-Regression models (Shrestha et al. 2023).  
+Regression models (Shrestha et al. 2023).\
 [Finemapping using BLR models on real
 data](Document/Finemapping_bayesian_linear_regression_real_data.html)
 
 Polygenic scoring (PGS) using Bayesian Linear Regression models and
-biological pathway information (work in progress).  
+biological pathway information (work in progress).\
 [Polygenic scoring using BLR
 models](Document/Polygenic_scoring_bayesian_linear_regression.html)
 
 Polygenic scoring (PGS) using summary statistics from PGS catalog and
-biological pathway information.  
+biological pathway information.\
 [Polygenic scoring using PGS
 Catalog](Document/Polygenic_scoring_pgscatalog.html)
 
 LD score regression for estimating genomic heritability and
-correlations.  
+correlations.\
 [LD score regression](Document/LD_score_regression.html)
 
 CAD/T2D genetic correlation with standalone gcorr: stored LD scores,
@@ -189,21 +195,22 @@ gcorr](Document/Genetic_correlation_CAD_T2D_gcorr.html)
 runtime, memory, simulated scoring evidence and remaining measurement
 gaps.
 
-[Workflow requirements and interpretation](Document/Download_and_install_gact_database.html#workflow-requirements)
+[Workflow requirements and
+interpretation](Document/Download_and_install_gact_database.html#workflow-requirements)
 
 ### Workshop and Course Materials
 
-**Workshop:**  
+**Workshop:**\
 *From Integrative Genomics to Polygenic Risk Scoring* — presented at the
 [**9th Annual Danish Bioinformatics
 Conference**](https://eventsignup.ku.dk/9danishbioinfconference).
 
-- [**Workshop Slides (HTML)**](Document/workshop_slides.html)  
+- [**Workshop Slides (HTML)**](Document/workshop_slides.html)\
 - [**Demonstration Slides (PDF)**](Document/workshop_slides.pdf)
 
-**Course:**  
+**Course:**\
 *Bayesian Linear Regression* — theoretical notes, lecture slides, and
-practical R examples.  
+practical R examples.\
 [**Course
 Materials**](https://psoerensen.github.io/bayesian-linear-regression/)
 
