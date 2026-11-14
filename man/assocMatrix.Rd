@@ -1,7 +1,12 @@
-\name{writeZMatrix}
+\name{assocMatrix}
+\alias{assocMatrix}
 \alias{writeZMatrix}
-\title{Write an observed GWAS Z matrix}
-\usage{writeZMatrix(GAlist, out_dir, Glist = NULL)}
+\title{Export a GWAS association matrix}
+\usage{
+assocMatrix(GAlist, out_dir, Glist = NULL, stat = "z")
+
+writeZMatrix(GAlist, out_dir, Glist = NULL)
+}
 \arguments{
 \item{GAlist}{A gact database descriptor with marker and GWAS data installed.}
 \item{out_dir}{A new output directory. Its parent must already exist.}
@@ -9,6 +14,8 @@
 \code{list(EUR = eur, EAS = eas, SAS = sas)}, with gmat sparse LD prepared.
 Panels must use the same genome build, strand and allele order as the gact
 catalog for shared markers.}
+\item{stat}{Statistic to export. The default, \code{"z"}, exports Z scores
+and is the only supported value.}
 }
 \value{Invisibly, a list with the matrix and catalog paths, matrix dimensions,
 and, when panels are supplied, the LD catalog and row map paths.}
@@ -18,6 +25,8 @@ Writes little-endian IEEE FP64 values in column-major order to
 Rows follow \code{GAlist$rsids}. Columns follow the study inventory.
 }
 \details{
+\code{writeZMatrix()} is the compatibility entry point for Z-score export.
+
 The writer reads the study files directly and checks coordinates and alleles
 against the gact marker catalog. It derives Z from finite \code{b} and positive
 finite \code{seb} when available, with finite stored Z as a fallback.

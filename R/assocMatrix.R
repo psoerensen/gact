@@ -1,4 +1,4 @@
-#' Write an observed GWAS Z matrix
+#' Export a GWAS association matrix
 #'
 #' Writes little-endian IEEE FP64 values in column-major order to `z.f64.bin`
 #' and creates `markers.tsv` and `studies.tsv` in the same directory.
@@ -14,10 +14,15 @@
 #'   list(EUR = eur, EAS = eas, SAS = sas), with gmat sparse LD prepared.
 #'   Panels must use the same genome build, strand and allele order as the
 #'   gact catalog for shared markers.
+#' @param stat Statistic to export. The default, `"z"`, exports Z scores and
+#'   is the only supported value.
 #' @return Invisibly, a list with the matrix and catalog paths, matrix dimensions,
 #'   and any LD row map paths.
 #' @export
-writeZMatrix <- function(GAlist, out_dir, Glist = NULL) {
+assocMatrix <- function(GAlist, out_dir, Glist = NULL, stat = "z") {
+  if (!identical(stat, "z"))
+    stop("stat must be \"z\".", call. = FALSE)
+
   valid_ids <- function(x) is.character(x) && length(x) > 0L &&
     !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
   rsids <- GAlist$rsids
@@ -95,4 +100,10 @@ writeZMatrix <- function(GAlist, out_dir, Glist = NULL) {
     result$ld_maps <- setNames(file.path(out_dir, paste0("ld-", panels, ".u32le.bin")), panels)
   }
   invisible(result)
+}
+
+#' @rdname assocMatrix
+#' @export
+writeZMatrix <- function(GAlist, out_dir, Glist = NULL) {
+  assocMatrix(GAlist, out_dir, Glist, stat = "z")
 }

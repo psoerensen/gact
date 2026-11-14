@@ -78,7 +78,7 @@ remotes::install_github("psoerensen/gact")
 gact::install_gsuite()
 ```
 
-### Export an observed GWAS Z matrix
+### Export a GWAS association matrix
 
 New studies are aligned during ingestion. Use `recodeSumstat()` to align an
 existing summary-statistics file to the same marker catalog. By default it
@@ -87,10 +87,10 @@ When replacing a registered study, update its recorded checksum using the
 returned MD5.
 
 ```{r, eval=FALSE}
-gact::writeZMatrix(GAlist, out_dir = "mopscore-z")
+gact::assocMatrix(GAlist, out_dir = "mopscore-z")
 ```
 
-The output directory contains a column-major FP64 Z matrix and TSV catalogs
+By default, the output directory contains a column-major FP64 Z matrix and TSV catalogs
 that give the exact marker and study order. The writer takes the marker
 backbone from `GAlist$rsids` and uses NaN for missing scores. To prepare slices
 for existing gmat sparse LD, pass `Glist = list(EUR = eur, EAS = eas, SAS = sas)`

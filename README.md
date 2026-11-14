@@ -98,27 +98,27 @@ remotes::install_github("psoerensen/gact")
 gact::install_gsuite()
 ```
 
-### Export an observed GWAS Z matrix
+### Export a GWAS association matrix
 
-New studies are aligned during ingestion. Use `recodeSumstat()` to align an
-existing summary-statistics file to the same marker catalog. By default it
-replaces the file after validation. Use `out_file` to keep the original.
-When replacing a registered study, update its recorded checksum using the
-returned MD5.
+New studies are aligned during ingestion. Use `recodeSumstat()` to align
+an existing summary-statistics file to the same marker catalog. By
+default it replaces the file after validation. Use `out_file` to keep
+the original. When replacing a registered study, update its recorded
+checksum using the returned MD5.
 
 ``` r
-gact::writeZMatrix(GAlist, out_dir = "mopscore-z")
+gact::assocMatrix(GAlist, out_dir = "mopscore-z")
 ```
 
-The output directory contains a column-major FP64 Z matrix and TSV
-catalogs that give the exact marker and study order. The writer takes
-the marker backbone from `GAlist$rsids` and uses NaN for missing scores. To
-prepare slices for existing gmat sparse LD, pass
-`Glist = list(EUR = eur, EAS = eas, SAS = sas)` with each ancestry's
+By default, the output directory contains a column-major FP64 Z matrix
+and TSV catalogs that give the exact marker and study order. The writer
+takes the marker backbone from `GAlist$rsids` and uses NaN for missing
+scores. To prepare slices for existing gmat sparse LD, pass
+`Glist = list(EUR = eur, EAS = eas, SAS = sas)` with each ancestry’s
 Glist. Align BED dosage alleles to the gact effect alleles before
 calculating LD. All study columns use that same allele at each Z row.
 The writer checks the LD allele order and stores a four-byte Z row index
-per LD row, so a slice can use its panel's LD directly.
+per LD row, so a slice can use its panel’s LD directly.
 
 ### Tutorials for downloading and installing the gact database
 

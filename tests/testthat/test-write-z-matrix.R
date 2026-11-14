@@ -1,4 +1,4 @@
-test_that("writeZMatrix writes aligned observed columns and ordered catalogs", {
+test_that("assocMatrix defaults to aligned observed Z columns", {
   root <- tempfile("z-matrix-")
   dir.create(root)
   on.exit(unlink(root, recursive = TRUE))
@@ -23,7 +23,7 @@ test_that("writeZMatrix writes aligned observed columns and ordered catalogs", {
     studyfiles = c(study1 = first, study2 = second)
   )
 
-  out <- writeZMatrix(ga, file.path(root, "matrix"))
+  out <- gact::assocMatrix(ga, file.path(root, "matrix"))
   expect_identical(out$dim, c(4L, 2L))
   expect_equal(file.size(out$z), 64)
   expect_identical(readBin(out$z, "double", n = 8, size = 8, endian = "little"),
@@ -36,16 +36,24 @@ test_that("writeZMatrix writes aligned observed columns and ordered catalogs", {
   expect_identical(metadata$ancestry, c("EAS", "EUR"))
   expect_identical(metadata$observed, c(3L, 1L))
   expect_identical(metadata$missing, c(1L, 3L))
-  expect_error(writeZMatrix(ga, dirname(out$z)), "already exists")
+  expect_error(assocMatrix(ga, dirname(out$z)), "already exists")
+  expect_error(assocMatrix(ga, file.path(root, "beta"), stat = "b"), 'stat must be "z"')
+  expect_false(dir.exists(file.path(root, "beta")))
+
+  legacy <- gact::writeZMatrix(ga, file.path(root, "legacy"))
+  explicit <- assocMatrix(ga, file.path(root, "explicit"), stat = "z")
+  expect_identical(unname(tools::md5sum(c(legacy$z, legacy$markers, legacy$studies))),
+    unname(tools::md5sum(c(out$z, out$markers, out$studies))))
+  expect_identical(unname(tools::md5sum(explicit$z)), unname(tools::md5sum(out$z)))
 
   ga$rsids <- markers$rsids
-  out_ordered <- writeZMatrix(ga, file.path(root, "ordered"))
+  out_ordered <- assocMatrix(ga, file.path(root, "ordered"))
   expect_identical(read.delim(out_ordered$markers,
     colClasses = c(rsids = "character"))$rsids, markers$rsids)
 
   cat("rs2,1,20,C,T,1,1,1,NA\n", file = second, append = TRUE)
   bad <- file.path(root, "failed")
-  expect_error(writeZMatrix(ga, bad), "Repeated marker rs2")
+  expect_error(assocMatrix(ga, bad), "Repeated marker rs2")
   expect_false(dir.exists(bad))
   expect_length(list.files(root, pattern = "^\\.gact-z-", all.files = TRUE), 0L)
 })
@@ -88,7 +96,7 @@ test_that("one Z allele matches all ancestry panels with different marker covera
   panels <- list(EUR = make_panel("eur", c(1, 2, 3)),
     EAS = make_panel("eas", c(2, 3, 4, 5)),
     SAS = make_panel("sas", c(1, 3, 4)))
-  out <- writeZMatrix(ga, file.path(root, "aligned"), Glist = panels)
+  out <- assocMatrix(ga, file.path(root, "aligned"), Glist = panels)
   z <- matrix(readBin(out$z, "double", n = 12, size = 8, endian = "little"), nrow = 4)
   catalog <- read.delim(out$ld)
   expect_identical(catalog$ancestry, names(panels))
@@ -130,16 +138,16 @@ test_that("one Z allele matches all ancestry panels with different marker covera
   expect_identical(after$columns, before$columns)
   expect_equal(before$values, after$values * c(-1, 1, 1, -1, -1, 1))
   expect_true(all(after$values > 0))
-  expect_error(writeZMatrix(ga, bad, Glist = reversed), "Reversed LD dosage allele for rs3")
+  expect_error(assocMatrix(ga, bad, Glist = reversed), "Reversed LD dosage allele for rs3")
   expect_false(dir.exists(bad))
 
   path <- panels$EUR$ldfiles[["markers"]]
   ld <- read.delim(path)
   ld$allele1[ld$marker_id == "rs2"] <- "A"
   data.table::fwrite(ld, path, sep = "\t")
-  expect_error(writeZMatrix(ga, bad, Glist = panels), "Allele mismatch for rs2")
+  expect_error(assocMatrix(ga, bad, Glist = panels), "Allele mismatch for rs2")
   expect_false(dir.exists(bad))
   ld$position_bp[ld$marker_id == "rs2"] <- 205L
   data.table::fwrite(ld, path, sep = "\t")
-  expect_error(writeZMatrix(ga, bad, Glist = panels), "Coordinate mismatch for rs2")
+  expect_error(assocMatrix(ga, bad, Glist = panels), "Coordinate mismatch for rs2")
 })
