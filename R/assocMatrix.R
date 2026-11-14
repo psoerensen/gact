@@ -8,6 +8,8 @@
 #' fallback. Missing and unusable scores are stored as NaN.
 #' All studies use the gact catalog effect allele. Reference panels must use
 #' that same dosage allele. Each panel's binary map indexes Z rows in LD order.
+#' With LD regions registered by [addLDRegions()], the export also writes
+#' zero-based Z and LD row pairs for each region with a matching panel.
 #' @param GAlist A gact database descriptor with marker and GWAS data installed.
 #' @param out_dir A new output directory. Its parent must already exist.
 #' @param Glist Optional list of Glist objects named by ancestry, for example
@@ -17,7 +19,7 @@
 #' @param stat Statistic to export. The default, `"z"`, exports Z scores and
 #'   is the only supported value.
 #' @return Invisibly, a list with the matrix and catalog paths, matrix dimensions,
-#'   and any LD row map paths.
+#'   any LD row map paths and the LD region catalog path when present.
 #' @export
 assocMatrix <- function(GAlist, out_dir, Glist = NULL, stat = "z") {
   if (!identical(stat, "z"))
@@ -85,11 +87,13 @@ assocMatrix <- function(GAlist, out_dir, Glist = NULL, stat = "z") {
   stage <- tempfile(".gact-z-", tmpdir = parent)
   if (!dir.create(stage)) stop("Cannot create the Z matrix staging directory.", call. = FALSE)
   on.exit(unlink(stage, recursive = TRUE))
+  region_files <- .stage_ld_regions(GAlist, panels, Glist, stage)
+  assembly <- if (any(nzchar(region_files))) GAlist$assembly else ""
   .Call(C_gact_write_z, enc2utf8(rsids),
         enc2utf8(normalizePath(marker_file, winslash = "/", mustWork = TRUE)),
         enc2utf8(normalizePath(files, winslash = "/", mustWork = TRUE)),
         enc2utf8(ids), enc2utf8(ancestry), enc2utf8(stage),
-        enc2utf8(panels), enc2utf8(panel_files))
+        enc2utf8(panels), enc2utf8(panel_files), enc2utf8(region_files), enc2utf8(assembly))
   if (file.exists(out_dir) || !file.rename(stage, out_dir))
     stop("Cannot publish the Z matrix directory: ", out_dir, call. = FALSE)
   result <- list(z = file.path(out_dir, "z.f64.bin"),
@@ -99,6 +103,7 @@ assocMatrix <- function(GAlist, out_dir, Glist = NULL, stat = "z") {
     result$ld <- file.path(out_dir, "ld.tsv")
     result$ld_maps <- setNames(file.path(out_dir, paste0("ld-", panels, ".u32le.bin")), panels)
   }
+  if (nzchar(assembly)) result$ld_regions <- file.path(out_dir, "ld_regions.tsv")
   invisible(result)
 }
 

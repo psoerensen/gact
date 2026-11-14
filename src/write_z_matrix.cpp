@@ -523,8 +523,76 @@ struct LdCoverage {
   std::size_t rows, matched;
 };
 
+struct LdRegion {
+  std::string chr;
+  std::uint64_t start, stop;
+  std::vector<std::array<std::uint32_t, 2>> rows;
+};
+
+class LdRegions {
+ public:
+  explicit LdRegions(const fs::path& path) {
+    if (path.empty()) return;
+    Table table(path.u8string());
+    const auto chr = table.required("chr"), start = table.required("start"),
+               stop = table.required("stop");
+    while (table.next()) {
+      const auto name = std::string(chromosome(table[chr]));
+      const double lo = number(table[start]), hi = number(table[stop]);
+      if (name.empty() || !(lo >= 0 && hi > lo && hi <= 9007199254740992.0 &&
+                            std::floor(lo) == lo && std::floor(hi) == hi))
+        table.input.fail("Invalid LD region coordinates");
+      auto& indices = by_chr_[name];
+      if (!indices.empty() && lo < regions_[indices.back()].stop)
+        table.input.fail("Overlapping or unordered LD regions");
+      indices.push_back(regions_.size());
+      regions_.push_back({std::string(table[chr]), static_cast<std::uint64_t>(lo),
+                          static_cast<std::uint64_t>(hi), {}});
+    }
+    if (regions_.empty()) table.input.fail("Empty LD region table");
+  }
+
+  void add(string_view chr, std::uint64_t pos, std::uint32_t z, std::size_t ld) {
+    const auto found = by_chr_.find(chromosome(chr));
+    if (found == by_chr_.end()) return;
+    const auto& indices = found->second;
+    const auto it = std::upper_bound(indices.begin(), indices.end(), pos,
+        [&](auto bp, auto i) { return bp < regions_[i].start; });
+    if (it == indices.begin()) return;
+    auto& region = regions_[*std::prev(it)];
+    if (pos >= region.stop) return;
+    if (ld > std::numeric_limits<std::uint32_t>::max())
+      throw std::runtime_error("LD region row exceeds the uint32 range");
+    region.rows.push_back({z, static_cast<std::uint32_t>(ld)});
+  }
+
+  void write(const fs::path& output, const std::string& stem) const {
+    auto index = output_file(output / (stem + ".tsv"));
+    auto pairs = output_file(output / (stem + ".u32le.bin"));
+    index << "region\tchr\tstart\tstop\toffset\tcount\n";
+    std::uint64_t offset = 0;
+    for (std::size_t i = 0; i < regions_.size(); ++i) {
+      const auto& r = regions_[i];
+      index << i << '\t' << r.chr << '\t' << r.start << '\t' << r.stop << '\t'
+            << offset << '\t' << r.rows.size() << '\n';
+      for (const auto& pair : r.rows) {
+        write_ld_row(pairs, pair[0]);
+        write_ld_row(pairs, pair[1]);
+      }
+      offset += r.rows.size();
+    }
+    index.close();
+    pairs.close();
+  }
+
+ private:
+  std::map<std::string, std::vector<std::size_t>, std::less<>> by_chr_;
+  std::vector<LdRegion> regions_;
+};
+
 LdCoverage write_ld_map(const std::string& path, const fs::path& output, const Index& index,
-                       const std::vector<Marker>& markers, const Labels& labels) {
+                       const std::vector<Marker>& markers, const Labels& labels,
+                       LdRegions* regions) {
   Table table(path);
   const MarkerFields fields(table, true);
   const auto idx = table.required("index"), id = table.required("marker_id");
@@ -545,6 +613,8 @@ LdCoverage write_ld_map(const std::string& path, const fs::path& output, const I
         table.input.fail("Reversed LD dosage allele for " + std::string(key) +
                          "; align the BED panel and its LD to the gact marker catalog first");
       z_index = static_cast<std::uint32_t>(z_row + 1);
+      if (regions)
+        regions->add(table[fields.chr], markers[z_row].pos, z_index - 1, row);
       ++matched;
     }
     write_ld_row(out, z_index);
@@ -601,7 +671,8 @@ void write_column(std::ofstream& out, std::vector<double>& column) {
 }
 
 SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP ancestry,
-                    SEXP directory, SEXP panels, SEXP panel_paths) {
+                    SEXP directory, SEXP panels, SEXP panel_paths, SEXP region_files,
+                    SEXP assembly_arg) {
   try {
     const auto size = static_cast<std::size_t>(XLENGTH(rsids));
     if (XLENGTH(panels) && size > std::numeric_limits<std::uint32_t>::max())
@@ -620,16 +691,32 @@ SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP anc
     write_markers(CHAR(STRING_ELT(marker_file, 0)), output / "markers.tsv", index, markers, labels);
     if (XLENGTH(panels) != 0) {
       auto catalog = output_file(output / "ld.tsv");
+      const std::string assembly = CHAR(STRING_ELT(assembly_arg, 0));
+      std::ofstream region_catalog;
+      if (!assembly.empty()) {
+        region_catalog = output_file(output / "ld_regions.tsv");
+        region_catalog << "ancestry\tassembly\tintervals\tregions\trow_pairs\n";
+      }
       catalog << "ancestry\tmap\tld_markers\tld_rows\tmatched\n";
       for (R_xlen_t i = 0; i < XLENGTH(panels); ++i) {
         const std::string panel = CHAR(STRING_ELT(panels, i));
         const std::string source = CHAR(STRING_ELT(panel_paths, i));
         const auto map = ld_map_name(panel);
-        const auto count = write_ld_map(source, output / map, index, markers, labels);
+        const std::string bed = CHAR(STRING_ELT(region_files, i));
+        LdRegions regions(bed.empty() ? fs::path{} : output / bed);
+        const auto count = write_ld_map(source, output / map, index, markers, labels,
+                                        bed.empty() ? nullptr : &regions);
+        if (!bed.empty()) {
+          const auto stem = fs::path(bed).stem().string();
+          regions.write(output, stem);
+          region_catalog << panel << '\t' << assembly << '\t' << bed << '\t'
+                         << stem << ".tsv\t" << stem << ".u32le.bin\n";
+        }
         catalog << panel << '\t' << map << '\t' << source << '\t'
                 << count.rows << '\t' << count.matched << '\n';
       }
       catalog.close();
+      if (region_catalog.is_open()) region_catalog.close();
     }
     auto z = output_file(output / "z.f64.bin");
     auto studies = output_file(output / "studies.tsv");
@@ -662,7 +749,7 @@ SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP anc
 }
 
 const R_CallMethodDef calls[] = {
-    {"C_gact_write_z", reinterpret_cast<DL_FUNC>(&write_z_matrix), 8},
+    {"C_gact_write_z", reinterpret_cast<DL_FUNC>(&write_z_matrix), 10},
     {"C_gact_recode_sumstat", reinterpret_cast<DL_FUNC>(&recode_sumstat), 5},
     {nullptr, nullptr, 0}
 };

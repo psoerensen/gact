@@ -99,6 +99,13 @@ alleles before calculating LD. All study columns use that same allele at
 each Z row. The writer checks the LD allele order and stores a four-byte
 Z row index per LD row, so a slice can use its panel's LD directly.
 
+For an existing GRCh37 database, use
+`GAlist <- gact::addLDRegions(GAlist)` before exporting with the aligned
+panels. New `hsa.0.0.1` descriptors include the EUR and EAS Berisa–Pickrell
+regions by default. The export adds `ld_regions.tsv` and paired Z and LD
+row indices for the overlapping markers in each region. The native gminer
+reader uses the saved indices to load slices in LD order.
+
 With the native gminer executable on PATH, impute missing scores from the
 matching sparse LD. Pass the directory used for the export as `matrix_dir`
 when it differs from `gwas_matrix` next to the marker directory.

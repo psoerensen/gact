@@ -156,6 +156,8 @@ createDB <- function(version = NULL, dbdir = NULL) {
  # Attach version metadata
  if (exists("gact_versions", inherits = TRUE) && version %in% names(gact_versions)) {
   GAlist$metadata <- gact_versions[[version]]
+  if (identical(version, "hsa.0.0.1"))
+   GAlist <- addLDRegions(GAlist)
  } else {
   warning("Version metadata not found in gact_versions for version: ", version)
  }

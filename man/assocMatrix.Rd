@@ -18,7 +18,7 @@ catalog for shared markers.}
 and is the only supported value.}
 }
 \value{Invisibly, a list with the matrix and catalog paths, matrix dimensions,
-and, when panels are supplied, the LD catalog and row map paths.}
+and, when available, the LD catalog, row map paths and region catalog path.}
 \description{
 Writes little-endian IEEE FP64 values in column-major order to
 \code{z.f64.bin} and creates \code{markers.tsv} and \code{studies.tsv}.
@@ -43,4 +43,13 @@ integer per LD row in disk order. Positive entries are one-based Z row
 indices. Zero means the LD marker is absent from \code{GAlist$rsids}.
 Gather the mapped Z scores in LD order and use the corresponding rows and
 columns of the original LD. No sign adjustment is required for that slice.
+
+With \code{GAlist$ldRegions} registered by \code{addLDRegions()}, the export
+writes \code{ld_regions.tsv} for panels with a matching assembly and ancestry.
+Each entry names an interval table, a region index and a binary row-pair file.
+Region IDs are zero-based and follow the interval table. Each index record
+gives the offset and count in pairs, including for empty regions. A pair
+contains two little-endian unsigned 32-bit integers, the zero-based Z and LD
+rows, in LD order within each region. Region membership uses inclusive starts
+and exclusive stops.
 }
