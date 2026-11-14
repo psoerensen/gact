@@ -1,0 +1,55 @@
+test_that("gminer reads assocMatrix and imputes from the matched ancestry CSR", {
+  skip_if(!nzchar(Sys.which("gminer_impute")), "Native gminer_impute is outside PATH")
+  root <- tempfile("gminer-assoc-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE))
+  marker_dir <- file.path(root, "marker")
+  dir.create(marker_dir)
+  catalog <- data.frame(rsids = c("rs1", "rs2", "rs3", "rs4"), chr = c(1, 1, 2, 1),
+    pos = c(100L, 200L, 100L, 300L), ea = "A", nea = "G")
+  data.table::fwrite(catalog, file.path(marker_dir, "markers.txt.gz"))
+
+  make_panel <- function(ancestry, second) {
+    prefix <- file.path(root, ancestry)
+    bed <- paste0(prefix, ".bed")
+    writeBin(as.raw(c(0x6c, 0x1b, 1, 0xff, 0, second, 0xff, 0)), bed)
+    writeLines(paste(catalog$chr[1:3], catalog$rsids[1:3], 0, catalog$pos[1:3], "A", "G"),
+      paste0(prefix, ".bim"))
+    writeLines(paste("F", paste0("I", 1:8), 0, 0, 0, -9), paste0(prefix, ".fam"))
+    gbase::gprep(gbase::gprep(bedfiles = bed), task = "sparseld",
+      max_distance_variants = 5L, progress = FALSE)
+  }
+  panels <- list(EUR = make_panel("EUR", c(0xff, 0)), EAS = make_panel("EAS", c(0, 0xff)))
+  ids <- c("east", "europe", "no_panel")
+  paths <- setNames(file.path(root, paste0(ids, ".csv")), ids)
+  for (path in paths)
+    data.table::fwrite(transform(catalog[1L, ], z = 5), path)
+  ga <- list(dirs = c(marker = marker_dir), rsids = catalog$rsids[c(4, 2, 3, 1)],
+    studies = data.frame(id = ids, ancestry = c("EAS", "EUR", "SAS")), studyfiles = paths)
+  observed <- assocMatrix(ga, file.path(root, "gwas_matrix"), Glist = panels)
+  checksum <- tools::md5sum(observed$z)
+  out <- gact::gminer(ga, task = "impute")
+  values <- matrix(readBin(out$z, "double", n = 12L, endian = "little"), nrow = 4)
+  mask <- matrix(as.integer(readBin(out$imputed, "raw", n = 12L)), nrow = 4)
+  quality <- matrix(readBin(out$r2, "double", n = 12L, endian = "little"), nrow = 4)
+  expect_equal(values[2, 1:2], c(-5, 5) / sqrt(1.1))
+  expect_equal(quality[2, 1:2], rep(1 / 1.1, 2))
+  expect_identical(values[4, ], rep(5, 3))
+  expect_true(all(is.nan(values[c(1, 3), ])))
+  expect_true(is.nan(values[2, 3]))
+  expect_identical(which(mask == 1L), c(2L, 6L))
+  expect_identical(tools::md5sum(observed$z), checksum)
+  counts <- read.delim(out$counts)
+  expect_identical(counts$study_id, ids)
+  expect_identical(counts$accepted, c(1L, 1L, 0L))
+  expect_identical(counts$eligible_missing, c(2L, 2L, 0L))
+  expect_identical(counts$remaining_missing, c(2L, 2L, 3L))
+
+  # A map with the right extent and counts can still point at the wrong SNP.
+  map <- readBin(observed$ld_maps[["EUR"]], "integer", n = 3L, endian = "little")
+  writeBin(map[c(2L, 1L, 3L)], observed$ld_maps[["EUR"]], endian = "little")
+  bad <- file.path(root, "bad")
+  expect_error(gact::gminer(ga, out_dir = bad), "gminer imputation failed")
+  expect_false(file.exists(bad))
+  expect_false(file.exists(paste0(bad, ".stage")))
+})

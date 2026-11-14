@@ -99,6 +99,15 @@ alleles before calculating LD. All study columns use that same allele at
 each Z row. The writer checks the LD allele order and stores a four-byte
 Z row index per LD row, so a slice can use its panel's LD directly.
 
+With the native gminer executable on PATH, impute missing scores from the
+matching sparse LD. Pass the directory used for the export as `matrix_dir`
+when it differs from `gwas_matrix` next to the marker directory.
+
+```{r, eval=FALSE}
+out <- gact::gminer(GAlist, task = "impute", matrix_dir = "mopscore-z")
+read.delim(out$counts)
+```
+
 ### Tutorials for downloading and installing the gact database
 Below is a set of tutorials used for the gact package:  
 
