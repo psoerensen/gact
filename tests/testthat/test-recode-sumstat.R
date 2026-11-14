@@ -1,0 +1,60 @@
+test_that("recodeSumstat aligns and atomically replaces gzipped study data", {
+  root <- tempfile("gact-recode-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE))
+  markers <- data.frame(rsids = c("rs1", "rs2"), chr = 1L, pos = c(10L, 20L),
+    ea = c("A", "C"), nea = c("G", "T"), eaf = c(0.2, 0.4))
+  data.table::fwrite(markers, file.path(root, "markers.txt.gz"))
+  ga <- list(dirs = c(marker = root))
+  path <- file.path(root, "GWAS3.txt.gz")
+  data.table::fwrite(data.frame(marker = c("rs2", "rs1"), chr = 1L,
+    pos = c(20L, 10L), ea = c("T", "A"), nea = c("C", "G"),
+    b = c(0.2, 0.4), seb = c(0.1, 0.2), z = c(2, -2), eaf = c(0.6, 0.2),
+    p = c(0.04, 0.05), notes = c("retain, commas", "also retain")), path)
+  original <- tools::md5sum(path)
+  copy <- file.path(root, "aligned.csv")
+  expect_equal(recodeSumstat(path, ga, out_file = copy)$reversed, 1)
+  expect_identical(tools::md5sum(path), original)
+  result <- recodeSumstat(path, ga)
+  expect_equal(result$reversed, 1)
+  expect_equal(result$repaired_z, 1)
+  aligned <- data.table::fread(path, data.table = FALSE)
+  expect_equal(aligned, data.table::fread(copy, data.table = FALSE))
+  expect_identical(aligned$marker, c("rs2", "rs1"))
+  expect_identical(aligned$ea, c("C", "A"))
+  expect_identical(aligned$nea, c("T", "G"))
+  expect_equal(aligned$b, c(-0.2, 0.4))
+  expect_equal(aligned$z, c(-2, 2))
+  expect_equal(aligned$eaf, c(0.4, 0.2))
+  expect_equal(aligned$seb, c(0.1, 0.2))
+  expect_equal(aligned$p, c(0.04, 0.05))
+  expect_identical(aligned$notes, c("retain, commas", "also retain"))
+  expect_identical(recodeSumstat(path, ga)$checksum, result$checksum)
+
+  aligned$pos[2L] <- 11L
+  data.table::fwrite(aligned, path)
+  bad <- tools::md5sum(path)
+  expect_error(recodeSumstat(path, ga), "Coordinate mismatch for rs1")
+  expect_identical(tools::md5sum(path), bad)
+  expect_length(list.files(root, pattern = "^\\.gact-recode-", all.files = TRUE), 0L)
+})
+
+test_that("ingestion aligns supplied signed Z columns", {
+  root <- tempfile("gact-qc-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE))
+  markers <- data.frame(rsids = "rs1", chr = 1L, pos = 10L,
+    ea = "A", nea = "G", eaf = 0.2)
+  data.table::fwrite(markers, file.path(root, "markers.txt.gz"))
+  data.table::fwrite(data.frame(cpra = "1_10_A_G"), file.path(root, "cpra.txt.gz"))
+  ga <- list(dirs = c(marker = root), rsids = markers$rsids)
+  stat <- data.frame(chr = 1L, pos = 10L, ea = "g", nea = "a",
+    eaf = 0.8, b = 0.2, seb = 0.1, z = 2, z_score = 2, p = 0.04, n = 1000)
+  aligned <- qcStatDB(ga, stat)
+  expect_identical(aligned$ea, "A")
+  expect_identical(aligned$nea, "G")
+  expect_equal(aligned$b, -0.2)
+  expect_equal(aligned$z, -2)
+  expect_equal(aligned$z_score, -2)
+  expect_equal(aligned$eaf, 0.2)
+})

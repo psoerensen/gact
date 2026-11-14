@@ -820,14 +820,19 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
 
 }
 
+.gact_ancestry_codes <- function(ancestry) {
+ aliases <- c(EUROPEAN="EUR", AFRICAN="AFR", "EAST ASIAN"="EAS", "SOUTH ASIAN"="SAS")
+ ancestry <- toupper(trimws(ancestry))
+ known <- ancestry %in% names(aliases)
+ ancestry[known] <- aliases[ancestry[known]]
+ ancestry
+}
+
 .gact_summary_metadata <- function(stat, GAlist, studyID, alleles=FALSE) {
  at <- match(studyID, GAlist$study$id)
  ancestry <- GAlist$study$ancestry[at]
  if(!is.null(ancestry) && length(ancestry)==length(studyID) && !anyNA(ancestry)) {
-  aliases <- c(EUROPEAN="EUR", AFRICAN="AFR", "EAST ASIAN"="EAS", "SOUTH ASIAN"="SAS")
-  ancestry <- toupper(trimws(ancestry))
-  known <- ancestry%in%names(aliases)
-  ancestry[known] <- aliases[ancestry[known]]
+  ancestry <- .gact_ancestry_codes(ancestry)
   attr(stat,"ancestry") <- setNames(ancestry,studyID)
  }
  attr(stat,"study_id") <- studyID

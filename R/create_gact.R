@@ -1282,18 +1282,16 @@ qcStatDB <- function(GAlist = NULL,
  # -----------------------------
  # Allele alignment
  # -----------------------------
- aligned <- stat$ea == marker$ea
+ aligned <- toupper(stat$ea) == toupper(marker$ea)
 
  message("Aligned:", sum(aligned))
  message("Flipped:", sum(!aligned))
 
  if (!all(aligned)) {
 
-  stat$b[!aligned] <- -stat$b[!aligned]
-
-  tmp_ea <- stat$ea
-  stat$ea[!aligned]  <- stat$nea[!aligned]
-  stat$nea[!aligned] <- tmp_ea[!aligned]
+  for (field in intersect(c("b", "z", "z_score"), names(stat))) {
+   stat[[field]][!aligned] <- -as.numeric(stat[[field]][!aligned])
+  }
 
   if (!is.null(stat$eaf)) {
    stat$eaf[!aligned] <- 1 - stat$eaf[!aligned]
@@ -1301,8 +1299,10 @@ qcStatDB <- function(GAlist = NULL,
  }
 
  # -----------------------------
- # Fill missing EAF
+ # Fill missing EAF and use the catalog allele labels.
  # -----------------------------
+ stat$ea <- marker$ea
+ stat$nea <- marker$nea
  if (is.null(stat$eaf)) {
   message("Using reference EAF")
   stat$eaf <- marker$eaf

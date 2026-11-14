@@ -62,9 +62,11 @@ The R package ***gact*** is designed for establishing and populating a comprehen
 
 Install gact from GitHub and the standalone gsuite analysis packages with:
 
-You need a C++17 build toolchain: matching Rtools on Windows, Xcode Command Line Tools on
-macOS, or R's configured compiler on Linux. The gsuite packages are distributed
-as source packages; their R dependencies are installed automatically.
+Source installation needs a C++17 build toolchain, such as matching Rtools on
+Windows, Xcode Command Line Tools on macOS, or R's configured compiler on Linux.
+Building gact also needs zlib headers and a linkable zlib library, included with
+Rtools on Windows. R installs the package dependencies from the configured
+repositories.
 
 ```{r,  eval=FALSE, echo=TRUE}
 install.packages("remotes", repos="https://cloud.r-project.org")
@@ -75,6 +77,27 @@ options(repos=c(
 remotes::install_github("psoerensen/gact")
 gact::install_gsuite()
 ```
+
+### Export an observed GWAS Z matrix
+
+New studies are aligned during ingestion. Use `recodeSumstat()` to align an
+existing summary-statistics file to the same marker catalog. By default it
+replaces the file after validation. Use `out_file` to keep the original.
+When replacing a registered study, update its recorded checksum using the
+returned MD5.
+
+```{r, eval=FALSE}
+gact::writeZMatrix(GAlist, out_dir = "mopscore-z")
+```
+
+The output directory contains a column-major FP64 Z matrix and TSV catalogs
+that give the exact marker and study order. The writer takes the marker
+backbone from `GAlist$rsids` and uses NaN for missing scores. To prepare slices
+for existing gmat sparse LD, pass `Glist = list(EUR = eur, EAS = eas, SAS = sas)`
+with each ancestry's Glist. Align BED dosage alleles to the gact effect
+alleles before calculating LD. All study columns use that same allele at
+each Z row. The writer checks the LD allele order and stores a four-byte
+Z row index per LD row, so a slice can use its panel's LD directly.
 
 ### Tutorials for downloading and installing the gact database
 Below is a set of tutorials used for the gact package:  
