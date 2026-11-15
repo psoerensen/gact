@@ -157,7 +157,7 @@ createDB <- function(version = NULL, dbdir = NULL) {
  if (exists("gact_versions", inherits = TRUE) && version %in% names(gact_versions)) {
   GAlist$metadata <- gact_versions[[version]]
   if (identical(version, "hsa.0.0.1"))
-   GAlist <- addLDRegions(GAlist)
+   GAlist <- downloadDB(GAlist, what = "ldetect")
  } else {
   warning("Version metadata not found in gact_versions for version: ", version)
  }
@@ -302,6 +302,8 @@ list_gact_versions <- function() {
 #'
 #' @param GAlist A list object containing the structure and paths needed for the database.
 #' @param what A character string specifying which data type to download.
+#'   Use \code{"ldetect"} to install the bundled GRCh37 EUR and EAS LD region
+#'   files in the marker directory and register their paths in GAlist.
 #' @param min_combined_score Minimum combined score for filtering STRING/STITCH data.
 #' @param min_interactions Minimum number of interactions for filtering STRING/STITCH data.
 #'
@@ -311,6 +313,7 @@ downloadDB <- function(GAlist = NULL, what = NULL,
                        min_combined_score = 900, min_interactions = 5) {
 
  if (is.null(what)) stop("Please specify what to download, e.g. what='gsets'")
+ if (identical(what, "ldetect")) return(addLDRegions(GAlist))
 
  # Ensure timeout and libcurl settings
  options(download.file.method = "libcurl", url.method = "libcurl", timeout = 3000)

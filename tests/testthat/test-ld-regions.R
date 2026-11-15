@@ -2,21 +2,29 @@ test_that("assocMatrix exports ancestry-specific half-open GRCh37 regions", {
   root <- tempfile("assoc-regions-")
   dir.create(root)
   on.exit(unlink(root, recursive = TRUE))
-  ga <- addLDRegions(list())
+  marker_dir <- file.path(root, "marker")
+  dir.create(marker_dir)
+  ga <- downloadDB(list(dirs = c(marker = marker_dir)), what = "ldetect")
   published <- ga$ldRegions$GRCh37
-  eur_stop <- published$EUR$intervals$stop[1L]
-  eas_stop <- published$EAS$intervals$stop[1L]
+  files <- vapply(published, function(x) x$file, character(1L))
+  expect_identical(unname(dirname(files)), rep(normalizePath(marker_dir, winslash = "/"), 2L))
+  expect_identical(unname(tools::md5sum(files)), unname(vapply(published, function(x) x$md5, "")))
+  expect_identical(downloadDB(ga, what = "ldetect"), ga)
+  intervals <- lapply(files, utils::read.table, header = TRUE)
+  eur_stop <- intervals$EUR$stop[1L]
+  eas_stop <- intervals$EAS$stop[1L]
   expect_identical(names(published), c("EUR", "EAS"))
-  expect_identical(vapply(published, function(x) nrow(x$intervals), integer(1)), c(EUR = 1703L, EAS = 1445L))
+  expect_identical(vapply(intervals, nrow, integer(1)), c(EUR = 1703L, EAS = 1445L))
   expect_identical(c(eur_stop, eas_stop), c(1892607L, 1976558L))
-  expect_error(addLDRegions(list(assembly = "GRCh38")), "differs")
+  expect_error(downloadDB(list(assembly = "GRCh38"), what = "ldetect"), "differs")
   created <- suppressMessages(gact:::createDB("hsa.0.0.1", root))
-  expect_identical(created$ldRegions, ga$ldRegions)
+  expect_identical(unname(tools::md5sum(vapply(created$ldRegions$GRCh37, function(x) x$file, ""))),
+                   unname(tools::md5sum(files)))
 
   markers <- data.frame(rsids = paste0("rs", 1:8), chr = c(rep("1", 7), "X"),
     pos = c(10583L, eur_stop - 1L, eur_stop, eur_stop + 1L, eas_stop, eas_stop + 1L, eas_stop + 2L, 20L),
     ea = "A", nea = "C")
-  data.table::fwrite(markers, file.path(root, "markers.txt.gz"))
+  data.table::fwrite(markers, file.path(marker_dir, "markers.txt.gz"))
   eur <- markers[1:7, ]
   eur$z <- -(1:7)
   eas <- markers[1:8, ]
@@ -24,12 +32,11 @@ test_that("assocMatrix exports ancestry-specific half-open GRCh37 regions", {
   sas <- eas
   for (panel in c("eur", "eas", "sas"))
     data.table::fwrite(get(panel), file.path(root, paste0(panel, ".tsv")), sep = "\t")
-  ga$dirs <- c(marker = root)
   ga$rsids <- markers$rsids[c(5, 3, 2, 1, 8, 4, 7)]
   ga$studies <- data.frame(id = c("eas", "sas", "eur"), ancestry = c("EAS", "SAS", "EUR"))
   ga$studyfiles <- setNames(file.path(root, paste0(ga$studies$id, ".tsv")), ga$studies$id)
   make_panel <- function(name, idx) {
-    prefix <- file.path(root, name)
+    prefix <- file.path(marker_dir, paste0("g1000_", name, ".subset.aligned"))
     bed <- paste0(prefix, ".bed")
     bim <- paste0(prefix, ".bim")
     fam <- paste0(prefix, ".fam")
@@ -46,8 +53,14 @@ test_that("assocMatrix exports ancestry-specific half-open GRCh37 regions", {
   bad$EUR$assembly <- "GRCh38"
   expect_error(assocMatrix(ga, file.path(root, "bad"), bad), "assembly differs")
   expect_false(dir.exists(file.path(root, "bad")))
-  out <- assocMatrix(ga, file.path(root, "matrix"), panels)
+  out <- gact::writeMarkerStat(ga)
   expect_identical(out$dim, c(7L, 3L))
+  expect_identical(dirname(out$z), file.path(normalizePath(root, winslash = "/"), "gwas_matrix"))
+  ld <- read.delim(out$ld)
+  expect_identical(ld$ancestry, c("EUR", "EAS", "SAS"))
+  expect_identical(ld$ld_markers, vapply(unname(panels), function(panel) {
+    normalizePath(panel$ldfiles[["markers"]], winslash = "/")
+  }, character(1L)))
   index <- read.delim(out$ld_regions)
   expect_identical(index$ancestry, c("EUR", "EAS"))
   expect_identical(index$assembly, rep("GRCh37", 2))
@@ -58,6 +71,11 @@ test_that("assocMatrix exports ancestry-specific half-open GRCh37 regions", {
   }
   expect_identical(pairs(1), c(3L, 0L, 2L, 1L, 1L, 2L, 0L, 3L))
   expect_identical(pairs(2), c(2L, 0L, 1L, 1L, 0L, 2L))
+  legacy <- ga
+  legacy$ldRegions$GRCh37 <- lapply(intervals, function(x) list(intervals = x))
+  old <- writeMarkerStat(legacy, out_dir = file.path(root, "legacy-regions"))
+  expect_identical(unname(tools::md5sum(file.path(dirname(old$z), index$row_pairs))),
+                   unname(tools::md5sum(file.path(dirname(out$z), index$row_pairs))))
   for (i in 1:2) {
     regions <- read.delim(file.path(dirname(out$z), index$regions[i]))
     expect_identical(regions$region, seq_len(nrow(regions)) - 1L)

@@ -8,7 +8,7 @@
 #' @param out_file Output path. Defaults to replacing the source after validation.
 #' @return Invisibly, the output path, recode counts and the file's MD5.
 #' @export
-recodeSumstat <- function(file, GAlist, out_file = file) {
+recodeStat <- function(file, GAlist, out_file = file) {
   one_path <- function(x) is.character(x) && length(x) == 1L &&
     !is.na(x) && nzchar(x)
   if (!one_path(file) || !one_path(out_file))
@@ -37,3 +37,7 @@ recodeSumstat <- function(file, GAlist, out_file = file) {
   invisible(list(file = out_file, reversed = counts[1L], repaired_z = counts[2L],
     checksum = unname(tools::md5sum(out_file))))
 }
+
+#' @rdname recodeStat
+#' @export
+recodeSumstat <- recodeStat

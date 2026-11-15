@@ -1,19 +1,57 @@
-test_that("gsuite installation is explicit and uses both repositories", {
+test_that("gsuite installation refreshes the official index and verifies the target library", {
+  gsuite <- "https://psoerensen.github.io/gtools/gsuite/repository"
+  cran <- "https://cloud.r-project.org"
+  index <- function(versions) {
+    cbind(Package = stats::setNames(names(versions), names(versions)), Version = versions)
+  }
+  versions <- c(gbase = "0.1.7", gcorr = "0.2.0")
+  published <- c(gbase = "0.1.12", gcorr = "0.1.9.1", gsea = "0.1.1.1")
+  lib <- tempfile("gsuite-library-")
   requested <- NULL
-  ready <- FALSE
-  testthat::local_mocked_bindings(install.packages=function(pkgs,lib,repos,...) {
-    requested <<- list(packages=pkgs,lib=lib,repos=repos)
-    ready <<- TRUE
-  }, packageVersion=function(pkg,lib.loc) package_version(if(ready) "0.1.3.1" else "0.0.0"), .package="utils")
-  lib <- dirname(system.file(package="gbase"))
-  expect_identical(install_gsuite(packages="gbase",lib=lib,repos=c(CRAN="@CRAN@")), "gbase")
-  expect_identical(requested$packages, "gbase")
-  expect_identical(unname(requested$repos), c(
-    "https://psoerensen.github.io/gtools/gsuite/repository", "https://cloud.r-project.org"))
+  refreshes <- 0L
+  succeeds <- TRUE
+  testthat::local_mocked_bindings(
+    available.packages = function(repos, type, ignore_repo_cache = FALSE) {
+      expect_identical(type, "source")
+      if (identical(repos, gsuite)) {
+        expect_true(ignore_repo_cache)
+        refreshes <<- refreshes + 1L
+        return(index(published))
+      }
+      expect_identical(unname(repos), cran)
+      index(c(gbase = "9.0.0", Rcpp = "1.1.1"))
+    },
+    installed.packages = function(lib.loc, noCache) {
+      expect_identical(lib.loc, lib)
+      expect_true(noCache)
+      index(versions)
+    },
+    install.packages = function(pkgs, lib, repos, type, available, ...) {
+      requested <<- list(packages = pkgs, lib = lib, repos = repos,
+                         type = type, available = available)
+      if (succeeds) versions[pkgs] <<- available[pkgs, "Version"]
+    }, .package = "utils")
+  packages <- c("gbase", "gcorr", "gsea")
+  expect_identical(install_gsuite(packages, lib, repos = c(CRAN = "@CRAN@")), packages)
+  expect_identical(requested$packages, c("gbase", "gsea"))
+  expect_identical(requested$lib, lib)
+  expect_identical(unname(requested$repos), c(gsuite, cran))
+  expect_identical(requested$type, "source")
+  expect_identical(requested$available["gbase", "Version"], "0.1.12")
+  expect_true("Rcpp" %in% rownames(requested$available))
+  expect_identical(unname(versions["gcorr"]), "0.2.0")
+
   requested <- NULL
-  install_gsuite(packages="gbase",lib=lib)
+  install_gsuite(packages, lib)
   expect_null(requested)
-  expect_error(install_gsuite(packages="qgg"), "standalone")
+  expect_identical(refreshes, 2L)
+
+  versions[["gbase"]] <- "0.1.7"
+  succeeds <- FALSE
+  expect_error(install_gsuite("gbase", lib, repos = c(CRAN = cran)),
+               "gbase \\(0\\.1\\.12\\)")
+  expect_error(install_gsuite("gmap", lib), "No compatible gsuite source version available for: gmap")
+  expect_error(install_gsuite("qgg"), "standalone")
 })
 
 test_that("database membership uses compact indices and retains repeated members", {

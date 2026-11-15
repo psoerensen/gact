@@ -1,4 +1,4 @@
-test_that("assocMatrix defaults to aligned observed Z columns", {
+test_that("writeMarkerStat defaults to aligned observed Z columns", {
   root <- tempfile("z-matrix-")
   dir.create(root)
   on.exit(unlink(root, recursive = TRUE))
@@ -7,7 +7,9 @@ test_that("assocMatrix defaults to aligned observed Z columns", {
     chr = c("1", "1", "2", "2"), pos = c(10, 20, 30, 40),
     ea = c("A", "C", "T", "G"), nea = c("G", "T", "C", "A")
   )
-  data.table::fwrite(markers, file.path(root, "markers.txt.gz"), sep = "\t")
+  marker_dir <- file.path(root, "marker")
+  dir.create(marker_dir)
+  data.table::fwrite(markers, file.path(marker_dir, "markers.txt.gz"), sep = "\t")
   first <- file.path(root, "one.txt.gz")
   second <- file.path(root, "two.csv")
   data.table::fwrite(data.frame(rsids = c("rs3", "other", "003"), chr = c(2, 2, 1),
@@ -17,13 +19,14 @@ test_that("assocMatrix defaults to aligned observed Z columns", {
     "rs3,2,30,T,C,Inf,4,2,NA", "003,1,10,A,G,NA,1,-1,NA",
     "rs4,2,40,A,G,3,NA,NA,NA"), second)
   ga <- list(
-    dirs = c(marker = root),
+    dirs = c(marker = marker_dir),
     rsids = c("rs3", "003", "rs2", "rs4"),
     studies = data.frame(id = c("study2", "study1"), ancestry = c("EAS", "EUR")),
     studyfiles = c(study1 = first, study2 = second)
   )
 
-  out <- gact::assocMatrix(ga, file.path(root, "matrix"))
+  out <- gact::writeMarkerStat(ga)
+  expect_identical(basename(dirname(out$z)), "gwas_matrix")
   expect_identical(out$dim, c(4L, 2L))
   expect_equal(file.size(out$z), 64)
   expect_identical(readBin(out$z, "double", n = 8, size = 8, endian = "little"),
@@ -36,6 +39,7 @@ test_that("assocMatrix defaults to aligned observed Z columns", {
   expect_identical(metadata$ancestry, c("EAS", "EUR"))
   expect_identical(metadata$observed, c(3L, 1L))
   expect_identical(metadata$missing, c(1L, 3L))
+  expect_null(out$ld)
   expect_error(assocMatrix(ga, dirname(out$z)), "already exists")
   expect_error(assocMatrix(ga, file.path(root, "beta"), stat = "b"), 'stat must be "z"')
   expect_false(dir.exists(file.path(root, "beta")))
@@ -45,6 +49,19 @@ test_that("assocMatrix defaults to aligned observed Z columns", {
   expect_identical(unname(tools::md5sum(c(legacy$z, legacy$markers, legacy$studies))),
     unname(tools::md5sum(c(out$z, out$markers, out$studies))))
   expect_identical(unname(tools::md5sum(explicit$z)), unname(tools::md5sum(out$z)))
+
+  one <- writeMarkerStat(ga, "study1")
+  expect_identical(basename(dirname(one$z)), "gwas_matrix_study1")
+  expect_identical(one$dim, c(4L, 1L))
+  expect_identical(readBin(one$z, "double", n = 4, endian = "little"), c(-2, NaN, NaN, NaN))
+  expect_identical(read.delim(one$studies)$ancestry, "EUR")
+
+  selected <- writeMarkerStat(ga, c("study1", "study2"))
+  expect_identical(basename(dirname(selected$z)), "gwas_matrix_selected")
+  expect_identical(read.delim(selected$studies)$study_id, c("study1", "study2"))
+  expect_identical(readBin(selected$z, "double", n = 8, endian = "little"),
+    c(-2, NaN, NaN, NaN, 2, NaN, 8, -3))
+  expect_error(writeMarkerStat(ga, "missing"), "Unknown studyID: missing")
 
   ga$rsids <- markers$rsids
   out_ordered <- assocMatrix(ga, file.path(root, "ordered"))
@@ -93,10 +110,15 @@ test_that("one Z allele matches all ancestry panels with different marker covera
     gl <- gbase::gprep(study = name, bedfiles = bed, bimfiles = bim, famfiles = fam)
     gbase::gprep(gl, task = "sparseld", max_distance_variants = 3L, progress = FALSE)
   }
-  panels <- list(EUR = make_panel("eur", c(1, 2, 3)),
-    EAS = make_panel("eas", c(2, 3, 4, 5)),
-    SAS = make_panel("sas", c(1, 3, 4)))
-  out <- assocMatrix(ga, file.path(root, "aligned"), Glist = panels)
+  panels <- list(EUR = make_panel("g1000_eur.subset.aligned", c(1, 2, 3)),
+    EAS = make_panel("g1000_eas.subset.aligned", c(2, 3, 4, 5)),
+    SAS = make_panel("g1000_sas.subset.aligned", c(1, 3, 4)))
+  registered <- gact::addLDPanels(ga, panels)
+  expect_identical(names(registered$ldPanels), names(panels))
+  expect_identical(names(registered$ldPanels$EUR), c("markers", "assembly"))
+  path <- file.path(root, "GAlist.rds")
+  saveRDS(registered, path)
+  out <- writeMarkerStat(readRDS(path), out_dir = file.path(root, "aligned"))
   z <- matrix(readBin(out$z, "double", n = 12, size = 8, endian = "little"), nrow = 4)
   catalog <- read.delim(out$ld)
   expect_identical(catalog$ancestry, names(panels))
@@ -120,6 +142,18 @@ test_that("one Z allele matches all ancestry panels with different marker covera
   }
   expect_identical(readBin(out$ld_maps[["EAS"]], "raw", n = 16L),
     as.raw(c(4, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0)))
+
+  custom <- make_panel("custom-ld", c(2, 3))
+  overrides <- addLDPanels(ga, list(EAS = custom))
+  alternate <- writeMarkerStat(overrides, out_dir = file.path(root, "custom"))
+  alternate_ld <- read.delim(alternate$ld)
+  expect_setequal(alternate_ld$ancestry, names(panels))
+  expect_identical(alternate_ld$ld_markers[alternate_ld$ancestry == "EAS"],
+    normalizePath(custom$ldfiles[["markers"]], winslash = "/"))
+  expect_identical(alternate_ld$ld_rows[alternate_ld$ancestry == "EAS"], 2L)
+  expect_identical(alternate_ld$ld_markers[alternate_ld$ancestry == "EUR"],
+    catalog$ld_markers[catalog$ancestry == "EUR"])
+  expect_null(assocMatrix(ga, file.path(root, "legacy-default"))$ld)
 
   bad <- file.path(root, "bad")
   reversed <- panels
@@ -150,4 +184,11 @@ test_that("one Z allele matches all ancestry panels with different marker covera
   ld$position_bp[ld$marker_id == "rs2"] <- 205L
   data.table::fwrite(ld, path, sep = "\t")
   expect_error(assocMatrix(ga, bad, Glist = panels), "Coordinate mismatch for rs2")
+
+  expect_true(file.remove(panels$EAS$ldfiles[["values"]]))
+  expect_error(writeMarkerStat(ga, studyID = "GWAS7", out_dir = bad),
+    "Incomplete sparse LD for EAS.*values.f32.bin")
+  expect_false(dir.exists(bad))
+  one <- writeMarkerStat(ga, studyID = "GWAS8", out_dir = file.path(root, "sas"))
+  expect_identical(read.delim(one$ld)$ancestry, "SAS")
 })

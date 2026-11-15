@@ -1,7 +1,12 @@
-\name{recodeSumstat}
+\name{recodeStat}
+\alias{recodeStat}
 \alias{recodeSumstat}
 \title{Align a summary-statistics file to the gact marker catalog}
-\usage{recodeSumstat(file, GAlist, out_file = file)}
+\usage{
+recodeStat(file, GAlist, out_file = file)
+
+recodeSumstat(file, GAlist, out_file = file)
+}
 \arguments{
 \item{file}{An existing gact-format CSV or TSV file, plain or gzipped.}
 \item{GAlist}{A gact descriptor pointing to the marker catalog.}
@@ -18,3 +23,4 @@ effect-allele frequency. Repairs legacy Z fields with the opposite sign
 and the same magnitude as beta divided by SE. Standard errors, p-values,
 other fields and row order are preserved.
 }
+\details{\code{recodeSumstat()} is a compatibility name for \code{recodeStat()}.}

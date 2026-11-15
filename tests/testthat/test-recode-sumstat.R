@@ -1,4 +1,4 @@
-test_that("recodeSumstat aligns and atomically replaces gzipped study data", {
+test_that("recodeStat aligns and atomically replaces gzipped study data", {
   root <- tempfile("gact-recode-")
   dir.create(root)
   on.exit(unlink(root, recursive = TRUE))
@@ -13,9 +13,9 @@ test_that("recodeSumstat aligns and atomically replaces gzipped study data", {
     p = c(0.04, 0.05), notes = c("retain, commas", "also retain")), path)
   original <- tools::md5sum(path)
   copy <- file.path(root, "aligned.csv")
-  expect_equal(recodeSumstat(path, ga, out_file = copy)$reversed, 1)
+  expect_equal(gact::recodeStat(path, ga, out_file = copy)$reversed, 1)
   expect_identical(tools::md5sum(path), original)
-  result <- recodeSumstat(path, ga)
+  result <- recodeStat(path, ga)
   expect_equal(result$reversed, 1)
   expect_equal(result$repaired_z, 1)
   aligned <- data.table::fread(path, data.table = FALSE)
@@ -34,7 +34,7 @@ test_that("recodeSumstat aligns and atomically replaces gzipped study data", {
   aligned$pos[2L] <- 11L
   data.table::fwrite(aligned, path)
   bad <- tools::md5sum(path)
-  expect_error(recodeSumstat(path, ga), "Coordinate mismatch for rs1")
+  expect_error(recodeStat(path, ga), "Coordinate mismatch for rs1")
   expect_identical(tools::md5sum(path), bad)
   expect_length(list.files(root, pattern = "^\\.gact-recode-", all.files = TRUE), 0L)
 })

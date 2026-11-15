@@ -78,38 +78,42 @@ remotes::install_github("psoerensen/gact")
 gact::install_gsuite()
 ```
 
+`install_gsuite()` checks the gsuite source repository for the latest versions
+compatible with your R session. It installs missing or older packages and
+verifies the versions in the destination library.
+
 ### Export a GWAS association matrix
 
-New studies are aligned during ingestion. Use `recodeSumstat()` to align an
+New studies are aligned during ingestion. Use `recodeStat()` to align an
 existing summary-statistics file to the same marker catalog. By default it
 replaces the file after validation. Use `out_file` to keep the original.
 When replacing a registered study, update its recorded checksum using the
 returned MD5.
 
 ```{r, eval=FALSE}
-gact::assocMatrix(GAlist, out_dir = "mopscore-z")
+gact::writeMarkerStat(GAlist, out_dir = "mopscore-z")
 ```
 
-By default, the output directory contains a column-major FP64 Z matrix and TSV catalogs
-that give the exact marker and study order. The writer takes the marker
-backbone from `GAlist$rsids` and uses NaN for missing scores. To prepare slices
-for existing gmat sparse LD, pass `Glist = list(EUR = eur, EAS = eas, SAS = sas)`
-with each ancestry's Glist. Align BED dosage alleles to the gact effect
-alleles before calculating LD. All study columns use that same allele at
-each Z row. The writer checks the LD allele order and stores a four-byte
-Z row index per LD row, so a slice can use its panel's LD directly.
+The output directory contains a column-major FP64 Z matrix and TSV catalogs
+that give the exact marker and study order. Use `studyID` to select columns.
+The writer takes the marker backbone from `GAlist$rsids` and uses NaN for
+missing scores. It finds sparse LD by study ancestry in the marker
+directory, using the aligned BED stems `g1000_eur.subset.aligned`,
+`g1000_eas.subset.aligned` and `g1000_sas.subset.aligned`. Use
+`addLDPanels()` for custom paths. Align BED dosage alleles to the gact
+effect alleles before calculating LD. The writer checks the LD allele
+order and stores a four-byte Z row index per LD row.
 
 For an existing GRCh37 database, use
-`GAlist <- gact::addLDRegions(GAlist)` before exporting with the aligned
-panels. New `hsa.0.0.1` descriptors include the EUR and EAS Berisa–Pickrell
-regions by default. The export adds `ld_regions.tsv` and paired Z and LD
-row indices for the overlapping markers in each region. The native gminer
-reader uses the saved indices to load slices in LD order.
+`GAlist <- gact::downloadDB(GAlist, what = "ldetect")` to install the EUR
+and EAS Berisa–Pickrell files in the marker directory. New `hsa.0.0.1`
+databases install the files during creation. The export adds
+`ld_regions.tsv` and paired Z and LD row indices. gminer reads the indices
+to load slices in LD order.
 
-With the gminer R package installed and its native executable on PATH, impute
-missing scores from the matching sparse LD. Pass the directory used for the
-export as `matrix_dir` when it differs from `gwas_matrix` next to the marker
-directory.
+With gminer installed, impute missing scores from the matching sparse LD.
+Pass the directory used for the export as `matrix_dir` when it differs from
+`gwas_matrix` next to the marker directory.
 
 ```{r, eval=FALSE}
 out <- gminer::gminer(GAlist, task = "impute", matrix_dir = "mopscore-z")

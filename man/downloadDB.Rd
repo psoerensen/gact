@@ -14,7 +14,9 @@ downloadDB(
 \arguments{
 \item{GAlist}{A list object containing the structure and paths needed for the database.}
 
-\item{what}{A character string specifying which data type to download.}
+\item{what}{A character string specifying which data type to download. Use
+\code{"ldetect"} to install the bundled GRCh37 EUR and EAS LD region files in
+the marker directory and register their paths in GAlist.}
 
 \item{min_combined_score}{Minimum combined score for filtering STRING/STITCH data.}
 
