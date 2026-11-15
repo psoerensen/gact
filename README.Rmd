@@ -106,12 +106,13 @@ regions by default. The export adds `ld_regions.tsv` and paired Z and LD
 row indices for the overlapping markers in each region. The native gminer
 reader uses the saved indices to load slices in LD order.
 
-With the native gminer executable on PATH, impute missing scores from the
-matching sparse LD. Pass the directory used for the export as `matrix_dir`
-when it differs from `gwas_matrix` next to the marker directory.
+With the gminer R package installed and its native executable on PATH, impute
+missing scores from the matching sparse LD. Pass the directory used for the
+export as `matrix_dir` when it differs from `gwas_matrix` next to the marker
+directory.
 
 ```{r, eval=FALSE}
-out <- gact::gminer(GAlist, task = "impute", matrix_dir = "mopscore-z")
+out <- gminer::gminer(GAlist, task = "impute", matrix_dir = "mopscore-z")
 read.delim(out$counts)
 ```
 
