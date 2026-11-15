@@ -2,8 +2,8 @@
 #'
 #' Writes little-endian IEEE FP64 values in column-major order to `z.f64.bin`
 #' and creates `markers.tsv` and `studies.tsv` in the same directory.
-#' Rows follow `GAlist$rsids`. Columns follow `studyID` when supplied or the
-#' study inventory by default.
+#' Rows follow `GAlist$rsids`. Columns follow the full study inventory in
+#' GAlist order. The inventory must contain at least two studies.
 #' The writer aligns study scores to the gact marker catalog. It computes Z
 #' from finite beta and positive finite SE when available, with stored Z as a
 #' fallback. Missing and unusable scores are stored as NaN.
@@ -15,21 +15,14 @@
 #' With LD regions installed by `downloadDB(GAlist, what = "ldetect")`, the
 #' export also writes zero-based Z and LD row pairs for each matching region.
 #' @param GAlist A gact database descriptor with marker and GWAS data installed.
-#' @param studyID Optional character vector of unique study IDs. The default
-#'   writes all studies in GAlist order.
-#' @param out_dir A new output directory. Defaults to `gwas_matrix` next to
-#'   the marker directory, with a study ID suffix for one selected study or
-#'   `_selected` for multiple selected studies. Its parent must already exist.
+#' @param out_dir A new output directory. Defaults to `matrix` inside the
+#'   database's `gstat` directory. Its parent must already exist.
 #' @param stat Statistic to export. The default, `"z"`, exports Z scores and
 #'   is the only supported value.
 #' @return Invisibly, a list with the matrix and catalog paths, matrix dimensions,
 #'   any LD row map paths and the LD region catalog path when present.
 #' @export
-writeMarkerStat <- function(GAlist, studyID = NULL, out_dir = NULL, stat = "z") {
-  .write_marker_stat(GAlist, studyID, out_dir, stat, discover_ld = TRUE)
-}
-
-.write_marker_stat <- function(GAlist, studyID, out_dir, stat, discover_ld) {
+writeMarkerStat <- function(GAlist, out_dir = NULL, stat = "z") {
   if (!identical(stat, "z"))
     stop("stat must be \"z\".", call. = FALSE)
 
@@ -41,22 +34,15 @@ writeMarkerStat <- function(GAlist, studyID = NULL, out_dir = NULL, stat = "z") 
   studies <- GAlist$studies
   if (is.null(studies$id)) studies <- GAlist$study
   ids <- as.character(studies$id)
+  if (length(ids) < 2L)
+    stop("The association matrix requires at least two studies.", call. = FALSE)
   if (!valid_ids(ids))
     stop("GAlist must contain unique, nonempty study IDs.", call. = FALSE)
-  study_rows <- seq_along(ids)
-  if (!is.null(studyID)) {
-    if (!valid_ids(studyID))
-      stop("studyID must contain unique, nonempty study IDs.", call. = FALSE)
-    study_rows <- match(studyID, ids)
-    if (anyNA(study_rows))
-      stop("Unknown studyID: ", studyID[which(is.na(study_rows))[1L]], ".", call. = FALSE)
-  }
   ancestry <- as.character(studies$ancestry)
   if (!length(ancestry)) ancestry <- rep(NA_character_, length(ids))
   if (length(ancestry) != length(ids))
     stop("The study ancestry column must match the study IDs.", call. = FALSE)
-  ids <- ids[study_rows]
-  ancestry <- .gact_ancestry_codes(ancestry[study_rows])
+  ancestry <- .gact_ancestry_codes(ancestry)
   ancestry[is.na(ancestry) | !nzchar(ancestry)] <- "unknown"
   if (any(grepl("[\t\r\n]", c(ids, ancestry))))
     stop("Study IDs and ancestries must be single TSV fields.", call. = FALSE)
@@ -74,22 +60,18 @@ writeMarkerStat <- function(GAlist, studyID = NULL, out_dir = NULL, stat = "z") 
   if (length(marker_file) != 1L || !file.exists(marker_file))
     stop("GAlist must point to an installed markers.txt.gz.", call. = FALSE)
 
-  if (discover_ld)
-    GAlist$ldPanels <- .find_aligned_ld(marker_dir, ancestry, GAlist$ldPanels)
+  GAlist$ldPanels <- .find_aligned_ld(marker_dir, ancestry, GAlist$ldPanels)
   panels <- as.character(names(GAlist$ldPanels))
   panel_files <- vapply(GAlist$ldPanels, function(panel) panel$markers, character(1L))
   if (any(grepl("[\t\r\n]", panel_files)))
     stop("LD marker paths must be single TSV fields.", call. = FALSE)
 
   if (is.null(out_dir)) {
-    suffix <- ""
-    if (length(studyID) == 1L) {
-      suffix <- paste0("_", utils::URLencode(studyID, reserved = TRUE, repeated = TRUE))
-    } else if (length(studyID) > 1L) {
-      suffix <- "_selected"
-    }
-    out_dir <- file.path(dirname(path.expand(marker_dir)),
-                         paste0("gwas_matrix", suffix))
+    gstat_dir <- if ("gstat" %in% names(GAlist$dirs)) GAlist$dirs[["gstat"]]
+    if (!is.character(gstat_dir) || length(gstat_dir) != 1L ||
+        is.na(gstat_dir) || !nzchar(gstat_dir))
+      stop("Supply a GAlist gstat directory or out_dir.", call. = FALSE)
+    out_dir <- file.path(gstat_dir, "matrix")
   }
   if (!is.character(out_dir) || length(out_dir) != 1L ||
       is.na(out_dir) || !nzchar(out_dir))
@@ -120,19 +102,4 @@ writeMarkerStat <- function(GAlist, studyID = NULL, out_dir = NULL, stat = "z") 
   }
   if (nzchar(assembly)) result$ld_regions <- file.path(out_dir, "ld_regions.tsv")
   invisible(result)
-}
-
-#' @rdname writeMarkerStat
-#' @param Glist Optional ancestry-named list of aligned Glist objects with
-#'   gmat sparse LD, for the compatibility entry points.
-#' @export
-assocMatrix <- function(GAlist, out_dir, Glist = NULL, stat = "z") {
-  GAlist <- addLDPanels(GAlist, Glist)
-  .write_marker_stat(GAlist, NULL, out_dir, stat, discover_ld = FALSE)
-}
-
-#' @rdname writeMarkerStat
-#' @export
-writeZMatrix <- function(GAlist, out_dir, Glist = NULL) {
-  assocMatrix(GAlist, out_dir, Glist)
 }

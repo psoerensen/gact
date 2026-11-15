@@ -1,10 +1,12 @@
-test_that("assocMatrix exports ancestry-specific half-open GRCh37 regions", {
+test_that("writeMarkerStat exports ancestry-specific half-open GRCh37 regions", {
   root <- tempfile("assoc-regions-")
   dir.create(root)
   on.exit(unlink(root, recursive = TRUE))
   marker_dir <- file.path(root, "marker")
   dir.create(marker_dir)
-  ga <- downloadDB(list(dirs = c(marker = marker_dir)), what = "ldetect")
+  gstat_dir <- file.path(root, "gstat")
+  dir.create(gstat_dir)
+  ga <- downloadDB(list(dirs = c(marker = marker_dir, gstat = gstat_dir)), what = "ldetect")
   published <- ga$ldRegions$GRCh37
   files <- vapply(published, function(x) x$file, character(1L))
   expect_identical(unname(dirname(files)), rep(normalizePath(marker_dir, winslash = "/"), 2L))
@@ -31,10 +33,10 @@ test_that("assocMatrix exports ancestry-specific half-open GRCh37 regions", {
   eas$z <- (1:8) * 10
   sas <- eas
   for (panel in c("eur", "eas", "sas"))
-    data.table::fwrite(get(panel), file.path(root, paste0(panel, ".tsv")), sep = "\t")
+    data.table::fwrite(get(panel), file.path(gstat_dir, paste0(panel, ".tsv")), sep = "\t")
   ga$rsids <- markers$rsids[c(5, 3, 2, 1, 8, 4, 7)]
   ga$studies <- data.frame(id = c("eas", "sas", "eur"), ancestry = c("EAS", "SAS", "EUR"))
-  ga$studyfiles <- setNames(file.path(root, paste0(ga$studies$id, ".tsv")), ga$studies$id)
+  ga$studyfiles <- setNames(file.path(gstat_dir, paste0(ga$studies$id, ".tsv")), ga$studies$id)
   make_panel <- function(name, idx) {
     prefix <- file.path(marker_dir, paste0("g1000_", name, ".subset.aligned"))
     bed <- paste0(prefix, ".bed")
@@ -51,11 +53,11 @@ test_that("assocMatrix exports ancestry-specific half-open GRCh37 regions", {
     EAS = make_panel("eas", c(2:3, 5:6, 8)), SAS = make_panel("sas", c(1:3, 5)))
   bad <- panels
   bad$EUR$assembly <- "GRCh38"
-  expect_error(assocMatrix(ga, file.path(root, "bad"), bad), "assembly differs")
+  expect_error(writeMarkerStat(addLDPanels(ga, bad), file.path(root, "bad")), "assembly differs")
   expect_false(dir.exists(file.path(root, "bad")))
   out <- gact::writeMarkerStat(ga)
   expect_identical(out$dim, c(7L, 3L))
-  expect_identical(dirname(out$z), file.path(normalizePath(root, winslash = "/"), "gwas_matrix"))
+  expect_identical(dirname(out$z), file.path(normalizePath(gstat_dir, winslash = "/"), "matrix"))
   ld <- read.delim(out$ld)
   expect_identical(ld$ancestry, c("EUR", "EAS", "SAS"))
   expect_identical(ld$ld_markers, vapply(unname(panels), function(panel) {
@@ -64,7 +66,11 @@ test_that("assocMatrix exports ancestry-specific half-open GRCh37 regions", {
   index <- read.delim(out$ld_regions)
   expect_identical(index$ancestry, c("EUR", "EAS"))
   expect_identical(index$assembly, rep("GRCh37", 2))
-  expect_null(assocMatrix(ga, file.path(root, "sas-matrix"), panels["SAS"])$ld_regions)
+  sas_only <- ga
+  sas_only$studies$ancestry <- rep("SAS", nrow(sas_only$studies))
+  sas_out <- writeMarkerStat(sas_only, file.path(root, "sas-matrix"))
+  expect_identical(read.delim(sas_out$ld)$ancestry, "SAS")
+  expect_null(sas_out$ld_regions)
   pairs <- function(i) {
     path <- file.path(dirname(out$z), index$row_pairs[i])
     readBin(path, "integer", n = file.size(path) / 4, size = 4, endian = "little")

@@ -111,13 +111,13 @@ the original. When replacing a registered study, update its recorded
 checksum using the returned MD5.
 
 ``` r
-gact::writeMarkerStat(GAlist, out_dir = "mopscore-z")
+gact::writeMarkerStat(GAlist)
 ```
 
-The output directory contains a column-major FP64 Z matrix and TSV catalogs
-that give the exact marker and study order. Use `studyID` to select columns.
-The writer takes the marker backbone from `GAlist$rsids` and uses NaN for
-missing scores. It finds sparse LD by study ancestry in the marker
+By default, `gstat/matrix/` holds the column-major FP64 Z matrix and TSV
+catalogs. Rows follow `GAlist$rsids`. Columns follow the full study inventory,
+which must contain at least two studies. Missing scores are stored as NaN.
+The writer finds sparse LD by study ancestry in the marker
 directory, using the aligned BED stems `g1000_eur.subset.aligned`,
 `g1000_eas.subset.aligned` and `g1000_sas.subset.aligned`. Use
 `addLDPanels()` for custom paths. Align BED dosage alleles to the gact
@@ -132,11 +132,10 @@ databases install the files during creation. The export adds
 to load slices in LD order.
 
 With gminer installed, impute missing scores from the matching sparse LD.
-Pass the directory used for the export as `matrix_dir` when it differs from
-`gwas_matrix` next to the marker directory.
+For an export in a different directory, pass its path as `matrix_dir`.
 
 ``` r
-out <- gminer::gminer(GAlist, task = "impute", matrix_dir = "mopscore-z")
+out <- gminer::gminer(GAlist, task = "impute")
 read.delim(out$counts)
 ```
 

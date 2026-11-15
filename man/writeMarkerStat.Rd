@@ -1,24 +1,13 @@
 \name{writeMarkerStat}
 \alias{writeMarkerStat}
-\alias{assocMatrix}
-\alias{writeZMatrix}
 \title{Export a GWAS association matrix}
 \usage{
-writeMarkerStat(GAlist, studyID = NULL, out_dir = NULL, stat = "z")
-
-assocMatrix(GAlist, out_dir, Glist = NULL, stat = "z")
-
-writeZMatrix(GAlist, out_dir, Glist = NULL)
+writeMarkerStat(GAlist, out_dir = NULL, stat = "z")
 }
 \arguments{
 \item{GAlist}{A gact database descriptor with marker and GWAS data installed.}
-\item{studyID}{Optional character vector of unique study IDs. The default
-writes all studies in GAlist order.}
-\item{out_dir}{A new output directory. Defaults to \code{gwas_matrix} next
-to the marker directory, with a study ID suffix for one selected study or
-\code{_selected} for multiple selected studies. Its parent must already exist.}
-\item{Glist}{Optional ancestry-named list of aligned Glist objects with
-gmat sparse LD, for the compatibility entry points.}
+\item{out_dir}{A new output directory. Defaults to \code{matrix} inside the
+database's \code{gstat} directory. Its parent must already exist.}
 \item{stat}{Statistic to export. The default, \code{"z"}, exports Z scores
 and is the only supported value.}
 }
@@ -27,14 +16,10 @@ and, when available, the LD catalog, row map paths and region catalog path.}
 \description{
 Writes little-endian IEEE FP64 values in column-major order to
 \code{z.f64.bin} and creates \code{markers.tsv} and \code{studies.tsv}.
-Rows follow \code{GAlist$rsids}. Columns follow \code{studyID} when supplied
-or the study inventory by default.
+Rows follow \code{GAlist$rsids}. Columns follow the full study inventory
+in GAlist order. The inventory must contain at least two studies.
 }
 \details{
-\code{assocMatrix()} and \code{writeZMatrix()} are compatibility entry points
-for exporting the full study inventory. They take reference panels through
-their \code{Glist} argument.
-
 The writer reads the study files directly and checks coordinates and alleles
 against the gact marker catalog. It derives Z from finite \code{b} and positive
 finite \code{seb} when available, with finite stored Z as a fallback.
