@@ -22,7 +22,8 @@ updateStatDB(
   comments = "none",
   recipe = NULL,
   writeStatDB = TRUE,
-  strand = c("unknown", "forward")
+  strand = c("unknown", "forward"),
+  descriptor = NULL
 )
 }
 \arguments{
@@ -66,6 +67,9 @@ known build, a conflicting GRCh37 or GRCh38 study build is rejected.}
 \item{strand}{Input allele strand. Use \code{"forward"} only when the source
 documents forward-strand alleles for the declared build. The default
 \code{"unknown"} drops strand-ambiguous A/T and C/G SNPs.}
+
+\item{descriptor}{Optional path to the current GAlist RDS. When supplied, the
+updated descriptor is published with the study and inventory.}
 }
 \value{
 A list of updated study information, including the study id, file name, trait, type, gender, ancestry, build, sample size, case/control count, reference, and comments.

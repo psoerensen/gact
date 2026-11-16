@@ -928,6 +928,8 @@ removeStatDB <- function(GAlist,studyID=NULL) {
 #' @param strand Input allele strand. Use `"forward"` only when the source
 #'   documents forward-strand alleles for the declared build. The default
 #'   `"unknown"` drops strand-ambiguous A/T and C/G SNPs.
+#' @param descriptor Optional path to the current GAlist RDS. When supplied, the
+#'   updated descriptor is published with the study and inventory.
 #' @return A list of updated study information, including the study id, file name, trait, type, gender, ancestry, build, sample size, case/control count, reference, and comments.
 #'   The QC summary is attached as `qc_metrics` and saved as `GWAS<n>.qc.json`.
 #'
@@ -950,7 +952,8 @@ updateStatDB <- function(GAlist=NULL,
                          comments="none",
                          recipe=NULL,
                          writeStatDB=TRUE,
-                         strand = c("unknown", "forward")) {
+                         strand = c("unknown", "forward"),
+                         descriptor = NULL) {
 
  strand <- match.arg(strand)
  attr(GAlist, "qc_metrics") <- NULL
@@ -1016,6 +1019,8 @@ updateStatDB <- function(GAlist=NULL,
  }
  GAlist$study$reference[study_number] <- reference
  GAlist$study$source[study_number] <- source
+ if (!is.null(recipe$accession)) GAlist$study$accession[study_number] <- recipe$accession
+ if (!is.null(recipe$input_md5)) GAlist$study$input_md5[study_number] <- recipe$input_md5
 
  gstat_dir <- unname(GAlist$dirs["gstat"])
  if (length(gstat_dir) != 1L || !dir.exists(gstat_dir)) {
@@ -1071,8 +1076,19 @@ updateStatDB <- function(GAlist=NULL,
  }
  published <- character()
  committed <- FALSE
+ staged_descriptor <- inventory_backup <- NULL
+ inventory_published <- FALSE
  on.exit({
+  if (!committed && inventory_published) {
+   restored <- if (is.null(inventory_backup)) {
+    unlink(file_stat_information) == 0L
+   } else {
+    file.rename(inventory_backup, file_stat_information)
+   }
+   if (!restored) warning("Could not restore GWAS inventory: ", file_stat_information)
+  }
   if (!committed) unlink(published)
+  if (!is.null(staged_descriptor)) unlink(staged_descriptor)
   unlink(stage, recursive = TRUE)
   if (!committed && any(file.exists(published))) {
    warning("Could not remove GWAS files from the failed import: ",
@@ -1118,6 +1134,17 @@ updateStatDB <- function(GAlist=NULL,
  rownames(GAlist$studies) <- GAlist$studies$id
  staged_inventory <- file.path(stage, basename(file_stat_information))
  write.csv2(GAlist$studies, file = staged_inventory, row.names = FALSE)
+ if (!is.null(descriptor)) {
+  descriptor <- normalizePath(descriptor, mustWork = TRUE)
+  staged_descriptor <- tempfile(".gact-descriptor-", tmpdir = dirname(descriptor))
+  saveRDS(GAlist, staged_descriptor, compress = FALSE)
+  if (file.exists(file_stat_information)) {
+   inventory_backup <- file.path(stage, "previous-inventory.csv")
+   if (!file.copy(file_stat_information, inventory_backup)) {
+    stop("Cannot back up the GWAS inventory: ", file_stat_information)
+   }
+  }
+ }
 
  suspendInterrupts({
   if (writeStatDB) {
@@ -1133,6 +1160,10 @@ updateStatDB <- function(GAlist=NULL,
    published <- c(published, qc_path)
   }
   .publish_gwas_import_file(staged_inventory, file_stat_information, replace = TRUE)
+  inventory_published <- TRUE
+  if (!is.null(staged_descriptor)) {
+   .publish_gwas_import_file(staged_descriptor, descriptor, replace = TRUE)
+  }
   committed <- TRUE
  })
  return(GAlist)

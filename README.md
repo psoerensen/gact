@@ -349,3 +349,34 @@ exact source and header matches reuse verified mappings. New
 observations remain unverified. This function performs local inspection;
 an agent can interpret source publications and curate the saved
 knowledge between runs.
+
+### Run a GWAS manifest
+
+`runGWASManifest()` uses one TSV row per study. Supply `accession`,
+`filename`, `url`, `md5`, `source`, `trait`, `type`, `build`, and
+`ancestry`. Shared study metadata can instead be supplied in `defaults`,
+with manifest values taking precedence. Use the study accession and file
+metadata for the exact download. A PMID identifies a publication, which
+can contain multiple GWAS studies.
+
+``` r
+report <- runGWASManifest(
+  manifest = "studies.tsv",
+  descriptor = "GAlist.rds",
+  data_dir = "download",
+  out_dir = "recipes/batch-01",
+  knowledge = "recipes/verified/formats.json",
+  defaults = list(source = "Catalog release", build = "GRCh37",
+                  type = "binary", ancestry = "Mixed"),
+  import = FALSE
+)
+```
+
+The download cache is checked against the manifest MD5. A verified match
+for the source and exact header is required for automatic ingestion.
+Check `manifest_review.tsv` for unverified formats, invalid inputs, or
+failed imports and check the per-study inspection files for mappings and
+preview warnings. Use `import = TRUE` to import ready studies and save
+the updated GAlist. On a rerun, use a fresh output directory. Accessions
+already represented in the database are skipped, including legacy GWAS
+Catalog study URLs.

@@ -1,3 +1,7 @@
+.gact_gwas_metadata_fields <- c("source", "trait", "type", "category", "efo",
+  "gender", "ancestry", "build", "n", "ncase", "ncontrol", "reference",
+  "comments", "effect_scale", "p_scale", "strand")
+
 #' Inspect local GWAS files and prepare ingestion recipes
 #'
 #' Reads bounded leading previews, joins files to study metadata, and writes
@@ -67,9 +71,7 @@ inspectGWAS <- function(data_dir, metadata, out_dir, file_column = NULL,
   if (length(file_column) != 1L || !file_column %in% names(metadata)) {
     stop("file_column must name a metadata column")
   }
-  fields <- c("source", "trait", "type", "category", "efo", "gender", "ancestry",
-              "build", "n", "ncase", "ncontrol", "reference", "comments",
-              "effect_scale", "p_scale", "strand")
+  fields <- .gact_gwas_metadata_fields
   if (is.null(metadata_mapping)) {
     shared <- intersect(fields, names(metadata))
     metadata_mapping <- stats::setNames(shared, shared)

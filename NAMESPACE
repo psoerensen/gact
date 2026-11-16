@@ -87,3 +87,4 @@ importFrom(utils,tail)
 importFrom(gbase,mapSets)
 
 export(inspectGWAS)
+export(runGWASManifest)
