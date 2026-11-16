@@ -672,11 +672,17 @@ void write_column(std::ofstream& out, std::vector<double>& column) {
 
 SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP ancestry,
                     SEXP directory, SEXP panels, SEXP panel_paths, SEXP region_files,
-                    SEXP assembly_arg) {
+                    SEXP assembly_arg, SEXP progress_arg) {
   try {
     const auto size = static_cast<std::size_t>(XLENGTH(rsids));
+    const auto study_count = static_cast<std::size_t>(XLENGTH(ids));
+    const bool progress = Rf_asLogical(progress_arg) == TRUE;
     if (XLENGTH(panels) && size > std::numeric_limits<std::uint32_t>::max())
       throw std::runtime_error("The LD row map supports up to 2^32 - 1 Z rows.");
+    if (progress) {
+      Rprintf("[writeMarkerStat] Preparing %zu markers for %zu studies\n", size, study_count);
+      R_FlushConsole();
+    }
     Index index;
     index.reserve(size);
     for (std::size_t i = 0; i < size; ++i) {
@@ -703,6 +709,10 @@ SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP anc
         const std::string source = CHAR(STRING_ELT(panel_paths, i));
         const auto map = ld_map_name(panel);
         const std::string bed = CHAR(STRING_ELT(region_files, i));
+        if (progress) {
+          Rprintf("[writeMarkerStat] Mapping %s LD\n", panel.c_str());
+          R_FlushConsole();
+        }
         LdRegions regions(bed.empty() ? fs::path{} : output / bed);
         const auto count = write_ld_map(source, output / map, index, markers, labels,
                                         bed.empty() ? nullptr : &regions);
@@ -723,6 +733,10 @@ SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP anc
     studies << "study_id\tancestry\tobserved\tmissing\tld_map\n";
     std::vector<double> column(size);
     std::vector<bool> seen(size);
+    if (progress) {
+      Rprintf("[writeMarkerStat] Writing study columns\n");
+      R_FlushConsole();
+    }
     for (R_xlen_t j = 0; j < XLENGTH(ids); ++j) {
       checkpoint(0);
       const std::string panel = CHAR(STRING_ELT(ancestry, j));
@@ -738,6 +752,12 @@ SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP anc
         }
       }
       studies << '\n';
+      if (progress) {
+        Rprintf("[writeMarkerStat] %zu/%zu %s (%s) | %zu observed | %zu missing\n",
+                static_cast<std::size_t>(j) + 1, study_count, CHAR(STRING_ELT(ids, j)),
+                panel.c_str(), observed, size - observed);
+        R_FlushConsole();
+      }
     }
     z.close();
     studies.close();
@@ -749,7 +769,7 @@ SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP anc
 }
 
 const R_CallMethodDef calls[] = {
-    {"C_gact_write_z", reinterpret_cast<DL_FUNC>(&write_z_matrix), 10},
+    {"C_gact_write_z", reinterpret_cast<DL_FUNC>(&write_z_matrix), 11},
     {"C_gact_recode_sumstat", reinterpret_cast<DL_FUNC>(&recode_sumstat), 5},
     {nullptr, nullptr, 0}
 };

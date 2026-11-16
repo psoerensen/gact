@@ -102,12 +102,31 @@ gact::install_gsuite()
 versions compatible with your R session. It installs missing or older
 packages and verifies the versions in the destination library.
 
+#### Installing with a shared or locked R library
+
+Start a fresh R session before loading gact or gbase. Run the following
+first to put a personal library ahead of the shared library, then run
+the install commands above.
+
+``` r
+lib <- path.expand("~/R/gsuite-library")
+dir.create(lib, recursive = TRUE, showWarnings = FALSE)
+.libPaths(c(lib, .libPaths()))
+```
+
+Use a separate directory for each R environment. Repeat the
+`.libPaths()` line before loading gact in later sessions, or configure
+`R_LIBS_USER` for that environment. This also works when the shared
+library contains a `00LOCK-gbase` directory. If you manage the original
+library and want to install there, remove a leftover lock only after
+confirming no installation is using that library.
+
 ### Export a GWAS association matrix
 
-New studies are aligned during ingestion. Use `recodeStat()` to align
-an existing summary-statistics file to the same marker catalog. By
-default it replaces the file after validation. Use `out_file` to keep
-the original. When replacing a registered study, update its recorded
+New studies are aligned during ingestion. Use `recodeStat()` to align an
+existing summary-statistics file to the same marker catalog. By default
+it replaces the file after validation. Use `out_file` to keep the
+original. When replacing a registered study, update its recorded
 checksum using the returned MD5.
 
 ``` r
@@ -115,9 +134,12 @@ gact::writeMarkerStat(GAlist)
 ```
 
 By default, `gstat/matrix/` holds the column-major FP64 Z matrix and TSV
-catalogs. Rows follow `GAlist$rsids`. Columns follow the full study inventory,
-which must contain at least two studies. Missing scores are stored as NaN.
-The writer finds sparse LD by study ancestry in the marker
+catalogs. Rows follow `GAlist$rsids`. Columns follow the full study
+inventory, which must contain at least two studies. Missing scores are
+stored as NaN. The export reports each LD panel and completed study
+column by default. Use `progress = FALSE` to suppress these updates.
+Record each study’s ancestry in the inventory to enable LD matching for
+imputation. The writer finds sparse LD by study ancestry in the marker
 directory, using the aligned BED stems `g1000_eur.subset.aligned`,
 `g1000_eas.subset.aligned` and `g1000_sas.subset.aligned`. Use
 `addLDPanels()` for custom paths. Align BED dosage alleles to the gact
@@ -125,14 +147,15 @@ effect alleles before calculating LD. The writer checks the LD allele
 order and stores a four-byte Z row index per LD row.
 
 For an existing GRCh37 database, use
-`GAlist <- gact::downloadDB(GAlist, what = "ldetect")` to install the EUR
-and EAS Berisa–Pickrell files in the marker directory. New `hsa.0.0.1`
-databases install the files during creation. The export adds
-`ld_regions.tsv` and paired Z and LD row indices. gminer reads the indices
-to load slices in LD order.
+`GAlist <- gact::downloadDB(GAlist, what = "ldetect")` to install the
+EUR and EAS Berisa–Pickrell files in the marker directory. New
+`hsa.0.0.1` databases install the files during creation. The export adds
+`ld_regions.tsv` and paired Z and LD row indices. gminer reads the
+indices to load slices in LD order.
 
-With gminer installed, impute missing scores from the matching sparse LD.
-For an export in a different directory, pass its path as `matrix_dir`.
+With gminer installed, impute missing scores from the matching sparse
+LD. For an export in a different directory, pass its path as
+`matrix_dir`.
 
 ``` r
 out <- gminer::gminer(GAlist, task = "impute")
@@ -289,3 +312,40 @@ number NNF20SA0061466)
     learning patterns of effect sharing across multiple phenotypes.
     *Plos Genetics* 21 (1), e1011519 (2025).
     <https://doi.org/10.1371/journal.pgen.1011519>.
+
+### Inspect downloaded GWAS files before ingestion
+
+`inspectGWAS()` reads bounded leading previews and joins local files to
+a TSV metadata table. It prepares recipes, `review.tsv`, `formats.json`,
+and a separate `ingest.R` script. The output directory must be new or
+empty and outside the input directory. Use `file_column` and
+`metadata_mapping` when the metadata table uses different names. Missing
+or ambiguous metadata remains visible in the review table.
+
+``` r
+inspection <- inspectGWAS(
+  data_dir = "mops/human_GWAS/final_hg38",
+  metadata = "all_229_trait_summary.tsv",
+  out_dir = "gwas_recipe_review",
+  preview_rows = 1000
+)
+inspection$review
+```
+
+The folder name does not establish genome build. Supply confirmed
+metadata in the table or through `defaults`, for example
+`defaults = list(build = "GRCh38")`. Review recipes before executing
+`Rscript gwas_recipe_review/ingest.R GAlist.rds`. The generated script
+uses the existing ingestion API and writes the database. Preview checks
+cover only sampled rows; full-file validation and alignment take place
+during ingestion. The script is a sequential first-import script and
+reruns use existing gact behavior; it is not a resumable campaign
+manager.
+
+Format learning persists as explicit, source-specific knowledge. Correct
+an entry in `formats.json`, document the evidence, and set `verified` to
+`true`. Pass that file as `knowledge` to subsequent inspections. Only
+exact source and header matches reuse verified mappings. New
+observations remain unverified. This function performs local inspection;
+an agent can interpret source publications and curate the saved
+knowledge between runs.

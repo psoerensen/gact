@@ -2,7 +2,7 @@
 \alias{writeMarkerStat}
 \title{Export a GWAS association matrix}
 \usage{
-writeMarkerStat(GAlist, out_dir = NULL, stat = "z")
+writeMarkerStat(GAlist, out_dir = NULL, stat = "z", progress = TRUE)
 }
 \arguments{
 \item{GAlist}{A gact database descriptor with marker and GWAS data installed.}
@@ -10,6 +10,8 @@ writeMarkerStat(GAlist, out_dir = NULL, stat = "z")
 database's \code{gstat} directory. Its parent must already exist.}
 \item{stat}{Statistic to export. The default, \code{"z"}, exports Z scores
 and is the only supported value.}
+\item{progress}{Show progress while writing the marker catalog, LD maps and
+study columns. The default is \code{TRUE}.}
 }
 \value{Invisibly, a list with the matrix and catalog paths, matrix dimensions,
 and, when available, the LD catalog, row map paths and region catalog path.}

@@ -27,7 +27,10 @@ test_that("writeMarkerStat defaults to aligned observed Z columns", {
     studyfiles = c(study1 = first, study2 = second)
   )
 
-  out <- gact::writeMarkerStat(ga)
+  expect_message(
+    expect_output(out <- gact::writeMarkerStat(ga), "2/2 study1.*1 observed.*3 missing"),
+    "No matching LD for study2 \\(EAS\\), study1 \\(EUR\\)"
+  )
   expect_identical(dirname(out$z), file.path(normalizePath(gstat_dir, winslash = "/"), "matrix"))
   expect_identical(out$dim, c(4L, 2L))
   expect_equal(file.size(out$z), 64)
@@ -49,7 +52,8 @@ test_that("writeMarkerStat defaults to aligned observed Z columns", {
   custom_descriptor <- ga
   custom_descriptor$dirs <- c(marker = marker_dir)
   expect_error(writeMarkerStat(custom_descriptor), "gstat directory or out_dir")
-  explicit <- writeMarkerStat(custom_descriptor, out_dir = file.path(root, "explicit"))
+  expect_silent(explicit <- writeMarkerStat(custom_descriptor,
+    out_dir = file.path(root, "explicit"), progress = FALSE))
   expect_identical(unname(tools::md5sum(c(explicit$z, explicit$markers, explicit$studies))),
     unname(tools::md5sum(c(out$z, out$markers, out$studies))))
   expect_error(writeMarkerStat(ga, studyID = "study1"), "unused argument")

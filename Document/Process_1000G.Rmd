@@ -23,20 +23,39 @@ GAlist <- downloadDB(GAlist=GAlist, what="1000G")
 
 Prepare and save one descriptor per ancestry. This applies the website's
 database-availability selection, without adding another QC filter.
+Read marker IDs from BIM before preparation: `gprep()` computes genotype
+summaries from BED, so preparing the whole panel just to discover IDs performs
+an unnecessary scan and creates a potentially large intermediate descriptor.
 
 ```{r prepare}
+nthreads <- 1L  # Increase only to the number of cores available to this job.
 for (ancestry in c("eur", "eas", "sas")) {
   prefix <- file.path(GAlist$dirs["marker"], paste0("g1000_", ancestry))
-  Glist <- gprep(study=paste("1000G", toupper(ancestry)),
+  message(ancestry, ": reading BIM marker IDs")
+  bim_ids <- data.table::fread(paste0(prefix, ".bim"), header=FALSE,
+    select=2L, colClasses="character")[[1L]]
+  rsids <- bim_ids[bim_ids %in% GAlist$rsids]
+  if (!length(rsids)) stop("No database markers in the ", ancestry, " panel")
+  message(ancestry, ": preparing ", length(rsids), " selected markers")
+  print(system.time(Glist <- gbase::gprep(study=paste("1000G", toupper(ancestry)),
     bedfiles=paste0(prefix, ".bed"), bimfiles=paste0(prefix, ".bim"),
-    famfiles=paste0(prefix, ".fam"))
-  rsids <- intersect(unlist(Glist$rsids, use.names=FALSE), GAlist$rsids)
-  Glist <- gprep(study=Glist$study, bedfiles=Glist$bedfiles,
-    bimfiles=Glist$bimfiles, famfiles=Glist$famfiles, rsids=rsids)
-  saveRDS(Glist, file.path(GAlist$dirs["marker"],
-    paste0("Glist_1000G_", ancestry, "_filtered.rds")))
+    famfiles=paste0(prefix, ".fam"), rsids=rsids, nthreads=nthreads)))
+  message(ancestry, ": saving descriptor")
+  print(system.time(saveRDS(Glist, file.path(GAlist$dirs["marker"],
+    paste0("Glist_1000G_", ancestry, "_filtered.rds")))))
+  rm(Glist, bim_ids, rsids)
+  gc(verbose=FALSE)
+  message(ancestry, ": done")
 }
 ```
+
+Preparation reads selected BED genotypes to compute counts and allele
+frequencies; it does not compute LD. Threading applies to the genotype count
+scan, not all metadata preparation. The stage messages distinguish preparation
+from the default gzip-compressed RDS write. `compress=FALSE` can make the latter
+faster at the cost of a larger descriptor file. Large-panel runtime also depends
+on storage throughput and memory pressure; small fixtures do not establish
+whole-genome performance.
 
 Continue with [sparse LD and LD scores](Compute_sparseLD_1000G.html).
 Older qgg descriptors should be prepared again with gbase using their existing

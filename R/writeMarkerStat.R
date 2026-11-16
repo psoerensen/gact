@@ -19,12 +19,16 @@
 #'   database's `gstat` directory. Its parent must already exist.
 #' @param stat Statistic to export. The default, `"z"`, exports Z scores and
 #'   is the only supported value.
+#' @param progress Show progress while writing the marker catalog, LD maps
+#'   and study columns. The default is `TRUE`.
 #' @return Invisibly, a list with the matrix and catalog paths, matrix dimensions,
 #'   any LD row map paths and the LD region catalog path when present.
 #' @export
-writeMarkerStat <- function(GAlist, out_dir = NULL, stat = "z") {
+writeMarkerStat <- function(GAlist, out_dir = NULL, stat = "z", progress = TRUE) {
   if (!identical(stat, "z"))
     stop("stat must be \"z\".", call. = FALSE)
+  if (!identical(progress, TRUE) && !identical(progress, FALSE))
+    stop("progress must be TRUE or FALSE.", call. = FALSE)
 
   valid_ids <- function(x) is.character(x) && length(x) > 0L &&
     !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
@@ -86,11 +90,16 @@ writeMarkerStat <- function(GAlist, out_dir = NULL, stat = "z") {
   on.exit(unlink(stage, recursive = TRUE))
   region_files <- .stage_ld_regions(GAlist, stage)
   assembly <- if (any(nzchar(region_files))) GAlist$assembly else ""
+  without_ld <- !ancestry %in% panels
+  if (progress && any(without_ld))
+    message("[writeMarkerStat] No matching LD for ",
+            paste(paste0(ids[without_ld], " (", ancestry[without_ld], ")"), collapse = ", "), ".")
   .Call(C_gact_write_z, enc2utf8(rsids),
         enc2utf8(normalizePath(marker_file, winslash = "/", mustWork = TRUE)),
         enc2utf8(normalizePath(files, winslash = "/", mustWork = TRUE)),
         enc2utf8(ids), enc2utf8(ancestry), enc2utf8(stage),
-        enc2utf8(panels), enc2utf8(panel_files), enc2utf8(region_files), enc2utf8(assembly))
+        enc2utf8(panels), enc2utf8(panel_files), enc2utf8(region_files), enc2utf8(assembly),
+        progress)
   if (file.exists(out_dir) || !file.rename(stage, out_dir))
     stop("Cannot publish the Z matrix directory: ", out_dir, call. = FALSE)
   result <- list(z = file.path(out_dir, "z.f64.bin"),
@@ -101,5 +110,6 @@ writeMarkerStat <- function(GAlist, out_dir = NULL, stat = "z") {
     result$ld_maps <- setNames(file.path(out_dir, paste0("ld-", panels, ".u32le.bin")), panels)
   }
   if (nzchar(assembly)) result$ld_regions <- file.path(out_dir, "ld_regions.tsv")
+  if (progress) message("[writeMarkerStat] Matrix written to ", out_dir)
   invisible(result)
 }

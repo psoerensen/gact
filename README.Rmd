@@ -82,6 +82,25 @@ gact::install_gsuite()
 compatible with your R session. It installs missing or older packages and
 verifies the versions in the destination library.
 
+#### Installing with a shared or locked R library
+
+Start a fresh R session before loading gact or gbase. Run the following first
+to put a personal library ahead of the shared library, then run the install
+commands above.
+
+```{r, eval=FALSE}
+lib <- path.expand("~/R/gsuite-library")
+dir.create(lib, recursive = TRUE, showWarnings = FALSE)
+.libPaths(c(lib, .libPaths()))
+```
+
+Use a separate directory for each R environment. Repeat the `.libPaths()`
+line before loading gact in later sessions, or configure `R_LIBS_USER`
+for that environment. This also works when the shared library contains a
+`00LOCK-gbase` directory. If you manage the original library and want to
+install there, remove a leftover lock only after confirming no installation
+is using that library.
+
 ### Export a GWAS association matrix
 
 New studies are aligned during ingestion. Use `recodeStat()` to align an
@@ -97,6 +116,9 @@ gact::writeMarkerStat(GAlist)
 By default, `gstat/matrix/` holds the column-major FP64 Z matrix and TSV
 catalogs. Rows follow `GAlist$rsids`. Columns follow the full study inventory,
 which must contain at least two studies. Missing scores are stored as NaN.
+The export reports each LD panel and completed study column by default.
+Use `progress = FALSE` to suppress these updates. Record each study's
+ancestry in the inventory to enable LD matching for imputation.
 The writer finds sparse LD by study ancestry in the marker
 directory, using the aligned BED stems `g1000_eur.subset.aligned`,
 `g1000_eas.subset.aligned` and `g1000_sas.subset.aligned`. Use
@@ -125,6 +147,7 @@ Below is a set of tutorials used for the gact package:
 Download, save and reopen the gact database, inspect its contents, and review storage and timing information:
 
 [Download and install gact database](Document/Download_and_install_gact_database.html)  
+
 
 Download and process genotype data from the 1000 Genomes Project (1000G) for different ancestries (European, East Asian, South Asian) used in different genomic analysis:   
 [Download and process of 1000G data](Document/Process_1000G.html)  

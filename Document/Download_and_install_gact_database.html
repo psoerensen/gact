@@ -404,6 +404,20 @@ installation, use
 <code>gact::install_gsuite(packages=c(&quot;gbase&quot;,&quot;gcorr&quot;))</code>. Source
 packages require a C++17 toolchain; on Windows use Rtools matching your
 R version. Package installation does not download the database.</p>
+<div id="installing-with-a-shared-or-locked-r-library" class="section level3">
+<h3>Installing with a shared or locked R library</h3>
+<p>Start a fresh R session before loading gact or gbase. Put a personal
+library first and then run the installation commands above.</p>
+<pre class="r"><code>lib &lt;- path.expand(&quot;~/R/gsuite-library&quot;)
+dir.create(lib, recursive = TRUE, showWarnings = FALSE)
+.libPaths(c(lib, .libPaths()))</code></pre>
+<p>Use a separate directory for each R environment. Repeat the
+<code>.libPaths()</code> line before loading gact in later sessions, or
+configure <code>R_LIBS_USER</code> for that environment. A
+<code>00LOCK-gbase</code> in the original library can remain in place
+while R installs into the personal library. Remove a leftover lock only
+after confirming no installation is using the original library.</p>
+</div>
 </div>
 <div id="download-save-and-reopen" class="section level2">
 <h2>Download, save and reopen</h2>
