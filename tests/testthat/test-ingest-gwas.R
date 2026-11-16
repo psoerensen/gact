@@ -99,6 +99,46 @@ test_that("odds-ratio conversion follows the mapped name or explicit scale", {
   expect_error(normalizeStatSchema(stat, c(b = "odds_ratio")), "strictly positive")
 })
 
+test_that("validation rejects unusable beta, SE, and EAF values", {
+  stat <- data.frame(chr = 1L, pos = 100:105, ea = "A", nea = "G", p = 0.1,
+    b = c(0, -0.1, Inf, -Inf, NaN, NA_real_),
+    seb = c(0.1, 0, -0.1, Inf, NaN, NA_real_),
+    eaf = c(0, 1, -0.1, 1.1, Inf, NA_real_))
+
+  validation <- validateStatSchema(stat)
+  expect_false(validation$ok)
+  expect_match(validation$errors[1], "Non-finite beta values \\(b\\): 3")
+  expect_match(validation$errors[2], "standard errors|Standard errors")
+  expect_match(validation$errors[2], "strictly positive: 4")
+  expect_match(validation$errors[3], "outside \\[0,1\\]: 3")
+  expect_true(validateStatSchema(stat[c(1, 6), ])$ok)
+  expect_true(validateStatSchema(transform(stat[1:2, ], seb = 0.1))$ok)
+  expect_error(ingestStatDB(list(), transform(stat, eaf = c("0", "bad", rep(NA, 4))),
+    schema = c(p = "p")), "Non-numeric values in eaf")
+})
+
+test_that("p values are converted by the mapped column name or explicit scale", {
+  stat <- data.frame(chr = 1L, pos = 100:104, ea = "A", nea = "G", b = 0.1, seb = 0.1,
+    neglog10p = c(0, 0.3, 0.7, 400, NA_real_))
+  expected <- c(1, 10^-0.3, 10^-0.7, .Machine$double.xmin, NA_real_)
+  norm <- normalizeStatSchema(stat, c(p = "neglog10p"))
+  expect_equal(norm$p, expected)
+  expect_identical(attr(norm, "transformations"), "-log10(p) -> p")
+
+  names(stat)[7] <- "Score"
+  expect_equal(normalizeStatSchema(stat, c(p = "Score"), p_scale = "neglog10p")$p, expected)
+  expect_false(validateStatSchema(normalizeStatSchema(stat, c(p = "Score")))$ok)
+
+  ordinary <- transform(stat, neglog10p = c(0.8, 0.3, 0.7, 0.2, NA_real_))
+  expect_identical(normalizeStatSchema(ordinary, c(p = "neglog10p"), p_scale = "p")$p,
+    ordinary$neglog10p)
+  expect_error(normalizeStatSchema(transform(stat, Score = -0.1), c(p = "Score"),
+    p_scale = "neglog10p"), "finite and nonnegative")
+  expect_error(normalizeStatSchema(transform(stat, Score = Inf), c(p = "Score"),
+    p_scale = "neglog10p"), "finite and nonnegative")
+  expect_error(normalizeStatSchema(stat, c(b = "b")), "Missing required canonical fields.*p")
+})
+
 test_that("ingestStatDB stops on low-confidence required mappings in strict mode", {
   stat <- data.frame(
     chr = c(1, 1),

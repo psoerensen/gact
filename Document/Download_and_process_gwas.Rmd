@@ -25,6 +25,12 @@ mapping. Use `effect_scale = "beta"` for a beta or log-odds column and
 By default, `ingestStatDB()` converts columns named `OR` or `odds_ratio` to
 log odds. Supply `seb` on the same scale as the resulting effect estimate.
 
+Beta values must be finite, standard errors must be finite and positive, and
+reported EAF must be between 0 and 1. By default, gact converts named
+`-log10(p)` columns such as `neglog10p` and `LP`. Use
+`p_scale = "neglog10p"` for other negative log10 p-value columns, or
+`p_scale = "p"` for ordinary p-values.
+
 
 ## UK Biobank HbA1c example
 
@@ -63,7 +69,7 @@ schema <- c(chr = "#CHROM", pos = "POS", ea = "ALT", nea = "REF",
             b = "Effect", seb = "StdErr", p = "P-value")
 
 result <- ingestStatDB(
-  GAlist, stat, schema = schema, effect_scale = "beta",
+  GAlist, stat, schema = schema, effect_scale = "beta", p_scale = "p",
   source = "NIH Figshare file 22770197 (Glycated_haemoglobin_HbA1c.imp.gz)",
   trait = "HbA1c", type = "quantitative", gender = "both", ancestry = "Mixed",
   build = "GRCh37", reference = "PMID:33462484",

@@ -14,6 +14,8 @@ A list with \code{ok}, \code{errors}, \code{warnings}, and \code{metrics}.
 }
 \description{
 The ingestion schema requires \code{chr}, \code{pos}, \code{ea}, \code{nea}, \code{b}, \code{seb}, and \code{p}.
+Observed beta values must be finite, standard errors must be finite and
+strictly positive, and p-values and effect-allele frequencies must be in {[}0, 1{]}.
 When \code{eaf} is absent, the writer uses effect-allele frequencies from the
 marker catalog after alignment.
 }

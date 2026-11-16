@@ -24,7 +24,10 @@ test_that("successive studies persist complete checksum and recipe metadata", {
   expect_true(is.na(saved$checksum[4]))
   before <- readLines(file.path(root, "GWAS_information.csv"))
   expect_error(updateStatDB(ga, data.frame(b = 1)), "Missing required columns")
+  expect_error(updateStatDB(ga, transform(stat, b = Inf, seb = 0, eaf = 1.1)),
+    "Non-finite beta.*strictly positive.*effect-allele frequencies")
   expect_identical(readLines(file.path(root, "GWAS_information.csv")), before)
+  expect_false(file.exists(file.path(root, "GWAS5.txt.gz")))
 })
 
 test_that("HbA1c-style ingestion is readable with catalog EAF and study N", {
@@ -50,4 +53,10 @@ test_that("HbA1c-style ingestion is readable with catalog EAF and study N", {
   expect_equal(study$b, -0.8)
   expect_equal(study$eaf, 0.2)
   expect_equal(study$n, 1000)
+
+  log_stat <- transform(raw, `P-value` = NULL, Score = 0.3)
+  schema[["p"]] <- "Score"
+  result <- ingestStatDB(result$GAlist, log_stat, schema = schema, p_scale = "neglog10p",
+    build = "GRCh37", n = 1000, type = "quantitative")
+  expect_equal(getGWAS(result$GAlist, "GWAS2")$p, 10^-0.3)
 })

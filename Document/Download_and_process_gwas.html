@@ -376,6 +376,12 @@ ratios from a column with a different name. By default,
 <code>ingestStatDB()</code> converts columns named <code>OR</code> or
 <code>odds_ratio</code> to log odds. Supply <code>seb</code> on the same
 scale as the resulting effect estimate.</p>
+<p>Beta values must be finite, standard errors must be finite and
+positive, and reported EAF must be between 0 and 1. By default, gact
+converts named <code>-log10(p)</code> columns such as
+<code>neglog10p</code> and <code>LP</code>. Use
+<code>p_scale = &quot;neglog10p&quot;</code> for other negative log10 p-value
+columns, or <code>p_scale = &quot;p&quot;</code> for ordinary p-values.</p>
 </div>
 <div id="uk-biobank-hba1c-example" class="section level2">
 <h2>UK Biobank HbA1c example</h2>
@@ -412,7 +418,7 @@ schema &lt;- c(chr = &quot;#CHROM&quot;, pos = &quot;POS&quot;, ea = &quot;ALT&q
             b = &quot;Effect&quot;, seb = &quot;StdErr&quot;, p = &quot;P-value&quot;)
 
 result &lt;- ingestStatDB(
-  GAlist, stat, schema = schema, effect_scale = &quot;beta&quot;,
+  GAlist, stat, schema = schema, effect_scale = &quot;beta&quot;, p_scale = &quot;p&quot;,
   source = &quot;NIH Figshare file 22770197 (Glycated_haemoglobin_HbA1c.imp.gz)&quot;,
   trait = &quot;HbA1c&quot;, type = &quot;quantitative&quot;, gender = &quot;both&quot;, ancestry = &quot;Mixed&quot;,
   build = &quot;GRCh37&quot;, reference = &quot;PMID:33462484&quot;,

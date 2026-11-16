@@ -36,6 +36,9 @@ shinyApp(
     selectInput("effect_scale", "Effect scale", choices = c(
      "Infer from column name" = "auto", "Beta or log odds" = "beta", "Odds ratio" = "or"
     )),
+    selectInput("p_scale", "P-value scale", choices = c(
+     "Infer from column name" = "auto", "P-value" = "p", "Negative log10 p-value" = "neglog10p"
+    )),
     actionButton("process", "Preview normalization"),
     actionButton("save_recipe", "Save recipe"),
     actionButton("ingest", "Ingest into DB"),
@@ -227,7 +230,8 @@ shinyApp(
    normalizeStatSchema(
     stat = current_data(),
     schema = mapping(),
-    effect_scale = input$effect_scale
+    effect_scale = input$effect_scale,
+    p_scale = input$p_scale
    )
   })
 
@@ -303,6 +307,7 @@ shinyApp(
 
     mapping = as.list(mapping()),
     effect_scale = input$effect_scale,
+    p_scale = input$p_scale,
     transformations = attr(norm_data(), "transformations"),
     validation = validation_rv(),
 
@@ -335,6 +340,7 @@ shinyApp(
     stat = fread(input$files$datapath[file_index], data.table = FALSE),
     schema = mapping(),
     effect_scale = input$effect_scale,
+    p_scale = input$p_scale,
     source = input$source,
     trait = input$trait,
     type = input$type,

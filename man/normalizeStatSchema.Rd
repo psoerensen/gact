@@ -9,7 +9,8 @@ normalizeStatSchema(
   schema,
   drop_unmapped = FALSE,
   require_fields = .gwas_required_fields,
-  effect_scale = c("auto", "beta", "or")
+  effect_scale = c("auto", "beta", "or"),
+  p_scale = c("auto", "p", "neglog10p")
 )
 }
 \arguments{
@@ -26,6 +27,11 @@ Defaults to \code{chr}, \code{pos}, \code{ea}, \code{nea}, \code{b}, \code{seb},
 columns named \code{OR} or \code{odds_ratio} (ignoring case and punctuation).
 Use \code{"beta"} for beta or log-odds values, or \code{"or"} to convert an odds
 ratio from any column name. Supply \code{seb} on the beta or log-odds scale.}
+
+\item{p_scale}{Scale of the mapped p-value column. \code{"auto"} converts
+\code{LP}, \code{mlogp}, \code{neglog10p}, and \code{minus_log10_p} names (ignoring case and
+punctuation). Use \code{"p"} for ordinary p-values or \code{"neglog10p"} for
+negative base-10 log p-values from any column name.}
 }
 \value{
 A normalized \code{data.frame} with canonical columns where possible.

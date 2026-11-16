@@ -1,5 +1,10 @@
 .gwas_required_fields <- c("chr", "pos", "ea", "nea", "b", "seb", "p")
 
+.gwas_neglog10p_column <- function(name) {
+ gsub("[^a-z0-9]", "", tolower(name)) %in%
+  c("lp", "mlogp", "neglog10p", "minuslog10p", "neglog10pvalue", "minuslog10pvalue")
+}
+
 scoreTemplateMatch <- function(colnames, template_mapping) {
 
  clean <- function(x) tolower(gsub("[^a-z0-9]", "", x, ignore.case = TRUE))
@@ -387,7 +392,8 @@ runRecipe <- function(recipe, GAlist, db_path,
  stat_norm <- normalizeStatSchema(
   stat = stat,
   schema = recipe$mapping,
-  effect_scale = if (is.null(recipe$effect_scale)) "auto" else recipe$effect_scale
+  effect_scale = if (is.null(recipe$effect_scale)) "auto" else recipe$effect_scale,
+  p_scale = if (is.null(recipe$p_scale)) "auto" else recipe$p_scale
  )
 
  # -----------------------------
@@ -773,7 +779,7 @@ detectStatSchema <- function(stat, sample_n = 100000,
   sapply(seq_along(col_names), function(i) {
    nm <- col_names[i]
    clean_nm <- clean_names[i]
-   if (clean_nm == field) return(1)
+   if (clean_nm == field || (field == "p" && .gwas_neglog10p_column(nm))) return(1)
 
    alias_hit <- FALSE
    if (length(pats)) {
@@ -814,11 +820,10 @@ detectStatSchema <- function(stat, sample_n = 100000,
 
   allele_score <- if (length(non_na_char)) mean(grepl("^[ACGT]+$", non_na_char)) else 0
 
-  # ---- FIX 3: better p detection ----
   p_score <- 0
   if (length(non_na_num)) {
-   if (max(non_na_num, na.rm = TRUE) > 20 && median(non_na_num, na.rm = TRUE) > 5) {
-    p_score <- 0.3  # likely -log10(p)
+   if (.gwas_neglog10p_column(col_names[j])) {
+    p_score <- mean(is.finite(non_na_num) & non_na_num >= 0)
    } else {
     p_score <- mean(non_na_num >= 0 & non_na_num <= 1)
    }
@@ -1207,19 +1212,25 @@ detectStatSchema <- function(stat, sample_n = 100000,
 #'   columns named `OR` or `odds_ratio` (ignoring case and punctuation).
 #'   Use `"beta"` for beta or log-odds values, or `"or"` to convert an odds
 #'   ratio from any column name. Supply `seb` on the beta or log-odds scale.
+#' @param p_scale Scale of the mapped p-value column. `"auto"` converts
+#'   `LP`, `mlogp`, `neglog10p`, and `minus_log10_p` names (ignoring case and
+#'   punctuation). Use `"p"` for ordinary p-values or `"neglog10p"` for
+#'   negative base-10 log p-values from any column name.
 #' @return A normalized `data.frame` with canonical columns where possible.
 #' @export
 normalizeStatSchema <- function(stat,
                                 schema,
                                 drop_unmapped = FALSE,
                                 require_fields = .gwas_required_fields,
-                                effect_scale = c("auto", "beta", "or")) {
+                                effect_scale = c("auto", "beta", "or"),
+                                p_scale = c("auto", "p", "neglog10p")) {
  if (is.null(stat)) stop("`stat` is NULL")
  if (!is.data.frame(stat)) stat <- as.data.frame(stat)
 
  mapping <- if (is.list(schema) && !is.null(schema$mapping)) schema$mapping else schema
  if (is.null(names(mapping))) stop("`schema` mapping must be a named vector")
  effect_scale <- match.arg(effect_scale)
+ p_scale <- match.arg(p_scale)
 
  out <- stat
  canon <- c("marker", "chr", "pos", "ea", "nea", "eaf", "b", "seb", "p", "n", "ncase", "ncontrol", "info")
@@ -1246,21 +1257,33 @@ normalizeStatSchema <- function(stat,
  if (!is.null(out$nea)) out$nea <- toupper(as.character(out$nea))
 
  for (nm in c("eaf", "b", "seb", "p", "n", "ncase", "ncontrol", "info")) {
-  if (!is.null(out[[nm]])) out[[nm]] <- suppressWarnings(as.numeric(out[[nm]]))
+  values <- out[[nm]]
+  if (is.null(values)) next
+  if (is.factor(values)) values <- as.character(values)
+  numeric_values <- suppressWarnings(as.numeric(values))
+  if (nm %in% c("b", "seb", "eaf", "p") && is.character(values)) {
+   invalid <- is.na(numeric_values) & !is.nan(numeric_values) &
+    !is.na(values) & !(trimws(values) %in% c("", "NA"))
+   if (any(invalid)) stop("Non-numeric values in ", nm, ": ", sum(invalid), ".")
+  }
+  out[[nm]] <- numeric_values
  }
 
  # ---- AUTO TRANSFORMATIONS ----
  transformations <- character(0)
 
- # Detect and convert -log10(p) → p
- if (!is.null(out$p)) {
-  p_vals <- out$p[!is.na(out$p)]
-  if (length(p_vals)) {
-   if (max(p_vals, na.rm = TRUE) > 20 && mean(p_vals > 5, na.rm = TRUE) > 0.5) {
-    out$p <- 10^(-out$p)
-    transformations <- c(transformations, "-log10(p) -> p")
-   }
+ if (p_scale == "auto") {
+  p_col <- if ("p" %in% names(mapping)) mapping[["p"]] else "p"
+  p_scale <- if (isTRUE(.gwas_neglog10p_column(p_col))) "neglog10p" else "p"
+ }
+ if (p_scale == "neglog10p" && "p" %in% names(out)) {
+  p_values <- out[["p"]]
+  observed <- p_values[!is.na(p_values) | is.nan(p_values)]
+  if (any(!is.finite(observed) | observed < 0)) {
+   stop("-log10(p) values must be finite and nonnegative.")
   }
+  out$p <- 10^(-p_values)
+  transformations <- c(transformations, "-log10(p) -> p")
  }
 
  effect_col <- if ("b" %in% names(mapping)) mapping[["b"]] else NA_character_
@@ -1268,7 +1291,7 @@ normalizeStatSchema <- function(stat,
   effect_name <- gsub("[^a-z0-9]", "", tolower(effect_col))
   effect_scale <- if (effect_name %in% c("or", "oddsratio")) "or" else "beta"
  }
- if (effect_scale == "or" && !is.null(out$b)) {
+ if (effect_scale == "or" && "b" %in% names(out)) {
   if (any(!is.na(out$b) & (!is.finite(out$b) | out$b <= 0))) {
    stop("Odds ratios must be finite and strictly positive.")
   }
@@ -1277,7 +1300,7 @@ normalizeStatSchema <- function(stat,
  }
 
  # ---- Clamp extreme p-values ----
- if (!is.null(out$p)) {
+ if ("p" %in% names(out)) {
   out$p[out$p == 0] <- .Machine$double.xmin
  }
 
@@ -1317,6 +1340,8 @@ normalizeStatSchema <- function(stat,
 #' Validate normalized GWAS summary statistics
 #'
 #' The ingestion schema requires `chr`, `pos`, `ea`, `nea`, `b`, `seb`, and `p`.
+#' Observed beta values must be finite, standard errors must be finite and
+#' strictly positive, and p-values and effect-allele frequencies must be in [0, 1].
 #' When `eaf` is absent, the writer uses effect-allele frequencies from the
 #' marker catalog after alignment.
 #'
@@ -1340,10 +1365,20 @@ validateStatSchema <- function(stat) {
   non_numeric <- Filter(function(field) !is.numeric(stat[[field]]), numeric_fields)
   if (length(non_numeric)) errors <- c(errors, paste("Columns must be numeric:", paste(non_numeric, collapse = ", ")))
 
-  if (is.numeric(stat[["p"]])) {
-    bad_p <- sum(!(stat$p >= 0 & stat$p <= 1), na.rm = TRUE)
-    if (bad_p > 0) errors <- c(errors, sprintf("Invalid p-values outside [0,1]: %s", bad_p))
+  count_invalid <- function(field, invalid) {
+    values <- stat[[field]]
+    if (!is.numeric(values)) return(0L)
+    observed <- values[!is.na(values) | is.nan(values)]
+    sum(!is.finite(observed) | invalid(observed))
   }
+  bad_beta <- count_invalid("b", function(x) FALSE)
+  bad_seb <- count_invalid("seb", function(x) x <= 0)
+  bad_p <- count_invalid("p", function(x) x < 0 | x > 1)
+  bad_eaf <- count_invalid("eaf", function(x) x < 0 | x > 1)
+  if (bad_beta > 0) errors <- c(errors, sprintf("Non-finite beta values (b): %s", bad_beta))
+  if (bad_seb > 0) errors <- c(errors, sprintf("Standard errors (seb) must be finite and strictly positive: %s", bad_seb))
+  if (bad_p > 0) errors <- c(errors, sprintf("Invalid p-values outside [0,1]: %s", bad_p))
+  if (bad_eaf > 0) errors <- c(errors, sprintf("Invalid effect-allele frequencies (eaf) outside [0,1]: %s", bad_eaf))
 
   if (all(c("ea", "nea") %in% colnames(stat))) {
     valid <- c("A", "C", "G", "T")
@@ -1381,6 +1416,7 @@ validateStatSchema <- function(stat) {
 #' @param write_to_db Passed to [updateStatDB()] as `writeStatDB`.
 #' @param ... Additional metadata arguments passed to [updateStatDB()] (e.g. `source`, `trait`, `type`).
 #' @param effect_scale Passed to [normalizeStatSchema()].
+#' @param p_scale Passed to [normalizeStatSchema()].
 #' @return A list with updated `GAlist`, `schema`, and `validation`.
 #' @export
 ingestStatDB <- function(GAlist,
@@ -1390,8 +1426,10 @@ ingestStatDB <- function(GAlist,
                          strict = TRUE,
                          write_to_db = TRUE,
                          ...,
-                         effect_scale = c("auto", "beta", "or")) {
+                         effect_scale = c("auto", "beta", "or"),
+                         p_scale = c("auto", "p", "neglog10p")) {
   effect_scale <- match.arg(effect_scale)
+  p_scale <- match.arg(p_scale)
   if (is.null(schema)) schema <- detectStatSchema(stat)
 
   mapping <- if (is.list(schema) && !is.null(schema$mapping)) schema$mapping else schema
@@ -1406,7 +1444,8 @@ ingestStatDB <- function(GAlist,
          ". Provide `schema=` explicitly or set strict = FALSE.")
   }
 
-  stat_norm <- normalizeStatSchema(stat, schema = mapping, effect_scale = effect_scale)
+  stat_norm <- normalizeStatSchema(stat, schema = mapping, effect_scale = effect_scale,
+                                  p_scale = p_scale)
   validation <- validateStatSchema(stat_norm)
   if (!validation$ok) stop(paste(validation$errors, collapse = " | "))
 
