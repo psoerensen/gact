@@ -13,7 +13,8 @@ createDB(version = NULL, dbdir = NULL)
 }
 \value{
 A list (GAlist) containing the database version, base directory,
-directory paths (GAlist$dirs), and feature names.
+directory paths (GAlist$dirs), including results at the database root,
+and feature names. LD/eigen references remain under marker.
 }
 \description{
 Initializes the directory tree used by downloadDB() and other GACT functions.

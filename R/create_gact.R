@@ -135,7 +135,8 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
 #' @param dbdir Character; parent directory path in which the version folder will be created.
 #'
 #' @return A list (GAlist) containing the database version, base directory,
-#'         directory paths (GAlist$dirs), and feature names.
+#'         directory paths (GAlist$dirs), including results at the database root,
+#'         and feature names. LD/eigen references remain under marker.
 #' @export
 createDB <- function(version = NULL, dbdir = NULL) {
  if (is.null(version)) stop("Please include a database name using the version argument")
@@ -148,7 +149,7 @@ createDB <- function(version = NULL, dbdir = NULL) {
  dir.create(dbdir, recursive = TRUE)
  dirnames <- c(
   "glist", "gstat", "gsets", "gsea", "gbayes", "gtex", "gwas", "ldsc",
-  "marker", "drugdb", "download", "script", "vep", "recipes",
+  "marker", "drugdb", "download", "script", "vep", "recipes", "results",
   # optional resources
   "ensembl", "string", "stitch", "reactome", "dgi", "gwascatalog", "diseases"
  )

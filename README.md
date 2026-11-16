@@ -404,3 +404,8 @@ preview warnings. Use `import = TRUE` to import ready studies and save
 the updated GAlist. On a rerun, use a fresh output directory. Accessions
 already represented in the database are skipped, including legacy GWAS
 Catalog study URLs.
+
+Analysis outputs use `GAlist$dirs[["results"]]`, created as `results/` at the
+database root by `createDB()`. Prepared association matrices remain in
+`gstat/matrix/`; shared LD and eigen references remain under `marker/`.
+This directory registration does not download data or run analyses.

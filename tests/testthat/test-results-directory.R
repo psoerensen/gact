@@ -1,0 +1,10 @@
+test_that("createDB registers results at database root without acquiring data", {
+  parent <- tempfile("results-db-")
+  dir.create(parent)
+  on.exit(unlink(parent, recursive = TRUE), add = TRUE)
+  ga <- suppressWarnings(createDB(version = "local-results-fixture", dbdir = parent))
+  expect_identical(ga$dirs[["results"]], file.path(ga$dbdir, "results"))
+  expect_true(dir.exists(ga$dirs[["results"]]))
+  expect_identical(dirname(ga$dirs[["results"]]), dirname(ga$dirs[["gstat"]]))
+  expect_true(dir.exists(ga$dirs[["marker"]]))
+})
