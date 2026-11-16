@@ -59,6 +59,9 @@ shinyApp(
 
     textInput("ancestry", "Ancestry"),
     selectInput("build", "Genome build", choices = c("GRCh37", "GRCh38")),
+    selectInput("strand", "Input allele strand", choices = c(
+     "Unknown" = "unknown", "Documented forward strand" = "forward"
+    )),
     selectInput("gender", "Gender", choices = c("both", "males", "females"), selected = "both"),
 
     textInput("source", "Source"),
@@ -73,7 +76,7 @@ shinyApp(
      tabPanel("Mapping Editor", uiOutput("mapping_ui")),
      tabPanel("Mapping Summary", DTOutput("mapping_summary")),  # ⭐ NEW
      tabPanel("Normalized", DTOutput("normalized")),
-     tabPanel("Validation", verbatimTextOutput("validation")),
+     tabPanel("Validation", verbatimTextOutput("validation"), verbatimTextOutput("ingest_qc")),
      tabPanel("Transformations", verbatimTextOutput("transformations"))
     )
    )
@@ -270,6 +273,17 @@ shinyApp(
    validation_rv()
   })
 
+  output$ingest_qc <- renderText({
+   req(has_imported())
+   qc <- attr(GAlist_rv(), "qc_metrics")
+   req(qc)
+   dropped <- unlist(qc$dropped_by_reason)
+   dropped <- dropped[dropped > 0L]
+   paste(c(sprintf("Import QC: %d input, %d written, %d dropped, %d written with swapped alleles",
+                   qc$n_input, qc$n_final, qc$n_dropped, qc$n_flipped),
+           sprintf("%s: %d", names(dropped), dropped)), collapse = "\n")
+  })
+
   output$transformations <- renderPrint({
    req(norm_data())
    attr(norm_data(), "transformations")
@@ -313,6 +327,7 @@ shinyApp(
     gender = input$gender,
     ancestry = clean_field(input$ancestry, "unknown"),
     build = input$build,
+    strand = input$strand,
 
     n = input$n,
     ncase = input$ncase,
@@ -366,6 +381,7 @@ shinyApp(
     gender = input$gender,
     ancestry = input$ancestry,
     build = input$build,
+    strand = input$strand,
     n = input$n,
     ncase = input$ncase,
     ncontrol = input$ncontrol,

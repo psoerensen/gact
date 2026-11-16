@@ -29,14 +29,16 @@ ingestStatDB(
 
 \item{write_to_db}{Passed to \code{\link[=updateStatDB]{updateStatDB()}} as \code{writeStatDB}.}
 
-\item{...}{Additional metadata arguments passed to \code{\link[=updateStatDB]{updateStatDB()}} (e.g. \code{source}, \code{trait}, \code{type}).}
+\item{...}{Arguments passed to \code{\link[=updateStatDB]{updateStatDB()}}, including study metadata
+and \code{strand} for documented forward-strand data.}
 
 \item{effect_scale}{Passed to \code{\link[=normalizeStatSchema]{normalizeStatSchema()}}.}
 
 \item{p_scale}{Passed to \code{\link[=normalizeStatSchema]{normalizeStatSchema()}}.}
 }
 \value{
-A list with updated \code{GAlist}, \code{schema}, and \code{validation}.
+A list with updated \code{GAlist}, \code{schema}, \code{validation}, normalized
+input, transformations, and the import \code{qc} summary.
 }
 \description{
 Runs schema detection, normalization, validation, and then delegates

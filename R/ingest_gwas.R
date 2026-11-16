@@ -431,7 +431,8 @@ runRecipe <- function(recipe, GAlist, db_path,
   reference = recipe$reference,
   comments = recipe$comments,
   recipe = recipe,
-  writeStatDB = TRUE
+  writeStatDB = TRUE,
+  strand = recipe$strand
  )
 
  # -----------------------------
@@ -1414,10 +1415,12 @@ validateStatSchema <- function(stat) {
 #' @param min_confidence Minimum per-field confidence used for auto mode.
 #' @param strict If `TRUE`, stop when low confidence exists for required fields.
 #' @param write_to_db Passed to [updateStatDB()] as `writeStatDB`.
-#' @param ... Additional metadata arguments passed to [updateStatDB()] (e.g. `source`, `trait`, `type`).
+#' @param ... Arguments passed to [updateStatDB()], including study metadata
+#'   and `strand` for documented forward-strand data.
 #' @param effect_scale Passed to [normalizeStatSchema()].
 #' @param p_scale Passed to [normalizeStatSchema()].
-#' @return A list with updated `GAlist`, `schema`, and `validation`.
+#' @return A list with updated `GAlist`, `schema`, `validation`, normalized
+#'   input, transformations, and the import `qc` summary.
 #' @export
 ingestStatDB <- function(GAlist,
                          stat,
@@ -1460,6 +1463,7 @@ ingestStatDB <- function(GAlist,
    GAlist = updated,
    schema = schema,
    validation = validation,
+   qc = attr(updated, "qc_metrics"),
    normalized_stat = stat_norm,
    transformations = attr(stat_norm, "transformations")
   )

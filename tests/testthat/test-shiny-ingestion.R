@@ -34,6 +34,7 @@ test_that("Shiny downloads the descriptor after successful ingestion", {
     session$setInputs(ingest = 2)
     expect_true(has_imported())
     expect_match(output$download_galist_ui$html, "Download updated GAlist")
+    expect_match(output$ingest_qc, "1 input, 1 written, 0 dropped, 0 written with swapped alleles")
     downloaded <- output$download_galist
     expect_identical(basename(downloaded), "GAlist-updated.rds")
     reopened <- readRDS(downloaded)

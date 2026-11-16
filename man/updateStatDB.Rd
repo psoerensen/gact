@@ -21,7 +21,8 @@ updateStatDB(
   reference = "unknown",
   comments = "none",
   recipe = NULL,
-  writeStatDB = TRUE
+  writeStatDB = TRUE,
+  strand = c("unknown", "forward")
 )
 }
 \arguments{
@@ -61,9 +62,14 @@ known build, a conflicting GRCh37 or GRCh38 study build is rejected.}
 \item{recipe}{Optional ingestion recipe to save alongside the processed study.}
 
 \item{writeStatDB}{A flag indicating whether to perform quality control and write the processed summary statistics to a file}
+
+\item{strand}{Input allele strand. Use \code{"forward"} only when the source
+documents forward-strand alleles for the declared build. The default
+\code{"unknown"} drops strand-ambiguous A/T and C/G SNPs.}
 }
 \value{
 A list of updated study information, including the study id, file name, trait, type, gender, ancestry, build, sample size, case/control count, reference, and comments.
+The QC summary is attached as \code{qc_metrics} and saved as \code{GWAS<n>.qc.json}.
 }
 \description{
 This function updates and processes genetic association study summary statistics. The input to the function includes study information, summary statistics, and information about the sample.

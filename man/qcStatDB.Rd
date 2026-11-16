@@ -16,7 +16,8 @@ qcStatDB(
   excludeMHC = FALSE,
   excludeMISS = 0.05,
   excludeHWE = 1e-12,
-  return_metrics = TRUE
+  return_metrics = TRUE,
+  strand = c("unknown", "forward")
 )
 }
 \arguments{
@@ -24,11 +25,15 @@ qcStatDB(
 
 \item{stat}{Ordinary data frame with chr, pos, ea, nea and p columns; b is used when alleles are flipped. Optional eaf, seb and n columns supply frequencies, standard errors and sample sizes.}
 
-\item{excludeMAF, excludeINFO, excludeCGAT, excludeINDEL, excludeDUPS, excludeMHC, excludeMISS, excludeHWE}{Legacy compatibility arguments, currently unused. Duplicate markers are removed unconditionally; these arguments do not enable their named filters.}
+\item{excludeMAF, excludeINFO, excludeCGAT, excludeINDEL, excludeDUPS, excludeMHC, excludeMISS, excludeHWE}{Legacy compatibility arguments, currently unused.}
 
 \item{excludeMAFDIFF}{Maximum absolute difference between reported and reference effect-allele frequency.}
 
-\item{return_metrics}{Attach mapping, flipping and filtering counts as the qc_metrics attribute.}
+\item{return_metrics}{Attach the QC summary as the \code{qc_metrics} attribute.}
+
+\item{strand}{Input allele strand. Use \code{"forward"} only for documented
+forward-strand input on the catalog build. The default \code{"unknown"}
+drops strand-ambiguous A/T and C/G SNPs.}
 }
 \value{
 Aligned, filtered data frame with marker IDs and optional qc_metrics.
@@ -37,5 +42,11 @@ Aligned, filtered data frame with marker IDs and optional qc_metrics.
 Maps chromosome-position-allele keys to the database, removes duplicate markers, aligns effect alleles and filters allele-frequency differences.
 }
 \details{
-Reads cpra.txt.gz and markers.txt.gz from the database marker directory. Missing EAF uses the reference frequency; missing n can be estimated from seb and EAF. Mapping checks either allele order but does not infer strand complements. This legacy helper is separate from gbase::checkStat() and gbase::gfilter().
+Matches either allele order against the marker catalog and keeps
+uniquely matched allele pairs. Unsplit allele lists and shared rsIDs are
+dropped. Duplicate estimates are compared after alignment, rounding EAF
+to 12 decimal places for that comparison. Conflicting groups are dropped.
+An absent EAF column is filled from the catalog. Output follows catalog
+order. The summary counts each dropped row once and counts flips only
+among retained rows.
 }

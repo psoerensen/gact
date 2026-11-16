@@ -842,7 +842,7 @@ check_downloads <- function(GAlist, min_size_MB = 0.5, verbose = TRUE) {
 #'
 #' @title Remove studies from a GACT database
 #'
-#' @description Deletes the selected summary-statistics files and updates the database study metadata.
+#' @description Deletes the selected summary-statistics files and their QC reports and updates the database study metadata.
 #'
 #' @param GAlist GACT database list containing directory paths, study metadata and mappings.
 #' @param studyID Character vector of existing study IDs to remove.
@@ -857,6 +857,13 @@ removeStatDB <- function(GAlist,studyID=NULL) {
  for (i in 1:length(studyID)) {
   file.remove(GAlist$studyfiles[studyID[i]])
  }
+ qc_files <- GAlist$study$qc_file[match(studyID, GAlist$study$id)]
+ if (length(qc_files)) {
+  qc_files <- qc_files[!is.na(qc_files) & nzchar(qc_files)]
+  qc_paths <- file.path(GAlist$dirs["gstat"], basename(qc_files))
+  file.remove(qc_paths[file.exists(qc_paths)])
+ }
+ attr(GAlist, "qc_metrics") <- NULL
  # update GAlist
  #study <- as.data.frame(GAlist$study)
  #study <- study[!study$id%in%studyID,]
@@ -918,7 +925,11 @@ removeStatDB <- function(GAlist,studyID=NULL) {
 #' @param comments Additional comments
 #' @param recipe Optional ingestion recipe to save alongside the processed study.
 #' @param writeStatDB A flag indicating whether to perform quality control and write the processed summary statistics to a file
+#' @param strand Input allele strand. Use `"forward"` only when the source
+#'   documents forward-strand alleles for the declared build. The default
+#'   `"unknown"` drops strand-ambiguous A/T and C/G SNPs.
 #' @return A list of updated study information, including the study id, file name, trait, type, gender, ancestry, build, sample size, case/control count, reference, and comments.
+#'   The QC summary is attached as `qc_metrics` and saved as `GWAS<n>.qc.json`.
 #'
 #' @export
 #'
@@ -938,7 +949,11 @@ updateStatDB <- function(GAlist=NULL,
                          reference="unknown",
                          comments="none",
                          recipe=NULL,
-                         writeStatDB=TRUE) {
+                         writeStatDB=TRUE,
+                         strand = c("unknown", "forward")) {
+
+ strand <- match.arg(strand)
+ attr(GAlist, "qc_metrics") <- NULL
 
  # Update study information only - useful if we need to add extra information
  message("Collecting information on external summary statistics")
@@ -1021,6 +1036,10 @@ updateStatDB <- function(GAlist=NULL,
   }
   builds <- c(grch37 = "GRCh37", hg19 = "GRCh37", grch38 = "GRCh38", hg38 = "GRCh38")
   study_build <- unname(builds[tolower(trimws(build))])
+  if (strand == "forward" && (length(build) != 1L || is.na(build) ||
+      tolower(trimws(build)) %in% c("", "unknown"))) {
+   stop("Declare the GWAS build when using forward-strand alleles.")
+  }
   if (length(study_build) == 1L && !is.na(study_build) &&
       length(catalog_build) == 1L && !is.na(catalog_build) && study_build != catalog_build) {
    stop("GWAS build ", study_build, " differs from marker catalog build ", catalog_build, ".")
@@ -1034,7 +1053,14 @@ updateStatDB <- function(GAlist=NULL,
    stat$n <- n
   }
 
-  stat <- qcStatDB(GAlist = GAlist, stat = stat, excludeMAFDIFF = 0.5)
+  stat <- qcStatDB(GAlist = GAlist, stat = stat, excludeMAFDIFF = 0.5, strand = strand)
+  qc_metrics <- attr(stat, "qc_metrics")
+  if (!nrow(stat)) {
+   dropped <- unlist(qc_metrics$dropped_by_reason)
+   dropped <- dropped[dropped > 0L]
+   stop("No variants passed GWAS quality control. Dropped: ",
+        paste(paste(names(dropped), dropped, sep = "="), collapse = ", "), ".")
+  }
  }
 
  # A single staging directory also serializes inventory updates.
@@ -1061,7 +1087,7 @@ updateStatDB <- function(GAlist=NULL,
   }
  }
 
- recipe_path <- NULL
+ recipe_path <- qc_path <- NULL
  if (writeStatDB) {
   message(paste("Writing processed summary statistics to internal file:",
                 GAlist$study$file[study_number]))
@@ -1069,8 +1095,15 @@ updateStatDB <- function(GAlist=NULL,
   if (file.exists(file_stat)) stop("GWAS summary statistics file already exists: ", file_stat)
   staged_stat <- file.path(stage, basename(file_stat))
   fwrite(stat, staged_stat, col.names = TRUE)
+  if (!is.null(qc_metrics)) {
+   qc_path <- file.path(gstat_dir, paste0(studyID, ".qc.json"))
+   staged_qc <- file.path(stage, basename(qc_path))
+   jsonlite::write_json(qc_metrics, staged_qc, auto_unbox = TRUE, pretty = TRUE)
+   GAlist$study$qc_file[study_number] <- basename(qc_path)
+   attr(GAlist, "qc_metrics") <- qc_metrics
+  }
   if (!is.null(recipe)) {
-   recipe$qc <- attr(stat, "qc_metrics")
+   recipe$qc <- qc_metrics
    recipe_path <- file.path(gstat_dir, paste0(recipeID, ".json"))
    if (file.exists(recipe_path)) stop("GWAS recipe file already exists: ", recipe_path)
    staged_recipe <- file.path(stage, basename(recipe_path))
@@ -1094,6 +1127,10 @@ updateStatDB <- function(GAlist=NULL,
   if (!is.null(recipe_path)) {
    .publish_gwas_import_file(staged_recipe, recipe_path)
    published <- c(published, recipe_path)
+  }
+  if (!is.null(qc_path)) {
+   .publish_gwas_import_file(staged_qc, qc_path)
+   published <- c(published, qc_path)
   }
   .publish_gwas_import_file(staged_inventory, file_stat_information, replace = TRUE)
   committed <- TRUE
@@ -1233,10 +1270,19 @@ updateStatDB <- function(GAlist=NULL,
 #' @param GAlist GACT database list containing directory paths, study metadata and mappings.
 #' @param stat Ordinary data frame with chr, pos, ea, nea and p columns; b is used when alleles are flipped. Optional eaf, seb and n columns supply frequencies, standard errors and sample sizes.
 #' @param excludeMAFDIFF Maximum absolute difference between reported and reference effect-allele frequency.
-#' @param excludeMAF,excludeINFO,excludeCGAT,excludeINDEL,excludeDUPS,excludeMHC,excludeMISS,excludeHWE Legacy compatibility arguments, currently unused. Duplicate markers are removed unconditionally; these arguments do not enable their named filters.
-#' @param return_metrics Attach mapping, flipping and filtering counts as the qc_metrics attribute.
+#' @param excludeMAF,excludeINFO,excludeCGAT,excludeINDEL,excludeDUPS,excludeMHC,excludeMISS,excludeHWE Legacy compatibility arguments, currently unused.
+#' @param return_metrics Attach the QC summary as the `qc_metrics` attribute.
+#' @param strand Input allele strand. Use `"forward"` only for documented
+#'   forward-strand input on the catalog build. The default `"unknown"`
+#'   drops strand-ambiguous A/T and C/G SNPs.
 #'
-#' @details Reads cpra.txt.gz and markers.txt.gz from the database marker directory. Missing EAF uses the reference frequency; missing n can be estimated from seb and EAF. Mapping checks either allele order but does not infer strand complements. This legacy helper is separate from gbase::checkStat() and gbase::gfilter().
+#' @details Matches either allele order against the marker catalog and keeps
+#'   uniquely matched allele pairs. Unsplit allele lists and shared rsIDs are
+#'   dropped. Duplicate estimates are compared after alignment, rounding EAF
+#'   to 12 decimal places for that comparison. Conflicting groups are dropped.
+#'   An absent EAF column is filled from the catalog. Output follows catalog
+#'   order. The summary counts each dropped row once and counts flips only
+#'   among retained rows.
 #'
 #' @return Aligned, filtered data frame with marker IDs and optional qc_metrics.
 #' @export
@@ -1251,155 +1297,126 @@ qcStatDB <- function(GAlist = NULL,
                      excludeMHC = FALSE,
                      excludeMISS = 0.05,
                      excludeHWE = 1e-12,
-                     return_metrics = TRUE) {
+                     return_metrics = TRUE,
+                     strand = c("unknown", "forward")) {
+ strand <- match.arg(strand)
+ if (!is.data.frame(stat)) stop("stat must be a data.frame")
+ stat <- as.data.frame(stat)
+ required <- c("chr", "pos", "ea", "nea", "p")
+ missing <- setdiff(required, names(stat))
+ if (length(missing)) stop("Missing required columns: ", paste(missing, collapse = ", "))
 
- # -----------------------------
- # Load reference
- # -----------------------------
  cpra <- data.table::fread(
   file.path(GAlist$dirs["marker"], "cpra.txt.gz"),
   header = FALSE
  )[[1]]
-
- if (cpra[1] == "cpra") cpra <- cpra[-1]
-
- rsids <- GAlist$rsids
-
- # -----------------------------
- # Validate input
- # -----------------------------
- if (!is.data.frame(stat)) stop("stat must be a data.frame")
-
- required <- c("chr","pos","ea","nea","p")
- missing <- setdiff(required, names(stat))
- if (length(missing)) {
-  stop("Missing required columns: ", paste(missing, collapse = ", "))
+ if (identical(cpra[1L], "cpra")) cpra <- cpra[-1L]
+ catalog <- data.table::fread(
+  file.path(GAlist$dirs["marker"], "markers.txt.gz"),
+  select = c("rsids", "ea", "nea", "eaf"),
+  data.table = FALSE
+ )
+ if (length(cpra) != nrow(catalog) ||
+     !identical(as.character(GAlist$rsids), as.character(catalog$rsids))) {
+  stop("The marker catalog and GAlist are out of sync.")
  }
 
- # -----------------------------
- # Remove NA only for required fields
- # -----------------------------
- stat <- stat[complete.cases(stat[, required]), ]
+ # Give each rejected row its first reason, in processing order.
+ n_input <- nrow(stat)
+ drop <- rep.int("", n_input)
+ drop[!complete.cases(stat[required])] <- "missing_required"
+ ea <- toupper(stat$ea)
+ nea <- toupper(stat$nea)
+ unsplit <- grepl(",", ea, fixed = TRUE) | grepl(",", nea, fixed = TRUE)
+ drop[drop == "" & unsplit] <- "unsplit_multiallelic"
+ if (strand == "unknown") {
+  palindromic <- paste0(ea, nea) %in% c("AT", "TA", "CG", "GC") &
+   nchar(ea) == 1L & nchar(nea) == 1L
+  drop[drop == "" & palindromic] <- "unresolved_strand"
+ }
 
- # fix p-values
+ rows <- which(drop == "")
+ key <- paste(stat$chr[rows], stat$pos[rows], ea[rows], nea[rows], sep = "_")
+ swapped_key <- paste(stat$chr[rows], stat$pos[rows], nea[rows], ea[rows], sep = "_")
+ direct_match <- match(key, cpra)
+ swapped_match <- match(swapped_key, cpra)
+ target <- pmin(direct_match, swapped_match, na.rm = TRUE)
+ repeated_keys <- cpra[duplicated(cpra)]
+ ambiguous <- (!is.na(direct_match) & !is.na(swapped_match)) |
+  key %in% repeated_keys | swapped_key %in% repeated_keys
+ drop[rows[is.na(target)]] <- "unmatched"
+ drop[rows[ambiguous]] <- "ambiguous_catalog_match"
+
+ repeated_ids <- catalog$rsids[duplicated(catalog$rsids)]
+ shared_id <- catalog$rsids[target] %in% repeated_ids
+ drop[rows[drop[rows] == "" & shared_id]] <- "shared_catalog_rsid"
+ mapped <- drop[rows] == ""
+ rows <- rows[mapped]
+ target <- target[mapped]
+ flipped <- !is.na(swapped_match[mapped])
+ stat <- stat[rows, , drop = FALSE]
+ marker <- catalog[target, , drop = FALSE]
  stat$p <- as.numeric(stat$p)
  stat$p[stat$p == 0] <- .Machine$double.xmin
 
- # -----------------------------
- # Build CPRA keys
- # -----------------------------
- cpra1 <- paste(stat$chr, stat$pos,
-                toupper(stat$ea),
-                toupper(stat$nea), sep = "_")
-
- cpra2 <- paste(stat$chr, stat$pos,
-                toupper(stat$nea),
-                toupper(stat$ea), sep = "_")
-
- mapped <- cpra1 %in% cpra | cpra2 %in% cpra
-
- message("Mapped markers: ", sum(mapped))
- message("Unmapped markers: ", sum(!mapped))
-
- stat <- stat[mapped, ]
- if (!nrow(stat)) stop("No variants matched the marker catalog. Check genome build and alleles.")
- cpra1 <- cpra1[mapped]
- cpra2 <- cpra2[mapped]
-
- # -----------------------------
- # Assign marker IDs
- # -----------------------------
- rws1 <- match(cpra1, cpra)
- rws2 <- match(cpra2, cpra)
-
- stat$marker <- NA_character_
-
- stat$marker[!is.na(rws1)] <- rsids[rws1[!is.na(rws1)]]
- stat$marker[!is.na(rws2)] <- rsids[rws2[!is.na(rws2)]]
-
- # -----------------------------
- # Remove duplicates
- # -----------------------------
- isdup <- duplicated(stat$marker)
-
- if (any(isdup)) {
-  message("Removing duplicated markers: ", sum(isdup))
-  stat <- stat[!isdup, ]
- }
-
- rownames(stat) <- stat$marker
-
- # -----------------------------
- # Load marker reference
- # -----------------------------
- marker <- data.table::fread(
-  file.path(GAlist$dirs["marker"], "markers.txt.gz"),
-  data.table = FALSE
- )
-
- rownames(marker) <- marker$rsids
-
- # align
- marker <- marker[stat$marker, ]
- stat   <- stat[marker$rsids, ]
- stat$rsids <- marker$rsids
-
- # -----------------------------
- # Allele alignment
- # -----------------------------
- aligned <- toupper(stat$ea) == toupper(marker$ea)
-
- message("Aligned:", sum(aligned))
- message("Flipped:", sum(!aligned))
-
- if (!all(aligned)) {
-
-  for (field in intersect(c("b", "z", "z_score"), names(stat))) {
-   stat[[field]][!aligned] <- -as.numeric(stat[[field]][!aligned])
-  }
-
-  if ("eaf" %in% names(stat)) {
-   stat$eaf[!aligned] <- 1 - stat$eaf[!aligned]
-  }
- }
-
- # -----------------------------
- # Fill missing EAF and use the catalog allele labels.
- # -----------------------------
+ stat$marker <- stat$rsids <- marker$rsids
  stat$ea <- marker$ea
  stat$nea <- marker$nea
+ for (field in intersect(c("b", "z", "z_score"), names(stat))) {
+  stat[[field]][flipped] <- -as.numeric(stat[[field]][flipped])
+ }
  if (!("eaf" %in% names(stat))) {
-  message("Using reference EAF")
   stat$eaf <- marker$eaf
+ } else {
+  stat$eaf[flipped] <- 1 - stat$eaf[flipped]
  }
 
- # -----------------------------
- # MAF difference filter (FIXED)
- # -----------------------------
+ duplicate_rows <- which(duplicated(target) | duplicated(target, fromLast = TRUE))
+ if (length(duplicate_rows)) {
+  fields <- intersect(c("rsids", "b", "z", "z_score", "seb", "p", "eaf", "n", "ncase",
+                         "ncontrol", "info"), names(stat))
+  estimates <- stat[duplicate_rows, fields, drop = FALSE]
+  estimates$eaf <- round(estimates$eaf, 12L)
+  distinct_ids <- unique(estimates)$rsids
+  conflicting <- stat$rsids[duplicate_rows] %in% distinct_ids[duplicated(distinct_ids)]
+  drop[rows[duplicate_rows[conflicting]]] <- "conflicting_duplicate"
+
+  # Prefer an already aligned copy, then sort its fields to break ties.
+  copies <- duplicate_rows[!conflicting]
+  fields <- lapply(stat[copies, , drop = FALSE], function(x) {
+   if (is.list(x)) as.character(x) else x
+  })
+  copies <- copies[do.call(order, c(list(flipped[copies]), unname(fields), list(method = "radix")))]
+  drop[rows[copies[duplicated(target[copies])]]] <- "redundant_duplicate"
+ }
+
  maf_diff <- abs(marker$eaf - stat$eaf)
- maf_diff_flag <- !is.na(maf_diff) & maf_diff > excludeMAFDIFF
+ drop[rows[drop[rows] == "" & !is.na(maf_diff) & maf_diff > excludeMAFDIFF]] <- "eaf_mismatch"
+ keep <- which(drop[rows] == "")
+ keep <- keep[order(target[keep])]
+ stat <- stat[keep, , drop = FALSE]
+ rownames(stat) <- stat$rsids
 
- message("Excluded by MAF diff:", sum(maf_diff_flag))
-
- stat <- stat[!maf_diff_flag, ]
- marker <- marker[!maf_diff_flag, ]
-
- # -----------------------------
- # Metrics
- # -----------------------------
+ reasons <- c("missing_required", "unsplit_multiallelic", "unresolved_strand", "unmatched",
+              "ambiguous_catalog_match", "shared_catalog_rsid", "conflicting_duplicate",
+              "redundant_duplicate", "eaf_mismatch")
+ counts <- setNames(tabulate(match(drop, reasons), length(reasons)), reasons)
  metrics <- list(
-  n_input = length(mapped),
-  n_mapped = sum(mapped),
+  strand = strand,
+  n_input = n_input,
+  n_mapped = length(rows),
   n_final = nrow(stat),
-  n_flipped = sum(!aligned),
-  n_removed_maf = sum(maf_diff_flag)
+  n_dropped = sum(counts),
+  n_flipped = sum(flipped[keep]),
+  n_removed_maf = unname(counts["eaf_mismatch"]),
+  dropped_by_reason = as.list(counts)
  )
-
+ message("GWAS QC: ", metrics$n_final, " of ", n_input, " rows retained, ",
+         metrics$n_dropped, " dropped, ", metrics$n_flipped, " retained rows flipped.")
  if (return_metrics) {
   attr(stat, "qc_metrics") <- metrics
  }
-
- return(stat)
+ stat
 }
 
 

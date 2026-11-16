@@ -31,6 +31,13 @@ reported EAF must be between 0 and 1. By default, gact converts named
 `p_scale = "neglog10p"` for other negative log10 p-value columns, or
 `p_scale = "p"` for ordinary p-values.
 
+By default, gact drops A/T and C/G SNPs with unknown strand. Set
+`strand = "forward"` when the source documents forward-strand alleles for the
+declared build. gact keeps one copy of agreeing duplicate estimates and drops
+conflicting duplicates. Each retained row must describe a single allele pair
+that maps uniquely to a catalog rsID. This allows separate pairs at one site
+when they have distinct catalog rsIDs.
+
 
 ## UK Biobank HbA1c example
 
@@ -72,10 +79,11 @@ result <- ingestStatDB(
   GAlist, stat, schema = schema, effect_scale = "beta", p_scale = "p",
   source = "NIH Figshare file 22770197 (Glycated_haemoglobin_HbA1c.imp.gz)",
   trait = "HbA1c", type = "quantitative", gender = "both", ancestry = "Mixed",
-  build = "GRCh37", reference = "PMID:33462484",
+  build = "GRCh37", strand = "forward", reference = "PMID:33462484",
   comments = "Study-level discovery sample size: 338,919 (GCST90019509)"
 )
 GAlist <- result$GAlist
+result$qc
 
 # Save updated database
 saveRDS(GAlist, file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds", compress = FALSE)
@@ -86,6 +94,9 @@ saveRDS(GAlist, file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds", compress = 
 The writer stages the study file and inventory before publishing them. You can
 retry a failed write once its cause is resolved. After a successful import,
 save the returned `GAlist` for subsequent imports and for `getGWAS()`.
+The QC summary counts input, retained, and dropped rows, with one reason for
+each drop and a flip count for retained rows. gact saves it as `GWAS<n>.qc.json`
+alongside the study file. Shiny displays the same counts on the Validation tab.
 
 If you use `shinyIngestGWAS()`, select **Download updated GAlist** after your
 imports and reopen the downloaded `.rds` in future sessions.

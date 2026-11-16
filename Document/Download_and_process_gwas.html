@@ -382,6 +382,13 @@ converts named <code>-log10(p)</code> columns such as
 <code>neglog10p</code> and <code>LP</code>. Use
 <code>p_scale = &quot;neglog10p&quot;</code> for other negative log10 p-value
 columns, or <code>p_scale = &quot;p&quot;</code> for ordinary p-values.</p>
+<p>By default, gact drops A/T and C/G SNPs with unknown strand. Set
+<code>strand = &quot;forward&quot;</code> when the source documents forward-strand
+alleles for the declared build. gact keeps one copy of agreeing
+duplicate estimates and drops conflicting duplicates. Each retained row
+must describe a single allele pair that maps uniquely to a catalog rsID.
+This allows separate pairs at one site when they have distinct catalog
+rsIDs.</p>
 </div>
 <div id="uk-biobank-hba1c-example" class="section level2">
 <h2>UK Biobank HbA1c example</h2>
@@ -421,17 +428,22 @@ result &lt;- ingestStatDB(
   GAlist, stat, schema = schema, effect_scale = &quot;beta&quot;, p_scale = &quot;p&quot;,
   source = &quot;NIH Figshare file 22770197 (Glycated_haemoglobin_HbA1c.imp.gz)&quot;,
   trait = &quot;HbA1c&quot;, type = &quot;quantitative&quot;, gender = &quot;both&quot;, ancestry = &quot;Mixed&quot;,
-  build = &quot;GRCh37&quot;, reference = &quot;PMID:33462484&quot;,
+  build = &quot;GRCh37&quot;, strand = &quot;forward&quot;, reference = &quot;PMID:33462484&quot;,
   comments = &quot;Study-level discovery sample size: 338,919 (GCST90019509)&quot;
 )
 GAlist &lt;- result$GAlist
+result$qc
 
 # Save updated database
 saveRDS(GAlist, file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;, compress = FALSE)</code></pre>
 <p>The writer stages the study file and inventory before publishing
 them. You can retry a failed write once its cause is resolved. After a
 successful import, save the returned <code>GAlist</code> for subsequent
-imports and for <code>getGWAS()</code>.</p>
+imports and for <code>getGWAS()</code>. The QC summary counts input,
+retained, and dropped rows, with one reason for each drop and a flip
+count for retained rows. gact saves it as
+<code>GWAS&lt;n&gt;.qc.json</code> alongside the study file. Shiny
+displays the same counts on the Validation tab.</p>
 <p>If you use <code>shinyIngestGWAS()</code>, select <strong>Download
 updated GAlist</strong> after your imports and reopen the downloaded
 <code>.rds</code> in future sessions.</p>

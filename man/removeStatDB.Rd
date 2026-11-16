@@ -15,5 +15,5 @@ removeStatDB(GAlist, studyID = NULL)
 Updated GAlist. The summary files are removed and existing GWAS_information.csv metadata is rewritten.
 }
 \description{
-Deletes the selected summary-statistics files and updates the database study metadata.
+Deletes the selected summary-statistics files and their QC reports and updates the database study metadata.
 }
