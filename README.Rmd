@@ -218,3 +218,37 @@ These notes and scripts are prepared in the BALDER project funded by the ODIN pl
 6. Kunkel et al. Improving polygenic prediction from summary data by learning patterns of effect sharing across multiple phenotypes. *Plos Genetics* 21 (1), e1011519 (2025). https://doi.org/10.1371/journal.pgen.1011519.
 
 
+
+### Inspect downloaded GWAS files before ingestion
+
+`inspectGWAS()` reads bounded leading previews and joins local files to a TSV
+metadata table. It prepares recipes, `review.tsv`, `formats.json`, and a separate
+`ingest.R` script. The output directory must be new or empty and outside the
+input directory. Use `file_column` and `metadata_mapping` when the metadata table
+uses different names. Missing or ambiguous metadata remains visible in the
+review table.
+
+```r
+inspection <- inspectGWAS(
+  data_dir = "mops/human_GWAS/final_hg38",
+  metadata = "all_229_trait_summary.tsv",
+  out_dir = "gwas_recipe_review",
+  preview_rows = 1000
+)
+inspection$review
+```
+
+The folder name does not establish genome build. Supply confirmed metadata in
+the table or through `defaults`, for example `defaults = list(build = "GRCh38")`.
+Review recipes before executing `Rscript gwas_recipe_review/ingest.R GAlist.rds`.
+The generated script uses the existing ingestion API and writes the database.
+Preview checks cover only sampled rows; full-file validation and alignment take
+place during ingestion. The script is a sequential first-import script and
+reruns use existing gact behavior; it is not a resumable campaign manager.
+
+Format learning persists as explicit, source-specific knowledge. Correct an
+entry in `formats.json`, document the evidence, and set `verified` to `true`.
+Pass that file as `knowledge` to subsequent inspections. Only exact source and
+header matches reuse verified mappings. New observations remain unverified.
+This function performs local inspection; an agent can interpret source
+publications and curate the saved knowledge between runs.

@@ -85,3 +85,5 @@ importFrom(stringr,str_split)
 importFrom(tools,md5sum)
 importFrom(utils,tail)
 importFrom(gbase,mapSets)
+
+export(inspectGWAS)
