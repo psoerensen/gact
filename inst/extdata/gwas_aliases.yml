@@ -117,6 +117,7 @@ fields:
       - std_err
       - se_beta
       - se_effect
+      - effect_se
       - stderr_beta
     regex: []
 

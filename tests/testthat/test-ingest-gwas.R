@@ -26,6 +26,23 @@ test_that("detectStatSchema identifies common GWAS columns", {
   expect_equal(out$mapping[["n"]], "N")
 })
 
+test_that("detectStatSchema recognizes effect_se in harmonized GWAS files", {
+  stat <- data.frame(
+    rsID = c("rs1", "rs2"), chr = c(1L, 1L), position = c(100L, 200L),
+    N_sample_size = c(10000, 10000),
+    effect_allele = c("A", "C"), non_effect_allele = c("G", "T"),
+    effect_size = c(-0.2, 0.3), effect_se = c(0.04, 0.08), pvalue = c(0.01, 0.02)
+  )
+  schema <- detectStatSchema(stat)
+  expect_identical(schema$mapping[["seb"]], "effect_se")
+  expect_identical(normalizeStatSchema(stat, schema)$seb, stat$effect_se)
+
+  stat$effect_se <- NA_real_
+  schema <- detectStatSchema(stat)
+  expect_identical(schema$mapping[["seb"]], "effect_se")
+  expect_error(normalizeStatSchema(stat, schema), "Missing required canonical fields.*seb")
+})
+
 test_that("normalizeStatSchema normalizes key fields", {
   stat <- data.frame(
     snp = c("rs1", "rs2"),

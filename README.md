@@ -387,6 +387,8 @@ empty and outside the input directory. Use `file_column` and
 `metadata_mapping` when the metadata table uses different names. Missing
 or ambiguous metadata remains visible in the review table.
 
+The schema detector recognizes `effect_se` as a standard-error column.
+
 ``` r
 inspection <- inspectGWAS(
   data_dir = "mops/human_GWAS/final_hg38",
