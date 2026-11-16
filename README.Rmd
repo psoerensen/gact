@@ -264,7 +264,19 @@ GAlist <- buildMarkerDB(input_dir = "prepared_grch38", dbdir = "/path/to/gactcor
 The build writes `marker/markers.txt.gz`, `marker/cpra.txt.gz`, a marker provenance
 manifest, and `GAlist_hsa.GRCh38.0.0.1.rds` under the new version directory. The saved
 descriptor can be passed to `runGWASManifest()`. GRCh38 LD and annotation bundles
-are separate resources and are pending for this version.
+are separate resources and are pending for this version. The matching NYGC
+genotypes are available separately.
+
+```r
+GAlist <- downloadDB(GAlist, what = "1000G")
+```
+
+For GRCh38, this downloads the five ancestry archives from the
+[versioned Zenodo record](https://doi.org/10.5281/zenodo.24292610).
+It checks SHA-256 for each archive and its extracted triplet, and places
+`g1000_<ancestry>.bed`, `.bim` and `.fam` directly in `marker/`.
+Existing files that match the release are reused. Conflicting files cause
+the installation to stop.
 
 ### Prepare NYGC 30× GRCh38 genotypes
 

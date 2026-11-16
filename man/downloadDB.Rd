@@ -16,7 +16,10 @@ downloadDB(
 
 \item{what}{A character string specifying which data type to download. Use
 \code{"ldetect"} to install the bundled GRCh37 EUR and EAS LD region files in
-the marker directory and register their paths in GAlist.}
+the marker directory and register their paths in GAlist. For GRCh38,
+\code{"1000G"} installs the five NYGC PLINK triplets from Zenodo record 24292610
+directly in the marker directory. It verifies SHA-256 checksums and reuses
+files that already match the release.}
 
 \item{min_combined_score}{Minimum combined score for filtering STRING/STITCH data.}
 

@@ -279,7 +279,7 @@ gact_versions <- list(
   local_build = TRUE,
   description = "GRCh38 human database for GWAS ingestion and retrieval",
   created = "2026-11-16",
-  sources = list()
+  sources = list(`1000G` = "10.5281/zenodo.24292610")
  )
 )
 
@@ -342,6 +342,9 @@ list_gact_versions <- function() {
 #' @param what A character string specifying which data type to download.
 #'   Use \code{"ldetect"} to install the bundled GRCh37 EUR and EAS LD region
 #'   files in the marker directory and register their paths in GAlist.
+#'   For GRCh38, \code{"1000G"} installs the five NYGC PLINK triplets from
+#'   Zenodo record 24292610 directly in the marker directory. It verifies
+#'   SHA-256 checksums and reuses files that already match the release.
 #' @param min_combined_score Minimum combined score for filtering STRING/STITCH data.
 #' @param min_interactions Minimum number of interactions for filtering STRING/STITCH data.
 #'
@@ -351,6 +354,18 @@ downloadDB <- function(GAlist = NULL, what = NULL,
                        min_combined_score = 900, min_interactions = 5) {
 
  if (is.null(what)) stop("Please specify what to download, e.g. what='gsets'")
+ if (identical(what, "1000G") &&
+     identical(.gact_catalog_build(GAlist) %||% GAlist$assembly, "GRCh38")) {
+  doi <- gact_versions[["hsa.GRCh38.0.0.1"]]$sources[["1000G"]]
+  dest <- GAlist$dirs[["marker"]]
+  files <- .gact_install_nygc_panels(dest, doi)
+  GAlist <- log_download(GAlist, what, "Zenodo", doi, dest, "success",
+                         "Verified GRCh38 NYGC panels for AFR, AMR, EAS, EUR and SAS")
+  row <- nrow(GAlist$downloads)
+  GAlist$downloads$dest_file[row] <- dest
+  GAlist$downloads$file_size_MB[row] <- round(sum(file.size(files)) / 1e6, 3)
+  return(GAlist)
+ }
  if (isTRUE(.gact_version_metadata(GAlist$version)$local_build)) {
   stop("Use buildMarkerDB() to build the ", GAlist$version,
        " marker catalog.")
