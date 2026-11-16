@@ -660,8 +660,10 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 #' @param what Specifies the type of statistics to retrieve; "all" for all statistics or specific
 #'        types like "rsids", "b", "seb", "eaf", "ea", "nea", "z", "p" (default: "all").
 #' @param format Specifies the format of the output; either "list" or "data.frame" (default: "list").
-#' @param rm.na Remove NA rows (default TRUE). FALSE retains the requested database
-#'   backbone, including gaps, and attaches marker identity for reference checking.
+#' @param rm.na Remove missing rows (default TRUE). For a single GWAS with
+#'   `what = "all"`, missing per-variant sample size (`n`) is allowed.
+#'   FALSE retains the requested database backbone, including gaps, and
+#'   attaches marker identity for reference checking.
 #' @param rsids An optional vector of SNP IDs to subset the marker statistics.
 #' @param cpra An optional vector of chromosome-position-ref-alt values to map to marker IDs.
 #'
@@ -721,7 +723,9 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
  }
 
  if(is.null(studyID)) studyID <- GAlist$study$id
- names(GAlist$study$neff) <-GAlist$study$id
+ study_neff <- GAlist$study$neff
+ if (is.null(study_neff)) study_neff <- rep(NA_real_, length(GAlist$study$id))
+ names(study_neff) <- GAlist$study$id
 
  if (length(studyID)==1) format <- "data.frame"
  if (length(studyID)>1) format <- "list"
@@ -735,7 +739,7 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
    stat$p <- as.numeric(stat$p)
    stat$p[stat$p<.Machine$double.xmin] <- .Machine$double.xmin
-   if(is.null(stat[["n"]])) stat$n <- rep(as.numeric(GAlist$study$neff[study]),length(stat$b))
+   if(is.null(stat[["n"]])) stat$n <- rep(as.numeric(study_neff[study]),length(stat$b))
    if (!is.null(maf)) stat <- stat[stat$eaf > maf | 1 - stat$eaf < maf, ]
    if(adjN) {
     if(GAlist$studies[study,"type"]=="binary") {
@@ -773,7 +777,7 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
   stat$p <- as.numeric(stat$p)
   stat$p[stat$p<.Machine$double.xmin] <- .Machine$double.xmin
   if (!is.null(maf)) stat <- stat[stat$eaf > maf | 1 - stat$eaf < maf, ]
-  if(is.null(stat[["n"]])) stat$n <- rep(GAlist$study$neff[study],nrow(stat))
+  if(is.null(stat[["n"]])) stat$n <- rep(study_neff[study],nrow(stat))
   if(adjN) {
    if(GAlist$studies[study,"type"]=="binary") {
     neff<-4/((2*stat$eaf*(1-stat$eaf))*stat$seb^2)
@@ -791,7 +795,7 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
   out <- stat[match(rsids,stat$rsids),,drop=FALSE]
   out$rsids <- rsids
   rownames(out) <- rsids
-  if(rm.na) out <- na.omit(out)
+  if(rm.na) out <- out[complete.cases(out[names(out) != "n"]), , drop = FALSE]
   return(finish(out))
  }
 

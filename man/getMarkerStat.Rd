@@ -26,7 +26,10 @@ types like "rsids", "b", "seb", "eaf", "ea", "nea", "z", "p" (default: "all").}
 
 \item{format}{Specifies the format of the output; either "list" or "data.frame" (default: "list").}
 
-\item{rm.na}{Remove missing rows (default TRUE). FALSE retains the requested database backbone, including unreported markers, for imputation.}
+\item{rm.na}{Remove missing rows (default TRUE). For a single GWAS with
+\code{what = "all"}, missing per-variant sample size (\code{n}) is allowed.
+FALSE retains the requested database backbone, including gaps, and
+attaches marker identity for reference checking.}
 
 \item{rsids}{An optional vector of SNP IDs to subset the marker statistics.}
 
