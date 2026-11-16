@@ -5,6 +5,11 @@
 #' The script is executed separately with the path to a GAlist RDS database.
 #' Preview success describes only the sampled records. Alignment remains the
 #' responsibility of the existing ingestion machinery.
+#' All recipes must pass preview validation before the script starts writing.
+#' After correcting a failed preview, inspect the file again to regenerate its
+#' recipe. Omitted optional metadata uses the ingestion API defaults.
+#' The preview and the script support plain text, gzip, bzip2, and XZ.
+#' The script expands compressed inputs to temporary files for full-file reads.
 #'
 #' Format knowledge is explicit and persistent. Edit a generated formats.json
 #' entry to correct its mapping and scales, add evidence, and set verified=true.
@@ -17,6 +22,8 @@
 #' @param out_dir New or empty output directory, outside data_dir.
 #' @param file_column Metadata column containing file paths or basenames.
 #'   If NULL, a unique filename, file_name, file, or path column is detected.
+#'   Paths are absolute or relative to `data_dir`. A bare basename must
+#'   uniquely identify a file among the inputs.
 #' @param metadata_mapping Named character vector mapping gact metadata fields
 #'   to metadata columns. Canonically named columns are used by default.
 #' @param defaults Named list of study metadata supplied by the caller. Values
@@ -35,7 +42,7 @@ inspectGWAS <- function(data_dir, metadata, out_dir, file_column = NULL,
                      preview_rows = 1000L, skip = 0L,
                      pattern = "\\.(tsv|txt|csv|sumstats|imp)(\\.(gz|bz2|xz))?$",
                      recursive = TRUE) {
-  data_dir <- normalizePath(data_dir, mustWork = TRUE)
+  data_dir <- normalizePath(data_dir, winslash = "/", mustWork = TRUE)
   if (!dir.exists(data_dir)) stop("data_dir must be a directory")
   for (value in list(preview_rows, skip)) {
     if (length(value) != 1L || !is.finite(value) || value != floor(value)) {
@@ -45,7 +52,7 @@ inspectGWAS <- function(data_dir, metadata, out_dir, file_column = NULL,
   if (preview_rows < 1 || skip < 0) stop("Invalid preview_rows or skip")
   metadata_file <- character()
   if (is.character(metadata) && length(metadata) == 1L) {
-    metadata_file <- normalizePath(metadata, mustWork = TRUE)
+    metadata_file <- normalizePath(metadata, winslash = "/", mustWork = TRUE)
     metadata <- data.table::fread(file = metadata, sep = "\t", data.table = FALSE)
   }
   if (!is.data.frame(metadata)) stop("metadata must be a TSV path or data.frame")
@@ -81,23 +88,40 @@ inspectGWAS <- function(data_dir, metadata, out_dir, file_column = NULL,
                            recursive = recursive, ignore.case = TRUE))
   files <- files[!dir.exists(files)]
   if (!length(files)) stop("No matching summary-statistics files found")
-  files <- setdiff(normalizePath(files, mustWork = TRUE), metadata_file)
+  files <- normalizePath(files, winslash = "/", mustWork = TRUE)
+  files <- files[!.gact_gwas_path_key(files) %in% .gact_gwas_path_key(metadata_file)]
   if (!length(files)) stop("No summary-statistics files beyond the metadata table")
-  out_dir <- normalizePath(out_dir, mustWork = FALSE)
-  if (out_dir == data_dir || startsWith(out_dir, paste0(data_dir, "/"))) {
-    stop("out_dir must be outside data_dir")
+  input_key <- .gact_gwas_path_key(data_dir)
+  check_output_path <- function(path) {
+    key <- .gact_gwas_path_key(path)
+    if (key == input_key || startsWith(key, paste0(sub("/+$", "", input_key), "/"))) {
+      stop("out_dir must be outside data_dir")
+    }
   }
+  out_dir <- .gact_gwas_output_path(path.expand(out_dir))
+  check_output_path(out_dir)
   if (dir.exists(out_dir) && length(list.files(out_dir, all.files = TRUE, no.. = TRUE))) {
     stop("out_dir must be new or empty; earlier recipes are preserved")
   }
-  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-  out_dir <- normalizePath(out_dir, mustWork = TRUE)
-  if (out_dir == data_dir || startsWith(out_dir, paste0(data_dir, "/"))) {
-    stop("out_dir must be outside data_dir")
-  }
-  dir.create(file.path(out_dir, "recipes"))
   aliases <- read_aliases_yaml(must_exist = TRUE)
-  file_keys <- gsub("\\\\", "/", as.character(metadata[[file_column]]))
+  if (!dir.exists(out_dir) && !dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)) {
+    stop("Cannot create out_dir: ", out_dir)
+  }
+  out_dir <- normalizePath(out_dir, winslash = "/", mustWork = TRUE)
+  check_output_path(out_dir)
+  dir.create(file.path(out_dir, "recipes"))
+
+  metadata_paths <- gsub("\\\\", "/", as.character(metadata[[file_column]]))
+  has_path <- !is.na(metadata_paths) & nzchar(metadata_paths)
+  absolute <- grepl("^(/|[A-Za-z]:)", metadata_paths)
+  bare <- has_path & !absolute & !grepl("/", metadata_paths, fixed = TRUE)
+  relative <- has_path & !bare & !absolute
+  metadata_paths[relative] <- file.path(data_dir, metadata_paths[relative])
+  qualified <- has_path & !bare & file.exists(metadata_paths)
+  metadata_paths[qualified] <- normalizePath(metadata_paths[qualified], winslash = "/", mustWork = TRUE)
+  metadata_keys <- .gact_gwas_path_key(metadata_paths)
+  file_keys <- .gact_gwas_path_key(files)
+  basenames <- basename(file_keys)
   recipes <- formats <- rows <- list()
   used_metadata <- integer()
   present <- function(x) length(x) == 1L && !is.na(x) && nzchar(as.character(x))
@@ -105,15 +129,16 @@ inspectGWAS <- function(data_dir, metadata, out_dir, file_column = NULL,
   for (i in seq_along(files)) {
     file <- files[[i]]
     id <- sprintf("study_%05d", i)
-    relative <- substring(file, nchar(data_dir) + 2L)
-    matches <- which(file_keys %in% c(file, relative))
-    if (!length(matches)) matches <- which(basename(file_keys) == basename(file))
+    matches <- which(qualified & metadata_keys == file_keys[[i]])
     issues <- character()
     recipe <- defaults
-    if (length(matches) == 1L && !file_keys[matches] %in% c(file, relative) &&
-        sum(basename(files) == basename(file)) > 1L) {
-      matches <- integer()
-      issues <- c(issues, "Ambiguous basename across data directories")
+    if (!length(matches)) {
+      by_name <- which(bare & metadata_keys == basenames[[i]])
+      if (length(by_name) && sum(basenames == basenames[[i]]) > 1L) {
+        issues <- c(issues, "Ambiguous basename across data directories")
+      } else {
+        matches <- by_name
+      }
     }
     if (length(matches) == 1L) {
       used_metadata <- c(used_metadata, matches)
@@ -208,9 +233,25 @@ inspectGWAS <- function(data_dir, metadata, out_dir, file_column = NULL,
     metadata_columns = names(metadata), unmatched_metadata = unmatched, script = script))
 }
 
+.gact_gwas_path_key <- function(path) {
+  if (.Platform$OS.type == "windows") tolower(path) else path
+}
+
+.gact_gwas_output_path <- function(path) {
+  if (file.exists(path)) return(normalizePath(path, winslash = "/", mustWork = TRUE))
+  parent <- dirname(path)
+  if (identical(parent, path)) stop("Cannot resolve out_dir: ", path)
+  parent <- .gact_gwas_output_path(parent)
+  leaf <- basename(path)
+  switch(leaf, "." = parent, ".." = dirname(parent), file.path(parent, leaf))
+}
+
+.gact_gwas_connection <- function(path) {
+  switch(tolower(tools::file_ext(path)), gz = gzfile, bz2 = bzfile, xz = xzfile, base::file)
+}
+
 .gact_gwas_preview <- function(file, rows, skip) {
-  connection <- if (grepl("\\.bz2$", file, ignore.case = TRUE)) bzfile(file, "rt") else
-    if (grepl("\\.xz$", file, ignore.case = TRUE)) xzfile(file, "rt") else gzfile(file, "rt")
+  connection <- .gact_gwas_connection(file)(file, "rt")
   on.exit(close(connection))
   if (skip) readLines(connection, n = skip, warn = FALSE)
   lines <- readLines(connection, n = rows + 1L, warn = FALSE)
@@ -219,8 +260,20 @@ inspectGWAS <- function(data_dir, metadata, out_dir, file_column = NULL,
                     data.table = FALSE, check.names = FALSE)
 }
 
+.gact_gwas_read_source <- function(path, skip) {
+  reader <- .gact_gwas_connection(path)
+  if (!identical(reader, base::file)) {
+    unpacked <- tempfile("gact-gwas-")
+    on.exit(unlink(unpacked))
+    R.utils::decompressFile(path, destname = unpacked, ext = tools::file_ext(path),
+                            FUN = reader, remove = FALSE)
+    path <- unpacked
+  }
+  data.table::fread(file = path, skip = skip, data.table = FALSE, check.names = FALSE)
+}
+
 .gact_write_ingestion_script <- function(path, recipes, skip) {
-  paths <- paste(capture.output(dput(recipes)), collapse = "\n")
+  paths <- paste(utils::capture.output(dput(recipes)), collapse = "\n")
   writeLines(c(
     "# Generated by inspectGWAS. Review and correct the recipe JSON files first.",
     "# Run with Rscript ingest.R /absolute/path/to/GAlist.rds",
@@ -236,20 +289,23 @@ inspectGWAS <- function(data_dir, metadata, out_dir, file_column = NULL,
     "    if (is.null(r[[field]]) || length(r[[field]]) != 1L ||",
     "        is.na(r[[field]]) || !nzchar(r[[field]])) stop('Missing ', field, ' in ', r$file_name)",
     "  }",
-    "  if (is.null(r$inspection)) stop('File preview failed: ', r$file_name)",
+    "  if (is.null(r$inspection) || !isTRUE(r$validation$ok)) {",
+    "    stop('File preview failed; inspect again: ', r$file_name,",
+    "         '. ', paste(r$validation$errors, collapse = ' | '))",
+    "  }",
     "  info <- file.info(r$file_name)",
     "  if (is.na(info$size) || info$size != r$inspection$size ||",
     "      abs(as.numeric(info$mtime) - r$inspection$mtime) > 1e-5) stop('File changed; inspect again: ', r$file_name)",
     "}",
     "GAlist <- readRDS(args[[1L]])",
     "for (r in recipes) {",
-    paste0("  stat <- data.table::fread(file = r$file_name, skip = ", skip, ", data.table = FALSE)"),
-    "  result <- ingestStatDB(GAlist, stat, schema = r$mapping,",
-    "    effect_scale = r$effect_scale, p_scale = r$p_scale,",
-    "    source = r$source, trait = r$trait, type = r$type, category = r$category,",
-    "    efo = r$efo, gender = r$gender, ancestry = r$ancestry, build = r$build,",
-    "    n = r$n, ncase = r$ncase, ncontrol = r$ncontrol, reference = r$reference,",
-    "    comments = r$comments, strand = r$strand, recipe = r)",
+    paste0("  stat <- gact:::.gact_gwas_read_source(r$file_name, skip = ", skip, ")"),
+    "  fields <- c('source', 'trait', 'type', 'category', 'efo', 'gender', 'ancestry',",
+    "    'build', 'n', 'ncase', 'ncontrol', 'reference', 'comments', 'strand',",
+    "    'effect_scale', 'p_scale')",
+    "  supplied <- Filter(Negate(is.null), r[intersect(fields, names(r))])",
+    "  result <- do.call(ingestStatDB, c(list(GAlist = GAlist, stat = stat, schema = r$mapping,",
+    "    recipe = r), supplied))",
     "  GAlist <- result$GAlist",
     "  saveRDS(GAlist, args[[1L]], compress = FALSE)",
     "}"), path)

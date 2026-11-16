@@ -10,7 +10,36 @@ mining_fixture <- function() {
   close(con)
   meta <- data.frame(filename = "trait.tsv.gz", source = "example-release",
     trait = "example", type = "quantitative", build = "GRCh38", ancestry = "EUR")
-  list(root = root, data = data, meta = meta)
+  list(root = root, data = data, meta = meta, stat = stat)
+}
+
+mining_database <- function(x) {
+  marker <- file.path(x$root, "marker")
+  gstat <- file.path(x$root, "gstat")
+  dir.create(marker)
+  dir.create(gstat)
+  markers <- transform(x$stat[c("chr", "pos", "ea", "nea")],
+    rsids = paste0("rs", x$stat$pos), eaf = 0.2)
+  data.table::fwrite(markers, file.path(marker, "markers.txt.gz"))
+  keys <- with(markers, paste(chr, pos, ea, nea, sep = "_"))
+  data.table::fwrite(data.frame(cpra = keys), file.path(marker, "cpra.txt.gz"))
+  ga <- list(metadata = list(build = "GRCh38"), dirs = c(marker = marker, gstat = gstat),
+    rsids = markers$rsids)
+  ga <- updateStatDB(ga, x$stat, type = "quantitative", trait = "existing", build = "GRCh38")
+  descriptor <- file.path(x$root, "GAlist.rds")
+  saveRDS(ga, descriptor)
+  list(descriptor = descriptor, gstat = gstat)
+}
+
+run_mining_script <- function(script, descriptor) {
+  previous <- Sys.getenv("R_LIBS", unset = NA_character_)
+  on.exit(if (is.na(previous)) Sys.unsetenv("R_LIBS") else Sys.setenv(R_LIBS = previous))
+  libraries <- unique(c(dirname(find.package("gact")), .libPaths()))
+  Sys.setenv(R_LIBS = paste(libraries, collapse = .Platform$path.sep))
+  output <- suppressWarnings(system2(file.path(R.home("bin"), "Rscript"),
+    c("--vanilla", shQuote(script), shQuote(descriptor)), stdout = TRUE, stderr = TRUE))
+  status <- attr(output, "status")
+  list(status = if (is.null(status)) 0L else status, output = paste(output, collapse = "\n"))
 }
 
 test_that("mining reads bounded compressed previews and prepares scripts", {
@@ -57,6 +86,35 @@ test_that("ambiguous matches and malformed files remain visible", {
   expect_match(result$review$issues[2], "Metadata matches: 2")
   expect_equal(nrow(result$unmatched_metadata), 2L)
   expect_error(inspectGWAS(x$data, x$meta, file.path(x$data, "out")), "outside")
+  expect_false(dir.exists(file.path(x$data, "out")))
+  expect_error(inspectGWAS(x$data, x$meta, file.path(x$data, "new", "..", "out")), "outside")
+  expect_false(dir.exists(file.path(x$data, "new")))
+})
+
+test_that("only bare metadata names can use basename matching", {
+  x <- mining_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  wrong <- transform(x$meta, filename = "elsewhere/trait.tsv.gz")
+  result <- inspectGWAS(x$data, wrong, file.path(x$root, "wrong"))
+  expect_identical(result$review$metadata_matches, 0L)
+  expect_null(jsonlite::read_json(result$recipes[[1]])$trait)
+  expect_identical(result$unmatched_metadata$filename, wrong$filename)
+
+  first <- file.path(x$data, "first")
+  second <- file.path(x$data, "second")
+  dir.create(first)
+  dir.create(second)
+  expect_true(file.rename(file.path(x$data, x$meta$filename), file.path(first, x$meta$filename)))
+  expect_true(file.copy(file.path(first, x$meta$filename), second))
+  meta <- rbind(transform(x$meta, filename = "first\\trait.tsv.gz", trait = "first"),
+    transform(x$meta, filename = file.path(second, filename), trait = "second"))
+  result <- inspectGWAS(x$data, meta, file.path(x$root, "paths"))
+  expect_equal(result$review$metadata_matches, c(1, 1))
+  traits <- vapply(result$recipes, function(path) jsonlite::read_json(path)$trait, character(1))
+  expect_identical(unname(traits), c("first", "second"))
+  result <- inspectGWAS(x$data, x$meta, file.path(x$root, "basename"))
+  expect_equal(result$review$metadata_matches, c(0, 0))
+  expect_true(all(grepl("Ambiguous basename", result$review$issues)))
 })
 
 test_that("generated script passes full data and recipe to the ingestion API", {
@@ -86,4 +144,48 @@ test_that("generated script passes full data and recipe to the ingestion API", {
   close(con)
   expect_error(eval(parse(result$script), env), "File changed")
   expect_length(calls, 1L)
+})
+
+test_that("failed preview validation stops the generated script before any writes", {
+  x <- mining_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  db <- mining_database(x)
+  bad <- "z-invalid.tsv"
+  data.table::fwrite(transform(x$stat, p = 1.2), file.path(x$data, bad), sep = "\t")
+  meta <- rbind(x$meta, transform(x$meta, filename = bad, trait = "invalid"))
+  result <- inspectGWAS(x$data, meta, file.path(x$root, "out"), preview_rows = 2)
+  expect_identical(result$review$preview_ok, c(TRUE, FALSE))
+  files <- c(db$descriptor, list.files(db$gstat, full.names = TRUE))
+  before <- tools::md5sum(files)
+  run <- run_mining_script(result$script, db$descriptor)
+  expect_true(run$status != 0L)
+  expect_match(run$output, "File preview failed; inspect again")
+  expect_match(run$output, "Invalid p-values")
+  expect_identical(tools::md5sum(files), before)
+  expect_setequal(list.files(db$gstat, full.names = TRUE), files[-1L])
+})
+
+test_that("the generated script appends XZ data and uses optional metadata defaults", {
+  x <- mining_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  db <- mining_database(x)
+  unlink(file.path(x$data, x$meta$filename))
+  x$meta$filename <- "trait.tsv.xz"
+  path <- file.path(x$data, x$meta$filename)
+  con <- xzfile(path, "wt")
+  writeLines("# file preamble", con)
+  write.table(x$stat, con, sep = "\t", row.names = FALSE, quote = FALSE)
+  close(con)
+  input_md5 <- tools::md5sum(path)
+  result <- inspectGWAS(x$data, x$meta, file.path(x$root, "out"), preview_rows = 2, skip = 1)
+  expect_true(result$review$preview_ok)
+  expect_equal(result$review$preview_rows, 2)
+  run <- run_mining_script(result$script, db$descriptor)
+  expect_identical(run$status, 0L, info = run$output)
+  updated <- readRDS(db$descriptor)
+  expect_identical(updated$studies$id, c("GWAS1", "GWAS2"))
+  expect_identical(updated$studies["GWAS2", "category"], "unknown")
+  expect_identical(updated$studies["GWAS2", "gender"], "unknown")
+  expect_equal(nrow(getGWAS(updated, "GWAS2", what = "b")), nrow(x$stat))
+  expect_identical(tools::md5sum(path), input_md5)
 })
