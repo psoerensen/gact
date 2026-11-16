@@ -13,5 +13,7 @@ The return value of shiny::runApp(); the call launches an interactive app and bl
 Runs the packaged Shiny application located at inst/shiny/ingest_app.
 }
 \details{
-The app is used to select local files and ingest them into a GACT database. Call it explicitly in an interactive session.
+The app is used to select local files and ingest them into a GACT
+database. After ingestion, use \strong{Download updated GAlist} to save the
+descriptor for reopening the database. Call the app in an interactive session.
 }

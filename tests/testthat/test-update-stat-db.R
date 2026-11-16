@@ -30,6 +30,49 @@ test_that("successive studies persist complete checksum and recipe metadata", {
   expect_false(file.exists(file.path(root, "GWAS5.txt.gz")))
 })
 
+test_that("failed publication preserves the inventory and can be retried", {
+  root <- tempfile("gact-import-retry-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE))
+  local_mocked_bindings(qcStatDB = function(GAlist, stat, ...) stat, .package = "gact")
+  stat <- data.frame(chr = 1L, pos = 10L, ea = "A", nea = "G",
+    b = 0.1, seb = 0.05, p = 0.04)
+  initial <- list(dirs = c(gstat = root), study = list(id = character()))
+  ga <- updateStatDB(initial, stat)
+  inventory <- file.path(root, "GWAS_information.csv")
+  before <- tools::md5sum(c(inventory, ga$studyfiles))
+  recipe <- list(source = "fixture")
+  publish <- gact:::.publish_gwas_import_file
+
+  blocked_recipe <- file.path(root, "REC2.json")
+  dir.create(blocked_recipe)
+  expect_error(updateStatDB(ga, stat, recipe = recipe), "GWAS recipe file already exists")
+  expect_true(dir.exists(blocked_recipe))
+  expect_false(file.exists(file.path(root, "GWAS2.txt.gz")))
+  unlink(blocked_recipe, recursive = TRUE)
+
+  for (destination in c("REC2.json", "GWAS_information.csv")) {
+    local({
+      local_mocked_bindings(.publish_gwas_import_file = function(from, to, replace = FALSE) {
+        if (basename(to) == destination) stop("Injected publication failure")
+        publish(from, to, replace)
+      }, .package = "gact")
+      expect_error(updateStatDB(ga, stat, recipe = recipe), "Injected publication failure")
+    })
+    expect_identical(tools::md5sum(names(before)), before)
+    expect_setequal(list.files(root, all.files = TRUE, no.. = TRUE),
+      c("GWAS_information.csv", "GWAS1.txt.gz"))
+  }
+
+  updated <- updateStatDB(ga, stat, recipe = recipe)
+  expect_identical(read.csv2(inventory)$id, c("GWAS1", "GWAS2"))
+  expect_true(file.exists(file.path(root, "REC2.json")))
+  expect_identical(updated$studies["GWAS2", "checksum"],
+    unname(tools::md5sum(updated$studyfiles["GWAS2"])))
+  expect_error(updateStatDB(ga, writeStatDB = FALSE), "Load the current descriptor")
+  expect_identical(read.csv2(inventory)$id, c("GWAS1", "GWAS2"))
+})
+
 test_that("HbA1c-style ingestion is readable with catalog EAF and study N", {
   root <- tempfile("gact-hba1c-")
   dir.create(root)

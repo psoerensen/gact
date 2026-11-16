@@ -42,6 +42,7 @@ shinyApp(
     actionButton("process", "Preview normalization"),
     actionButton("save_recipe", "Save recipe"),
     actionButton("ingest", "Ingest into DB"),
+    uiOutput("download_galist_ui"),
 
     hr(),
 
@@ -84,7 +85,7 @@ shinyApp(
   options(shiny.maxRequestSize = 2000 * 1024^2)
 
   GAlist_rv <- reactiveVal(NULL)
-  db_path_rv <- reactiveVal(NULL)
+  has_imported <- reactiveVal(FALSE)
   schema_rv <- reactiveVal(NULL)
 
   # =========================
@@ -93,17 +94,33 @@ shinyApp(
   observeEvent(input$db_file, {
    req(input$db_file)
 
-   tmp <- input$db_file$datapath
-   stable <- file.path(tempdir(), input$db_file$name)
-   file.copy(tmp, stable, overwrite = TRUE)
-
-   GAlist_rv(readRDS(stable))
-   db_path_rv(stable)
-
-   output$db_status <- renderText({
-    paste("Loaded DB:", input$db_file$name)
-   })
+   has_imported(FALSE)
+   GAlist_rv(tryCatch(readRDS(input$db_file$datapath), error = function(e) {
+    showNotification(conditionMessage(e), type = "error")
+    NULL
+   }))
   })
+
+  output$db_status <- renderText({
+   req(GAlist_rv())
+   paste("Loaded DB:", input$db_file$name)
+  })
+
+  output$download_galist_ui <- renderUI({
+   req(has_imported())
+   downloadButton("download_galist", "Download updated GAlist")
+  })
+
+  output$download_galist <- downloadHandler(
+   filename = function() {
+    stem <- tools::file_path_sans_ext(basename(input$db_file$name))
+    paste0(stem, "-updated.rds")
+   },
+   content = function(file) {
+    req(has_imported(), GAlist_rv())
+    saveRDS(GAlist_rv(), file, compress = FALSE)
+   }
+  )
 
   # =========================
   # FAST LOAD (only 50 rows)
@@ -331,7 +348,7 @@ shinyApp(
   # =========================
   observeEvent(input$ingest, {
 
-   req(input$files, input$file_select, mapping(), GAlist_rv(), db_path_rv())
+   req(input$files, input$file_select, mapping(), GAlist_rv())
    file_index <- match(input$file_select, input$files$name)
    req(!is.na(file_index))
 
@@ -361,9 +378,10 @@ shinyApp(
    req(G_updated)
 
    GAlist_rv(G_updated)
-   saveRDS(G_updated, db_path_rv(), compress = FALSE)
+   has_imported(TRUE)
 
-   showNotification("Ingestion successful", type = "message")
+   showNotification("Ingestion successful. Download the updated GAlist to reopen it later.",
+                    type = "message")
   })
  }
 )

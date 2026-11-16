@@ -82,3 +82,10 @@ saveRDS(GAlist, file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds", compress = 
 
 
 ```
+
+The writer stages the study file and inventory before publishing them. You can
+retry a failed write once its cause is resolved. After a successful import,
+save the returned `GAlist` for subsequent imports and for `getGWAS()`.
+
+If you use `shinyIngestGWAS()`, select **Download updated GAlist** after your
+imports and reopen the downloaded `.rds` in future sessions.

@@ -428,6 +428,13 @@ GAlist &lt;- result$GAlist
 
 # Save updated database
 saveRDS(GAlist, file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;, compress = FALSE)</code></pre>
+<p>The writer stages the study file and inventory before publishing
+them. You can retry a failed write once its cause is resolved. After a
+successful import, save the returned <code>GAlist</code> for subsequent
+imports and for <code>getGWAS()</code>.</p>
+<p>If you use <code>shinyIngestGWAS()</code>, select <strong>Download
+updated GAlist</strong> after your imports and reopen the downloaded
+<code>.rds</code> in future sessions.</p>
 </div>
 
 

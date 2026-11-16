@@ -886,9 +886,17 @@ removeStatDB <- function(GAlist,studyID=NULL) {
 
 
 
+.publish_gwas_import_file <- function(from, to, replace = FALSE) {
+ if (!replace && file.exists(to)) stop("GWAS import destination already exists: ", to)
+ if (!file.rename(from, to)) stop("Cannot publish GWAS import file: ", to)
+}
+
 #' Update and process genetic association study summary statistics
 #'
 #' This function updates and processes genetic association study summary statistics. The input to the function includes study information, summary statistics, and information about the sample.
+#' Study files and metadata are staged before publication. If publication
+#' fails, files published by that attempt are removed and the previous
+#' inventory is preserved. Use the latest descriptor to add further studies.
 #'
 #' @param GAlist A list object providing information and infrastructure of the gact database.
 #' @param stat A data frame with `chr`, `pos`, `ea`, `nea`, `b`, `seb`, and `p`
@@ -994,8 +1002,12 @@ updateStatDB <- function(GAlist=NULL,
  GAlist$study$reference[study_number] <- reference
  GAlist$study$source[study_number] <- source
 
- file_stat_information <- file.path(GAlist$dirs["gstat"],"GWAS_information.csv")
- GAlist$studyfiles <- file.path(GAlist$dirs["gstat"],paste0(GAlist$study$file,".gz"))
+ gstat_dir <- unname(GAlist$dirs["gstat"])
+ if (length(gstat_dir) != 1L || !dir.exists(gstat_dir)) {
+  stop("GAlist must point to an existing gstat directory.")
+ }
+ file_stat_information <- file.path(gstat_dir, "GWAS_information.csv")
+ GAlist$studyfiles <- file.path(gstat_dir, paste0(GAlist$study$file, ".gz"))
  names(GAlist$studyfiles) <- GAlist$study$id
 
 
@@ -1023,31 +1035,69 @@ updateStatDB <- function(GAlist=NULL,
   }
 
   stat <- qcStatDB(GAlist = GAlist, stat = stat, excludeMAFDIFF = 0.5)
+ }
+
+ # A single staging directory also serializes inventory updates.
+ stage <- file.path(gstat_dir, ".gact-import.lock")
+ if (!dir.create(stage, showWarnings = FALSE, mode = "0700")) {
+  stop("Cannot stage GWAS import at ", stage,
+       ". Check for another import or a filesystem permission error.")
+ }
+ published <- character()
+ committed <- FALSE
+ on.exit({
+  if (!committed) unlink(published)
+  unlink(stage, recursive = TRUE)
+  if (!committed && any(file.exists(published))) {
+   warning("Could not remove GWAS files from the failed import: ",
+           paste(published[file.exists(published)], collapse = ", "))
+  }
+ }, add = TRUE)
+
+ if (file.exists(file_stat_information)) {
+  inventory <- read.csv2(file_stat_information, colClasses = "character")
+  if (!"id" %in% names(inventory) || !setequal(inventory$id, as.character(existing_ids))) {
+   stop("GAlist study IDs differ from GWAS_information.csv. Load the current descriptor before importing.")
+  }
+ }
+
+ recipe_path <- NULL
+ if (writeStatDB) {
   message(paste("Writing processed summary statistics to internal file:",
                 GAlist$study$file[study_number]))
-  file_stat <- GAlist$studyfiles[study_number]
-  if(file.exists(file_stat)) stop(paste("GWAS summary statistics file already exists:",
-                                        file_stat))
-  fwrite(stat, file_stat, col.names=TRUE)
+  file_stat <- unname(GAlist$studyfiles[study_number])
+  if (file.exists(file_stat)) stop("GWAS summary statistics file already exists: ", file_stat)
+  staged_stat <- file.path(stage, basename(file_stat))
+  fwrite(stat, staged_stat, col.names = TRUE)
   if (!is.null(recipe)) {
    recipe$qc <- attr(stat, "qc_metrics")
-   recipe_path <- file.path(
-    GAlist$dirs["gstat"],
-    paste0(recipeID, ".json")
-   )
-   jsonlite::write_json(
-    recipe,
-    recipe_path,
-    auto_unbox = TRUE,
-    pretty = TRUE
-   )
+   recipe_path <- file.path(gstat_dir, paste0(recipeID, ".json"))
+   if (file.exists(recipe_path)) stop("GWAS recipe file already exists: ", recipe_path)
+   staged_recipe <- file.path(stage, basename(recipe_path))
+   jsonlite::write_json(recipe, staged_recipe, auto_unbox = TRUE, pretty = TRUE)
    GAlist$study$recipe_file[study_number] <- basename(recipe_path)
   }
-  GAlist$study$checksum[study_number] <- unname(tools::md5sum(file_stat))
+  checksum <- unname(tools::md5sum(staged_stat))
+  if (is.na(checksum)) stop("Cannot checksum staged GWAS file: ", staged_stat)
+  GAlist$study$checksum[study_number] <- checksum
  }
  GAlist$studies <- as.data.frame(GAlist$study)
  rownames(GAlist$studies) <- GAlist$studies$id
- write.csv2(GAlist$studies, file=file_stat_information, row.names=FALSE)
+ staged_inventory <- file.path(stage, basename(file_stat_information))
+ write.csv2(GAlist$studies, file = staged_inventory, row.names = FALSE)
+
+ suspendInterrupts({
+  if (writeStatDB) {
+   .publish_gwas_import_file(staged_stat, file_stat)
+   published <- c(published, file_stat)
+  }
+  if (!is.null(recipe_path)) {
+   .publish_gwas_import_file(staged_recipe, recipe_path)
+   published <- c(published, recipe_path)
+  }
+  .publish_gwas_import_file(staged_inventory, file_stat_information, replace = TRUE)
+  committed <- TRUE
+ })
  return(GAlist)
 }
 

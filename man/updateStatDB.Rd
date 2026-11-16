@@ -67,4 +67,7 @@ A list of updated study information, including the study id, file name, trait, t
 }
 \description{
 This function updates and processes genetic association study summary statistics. The input to the function includes study information, summary statistics, and information about the sample.
+Study files and metadata are staged before publication. If publication
+fails, files published by that attempt are removed and the previous
+inventory is preserved. Use the latest descriptor to add further studies.
 }
