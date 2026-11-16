@@ -26,8 +26,21 @@ By default, `ingestStatDB()` converts columns named `OR` or `odds_ratio` to
 log odds. Supply `seb` on the same scale as the resulting effect estimate.
 
 
-## Introduction
-This tutorial is designed for incorporating new genetic association data into an existing gact database. The example below is for the UK Biobank 2021 Glycated Hemoglobin (HbA1c) GWAS data for European ancestry.
+## UK Biobank HbA1c example
+
+Use `Glycated_haemoglobin_HbA1c.imp.gz` from version 1 of the NIH Figshare
+release (`10.35092/yhjc.12355382.v1`, file ID `22770197`). The release uses
+GRCh37 and reports beta relative to `ALT`. [Release record](https://doi.org/10.35092/yhjc.12355382.v1) ·
+[Exact imputed HbA1c file](https://nih.figshare.com/ndownloader/files/22770197)
+
+The GWAS meta-analysis combines White British, non-British White, African,
+and South Asian participants. The GWAS Catalog reports a **study-level
+discovery sample size of 338,919** (327,177 European, 4,847 African, and
+6,895 South Asian participants). [GWAS Catalog study GCST90019509](https://www.ebi.ac.uk/gwas/studies/GCST90019509)
+
+The release does not report variant-level sample sizes. Record the study
+total in `comments` and omit `n`, because gact would otherwise copy the
+supplied count to every variant when the input has no `n` column.
 
 <br>
 
@@ -41,12 +54,7 @@ library(data.table)
 GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
 
 
-################################################################################
-# UK Biobank 2021 HbA1c GWAS: European ancestry
-################################################################################
-# link: https://t2d.hugeamp.org/dinspector.html?dataset=SinnottArmstrong2021_HBA1C_EU
-
-# Load GWAS data
+# Load the imputed HbA1c file from the Figshare release cited above.
 fname_stat <- "C:/Users/gact/hsa.0.0.1/download/Glycated_haemoglobin_HbA1c.imp.gz"
 stat <- fread(fname_stat, data.table = FALSE)
 
@@ -56,9 +64,10 @@ schema <- c(chr = "#CHROM", pos = "POS", ea = "ALT", nea = "REF",
 
 result <- ingestStatDB(
   GAlist, stat, schema = schema, effect_scale = "beta",
-  source = "Glycated_haemoglobin_HbA1c.imp", trait = "HbA1c",
-  type = "quantitative", gender = "both", ancestry = "EUR",
-  build = "GRCh37", reference = "PMID:33462484", n = 318779
+  source = "NIH Figshare file 22770197 (Glycated_haemoglobin_HbA1c.imp.gz)",
+  trait = "HbA1c", type = "quantitative", gender = "both", ancestry = "Mixed",
+  build = "GRCh37", reference = "PMID:33462484",
+  comments = "Study-level discovery sample size: 338,919 (GCST90019509)"
 )
 GAlist <- result$GAlist
 

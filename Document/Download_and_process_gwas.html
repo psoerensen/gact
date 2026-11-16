@@ -377,12 +377,22 @@ ratios from a column with a different name. By default,
 <code>odds_ratio</code> to log odds. Supply <code>seb</code> on the same
 scale as the resulting effect estimate.</p>
 </div>
-<div id="introduction" class="section level2">
-<h2>Introduction</h2>
-<p>This tutorial is designed for incorporating new genetic association
-data into an existing gact database. The example below is for the UK
-Biobank 2021 Glycated Hemoglobin (HbA1c) GWAS data for European
-ancestry.</p>
+<div id="uk-biobank-hba1c-example" class="section level2">
+<h2>UK Biobank HbA1c example</h2>
+<p>Use <code>Glycated_haemoglobin_HbA1c.imp.gz</code> from version 1 of
+the NIH Figshare release (<code>10.35092/yhjc.12355382.v1</code>, file
+ID <code>22770197</code>). The release uses GRCh37 and reports beta
+relative to <code>ALT</code>. <a href="https://doi.org/10.35092/yhjc.12355382.v1">Release record</a> · <a href="https://nih.figshare.com/ndownloader/files/22770197">Exact imputed
+HbA1c file</a></p>
+<p>The GWAS meta-analysis combines White British, non-British White,
+African, and South Asian participants. The GWAS Catalog reports a
+<strong>study-level discovery sample size of 338,919</strong> (327,177
+European, 4,847 African, and 6,895 South Asian participants). <a href="https://www.ebi.ac.uk/gwas/studies/GCST90019509">GWAS Catalog
+study GCST90019509</a></p>
+<p>The release does not report variant-level sample sizes. Record the
+study total in <code>comments</code> and omit <code>n</code>, because
+gact would otherwise copy the supplied count to every variant when the
+input has no <code>n</code> column.</p>
 <p><br></p>
 <pre class="r"><code># Load libraries
 library(gact)
@@ -393,12 +403,7 @@ library(data.table)
 GAlist &lt;- readRDS(file=&quot;C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds&quot;)
 
 
-################################################################################
-# UK Biobank 2021 HbA1c GWAS: European ancestry
-################################################################################
-# link: https://t2d.hugeamp.org/dinspector.html?dataset=SinnottArmstrong2021_HBA1C_EU
-
-# Load GWAS data
+# Load the imputed HbA1c file from the Figshare release cited above.
 fname_stat &lt;- &quot;C:/Users/gact/hsa.0.0.1/download/Glycated_haemoglobin_HbA1c.imp.gz&quot;
 stat &lt;- fread(fname_stat, data.table = FALSE)
 
@@ -408,9 +413,10 @@ schema &lt;- c(chr = &quot;#CHROM&quot;, pos = &quot;POS&quot;, ea = &quot;ALT&q
 
 result &lt;- ingestStatDB(
   GAlist, stat, schema = schema, effect_scale = &quot;beta&quot;,
-  source = &quot;Glycated_haemoglobin_HbA1c.imp&quot;, trait = &quot;HbA1c&quot;,
-  type = &quot;quantitative&quot;, gender = &quot;both&quot;, ancestry = &quot;EUR&quot;,
-  build = &quot;GRCh37&quot;, reference = &quot;PMID:33462484&quot;, n = 318779
+  source = &quot;NIH Figshare file 22770197 (Glycated_haemoglobin_HbA1c.imp.gz)&quot;,
+  trait = &quot;HbA1c&quot;, type = &quot;quantitative&quot;, gender = &quot;both&quot;, ancestry = &quot;Mixed&quot;,
+  build = &quot;GRCh37&quot;, reference = &quot;PMID:33462484&quot;,
+  comments = &quot;Study-level discovery sample size: 338,919 (GCST90019509)&quot;
 )
 GAlist &lt;- result$GAlist
 
