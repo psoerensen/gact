@@ -149,7 +149,7 @@ order and stores a four-byte Z row index per LD row.
 For an existing GRCh37 database, use
 `GAlist <- gact::downloadDB(GAlist, what = "ldetect")` to install the
 EUR and EAS Berisa–Pickrell files in the marker directory. New
-`hsa.0.0.1` databases install the files during creation. The export adds
+`hsa.GRCh37.0.0.1` databases install the files during creation. The export adds
 `ld_regions.tsv` and paired Z and LD row indices. gminer reads the
 indices to load slices in LD order.
 
@@ -312,6 +312,30 @@ number NNF20SA0061466)
     learning patterns of effect sharing across multiple phenotypes.
     *Plos Genetics* 21 (1), e1011519 (2025).
     <https://doi.org/10.1371/journal.pgen.1011519>.
+
+### Build the GRCh38 marker database
+
+`hsa.GRCh38.0.0.1` is a locally built database for GWAS ingestion and retrieval.
+Use `gact(version = "hsa.GRCh37.0.0.1", dbdir = dbdir, task = "download")`
+to install the published GRCh37 bundle.
+Prepare chromosomes 1–22 with `system.file("scripts", "prepare_igsr_grch38.py",
+package = "gact")` and Python 3.9 or newer. For each chromosome, call the script
+with its number and `--panel`, `--fasta`, `--rsids`, and `--out` directories.
+Use the [IGSR 2019-03-12 GRCh38 release](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/)
+with its checksum manifest, the [UCSC chromosome FASTAs](https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/)
+with `md5sum.txt`, and the GRCh38 gnomAD v4.1 rsID lookup tables with columns
+`#CHROM`, `POS`, `ID`, `REF`, and `ALT`. The script checks reference alleles and
+uses the panel's global alternate allele count divided by allele number. The
+default scope is PASS, biallelic autosomal SNVs with a global MAF of at least 1%.
+
+```r
+GAlist <- buildMarkerDB(input_dir = "prepared_grch38", dbdir = "/path/to/gactcore")
+```
+
+The build writes `marker/markers.txt.gz`, `marker/cpra.txt.gz`, a marker provenance
+manifest, and `GAlist_hsa.GRCh38.0.0.1.rds` under the new version directory. The saved
+descriptor can be passed to `runGWASManifest()`. GRCh38 LD and annotation bundles
+are separate resources and are pending for this version.
 
 ### Inspect downloaded GWAS files before ingestion
 

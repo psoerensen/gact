@@ -15,7 +15,9 @@ gact(
 \arguments{
 \item{GAlist}{A list object providing information and infrastructure of the gact database.}
 
-\item{version}{The version of the gact database to use.}
+\item{version}{The version of the gact database to use.
+Use \code{"hsa.GRCh37.0.0.1"} for the published GRCh37 bundle. For the
+locally built \code{"hsa.GRCh38.0.0.1"} database, use \code{\link[=buildMarkerDB]{buildMarkerDB()}}.}
 
 \item{task}{The task to perform, either "download" or "process". By default "download".}
 

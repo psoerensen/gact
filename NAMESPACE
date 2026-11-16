@@ -88,3 +88,4 @@ importFrom(gbase,mapSets)
 
 export(inspectGWAS)
 export(runGWASManifest)
+export(buildMarkerDB)

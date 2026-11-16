@@ -19,7 +19,7 @@ test_that("writeMarkerStat exports ancestry-specific half-open GRCh37 regions", 
   expect_identical(vapply(intervals, nrow, integer(1)), c(EUR = 1703L, EAS = 1445L))
   expect_identical(c(eur_stop, eas_stop), c(1892607L, 1976558L))
   expect_error(downloadDB(list(assembly = "GRCh38"), what = "ldetect"), "differs")
-  created <- suppressMessages(gact:::createDB("hsa.0.0.1", root))
+  created <- suppressMessages(gact:::createDB("hsa.GRCh37.0.0.1", root))
   expect_identical(unname(tools::md5sum(vapply(created$ldRegions$GRCh37, function(x) x$file, ""))),
                    unname(tools::md5sum(files)))
 

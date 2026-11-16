@@ -7,12 +7,14 @@
 list_gact_versions()
 }
 \value{
-A data frame with columns: \code{version}, \code{species}, \code{created}, and \code{description}.
+A data frame with columns \code{version}, \code{species}, \code{build}, \code{created},
+and \code{description}.
 }
 \description{
 Displays all database versions shipped with the GACT package, including
-species, creation date, and a short description. These correspond to
-versioned data bundles that can be installed using \code{\link[=gact]{gact()}}.
+species, genome build, creation date, and a short description.
+Install a published bundle with \code{\link[=gact]{gact()}} or construct the GRCh38 GWAS
+database locally with \code{\link[=buildMarkerDB]{buildMarkerDB()}}.
 }
 \examples{
 list_gact_versions()

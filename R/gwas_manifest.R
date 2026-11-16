@@ -135,10 +135,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
           !row$build %in% c("GRCh37", "GRCh38")) {
         stop("Specify type (binary or quantitative) and build (GRCh37 or GRCh38)")
       }
-      build <- GAlist$metadata$build
-      if (is.null(build) && identical(GAlist$version, "hsa.0.0.1")) {
-        build <- gact_versions[["hsa.0.0.1"]]$build
-      }
+      build <- .gact_catalog_build(GAlist)
       if (length(build) != 1L || is.na(build) || !identical(build, row$build)) {
         stop("Verify that the study and marker catalog use the same genome build")
       }

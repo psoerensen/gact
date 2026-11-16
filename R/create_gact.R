@@ -17,6 +17,8 @@
 #'
 #' @param GAlist A list object providing information and infrastructure of the gact database.
 #' @param version The version of the gact database to use.
+#'   Use `"hsa.GRCh37.0.0.1"` for the published GRCh37 bundle. For the
+#'   locally built `"hsa.GRCh38.0.0.1"` database, use [buildMarkerDB()].
 #' @param task The task to perform, either "download" or "process". By default "download".
 #' @param dbdir The directory where the database should be stored, by default the current working directory.
 #'
@@ -37,7 +39,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
 
  if (is.null(dbdir)) dbdir <- getwd()
  if (is.null(version))
-  stop("Please provide a database version (e.g. version = 'hsa.0.0.1').\n",
+  stop("Please provide a database version (e.g. version = 'hsa.GRCh37.0.0.1').\n",
        "Tip: Run list_gact_versions() to see available versions.")
 
  # ------------------------------------------------------------------
@@ -49,7 +51,8 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
  }
 
  available_versions <- names(gact_versions)
- if (!(version %in% available_versions)) {
+ version_metadata <- .gact_version_metadata(version)
+ if (is.null(version_metadata)) {
   stop(
    paste0(
     "Version '", version, "' is not defined in gact_versions.\n",
@@ -60,6 +63,10 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
  }
 
  if(task=="download") {
+  if (isTRUE(version_metadata$local_build)) {
+   stop("Use buildMarkerDB() to build the ", version,
+        " catalog from prepared inputs.")
+  }
   GAlist <- createDB(version=version, dbdir=dbdir)
 
   options(download.file.method="libcurl", url.method="libcurl", timeout=timeout)
@@ -154,9 +161,13 @@ createDB <- function(version = NULL, dbdir = NULL) {
  GAlist <- list(version = version, dbdir = dbdir, dirs = dirs, features = features)
 
  # Attach version metadata
- if (exists("gact_versions", inherits = TRUE) && version %in% names(gact_versions)) {
-  GAlist$metadata <- gact_versions[[version]]
-  if (identical(version, "hsa.0.0.1"))
+ GAlist$metadata <- .gact_version_metadata(version)
+ if (!is.null(GAlist$metadata)) {
+  if (isTRUE(GAlist$metadata$local_build)) {
+   GAlist$assembly <- GAlist$metadata$build
+   GAlist$features <- c("Markers", "GWAS")
+  }
+  if (isTRUE(GAlist$metadata$bundled_ld_regions))
    GAlist <- downloadDB(GAlist, what = "ldetect")
  } else {
   warning("Version metadata not found in gact_versions for version: ", version)
@@ -177,9 +188,10 @@ createDB <- function(version = NULL, dbdir = NULL) {
 #'
 #' @keywords internal
 gact_versions <- list(
- "hsa.0.0.1" = list(
+ "hsa.GRCh37.0.0.1" = list(
   species = "Homo sapiens",
   build = "GRCh37",
+  bundled_ld_regions = TRUE,
   description = "Default GACT human database release 0.0.1",
   created = "2025-11-06",
   sources = list(
@@ -259,17 +271,40 @@ gact_versions <- list(
 
 
   )
+ ),
+ "hsa.GRCh38.0.0.1" = list(
+  species = "Homo sapiens",
+  build = "GRCh38",
+  local_build = TRUE,
+  description = "GRCh38 human database for GWAS ingestion and retrieval",
+  created = "2026-11-16",
+  sources = list()
  )
 )
+
+.gact_version_metadata <- function(version) {
+ if (!is.character(version) || length(version) != 1L || is.na(version)) return(NULL)
+ gact_versions[[version]]
+}
+
+.gact_catalog_build <- function(GAlist) {
+ build <- GAlist$metadata$build
+ if (is.null(build)) build <- .gact_version_metadata(GAlist$version)$build
+ # Older saved GRCh37 descriptors may predate the build field.
+ if (is.null(build) && identical(GAlist$version, "hsa.0.0.1")) build <- "GRCh37"
+ build
+}
 
 #' List available GACT database versions
 #'
 #' @description
 #' Displays all database versions shipped with the GACT package, including
-#' species, creation date, and a short description. These correspond to
-#' versioned data bundles that can be installed using [gact()].
+#' species, genome build, creation date, and a short description.
+#' Install a published bundle with [gact()] or construct the GRCh38 GWAS
+#' database locally with [buildMarkerDB()].
 #'
-#' @return A data frame with columns: `version`, `species`, `created`, and `description`.
+#' @return A data frame with columns `version`, `species`, `build`, `created`,
+#'   and `description`.
 #' @export
 #'
 #' @examples
@@ -279,6 +314,7 @@ list_gact_versions <- function() {
   list(
    version = v,
    species = gact_versions[[v]]$species,
+   build = gact_versions[[v]]$build,
    created = gact_versions[[v]]$created,
    description = gact_versions[[v]]$description
   )
@@ -314,6 +350,10 @@ downloadDB <- function(GAlist = NULL, what = NULL,
                        min_combined_score = 900, min_interactions = 5) {
 
  if (is.null(what)) stop("Please specify what to download, e.g. what='gsets'")
+ if (isTRUE(.gact_version_metadata(GAlist$version)$local_build)) {
+  stop("Use buildMarkerDB() to build the ", GAlist$version,
+       " marker catalog.")
+ }
  if (identical(what, "ldetect")) return(addLDRegions(GAlist))
 
  # Ensure timeout and libcurl settings
@@ -1035,10 +1075,7 @@ updateStatDB <- function(GAlist=NULL,
  if(writeStatDB) {
   message("Perform quality control of external summary statistics")
 
-  catalog_build <- GAlist$metadata$build
-  if (is.null(catalog_build) && identical(GAlist$version, "hsa.0.0.1")) {
-   catalog_build <- gact_versions[["hsa.0.0.1"]]$build
-  }
+  catalog_build <- .gact_catalog_build(GAlist)
   builds <- c(grch37 = "GRCh37", hg19 = "GRCh37", grch38 = "GRCh38", hg38 = "GRCh38")
   study_build <- unname(builds[tolower(trimws(build))])
   if (strand == "forward" && (length(build) != 1L || is.na(build) ||
