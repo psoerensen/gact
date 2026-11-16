@@ -266,6 +266,35 @@ manifest, and `GAlist_hsa.GRCh38.0.0.1.rds` under the new version directory. The
 descriptor can be passed to `runGWASManifest()`. GRCh38 LD and annotation bundles
 are separate resources and are pending for this version.
 
+### Prepare NYGC 30× GRCh38 genotypes
+
+`buildNYGCGenotypes()` writes one BED/BIM/FAM triplet for all 22 autosomes
+per ancestry (AFR, AMR, EAS, EUR and SAS). It checks each NYGC VCF and index against the release
+manifest and matches biallelic SNPs to the existing GRCh38 marker catalog by
+chromosome, position, REF and ALT. The BED dosage counts catalog ALT.
+
+Put the [2022-04-22 phased VCFs, indexes and checksum manifest](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/)
+and the [Phase 3 sample panel](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel)
+in the input directory. Install a version of gsim with phased VCF import
+and BED export, and put bcftools on PATH for indexed extraction.
+
+```r
+buildNYGCGenotypes(input_dir = "download/nygc-30x",
+  marker_catalog = "marker/markers.txt.gz",
+  out_dir = "nygc-grch38/marker")
+```
+
+Create the standalone parent directory `nygc-grch38` first. The build creates
+its `marker` subdirectory with files such as `g1000_eur.bed`, `.bim` and
+`.fam`, plus `nygc-panels.json` with counts, input provenance and checksums.
+The triplets can be passed to `gbase::gprep()`.
+
+For a parallel build, run `prepareNYGCGenotypes()` for each autosome in a
+shared staging directory, then call `mergeNYGCGenotypes()` on those files.
+The merge checks the chromosome receipts and consistent sample order before
+publishing the output directory. For a short test, pass a `regions` data
+frame with `chromosome`, `start` and `end` columns to `buildNYGCGenotypes()`.
+
 ### Inspect downloaded GWAS files before ingestion
 
 `inspectGWAS()` reads bounded leading previews and joins local files to a TSV
