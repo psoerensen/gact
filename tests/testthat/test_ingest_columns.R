@@ -45,6 +45,7 @@ test_that("FinnGen-style OR and mlogp conversion works", {
   alt = sample(c("A","C","G","T"), 1000, TRUE),
   ref = sample(c("A","C","G","T"), 1000, TRUE),
   odds_ratio = runif(1000, 0.5, 1.5),
+  se = runif(1000, 0.01, 0.1),
   neglog10p = runif(1000, 10, 50),
   af = runif(1000),
   n = sample(10000:50000, 1000, TRUE)

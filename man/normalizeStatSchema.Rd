@@ -8,7 +8,8 @@ normalizeStatSchema(
   stat,
   schema,
   drop_unmapped = FALSE,
-  require_fields = c("chr", "pos", "ea", "nea", "p")
+  require_fields = .gwas_required_fields,
+  effect_scale = c("auto", "beta", "or")
 )
 }
 \arguments{
@@ -18,7 +19,13 @@ normalizeStatSchema(
 
 \item{drop_unmapped}{Logical; if \code{TRUE}, return only canonical + passthrough columns.}
 
-\item{require_fields}{Canonical fields required to be present after normalization.}
+\item{require_fields}{Canonical fields required to be present after normalization.
+Defaults to \code{chr}, \code{pos}, \code{ea}, \code{nea}, \code{b}, \code{seb}, and \code{p}.}
+
+\item{effect_scale}{Scale of the mapped effect column. \code{"auto"} converts
+columns named \code{OR} or \code{odds_ratio} (ignoring case and punctuation).
+Use \code{"beta"} for beta or log-odds values, or \code{"or"} to convert an odds
+ratio from any column name. Supply \code{seb} on the beta or log-odds scale.}
 }
 \value{
 A normalized \code{data.frame} with canonical columns where possible.

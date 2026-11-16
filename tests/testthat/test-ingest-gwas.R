@@ -46,7 +46,7 @@ test_that("normalizeStatSchema normalizes key fields", {
     p = "pvalue"
   )
 
-  out <- normalizeStatSchema(stat, schema = schema)
+  out <- normalizeStatSchema(stat, schema = schema, require_fields = names(schema))
 
   expect_equal(out$chr, c(23L, 2L))
   expect_equal(out$ea, c("A", "C"))
@@ -66,6 +66,37 @@ test_that("validateStatSchema rejects invalid p-values", {
   out <- validateStatSchema(stat)
   expect_false(out$ok)
   expect_true(any(grepl("Invalid p-values", out$errors)))
+})
+
+test_that("ingestion requires beta and standard error columns", {
+  stat <- data.frame(chr = 1L, pos = 100L, ea = "A", nea = "G", p = 0.1)
+  expect_match(validateStatSchema(stat)$errors, "b, seb")
+  expect_error(ingestStatDB(list(), stat, schema = c(p = "p")), "b, seb")
+  stat$b <- 0.2
+  stat$seb <- NA_real_
+  expect_match(validateStatSchema(stat)$errors, "Empty required columns: seb")
+  stat$p <- NULL
+  stat$eaf <- 0.1
+  expect_true(is.na(detectStatSchema(stat)$mapping[["p"]]))
+})
+
+test_that("odds-ratio conversion follows the mapped name or explicit scale", {
+  stat <- data.frame(chr = 1L, pos = 100:101, ea = "A", nea = "G",
+    p = 0.1, beta = c(0.75, 1.25), odds_ratio = c(0.2, 0.4), seb = 0.1)
+
+  beta <- normalizeStatSchema(stat, c(b = "beta"))
+  expect_identical(beta$b, stat$beta)
+  expect_null(attr(beta, "transformations"))
+
+  expect_warning(or <- normalizeStatSchema(stat, c(b = "odds_ratio")), "SE may not")
+  expect_equal(or$b, log(stat$odds_ratio))
+  expect_warning(explicit <- normalizeStatSchema(stat, c(b = "beta"), effect_scale = "or"),
+    "SE may not")
+  expect_equal(explicit$b, log(stat$beta))
+  expect_equal(normalizeStatSchema(stat, c(b = "odds_ratio"), effect_scale = "beta")$b,
+    stat$odds_ratio)
+  stat$odds_ratio[1L] <- 0
+  expect_error(normalizeStatSchema(stat, c(b = "odds_ratio")), "strictly positive")
 })
 
 test_that("ingestStatDB stops on low-confidence required mappings in strict mode", {

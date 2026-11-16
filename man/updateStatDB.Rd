@@ -27,7 +27,9 @@ updateStatDB(
 \arguments{
 \item{GAlist}{A list object providing information and infrastructure of the gact database.}
 
-\item{stat}{A dataframe of summary statistics for each SNP}
+\item{stat}{A data frame with \code{chr}, \code{pos}, \code{ea}, \code{nea}, \code{b}, \code{seb}, and \code{p}
+when writing a study. Supply \code{b} and \code{seb} on the beta or log-odds scale.
+If \code{eaf} is omitted, QC uses the marker catalog's effect-allele frequency.}
 
 \item{source}{Source of the summary statistics}
 
@@ -43,9 +45,10 @@ updateStatDB(
 
 \item{ancestry}{Ancestry of study participants (EUR, AFR, ,,,,, Mixed)}
 
-\item{build}{Genome build used in the study}
+\item{build}{Genome build used in the study. For a marker catalog with a
+known build, a conflicting GRCh37 or GRCh38 study build is rejected.}
 
-\item{n}{Sample size}
+\item{n}{Study sample size. Used for variant \code{n} when the column is absent.}
 
 \item{ncase}{Number of cases}
 
@@ -55,9 +58,9 @@ updateStatDB(
 
 \item{comments}{Additional comments}
 
-\item{writeStatDB}{A flag indicating whether to perform quality control and write the processed summary statistics to a file}
+\item{recipe}{Optional ingestion recipe to save alongside the processed study.}
 
-\item{excludeMAFDIFF}{A threshold used to exclude SNPs with a difference in minor allele frequency (MAF) between cases and controls that exceeds this threshold}
+\item{writeStatDB}{A flag indicating whether to perform quality control and write the processed summary statistics to a file}
 }
 \value{
 A list of updated study information, including the study id, file name, trait, type, gender, ancestry, build, sample size, case/control count, reference, and comments.

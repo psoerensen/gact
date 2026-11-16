@@ -179,6 +179,7 @@ createDB <- function(version = NULL, dbdir = NULL) {
 gact_versions <- list(
  "hsa.0.0.1" = list(
   species = "Homo sapiens",
+  build = "GRCh37",
   description = "Default GACT human database release 0.0.1",
   created = "2025-11-06",
   sources = list(
@@ -890,7 +891,9 @@ removeStatDB <- function(GAlist,studyID=NULL) {
 #' This function updates and processes genetic association study summary statistics. The input to the function includes study information, summary statistics, and information about the sample.
 #'
 #' @param GAlist A list object providing information and infrastructure of the gact database.
-#' @param stat A dataframe of summary statistics for each SNP
+#' @param stat A data frame with `chr`, `pos`, `ea`, `nea`, `b`, `seb`, and `p`
+#'   when writing a study. Supply `b` and `seb` on the beta or log-odds scale.
+#'   If `eaf` is omitted, QC uses the marker catalog's effect-allele frequency.
 #' @param source Source of the summary statistics
 #' @param trait Trait being studied
 #' @param type Type of trait (binary or quantitative)
@@ -898,14 +901,15 @@ removeStatDB <- function(GAlist,studyID=NULL) {
 #' @param efo Experimental Factor Ontology (complex, biomarker)
 #' @param gender Gender of study participants
 #' @param ancestry Ancestry of study participants (EUR, AFR, ,,,,, Mixed)
-#' @param build Genome build used in the study
-#' @param n Sample size
+#' @param build Genome build used in the study. For a marker catalog with a
+#'   known build, a conflicting GRCh37 or GRCh38 study build is rejected.
+#' @param n Study sample size. Used for variant `n` when the column is absent.
 #' @param ncase Number of cases
 #' @param ncontrol Number of controls
 #' @param reference Reference for the study
 #' @param comments Additional comments
+#' @param recipe Optional ingestion recipe to save alongside the processed study.
 #' @param writeStatDB A flag indicating whether to perform quality control and write the processed summary statistics to a file
-#' @param excludeMAFDIFF A threshold used to exclude SNPs with a difference in minor allele frequency (MAF) between cases and controls that exceeds this threshold
 #' @return A list of updated study information, including the study id, file name, trait, type, gender, ancestry, build, sample size, case/control count, reference, and comments.
 #'
 #' @export
@@ -999,22 +1003,26 @@ updateStatDB <- function(GAlist=NULL,
  if(writeStatDB) {
   message("Perform quality control of external summary statistics")
 
-  #if(any(!sapply(stat, class)[c("eaf", "b", "seb", "p")]%in%"numeric")) warning("Column classes wrong")
-  required <- c("eaf","b","seb","p")
-  missing <- setdiff(required, names(stat))
-  if(length(missing) > 0) {
-   stop(paste("Missing required columns:", paste(missing, collapse=", ")))
+  catalog_build <- GAlist$metadata$build
+  if (is.null(catalog_build) && identical(GAlist$version, "hsa.0.0.1")) {
+   catalog_build <- gact_versions[["hsa.0.0.1"]]$build
   }
-  if(any(!sapply(stat[required], is.numeric))) {
-   warning("Some required columns are not numeric")
+  builds <- c(grch37 = "GRCh37", hg19 = "GRCh37", grch38 = "GRCh38", hg38 = "GRCh38")
+  study_build <- unname(builds[tolower(trimws(build))])
+  if (length(study_build) == 1L && !is.na(study_build) &&
+      length(catalog_build) == 1L && !is.na(catalog_build) && study_build != catalog_build) {
+   stop("GWAS build ", study_build, " differs from marker catalog build ", catalog_build, ".")
   }
-  stat$p <- as.numeric(stat$p)
-  stat$p[stat$p==0] <- .Machine$double.xmin
+  if (!is.data.frame(stat)) stop("stat must be a data.frame")
+  stat <- as.data.frame(stat)
+  if ("p" %in% names(stat)) stat$p <- as.numeric(stat$p)
+  validation <- validateStatSchema(stat)
+  if (!validation$ok) stop(paste(validation$errors, collapse = " | "))
+  if (!("n" %in% names(stat)) && length(n) == 1L && is.finite(n)) {
+   stat$n <- n
+  }
 
-  stat <- qcStatDB(GAlist=GAlist,stat=stat, excludeMAF=0.5, excludeMAFDIFF=0.5,
-                   excludeINFO=0.8, excludeCGAT=TRUE, excludeINDEL=TRUE,
-                   excludeDUPS=TRUE, excludeMHC=FALSE, excludeMISS=0.05,
-                   excludeHWE=1e-12)
+  stat <- qcStatDB(GAlist = GAlist, stat = stat, excludeMAFDIFF = 0.5)
   message(paste("Writing processed summary statistics to internal file:",
                 GAlist$study$file[study_number]))
   file_stat <- GAlist$studyfiles[study_number]
@@ -1244,6 +1252,7 @@ qcStatDB <- function(GAlist = NULL,
  message("Unmapped markers: ", sum(!mapped))
 
  stat <- stat[mapped, ]
+ if (!nrow(stat)) stop("No variants matched the marker catalog. Check genome build and alleles.")
  cpra1 <- cpra1[mapped]
  cpra2 <- cpra2[mapped]
 
@@ -1283,6 +1292,7 @@ qcStatDB <- function(GAlist = NULL,
  # align
  marker <- marker[stat$marker, ]
  stat   <- stat[marker$rsids, ]
+ stat$rsids <- marker$rsids
 
  # -----------------------------
  # Allele alignment
@@ -1298,7 +1308,7 @@ qcStatDB <- function(GAlist = NULL,
    stat[[field]][!aligned] <- -as.numeric(stat[[field]][!aligned])
   }
 
-  if (!is.null(stat$eaf)) {
+  if ("eaf" %in% names(stat)) {
    stat$eaf[!aligned] <- 1 - stat$eaf[!aligned]
   }
  }
@@ -1308,7 +1318,7 @@ qcStatDB <- function(GAlist = NULL,
  # -----------------------------
  stat$ea <- marker$ea
  stat$nea <- marker$nea
- if (is.null(stat$eaf)) {
+ if (!("eaf" %in% names(stat))) {
   message("Using reference EAF")
   stat$eaf <- marker$eaf
  }
@@ -1316,19 +1326,13 @@ qcStatDB <- function(GAlist = NULL,
  # -----------------------------
  # MAF difference filter (FIXED)
  # -----------------------------
- maf_diff_flag <- abs(marker$eaf - stat$eaf) > excludeMAFDIFF
+ maf_diff <- abs(marker$eaf - stat$eaf)
+ maf_diff_flag <- !is.na(maf_diff) & maf_diff > excludeMAFDIFF
 
  message("Excluded by MAF diff:", sum(maf_diff_flag))
 
  stat <- stat[!maf_diff_flag, ]
  marker <- marker[!maf_diff_flag, ]
-
- # -----------------------------
- # Ensure sample size
- # -----------------------------
- if (is.null(stat$n) && !is.null(stat$seb)) {
-  stat$n <- neff(seb = stat$seb, af = stat$eaf)
- }
 
  # -----------------------------
  # Metrics

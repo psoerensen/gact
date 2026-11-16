@@ -13,5 +13,7 @@ validateStatSchema(stat)
 A list with \code{ok}, \code{errors}, \code{warnings}, and \code{metrics}.
 }
 \description{
-Validate normalized GWAS summary statistics
+The ingestion schema requires \code{chr}, \code{pos}, \code{ea}, \code{nea}, \code{b}, \code{seb}, and \code{p}.
+When \code{eaf} is absent, the writer uses effect-allele frequencies from the
+marker catalog after alignment.
 }

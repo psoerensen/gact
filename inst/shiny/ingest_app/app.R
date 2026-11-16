@@ -33,6 +33,9 @@ shinyApp(
     hr(),
 
     actionButton("detect", "Auto-detect schema"),
+    selectInput("effect_scale", "Effect scale", choices = c(
+     "Infer from column name" = "auto", "Beta or log odds" = "beta", "Odds ratio" = "or"
+    )),
     actionButton("process", "Preview normalization"),
     actionButton("save_recipe", "Save recipe"),
     actionButton("ingest", "Ingest into DB"),
@@ -223,7 +226,8 @@ shinyApp(
 
    normalizeStatSchema(
     stat = current_data(),
-    schema = mapping()
+    schema = mapping(),
+    effect_scale = input$effect_scale
    )
   })
 
@@ -298,6 +302,7 @@ shinyApp(
     comments = clean_field(input$comments, ""),
 
     mapping = as.list(mapping()),
+    effect_scale = input$effect_scale,
     transformations = attr(norm_data(), "transformations"),
     validation = validation_rv(),
 
@@ -321,16 +326,15 @@ shinyApp(
   # =========================
   observeEvent(input$ingest, {
 
-   req(norm_data(), validation_rv(), GAlist_rv(), db_path_rv())
+   req(input$files, input$file_select, mapping(), GAlist_rv(), db_path_rv())
+   file_index <- match(input$file_select, input$files$name)
+   req(!is.na(file_index))
 
-   if (!isTRUE(validation_rv()$ok)) {
-    showNotification("Validation failed", type = "error")
-    return()
-   }
-
-   G_updated <- updateStatDB(
+   G_updated <- tryCatch(ingestStatDB(
     GAlist = GAlist_rv(),
-    stat = norm_data(),
+    stat = fread(input$files$datapath[file_index], data.table = FALSE),
+    schema = mapping(),
+    effect_scale = input$effect_scale,
     source = input$source,
     trait = input$trait,
     type = input$type,
@@ -343,9 +347,12 @@ shinyApp(
     ncase = input$ncase,
     ncontrol = input$ncontrol,
     reference = input$reference,
-    comments = input$comments,
-    writeStatDB = TRUE
-   )
+    comments = input$comments
+   )$GAlist, error = function(e) {
+    showNotification(conditionMessage(e), type = "error")
+    NULL
+   })
+   req(G_updated)
 
    GAlist_rv(G_updated)
    saveRDS(G_updated, db_path_rv(), compress = FALSE)

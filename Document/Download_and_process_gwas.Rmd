@@ -13,12 +13,17 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Workflow requirements {#workflow-requirements}
 
 Use a genetic reference panel matched to the GWAS ancestry and genome build.
-The default database uses GRCh37; summary statistics from another build require
-coordinate conversion and checks of marker identity and allele orientation before
-ingestion. Review the mappings returned by `detectStatSchema()` and provide an
-explicit schema when a required field is ambiguous. `normalizeStatSchema()` and
-`validateStatSchema()` support checking the resulting canonical fields before
-writing to the database.
+The default database uses GRCh37. Convert coordinates from other builds and
+check marker identity and allele orientation before ingestion. Required fields
+are `chr`, `pos`, `ea`, `nea`, `b`, `seb`, and `p`. Supply study effect-allele
+frequencies as `eaf` when available. When `eaf` is omitted, gact uses the marker
+catalog frequencies, so the study-to-reference frequency check needs study EAF.
+
+Review the mappings returned by `detectStatSchema()` when using automatic
+mapping. Use `effect_scale = "beta"` for a beta or log-odds column and
+`effect_scale = "or"` for odds ratios from a column with a different name.
+By default, `ingestStatDB()` converts columns named `OR` or `odds_ratio` to
+log odds. Supply `seb` on the same scale as the resulting effect estimate.
 
 
 ## Introduction
@@ -44,31 +49,18 @@ GAlist <- readRDS(file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds")
 # Load GWAS data
 fname_stat <- "C:/Users/gact/hsa.0.0.1/download/Glycated_haemoglobin_HbA1c.imp.gz"
 stat <- fread(fname_stat, data.table = FALSE)
-head(stat)
 
-# Modify columns according to required format
+# Map the study columns. This example uses catalog frequencies for EAF.
+schema <- c(chr = "#CHROM", pos = "POS", ea = "ALT", nea = "REF",
+            b = "Effect", seb = "StdErr", p = "P-value")
 
-
-# Subset and rename columns according to required format
-stat <- stat[, c("MarkerName", "#CHROM", "POS", "ALT", "REF", "Effect", "StdErr", "P-value")]
-colnames(stat) <- c("marker", "chr", "pos", "ea", "nea", "b", "seb", "p")
-
-
-# Update database
-GAlist <- updateStatDB(GAlist = GAlist,
-                       stat = stat,
-                       source = "Glycated_haemoglobin_HbA1c.imp",
-                       trait = "HbA1C",
-                       type = "quantitative",
-                       gender = "both",
-                       ancestry = "EUR",
-                       build = "GRCh37",
-                       reference = "PMID:33462484",
-                       n = 318779,
-                       ncase = 0,
-                       ncontrol = 0,
-                       comments = "Just UK biobank",
-                       writeStatDB = TRUE)
+result <- ingestStatDB(
+  GAlist, stat, schema = schema, effect_scale = "beta",
+  source = "Glycated_haemoglobin_HbA1c.imp", trait = "HbA1c",
+  type = "quantitative", gender = "both", ancestry = "EUR",
+  build = "GRCh37", reference = "PMID:33462484", n = 318779
+)
+GAlist <- result$GAlist
 
 # Save updated database
 saveRDS(GAlist, file="C:/Users/gact/hsa.0.0.1/GAlist_hsa.0.0.1.rds", compress = FALSE)

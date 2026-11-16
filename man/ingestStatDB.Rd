@@ -11,7 +11,8 @@ ingestStatDB(
   min_confidence = 0.1,
   strict = TRUE,
   write_to_db = TRUE,
-  ...
+  ...,
+  effect_scale = c("auto", "beta", "or")
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ ingestStatDB(
 \item{write_to_db}{Passed to \code{\link[=updateStatDB]{updateStatDB()}} as \code{writeStatDB}.}
 
 \item{...}{Additional metadata arguments passed to \code{\link[=updateStatDB]{updateStatDB()}} (e.g. \code{source}, \code{trait}, \code{type}).}
+
+\item{effect_scale}{Passed to \code{\link[=normalizeStatSchema]{normalizeStatSchema()}}.}
 }
 \value{
 A list with updated \code{GAlist}, \code{schema}, and \code{validation}.

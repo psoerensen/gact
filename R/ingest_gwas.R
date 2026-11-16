@@ -1,3 +1,5 @@
+.gwas_required_fields <- c("chr", "pos", "ea", "nea", "b", "seb", "p")
+
 scoreTemplateMatch <- function(colnames, template_mapping) {
 
  clean <- function(x) tolower(gsub("[^a-z0-9]", "", x, ignore.case = TRUE))
@@ -210,7 +212,7 @@ validateRecipe <- function(recipe, level = c("minimal","standard","strict")) {
 
  } else {
 
-  required_fields <- c("marker","chr","pos","ea","nea","b","p")
+  required_fields <- .gwas_required_fields
 
   for (f in required_fields) {
 
@@ -234,14 +236,6 @@ validateRecipe <- function(recipe, level = c("minimal","standard","strict")) {
                  paste("Duplicate column mapping:", paste(unique(dup), collapse=", ")))
   }
 
-  # recommended fields
-  if (is_empty(recipe$mapping$seb)) {
-   warnings <- c(warnings, "Missing SE (seb) → limits many models")
-  }
-
-  if (is_empty(recipe$mapping$eaf)) {
-   warnings <- c(warnings, "Missing EAF → limits QC / LD-aware models")
-  }
  }
 
  # -----------------------------
@@ -392,7 +386,8 @@ runRecipe <- function(recipe, GAlist, db_path,
 
  stat_norm <- normalizeStatSchema(
   stat = stat,
-  schema = recipe$mapping
+  schema = recipe$mapping,
+  effect_scale = if (is.null(recipe$effect_scale)) "auto" else recipe$effect_scale
  )
 
  # -----------------------------
@@ -778,6 +773,7 @@ detectStatSchema <- function(stat, sample_n = 100000,
   sapply(seq_along(col_names), function(i) {
    nm <- col_names[i]
    clean_nm <- clean_names[i]
+   if (clean_nm == field) return(1)
 
    alias_hit <- FALSE
    if (length(pats)) {
@@ -838,15 +834,7 @@ detectStatSchema <- function(stat, sample_n = 100000,
 
   seb_score <- if (length(non_na_num)) mean(non_na_num > 0 & non_na_num < 1) else 0
 
-  # ---- FIX 4: OR vs beta heuristic ----
-  b_score <- 0
-  if (length(non_na_num)) {
-   if (all(non_na_num > 0, na.rm = TRUE) && median(non_na_num, na.rm = TRUE) > 0.5) {
-    b_score <- 0.3  # OR
-   } else if (any(non_na_num < 0, na.rm = TRUE)) {
-    b_score <- 0.5  # beta
-   }
-  }
+  b_score <- if (length(non_na_num)) mean(is.finite(non_na_num)) else 0
 
   n_score <- if (length(non_na_num)) mean(non_na_num >= 100) else 0
 
@@ -894,6 +882,9 @@ detectStatSchema <- function(stat, sample_n = 100000,
   score_tbl[f, ] <- w_name * nscore +
    w_value * pmin(vscore, 1.25) +
    w_alias * alias_score_tbl[f, ]
+  if (f %in% c(.gwas_required_fields, "eaf")) {
+   score_tbl[f, nscore == 0 & alias_score_tbl[f, ] == 0] <- 0
+  }
  }
 
  warnings <- character(0)
@@ -958,7 +949,7 @@ detectStatSchema <- function(stat, sample_n = 100000,
  candidates[["ea"]] <- ea_pick$candidates
  candidates[["nea"]] <- names(nea_scores)[nea_ord[seq_len(min(3, length(nea_ord)))]]
 
- required <- c("chr", "pos", "ea", "nea", "p")
+ required <- .gwas_required_fields
  missing_required <- required[is.na(mapping[required])]
  if (length(missing_required)) {
   warnings <- c(warnings, paste("Missing required fields:", paste(missing_required, collapse = ", ")))
@@ -1211,25 +1202,32 @@ detectStatSchema <- function(stat, sample_n = 100000,
 #' @param schema Output from [detectStatSchema()] or a named character vector.
 #' @param drop_unmapped Logical; if `TRUE`, return only canonical + passthrough columns.
 #' @param require_fields Canonical fields required to be present after normalization.
+#'   Defaults to `chr`, `pos`, `ea`, `nea`, `b`, `seb`, and `p`.
+#' @param effect_scale Scale of the mapped effect column. `"auto"` converts
+#'   columns named `OR` or `odds_ratio` (ignoring case and punctuation).
+#'   Use `"beta"` for beta or log-odds values, or `"or"` to convert an odds
+#'   ratio from any column name. Supply `seb` on the beta or log-odds scale.
 #' @return A normalized `data.frame` with canonical columns where possible.
 #' @export
 normalizeStatSchema <- function(stat,
                                 schema,
                                 drop_unmapped = FALSE,
-                                require_fields = c("chr", "pos", "ea", "nea", "p")) {
+                                require_fields = .gwas_required_fields,
+                                effect_scale = c("auto", "beta", "or")) {
  if (is.null(stat)) stop("`stat` is NULL")
  if (!is.data.frame(stat)) stat <- as.data.frame(stat)
 
  mapping <- if (is.list(schema) && !is.null(schema$mapping)) schema$mapping else schema
  if (is.null(names(mapping))) stop("`schema` mapping must be a named vector")
+ effect_scale <- match.arg(effect_scale)
 
  out <- stat
  canon <- c("marker", "chr", "pos", "ea", "nea", "eaf", "b", "seb", "p", "n", "ncase", "ncontrol", "info")
 
  for (nm in canon) {
   src <- if (nm %in% names(mapping)) mapping[[nm]] else NULL
-  if (!is.null(src) && !is.na(src) && src %in% colnames(out)) {
-   out[[nm]] <- out[[src]]
+  if (!is.null(src) && !is.na(src) && src %in% colnames(stat)) {
+   out[[nm]] <- stat[[src]]
   }
  }
 
@@ -1265,21 +1263,22 @@ normalizeStatSchema <- function(stat,
   }
  }
 
- # Detect and convert OR → log(OR)
- if (!is.null(out$b)) {
-  b_vals <- out$b[!is.na(out$b)]
-  if (length(b_vals)) {
-   if (all(b_vals > 0, na.rm = TRUE) && stats::median(b_vals, na.rm = TRUE) > 0.5) {
-    out$b <- log(out$b)
-    transformations <- c(transformations, "OR -> log(OR)")
-   }
+ effect_col <- if ("b" %in% names(mapping)) mapping[["b"]] else NA_character_
+ if (effect_scale == "auto") {
+  effect_name <- gsub("[^a-z0-9]", "", tolower(effect_col))
+  effect_scale <- if (effect_name %in% c("or", "oddsratio")) "or" else "beta"
+ }
+ if (effect_scale == "or" && !is.null(out$b)) {
+  if (any(!is.na(out$b) & (!is.finite(out$b) | out$b <= 0))) {
+   stop("Odds ratios must be finite and strictly positive.")
   }
+  out$b <- log(out$b)
+  transformations <- c(transformations, "OR -> log(OR)")
  }
 
  # ---- Clamp extreme p-values ----
  if (!is.null(out$p)) {
   out$p[out$p == 0] <- .Machine$double.xmin
-  out$p[out$p < .Machine$double.xmin] <- .Machine$double.xmin
  }
 
  # ---- Optional warning: SE mismatch ----
@@ -1317,6 +1316,10 @@ normalizeStatSchema <- function(stat,
 
 #' Validate normalized GWAS summary statistics
 #'
+#' The ingestion schema requires `chr`, `pos`, `ea`, `nea`, `b`, `seb`, and `p`.
+#' When `eaf` is absent, the writer uses effect-allele frequencies from the
+#' marker catalog after alignment.
+#'
 #' @param stat A normalized `data.frame` (typically from [normalizeStatSchema()]).
 #' @return A list with `ok`, `errors`, `warnings`, and `metrics`.
 #' @export
@@ -1327,11 +1330,17 @@ validateStatSchema <- function(stat) {
   errors <- character(0)
   warnings <- character(0)
 
-  required <- c("chr", "pos", "ea", "nea", "p")
+  required <- .gwas_required_fields
   miss <- required[!required %in% colnames(stat)]
   if (length(miss)) errors <- c(errors, paste("Missing required columns:", paste(miss, collapse = ", ")))
+  empty <- Filter(function(field) all(is.na(stat[[field]])), intersect(required, names(stat)))
+  if (length(empty)) errors <- c(errors, paste("Empty required columns:", paste(empty, collapse = ", ")))
 
-  if ("p" %in% colnames(stat)) {
+  numeric_fields <- intersect(c("b", "seb", "p", "eaf"), names(stat))
+  non_numeric <- Filter(function(field) !is.numeric(stat[[field]]), numeric_fields)
+  if (length(non_numeric)) errors <- c(errors, paste("Columns must be numeric:", paste(non_numeric, collapse = ", ")))
+
+  if (is.numeric(stat[["p"]])) {
     bad_p <- sum(!(stat$p >= 0 & stat$p <= 1), na.rm = TRUE)
     if (bad_p > 0) errors <- c(errors, sprintf("Invalid p-values outside [0,1]: %s", bad_p))
   }
@@ -1371,6 +1380,7 @@ validateStatSchema <- function(stat) {
 #' @param strict If `TRUE`, stop when low confidence exists for required fields.
 #' @param write_to_db Passed to [updateStatDB()] as `writeStatDB`.
 #' @param ... Additional metadata arguments passed to [updateStatDB()] (e.g. `source`, `trait`, `type`).
+#' @param effect_scale Passed to [normalizeStatSchema()].
 #' @return A list with updated `GAlist`, `schema`, and `validation`.
 #' @export
 ingestStatDB <- function(GAlist,
@@ -1379,20 +1389,24 @@ ingestStatDB <- function(GAlist,
                          min_confidence = 0.1,
                          strict = TRUE,
                          write_to_db = TRUE,
-                         ...) {
+                         ...,
+                         effect_scale = c("auto", "beta", "or")) {
+  effect_scale <- match.arg(effect_scale)
   if (is.null(schema)) schema <- detectStatSchema(stat)
 
   mapping <- if (is.list(schema) && !is.null(schema$mapping)) schema$mapping else schema
   confidence <- if (is.list(schema) && !is.null(schema$confidence)) schema$confidence else setNames(rep(1, length(mapping)), names(mapping))
 
-  required <- c("chr", "pos", "ea", "nea", "p")
-  low_conf <- required[!is.na(mapping[required]) & confidence[required] < min_confidence]
+  mapped_required <- intersect(.gwas_required_fields, names(mapping))
+  scores <- confidence[mapped_required]
+  low_conf <- mapped_required[!is.na(unlist(mapping[mapped_required])) &
+                               !is.na(scores) & scores < min_confidence]
   if (strict && length(low_conf)) {
     stop("Low-confidence required mappings: ", paste(low_conf, collapse = ", "),
          ". Provide `schema=` explicitly or set strict = FALSE.")
   }
 
-  stat_norm <- normalizeStatSchema(stat, schema = mapping)
+  stat_norm <- normalizeStatSchema(stat, schema = mapping, effect_scale = effect_scale)
   validation <- validateStatSchema(stat_norm)
   if (!validation$ok) stop(paste(validation$errors, collapse = " | "))
 
