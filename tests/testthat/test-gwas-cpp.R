@@ -1,6 +1,7 @@
 cpp_gwas_fixture <- function() {
   root <- tempfile("gact-cpp-")
   dir.create(root)
+  root <- normalizePath(root, winslash = "/", mustWork = TRUE)
   dirs <- setNames(file.path(root, c("marker", "gstat", "download")),
                    c("marker", "gstat", "download"))
   for (dir in dirs) dir.create(dir)
