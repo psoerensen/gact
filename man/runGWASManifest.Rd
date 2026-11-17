@@ -62,11 +62,15 @@ Invisibly, the per-study report written to \code{manifest_review.tsv}.
 Status is \code{imported}, \code{already_imported}, \code{ready}, or \code{needs_review}.
 The \code{out_dir} attribute gives the batch report directory.
 Preview QC warnings are reported separately. Full-data QC counts are
-included for newly imported studies.
+included for newly imported studies. The \code{cleanup} column records the
+outcome for managed downloads.
 }
 \description{
 Each row represents one study. New inputs are downloaded or read from the
 local cache and checked against the supplied MD5. Automatic import requires
 a verified source and header match from \code{\link[=inspectGWAS]{inspectGWAS()}} and a passing
 preview. Review the per-study inspection files for rows marked for review.
+Files downloaded by gact are removed after a successful import and descriptor
+save. Preview runs, failed imports, and inputs supplied directly to the
+cache retain their files.
 }

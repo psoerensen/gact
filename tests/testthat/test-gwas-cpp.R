@@ -39,6 +39,14 @@ test_that("native staging publishes verified recipes and reads both studies", {
   scratch <- file.path(x$root, "scratch")
   dir.create(scratch)
   writeLines("owned by the caller", file.path(scratch, "keep.me"))
+  inputs <- x$files
+  inputs[1L] <- file.path(x$root, "upstream.tsv.gz")
+  expect_true(file.rename(x$files[1L], inputs[1L]))
+  x$manifest$url[1L] <- "https://example.org/a.h.tsv.gz"
+  testthat::local_mocked_bindings(curl_download = function(url, destfile, mode) {
+    expect_identical(url, x$manifest$url[1L])
+    expect_true(file.copy(inputs[1L], destfile))
+  }, .package = "curl")
   run <- function(name, import = TRUE) runGWASManifest(x$manifest, x$descriptor,
     out_dir = if (is.null(name)) NULL else file.path(x$root, name),
     knowledge = x$knowledge, engine = "cpp", workers = 2L, import = import,
@@ -60,12 +68,14 @@ test_that("native staging publishes verified recipes and reads both studies", {
   expect_identical(run("preview", FALSE)$status, rep("ready", 2))
   expect_false(dir.exists(file.path(x$root, "recipes")))
   expect_identical(list.files(scratch), "keep.me")
+  expect_true(all(file.exists(x$files)))
   failed <- run("failure")
   expect_identical(failed$status, rep("needs_review", 2))
   expect_match(failed$issues, "Simulated batch descriptor failure", all = TRUE)
   expect_length(list.files(x$ga$dirs[["gstat"]], all.files = TRUE, no.. = TRUE), 0L)
   expect_length(readRDS(x$descriptor)$study$id, 0L)
   expect_identical(list.files(scratch), "keep.me")
+  expect_true(all(file.exists(x$files)))
   fail <- FALSE
   writes <- 0L
   result <- run(NULL)
@@ -79,12 +89,13 @@ test_that("native staging publishes verified recipes and reads both studies", {
   expect_true(all(file.exists(file.path(reports, c("manifest.tsv", "manifest_review.tsv")))))
   expect_length(list.files(reports, recursive = TRUE, pattern = "\\.(gz|bin)$"), 0L)
   expect_identical(list.files(scratch), "keep.me")
-  expect_true(all(file.exists(x$files)))
+  expect_identical(result$cleanup, c("removed", NA_character_))
+  expect_identical(file.exists(x$files), c(FALSE, TRUE))
   ga <- readRDS(x$descriptor)
   expect_identical(ga$study$id, c("GWAS1", "GWAS2"))
   expect_equal(ga$study$study_n_total, c(1200, 1000))
-  for (i in seq_along(x$files)) {
-    source <- data.table::fread(x$files[i], data.table = FALSE)
+  for (i in seq_along(inputs)) {
+    source <- data.table::fread(inputs[i], data.table = FALSE)
     normalized <- normalizeStatSchema(source, x$mapping, effect_scale = "beta", p_scale = "p")
     expected <- gact:::qcStatDB(x$ga, normalized, excludeMAFDIFF = .5, strand = "forward")
     actual <- getGWAS(ga, ga$study$id[i], rsids = x$ga$rsids, format = "data.frame")

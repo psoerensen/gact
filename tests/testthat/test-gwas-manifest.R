@@ -38,6 +38,7 @@ test_that("manifest reuses verified formats, persists accession, and skips rerun
   x <- manifest_fixture()
   on.exit(unlink(x$root, recursive = TRUE))
   data <- x$dirs[["download"]]
+  x$manifest$url[2] <- "https://example.org/manual.tsv"
   before <- tools::md5sum(x$descriptor)
   args <- list(manifest = x$manifest, descriptor = x$descriptor, data_dir = data,
                knowledge = x$book, defaults = x$defaults)
@@ -55,6 +56,8 @@ test_that("manifest reuses verified formats, persists accession, and skips rerun
   expect_identical(updated$study$accession, c(NA_character_, "GCST200"))
   expect_identical(updated$study$reference[2], "https://www.ebi.ac.uk/gwas/studies/GCST200")
   expect_equal(nrow(getGWAS(updated, "GWAS2", what = "p")), 4)
+  expect_true(file.exists(file.path(data, x$manifest$filename[2])))
+  expect_true(is.na(run$cleanup[2]))
   unlink(file.path(data, x$manifest$filename))
   before <- tools::md5sum(x$descriptor)
   again <- do.call(runGWASManifest, c(args, list(out_dir = file.path(x$root, "again"))))
@@ -129,4 +132,31 @@ test_that("downloads are published to the cache only after checksum validation",
     knowledge = x$book, defaults = x$defaults, import = FALSE)
   expect_identical(run$status, "ready")
   expect_identical(unname(tools::md5sum(cached)), row$md5)
+  receipt <- paste0(cached, ".gact-download.json")
+  expect_true(file.exists(receipt))
+  receipt_hash <- tools::md5sum(receipt)
+  original <- gact:::.publish_gwas_import_file
+  fail <- TRUE
+  testthat::local_mocked_bindings(.publish_gwas_import_file = function(from, to, ...) {
+    if (fail && identical(basename(to), "GAlist.rds")) stop("Simulated descriptor write failure")
+    original(from, to, ...)
+  }, .package = "gact")
+  failed <- runGWASManifest(row, x$descriptor, data, file.path(x$root, "failed-import"),
+    knowledge = x$book, defaults = x$defaults)
+  expect_identical(failed$status, "needs_review")
+  expect_true(file.exists(cached))
+  expect_identical(tools::md5sum(receipt), receipt_hash)
+  fail <- FALSE
+  imported <- runGWASManifest(row, x$descriptor, data, file.path(x$root, "import"),
+    knowledge = x$book, defaults = x$defaults)
+  expect_identical(imported$status, "imported")
+  expect_identical(imported$cleanup, "removed")
+  expect_false(file.exists(cached))
+  expect_identical(tools::md5sum(receipt), receipt_hash)
+  saved <- readRDS(x$descriptor)
+  expect_equal(nrow(getGWAS(saved, "GWAS2")), 4L)
+  repeated <- runGWASManifest(row, x$descriptor, data, file.path(x$root, "repeated"),
+    knowledge = x$book, defaults = x$defaults)
+  expect_identical(repeated$status, "already_imported")
+  expect_false(file.exists(cached))
 })

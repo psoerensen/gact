@@ -4,6 +4,9 @@
 #' local cache and checked against the supplied MD5. Automatic import requires
 #' a verified source and header match from [inspectGWAS()] and a passing
 #' preview. Review the per-study inspection files for rows marked for review.
+#' Files downloaded by gact are removed after a successful import and descriptor
+#' save. Preview runs, failed imports, and inputs supplied directly to the
+#' cache retain their files.
 #'
 #' @param manifest A TSV path or data frame with `accession`, `filename`,
 #'   `url`, `md5`, `source`, `trait`, `type`, `build`, and `ancestry`.
@@ -36,7 +39,8 @@
 #' @return Invisibly, the per-study report written to `manifest_review.tsv`.
 #'   Status is `imported`, `already_imported`, `ready`, or `needs_review`.
 #'   Preview QC warnings are reported separately. Full-data QC counts are
-#'   included for newly imported studies.
+#'   included for newly imported studies. The `cleanup` column records the
+#'   outcome for managed downloads.
 #'   The out_dir attribute gives the batch report directory.
 #' @export
 runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NULL,
@@ -126,7 +130,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   jobs <- vector("list", nrow(manifest))
   report <- data.frame(accession = manifest$accession, filename = manifest$filename,
     status = "needs_review", study_id = NA_character_, recipe = NA_character_,
-    issues = NA_character_, warnings = NA_character_,
+    issues = NA_character_, warnings = NA_character_, cleanup = NA_character_,
     n_input = NA_integer_, n_final = NA_integer_, n_dropped = NA_integer_,
     n_flipped = NA_integer_, stringsAsFactors = FALSE)
   for (i in seq_len(nrow(manifest))) {
@@ -209,6 +213,11 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       GAlist <- result$GAlist
       report$status[i] <- "imported"
       report$study_id[i] <- tail(GAlist$study$id, 1L)
+      if (!is.null(result$cleanup)) {
+        report$cleanup[i] <- result$cleanup$status
+        warnings <- c(recipe$validation$warnings, result$cleanup$warning)
+        report$warnings[i] <- paste(unlist(warnings), collapse = " | ")
+      }
       for (field in c("n_input", "n_final", "n_dropped", "n_flipped")) {
         report[[field]][i] <- result$qc[[field]]
       }
@@ -268,6 +277,44 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   if (!identical(unname(tools::md5sum(candidate)), expected)) {
     stop("Input MD5 checksum mismatch: ", row$filename)
   }
-  if (!cached) .publish_gwas_import_file(candidate, file)
+  if (!cached) {
+    receipt <- tempfile(".gact-download-receipt-", tmpdir = data_dir)
+    on.exit(unlink(receipt, expand = FALSE), add = TRUE)
+    jsonlite::write_json(list(url = row$url, md5 = expected), receipt, auto_unbox = TRUE)
+    .publish_gwas_import_file(candidate, file)
+    .publish_gwas_import_file(receipt, paste0(file, ".gact-download.json"), replace = TRUE)
+  }
   normalizePath(file, winslash = "/", mustWork = TRUE)
+}
+
+.gact_gwas_cleanup_download <- function(recipe) {
+  if (!is.list(recipe)) return(NULL)
+  file <- recipe[["file_name"]]
+  url <- recipe[["input_url"]]
+  md5 <- recipe[["input_md5"]]
+  fields <- list(file, url, md5)
+  if (!all(lengths(fields) == 1L) || !all(vapply(fields, is.character, logical(1))) ||
+      anyNA(unlist(fields)) || !nzchar(file) ||
+      !grepl("^https://", url, ignore.case = TRUE) || !grepl("^[a-f0-9]{32}$", md5)) {
+    return(NULL)
+  }
+  receipt <- paste0(file, ".gact-download.json")
+  if (!file.exists(receipt)) return(NULL)
+  tryCatch({
+    lock <- paste0(file, ".download-lock")
+    if (!dir.create(lock, showWarnings = FALSE)) stop("the download cache is locked")
+    on.exit(unlink(lock, recursive = TRUE, expand = FALSE), add = TRUE)
+    if (!identical(jsonlite::read_json(receipt), list(url = url, md5 = md5))) {
+      stop("the download receipt does not match")
+    }
+    if (!file.exists(file)) return(list(status = "already_absent"))
+    if (dir.exists(file) || !identical(normalizePath(file, winslash = "/", mustWork = TRUE), file) ||
+        !identical(unname(tools::md5sum(file)), md5)) {
+      stop("the input path or checksum changed")
+    }
+    if (!suppressWarnings(file.remove(file))) stop("the file could not be removed")
+    list(status = "removed")
+  }, error = function(e) {
+    list(status = "retained", warning = paste0("Download cleanup skipped: ", conditionMessage(e)))
+  })
 }

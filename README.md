@@ -448,6 +448,11 @@ the updated GAlist. On a rerun, use a fresh output directory. Accessions
 already represented in the database are skipped, including legacy GWAS
 Catalog study URLs.
 
+After the study and updated GAlist are saved, gact removes the source file
+if it downloaded the file itself. The manifest review reports cleanup and
+keeps the URL, checksum, and recipe available for reproducibility. Local
+files, preview downloads, and downloads from failed imports are retained.
+
 #### Stage a Pan-UK Biobank batch in C++
 
 `scanGWAS()` reads the provider phenotype manifest and looks for a matching

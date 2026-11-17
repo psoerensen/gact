@@ -1408,6 +1408,8 @@ validateStatSchema <- function(stat) {
 #'
 #' Runs schema detection, normalization, validation, and then delegates
 #' storage/QC to [updateStatDB()].
+#' A gact-managed download is removed after the study and its descriptor
+#' are saved, using the URL and checksum in the ingestion recipe.
 #'
 #' @param GAlist A gact database object.
 #' @param stat A raw summary-statistics `data.frame`.
@@ -1420,7 +1422,8 @@ validateStatSchema <- function(stat) {
 #' @param effect_scale Passed to [normalizeStatSchema()].
 #' @param p_scale Passed to [normalizeStatSchema()].
 #' @return A list with updated `GAlist`, `schema`, `validation`, normalized
-#'   input, transformations, and the import `qc` summary.
+#'   input, transformations, the import `qc` summary, and download `cleanup`
+#'   status when applicable.
 #' @export
 ingestStatDB <- function(GAlist,
                          stat,
@@ -1459,12 +1462,18 @@ ingestStatDB <- function(GAlist,
     ...
   )
 
+  cleanup <- NULL
+  if (isTRUE(write_to_db)) {
+    args <- list(...)
+    if (!is.null(args[["descriptor"]])) cleanup <- .gact_gwas_cleanup_download(args[["recipe"]])
+  }
   list(
    GAlist = updated,
    schema = schema,
    validation = validation,
    qc = attr(updated, "qc_metrics"),
    normalized_stat = stat_norm,
-   transformations = attr(stat_norm, "transformations")
+   transformations = attr(stat_norm, "transformations"),
+   cleanup = cleanup
   )
 }

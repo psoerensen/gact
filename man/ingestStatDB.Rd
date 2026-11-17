@@ -38,9 +38,12 @@ and \code{strand} for documented forward-strand data.}
 }
 \value{
 A list with updated \code{GAlist}, \code{schema}, \code{validation}, normalized
-input, transformations, and the import \code{qc} summary.
+input, transformations, the import \code{qc} summary, and download \code{cleanup}
+status when applicable.
 }
 \description{
 Runs schema detection, normalization, validation, and then delegates
 storage/QC to \code{\link[=updateStatDB]{updateStatDB()}}.
+A gact-managed download is removed after the study and its descriptor
+are saved, using the URL and checksum in the ingestion recipe.
 }

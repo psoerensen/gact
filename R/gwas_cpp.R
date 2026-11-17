@@ -123,6 +123,14 @@
     for (field in c("n_input", "n_final", "n_dropped", "n_flipped")) {
       report[[field]][i] <- item$qc[[field]]
     }
+    cleanup <- .gact_gwas_cleanup_download(item$recipe)
+    if (!is.null(cleanup)) {
+      report$cleanup[i] <- cleanup$status
+      if (length(cleanup$warning)) {
+        warnings <- c(report$warnings[i], cleanup$warning)
+        report$warnings[i] <- paste(warnings[!is.na(warnings) & nzchar(warnings)], collapse = " | ")
+      }
+    }
   }
   report
 }
