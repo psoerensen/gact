@@ -29,7 +29,7 @@
 #'   chromosome tables and receipts. The build prepares Ensembl, regulatory, Reactome,
 #'   STRING, STITCH, GO, and drug marker sets. GO and drug gene memberships
 #'   come from the published annotation bundle. Both builds save their GAlist
-#'   in the new version directory.
+#'   in the new version directory and report the final marker count and path.
 #'
 #' @return A list providing information and infrastructure of the gact database.
 #'
@@ -147,6 +147,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
  dbdir <- normalizePath(dbdir, winslash = "/", mustWork = TRUE)
  target <- file.path(dbdir, version)
  if (file.exists(target)) stop("Database already exists: ", target)
+ message("Building ", version, " at ", target)
  stage <- tempfile(".gact-build-", tmpdir = dbdir)
  if (!dir.create(stage, mode = "0700")) stop("Cannot stage the database build.")
  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
@@ -199,6 +200,8 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
  saveRDS(ga, file.path(staged_db, paste0("GAlist_", version, ".rds")))
  if (file.exists(target) || !file.rename(staged_db, target))
   stop("Cannot publish database at ", target)
+ message("Database ready at ", target, " (",
+         format(length(ga$rsids), big.mark = ",", scientific = FALSE), " markers).")
  ga
 }
 

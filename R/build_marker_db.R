@@ -6,6 +6,7 @@
 #' Rows at repeated chromosome-position pairs or with repeated rsIDs are
 #' omitted. All 22 autosomes must have retained markers. This version
 #' provides resources for GWAS ingestion and retrieval.
+#' The build reports progress as it verifies and reads each chromosome.
 #'
 #' @param input_dir Directory containing the checksum-verified `chr1.tsv.gz`
 #'   to `chr22.tsv.gz` tables and their `chr1.json` to `chr22.json` receipts
@@ -25,15 +26,17 @@ buildMarkerDB <- function(input_dir, dbdir = getwd()) {
   if (!all(file.exists(c(files, receipts)))) {
     stop("Supply prepared marker tables and receipts for all 22 autosomes.")
   }
+  message("Preparing the GRCh38 marker backbone from ", input_dir)
   provenance <- lapply(receipts, jsonlite::read_json)
-  sums <- unname(tools::md5sum(files))
   expected <- c("rsids", "chr", "pos", "ref", "alt", "af")
   parts <- lapply(autosomes, function(i) {
+    message("Chromosome ", i, "/", length(autosomes), ": checking and reading ", basename(files[i]))
     receipt <- provenance[[i]]
+    checksum <- unname(tools::md5sum(files[i]))
     if (!identical(receipt$build, "GRCh38") ||
         !isTRUE(receipt$chromosome == i) ||
         !identical(receipt$output$file, basename(files[i])) ||
-        is.na(sums[i]) || !identical(receipt$output$md5, sums[i])) {
+        is.na(checksum) || !identical(receipt$output$md5, checksum)) {
       stop("Invalid GRCh38 receipt or checksum for chromosome ", i)
     }
     markers <- data.table::fread(files[i],
@@ -50,6 +53,7 @@ buildMarkerDB <- function(input_dir, dbdir = getwd()) {
     }
     markers
   })
+  message("Combining the chromosome tables and removing duplicate markers.")
   markers <- data.table::rbindlist(parts)
   rm(parts)
   n_input <- nrow(markers)
@@ -63,6 +67,7 @@ buildMarkerDB <- function(input_dir, dbdir = getwd()) {
   data.table::setnames(markers, c("ref", "alt", "af"), c("nea", "ea", "eaf"))
   data.table::setcolorder(markers, c("rsids", "chr", "pos", "ea", "nea", "eaf"))
 
+  message("Writing the marker catalog and coordinate index.")
   stage <- tempfile(".gact-marker-db-", tmpdir = dbdir)
   if (!dir.create(stage, mode = "0700")) stop("Cannot create marker database staging directory.")
   on.exit(unlink(stage, recursive = TRUE), add = TRUE)

@@ -89,7 +89,10 @@ test_that("gact builds both releases with their own backbone and coordinates", {
     }, .package = "gact"
   )
   for (version in names(versions)) {
-    ga <- gact(version = version, task = "build", dbdir = release_dir)
+    messages <- capture.output(ga <- gact(version = version, task = "build",
+                                          dbdir = release_dir), type = "message")
+    expect_true(any(grepl(paste0("Database ready at ", ga$dbdir, " (",
+                                 length(ga$rsids), " markers)."), messages, fixed = TRUE)))
     expected <- if (ga$assembly == "GRCh37") "rs37" else "rs38"
     expect_identical(ga$assembly, versions[[version]]$build)
     expect_identical(ga, readRDS(file.path(release_dir, version, paste0("GAlist_", version, ".rds"))))
@@ -105,6 +108,8 @@ test_that("gact builds both releases with their own backbone and coordinates", {
     expect_error(gact(version = version, task = "build", dbdir = release_dir), "already exists")
     if (ga$assembly == "GRCh37") expect_true(file.exists(ga$ldRegions$GRCh37$EUR$file))
     if (ga$assembly == "GRCh38") {
+      expect_true(any(grepl("Chromosome 1/22: checking and reading", messages, fixed = TRUE)))
+      expect_true(any(grepl("Chromosome 22/22: checking and reading", messages, fixed = TRUE)))
       manifest <- jsonlite::read_json(file.path(ga$dirs[["marker"]], "marker_manifest.json"))
       expect_equal(manifest$n_markers, 22)
       expect_length(manifest$inputs, 22L)

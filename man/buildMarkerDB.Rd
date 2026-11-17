@@ -24,4 +24,5 @@ catalog uses ALT as its effect allele and the frequency of ALT as EAF.
 Rows at repeated chromosome-position pairs or with repeated rsIDs are
 omitted. All 22 autosomes must have retained markers. This version
 provides resources for GWAS ingestion and retrieval.
+The build reports progress as it verifies and reads each chromosome.
 }

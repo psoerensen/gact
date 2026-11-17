@@ -47,7 +47,7 @@ It looks under \code{dbdir} and its parent for \code{prepared_grch38} or
 chromosome tables and receipts. The build prepares Ensembl, regulatory, Reactome,
 STRING, STITCH, GO, and drug marker sets. GO and drug gene memberships
 come from the published annotation bundle. Both builds save their GAlist
-in the new version directory.
+in the new version directory and report the final marker count and path.
 }
 \examples{
 \dontrun{
