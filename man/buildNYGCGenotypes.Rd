@@ -8,7 +8,7 @@ buildNYGCGenotypes(input_dir, marker_catalog, out_dir, regions = NULL)
 }
 \arguments{
 \item{input_dir}{Directory with the official NYGC VCF, tabix index,
-\code{20220804_manifest.txt} and \code{integrated_call_samples_v3.20130502.ALL.panel}.}
+\verb{20220804_manifest.txt} and \code{integrated_call_samples_v3.20130502.ALL.panel}.}
 
 \item{marker_catalog}{Path to the GRCh38 \code{markers.txt.gz} file with ALT
 as the effect allele.}

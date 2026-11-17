@@ -256,29 +256,49 @@ GAlist <- gact(version = "hsa.GRCh37.0.0.1", dbdir = dbdir, task = "build")
 GAlist <- gact(version = "hsa.GRCh38.0.0.1", dbdir = dbdir, task = "build")
 ```
 
-For GRCh38, gact looks under `dbdir` and its parent for `prepared_grch38/`
-or `reference/grch38-prep.*/tables/`.
+For GRCh38, gact looks under `dbdir` and its parent for `reference/prepared_grch38/`, `prepared_grch38/`
+or `reference/grch38-prep.*/tables/`. Keep one complete set of chromosome
+tables and receipts for future builds.
 
-### Prepare the GRCh38 marker backbone
+### Install prepared NYGC genotype panels
+
+```r
+GAlist <- downloadDB(GAlist, what = "1000G")
+```
+
+For GRCh38, this installs the five ancestry panels from the
+[versioned Zenodo record](https://doi.org/10.5281/zenodo.24292610).
+It verifies the archive and member SHA-256 checksums and puts the
+`g1000_<ancestry>.bed`, `.bim` and `.fam` files in `marker/`.
+
+### Rebuild the GRCh38 marker backbone from IGSR inputs
 
 `hsa.GRCh38.0.0.1` has a local build workflow for marker sets and GWAS data.
-Use `gact(version = "hsa.GRCh37.0.0.1", dbdir = dbdir, task = "download")`
-to install the published GRCh37 bundle.
+Each release folder includes `reference/`, available as
+`GAlist$dirs[["reference"]]`. For a new GRCh38 build, prepare the input
+tables before creating the release folder.
 Prepare chromosomes 1–22 with `prepareIGSRMarkers()` and a version of gsim
 that exports `gsim_scan_vcf()`.
-Use the [IGSR 2019-03-12 GRCh38 release](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/)
-with its checksum manifest, the [UCSC chromosome FASTAs](https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/)
-with `md5sum.txt`, and the GRCh38 gnomAD v4.1 rsID lookup tables with columns
-`#CHROM`, `POS`, `ID`, `REF`, and `ALT`, sorted by position. Preparation checks reference alleles and
+The downloader verifies the [IGSR 2019-03-12 GRCh38 VCFs](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/)
+and [UCSC chromosome FASTAs](https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/)
+against their release manifests. It also verifies the gnomAD v4.1 genomes
+VCF for each chromosome, writes a compact rsID lookup and checksum receipt, and
+removes the downloaded gnomAD VCF after processing. Each chromosome requires
+temporary space for its full VCF. Use `include_rsids = FALSE` if you already
+have lookup tables. Preparation checks reference alleles and
 uses the panel's global alternate allele count divided by allele number. The
 default scope is PASS, biallelic autosomal SNVs with a global MAF of at least 1%.
 
 ```r
+dbdir <- "/path/to/gactcore"
+reference_dir <- file.path(dbdir, "reference")
+tables <- file.path(reference_dir, "prepared_grch38")
+inputs <- downloadReferenceInputs("IGSR", reference_dir = reference_dir)
 for (chr in 1:22) {
-  prepareIGSRMarkers(chr, panel_dir = "igsr", fasta_dir = "ucsc-hg38",
-    rsid_dir = "gnomad-rsids", out_dir = "prepared_grch38")
+  prepareIGSRMarkers(chr, panel_dir = inputs$panel_dir, fasta_dir = inputs$fasta_dir,
+    rsid_dir = inputs$rsid_dir, out_dir = tables)
 }
-GAlist <- buildMarkerDB(input_dir = "prepared_grch38", dbdir = "/path/to/gactcore")
+GAlist <- buildMarkerDB(input_dir = tables, dbdir = dbdir)
 ```
 
 The build writes `marker/markers.txt.gz`, `marker/cpra.txt.gz`, a marker provenance
@@ -287,32 +307,28 @@ descriptor can be passed to `runGWASManifest()`. GRCh38 LD and annotation bundle
 are separate resources and are pending for this version. The matching NYGC
 genotypes are available separately.
 
-```r
-GAlist <- downloadDB(GAlist, what = "1000G")
-```
+To prepare the existing marker database for publication, use
+`packageMarkerDB(dbdir, out_dir)`, where `dbdir` is the GRCh38 database root
+and `out_dir` is a separate release directory. Upload the returned
+`archive` and `checksum_file` to Zenodo. The GRCh38 download installer
+requires a published marker bundle registered for the release.
 
-For GRCh38, this downloads the five ancestry archives from the
-[versioned Zenodo record](https://doi.org/10.5281/zenodo.24292610).
-It checks SHA-256 for each archive and its extracted triplet, and places
-`g1000_<ancestry>.bed`, `.bim` and `.fam` directly in `marker/`.
-Existing files that match the release are reused. Conflicting files cause
-the installation to stop.
-
-### Prepare NYGC 30× GRCh38 genotypes
+### Rebuild NYGC 30× GRCh38 genotype panels from VCFs
 
 `buildNYGCGenotypes()` writes one BED/BIM/FAM triplet for all 22 autosomes
 per ancestry (AFR, AMR, EAS, EUR and SAS). It checks each NYGC VCF and index against the release
 manifest and matches biallelic SNPs to the existing GRCh38 marker catalog by
 chromosome, position, REF and ALT. The BED dosage counts catalog ALT.
 
-Put the [2022-04-22 phased VCFs, indexes and checksum manifest](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/)
-and the [Phase 3 sample panel](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel)
-in the input directory. Install gsim with `gsim_scan_vcf()`, phased VCF import
+The downloader fetches and verifies the [2022-04-22 phased VCFs and indexes](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/)
+and checks the [Phase 3 sample panel](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel).
+Install gsim with `gsim_scan_vcf()`, phased VCF import
 and BED export. gsim streams the chromosome VCF and extracts the genetic map
 from `INFO/CM`. Region requests also scan sequentially.
 
 ```r
-buildNYGCGenotypes(input_dir = "download/nygc-30x",
+inputs <- downloadReferenceInputs("NYGC", reference_dir = "reference")
+buildNYGCGenotypes(input_dir = inputs$input_dir,
   marker_catalog = "marker/markers.txt.gz",
   out_dir = "nygc-grch38/marker")
 ```

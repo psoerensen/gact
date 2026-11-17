@@ -1,4 +1,200 @@
-# IGSR chromosome preparation --------
+# Raw reference inputs and chromosome preparation --------
+
+#' Download raw GRCh38 reference inputs
+#'
+#' Downloads the source files for the IGSR marker backbone or NYGC genotype
+#' panels. VCFs, indexes and FASTAs are checked against their release manifests.
+#' The NYGC sample panel is checked for the expected sample count, unique
+#' IDs and ancestry groups. Existing verified files are reused and conflicting files cause an
+#' error. IGSR also prepares rsID lookup tables from gnomAD v4.1 genome VCFs.
+#'
+#' @param panel One of "IGSR" or "NYGC".
+#' @param reference_dir Parent directory for the raw downloads. Defaults to
+#'   `reference` in the working directory. For a database created elsewhere,
+#'   use `GAlist$dirs[["reference"]]`.
+#' @param chromosomes Autosomes to download, from 1 to 22.
+#' @param include_rsids For IGSR, prepare gnomAD rsID lookup tables. Set to
+#'   FALSE to use separately prepared tables. gnomAD VCFs are processed
+#'   one chromosome at a time and discarded after preparation.
+#' @return Invisibly, the input paths for the corresponding preparation functions.
+#' @seealso [prepareIGSRMarkers()], [buildMarkerDB()], [buildNYGCGenotypes()]
+#' @export
+downloadReferenceInputs <- function(panel = c("IGSR", "NYGC"), reference_dir = "reference",
+                                    chromosomes = 1:22, include_rsids = TRUE) {
+  panel <- match.arg(panel)
+  if (!length(chromosomes) || !all(chromosomes %in% 1:22) || anyDuplicated(chromosomes))
+    stop("Supply unique autosomes from 1 to 22.")
+  if (!dir.exists(reference_dir) && !dir.create(reference_dir, recursive = TRUE))
+    stop("Cannot create reference directory: ", reference_dir)
+  reference_dir <- normalizePath(reference_dir, winslash = "/", mustWork = TRUE)
+  lock <- file.path(reference_dir, paste0(".gact-", tolower(panel), "-download"))
+  if (!dir.create(lock, mode = "0700", showWarnings = FALSE))
+    stop("Cannot lock the ", panel, " download directory: ", lock)
+  on.exit(unlink(lock, recursive = TRUE), add = TRUE)
+
+  fetch <- function(spec, directory) {
+    if (!dir.exists(directory) && !dir.create(directory))
+      stop("Cannot create input directory: ", directory)
+    manifest <- .gact_fetch_reference_file(spec$url, spec$manifest, directory, lock,
+      function(path) .gact_reference_checksums(path, spec))
+    checksums <- .gact_reference_checksums(manifest, spec)
+    for (i in seq_along(spec$files)) {
+      verify <- function(path) {
+        if (!identical(unname(tools::md5sum(path)), checksums[i]))
+          stop("Release checksum mismatch for ", spec$files[i], " at ", path)
+      }
+      .gact_fetch_reference_file(spec$url, spec$files[i], directory, lock, verify)
+    }
+  }
+  if (panel == "IGSR") {
+    dirs <- list(panel_dir = file.path(reference_dir, "igsr-20190312"),
+                 fasta_dir = file.path(reference_dir, "ucsc-hg38"))
+    fetch(.gact_reference_spec("IGSR", chromosomes), dirs$panel_dir)
+    fetch(.gact_reference_spec("UCSC", chromosomes), dirs$fasta_dir)
+    if (isTRUE(include_rsids)) {
+      dirs$rsid_dir <- file.path(reference_dir, "gnomad-rsids")
+      if (!dir.exists(dirs$rsid_dir) && !dir.create(dirs$rsid_dir))
+        stop("Cannot create rsID lookup directory: ", dirs$rsid_dir)
+      for (chr in chromosomes) .gact_prepare_gnomad_lookup(chr, dirs$rsid_dir, lock)
+    }
+  } else {
+    dirs <- list(input_dir = file.path(reference_dir, "nygc-30x"))
+    fetch(.gact_reference_spec("NYGC", chromosomes), dirs$input_dir)
+    .gact_fetch_reference_file(.gact_nygc_sample_url, .gact_nygc_sample_file,
+                              dirs$input_dir, lock, .gact_read_nygc_samples)
+  }
+  invisible(dirs)
+}
+
+.gact_nygc_sample_file <- "integrated_call_samples_v3.20130502.ALL.panel"
+.gact_nygc_sample_url <- "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/"
+.gact_nygc_populations <- c("AFR", "AMR", "EAS", "EUR", "SAS")
+
+.gact_read_nygc_samples <- function(path) {
+  samples <- data.table::fread(path, header = TRUE, sep = "\t", fill = TRUE,
+                               select = c("sample", "super_pop", "gender"))
+  if (nrow(samples) != 2504L || anyNA(samples) || any(!nzchar(samples$sample)) ||
+      anyDuplicated(samples$sample) || !setequal(samples$super_pop, .gact_nygc_populations))
+    stop("Expected 2,504 unrelated 1000G samples across five ancestries.")
+  samples
+}
+
+.gact_reference_spec <- function(source, chromosomes) {
+  igsr <- "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/"
+  switch(source,
+    IGSR = list(
+      url = paste0(igsr, "1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/"),
+      manifest = "20190312_biallelic_SNV_and_INDEL_MANIFEST.txt",
+      files = sprintf("ALL.chr%d.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz",
+                      as.integer(chromosomes)),
+      file_column = 1L, hash_column = 3L),
+    UCSC = list(url = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/",
+      manifest = "md5sum.txt", files = paste0("chr", chromosomes, ".fa.gz"),
+      file_column = 2L, hash_column = 1L),
+    NYGC = {
+      vcf <- paste0("1kGP_high_coverage_Illumina.chr", chromosomes,
+                    ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")
+      list(url = paste0(igsr, "1000G_2504_high_coverage/working/",
+                         "20220422_3202_phased_SNV_INDEL_SV/"),
+           manifest = "20220804_manifest.txt", files = c(vcf, paste0(vcf, ".tbi")),
+           file_column = 1L, hash_column = 2L)
+    })
+}
+
+.gact_reference_checksums <- function(path, spec) {
+  rows <- strsplit(trimws(readLines(path)), "[[:space:]]+")
+  rows <- rows[lengths(rows) >= max(spec$file_column, spec$hash_column)]
+  names <- vapply(rows, function(row) sub("^\\./", "", row[spec$file_column]), character(1L))
+  vapply(spec$files, function(file) {
+    match <- which(names == file)
+    if (length(match) != 1L) stop("Expected one release checksum for ", file)
+    hash <- tolower(rows[[match]][spec$hash_column])
+    if (!grepl("^[0-9a-f]{32}$", hash)) stop("Invalid release checksum for ", file)
+    hash
+  }, character(1L), USE.NAMES = FALSE)
+}
+
+.gact_fetch_reference_file <- function(base, name, directory, stage, verify) {
+  target <- file.path(directory, name)
+  if (!file.exists(target)) {
+    message("Downloading ", name)
+    incoming <- file.path(stage, name)
+    curl::curl_download(paste0(base, name), incoming, mode = "wb")
+    verify(incoming)
+    if (file.exists(target) || !file.rename(incoming, target))
+      stop("Cannot publish reference input: ", target)
+  } else {
+    verify(target)
+  }
+  invisible(target)
+}
+
+.gact_prepare_gnomad_lookup <- function(chr, directory, stage) {
+  label <- paste0("chr", chr)
+  target <- file.path(directory, paste0("gnomad_rsid_", label, ".tsv.bgz"))
+  receipt <- paste0(target, ".json")
+  if (file.exists(target) || file.exists(receipt)) {
+    if (!all(file.exists(c(target, receipt)))) stop("Incomplete gnomAD lookup: ", target)
+    saved <- jsonlite::read_json(receipt)
+    if (!identical(saved$version, "4.1") || !isTRUE(saved$chromosome == chr) ||
+        !identical(saved$output_md5, unname(tools::md5sum(target))))
+      stop("Existing gnomAD lookup differs from its receipt: ", target)
+    return(invisible(target))
+  }
+
+  .gact_require_vcf_scan()
+  bucket <- "gcp-public-data--gnomad"
+  object <- paste0("release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites.", label, ".vcf.bgz")
+  storage <- "https://storage.googleapis.com/"
+  url <- paste0(storage, bucket, "/", object)
+  metadata_url <- paste0(storage, "storage/v1/b/", bucket, "/o/",
+                         utils::URLencode(object, reserved = TRUE), "?fields=md5Hash")
+  response <- curl::curl_fetch_memory(metadata_url)
+  if (response$status_code != 200L) stop("Cannot read gnomAD checksum for ", label)
+  hash <- jsonlite::fromJSON(rawToChar(response$content))$md5Hash
+  if (length(hash) != 1L || is.na(hash) || length(openssl::base64_decode(hash)) != 16L)
+    stop("Missing gnomAD VCF MD5 for ", label)
+  expected <- paste(sprintf("%02x", as.integer(openssl::base64_decode(hash))), collapse = "")
+  vcf <- file.path(stage, basename(object))
+  message("Downloading gnomAD v4.1 genome sites for ", label)
+  curl::curl_download(url, vcf, mode = "wb")
+  if (!identical(unname(tools::md5sum(vcf)), expected))
+    stop("gnomAD VCF checksum mismatch for ", label)
+
+  message("Preparing gnomAD rsID lookup for ", label)
+  lookup <- file.path(stage, basename(target))
+  con <- gzfile(lookup, "wt", compression = 1)
+  on.exit(if (!is.null(con)) close(con), add = TRUE)
+  writeLines("#CHROM\tPOS\tID\tREF\tALT", con)
+  last_position <- 0
+  bases <- c("A", "C", "G", "T")
+  .gact_vcf_scan(vcf, function(batch) {
+    if (any(batch$chrom != label) || is.unsorted(c(last_position, batch$pos)))
+      stop("Unexpected chromosome or position order in gnomAD ", label)
+    last_position <<- tail(batch$pos, 1L)
+    keep <- batch$ref %in% bases & batch$alt %in% bases & batch$ref != batch$alt &
+      grepl("(^|;)rs[0-9]+(;|$)", batch$id)
+    if (any(keep)) {
+      writeLines(paste(batch$chrom[keep], as.integer(batch$pos[keep]), batch$id[keep],
+                       batch$ref[keep], batch$alt[keep], sep = "\t"), con)
+    }
+  })
+  close(con)
+  con <- NULL
+  staged_receipt <- file.path(stage, basename(receipt))
+  jsonlite::write_json(list(version = "4.1", chromosome = as.integer(chr), url = url,
+    source_md5 = expected, output_md5 = unname(tools::md5sum(lookup))),
+    staged_receipt, auto_unbox = TRUE, pretty = TRUE)
+  suspendInterrupts({
+    if (!file.rename(lookup, target)) stop("Cannot publish gnomAD lookup: ", target)
+    if (!file.rename(staged_receipt, receipt)) {
+      unlink(target)
+      stop("Cannot publish gnomAD lookup receipt: ", receipt)
+    }
+  })
+  unlink(vcf)
+  invisible(target)
+}
 
 #' Prepare one IGSR GRCh38 chromosome for the marker catalog
 #'
@@ -31,35 +227,36 @@ prepareIGSRMarkers <- function(chromosome, panel_dir, fasta_dir, rsid_dir,
     stop("min_maf must be between 0 and 0.5.")
   }
   label <- paste0("chr", chromosome)
-  panel_name <- sprintf("ALL.chr%d.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz",
-                        as.integer(chromosome))
-  vcf <- file.path(panel_dir, panel_name)
-  fasta <- file.path(fasta_dir, paste0(label, ".fa.gz"))
+  panel <- .gact_reference_spec("IGSR", chromosome)
+  reference_spec <- .gact_reference_spec("UCSC", chromosome)
+  vcf <- file.path(panel_dir, panel$files)
+  fasta <- file.path(fasta_dir, reference_spec$files)
   rsids <- file.path(rsid_dir, paste0("gnomad_rsid_", label, ".tsv.bgz"))
-  panel_manifest <- strsplit(trimws(readLines(file.path(panel_dir,
-    "20190312_biallelic_SNV_and_INDEL_MANIFEST.txt"))), "[[:space:]]+")
-  fasta_manifest <- strsplit(trimws(readLines(file.path(fasta_dir,
-    "md5sum.txt"))), "[[:space:]]+")
-  find_checksum <- function(rows, name, file_column, checksum_column, width) {
-    matches <- Filter(function(row) length(row) == width &&
-      sub("^\\./", "", row[file_column]) == name, rows)
-    if (length(matches) != 1L) stop("Expected one checksum for ", name)
-    matches[[1L]][checksum_column]
-  }
-  expected <- c(find_checksum(panel_manifest, panel_name, 1L, 3L, 3L),
-                find_checksum(fasta_manifest, basename(fasta), 2L, 1L, 2L))
+  panel_manifest_path <- file.path(panel_dir, panel$manifest)
+  fasta_manifest_path <- file.path(fasta_dir, reference_spec$manifest)
   inputs <- c(vcf, fasta, rsids)
+  required <- c(inputs, panel_manifest_path, fasta_manifest_path)
+  missing <- required[!file.exists(required)]
+  if (length(missing)) stop("Missing IGSR preparation inputs for ", label, ":\n",
+                            paste(missing, collapse = "\n"))
+  expected <- c(.gact_reference_checksums(panel_manifest_path, panel),
+                .gact_reference_checksums(fasta_manifest_path, reference_spec))
   checksums <- unname(tools::md5sum(inputs))
   if (anyNA(checksums) || !identical(checksums[1:2], expected)) {
     stop("Missing input or release checksum mismatch for ", label)
   }
-  igsr <- paste0("https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/",
-                 "1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/")
-  urls <- c(paste0(igsr, panel_name),
-            paste0("https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/", basename(fasta)),
+  urls <- c(paste0(panel$url, panel$files),
+            paste0(reference_spec$url, reference_spec$files),
             "https://gnomad.broadinstitute.org/downloads#v4")
   sources <- unname(Map(function(path, url, md5)
     list(file = basename(path), url = url, md5 = md5), inputs, urls, checksums))
+  lookup_receipt <- paste0(rsids, ".json")
+  if (file.exists(lookup_receipt)) {
+    source <- jsonlite::read_json(lookup_receipt)
+    if (!identical(source$output_md5, checksums[3L]))
+      stop("gnomAD lookup checksum differs from its receipt for ", label)
+    sources[[3L]]$upstream <- source
+  }
 
   if (!dir.exists(out_dir) && !dir.create(out_dir, recursive = TRUE)) {
     stop("Cannot create chromosome output directory.")
@@ -203,22 +400,27 @@ prepareIGSRMarkers <- function(chromosome, panel_dir, fasta_dir, rsid_dir,
   invisible(receipt)
 }
 
-.gact_vcf_scan <- function(...) {
+.gact_require_vcf_scan <- function() {
   if (!requireNamespace("gsim", quietly = TRUE) ||
       !"gsim_scan_vcf" %in% getNamespaceExports("gsim")) {
     stop("Install gsim with gsim_scan_vcf() support.")
   }
+}
+
+.gact_vcf_scan <- function(...) {
+  .gact_require_vcf_scan()
   gsim::gsim_scan_vcf(...)
 }
 
-# Marker catalog build --------
+# Marker catalog build and release packaging --------
 
 .gact_grch38_marker_tables <- function(dbdir) {
  roots <- unique(c(dbdir, dirname(dbdir)))
  reference <- file.path(roots, "reference")
  runs <- as.character(unlist(lapply(reference, list.dirs, full.names = TRUE, recursive = FALSE)))
  runs <- runs[startsWith(basename(runs), "grch38-prep.")]
- candidates <- c(file.path(roots, "prepared_grch38"), file.path(runs, "tables"))
+ candidates <- c(file.path(reference, "prepared_grch38"),
+                 file.path(roots, "prepared_grch38"), file.path(runs, "tables"))
  files <- paste0("chr", rep(1:22, 2L), rep(c(".tsv.gz", ".json"), each = 22L))
  ready <- vapply(candidates, function(path) all(file.exists(file.path(path, files))),
                 logical(1L))
@@ -336,6 +538,84 @@ buildMarkerDB <- function(input_dir, dbdir = getwd()) {
   invisible(ga)
 }
 
+#' Package a GRCh38 marker database for release
+#'
+#' Create a Zenodo-ready gzip tar archive containing the marker catalog,
+#' coordinate-and-allele index, and provenance. Verify the catalog and index
+#' against the build metadata, and include SHA-256 checksums for the archived
+#' files and the archive itself.
+#'
+#' @param dbdir Existing GRCh38 database directory containing the marker directory.
+#' @param out_dir Output directory outside the source database.
+#' @return Invisibly, a list containing the archive path, checksum file path,
+#'   and archive SHA-256.
+#' @seealso [buildMarkerDB()]
+#' @export
+packageMarkerDB <- function(dbdir, out_dir = getwd()) {
+  dbdir <- normalizePath(dbdir, winslash = "/", mustWork = TRUE)
+  out_dir <- .gact_gwas_output_path(path.expand(out_dir))
+  source_key <- .gact_gwas_path_key(dbdir)
+  output_key <- .gact_gwas_path_key(out_dir)
+  if (output_key == source_key || startsWith(output_key, paste0(source_key, "/"))) {
+    stop("out_dir must be outside the source database")
+  }
+  filenames <- c("markers.txt.gz", "cpra.txt.gz", "marker_manifest.json")
+  source <- file.path(dbdir, "marker", filenames)
+  if (!all(file.exists(source) & !dir.exists(source))) {
+    stop("The source database must contain markers.txt.gz, cpra.txt.gz, and marker_manifest.json")
+  }
+  if (!dir.exists(out_dir) && !dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)) {
+    stop("Cannot create output directory: ", out_dir)
+  }
+  name <- "gact-hsa.GRCh38.0.0.1-marker.tar.gz"
+  archive <- file.path(out_dir, name)
+  checksum_file <- paste0(archive, ".sha256")
+  stage <- file.path(out_dir, paste0(".", name, ".lock"))
+  if (!dir.create(stage, mode = "0700", showWarnings = FALSE)) stop("Cannot stage marker archive: ", stage)
+  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+  if (any(file.exists(c(archive, checksum_file)))) stop("Marker archive or checksum already exists in ", out_dir)
+  payload <- file.path(stage, "payload")
+  if (!dir.create(file.path(payload, "marker"), recursive = TRUE, showWarnings = FALSE)) {
+    stop("Cannot create archive payload directory")
+  }
+  members <- paste0("marker/", filenames)
+  copies <- file.path(payload, members)
+  if (!all(file.copy(source, copies))) stop("Cannot copy marker release files")
+  metadata <- jsonlite::read_json(copies[3L])
+  expected <- unlist(metadata$checksums)
+  if (!identical(metadata$build, "GRCh38") ||
+      !setequal(names(expected), filenames[1:2]) || length(expected) != 2L ||
+      !identical(unname(tools::md5sum(file.path(payload, "marker", names(expected)))), unname(expected))) {
+    stop("GRCh38 marker metadata or build checksums do not match the source files")
+  }
+  hashes <- vapply(copies, .gact_sha256_file, character(1), USE.NAMES = FALSE)
+  writeLines(paste(hashes, members, sep = "  "), file.path(payload, "SHA256SUMS"))
+  staged_archive <- file.path(stage, name)
+  old <- setwd(payload)
+  status <- tryCatch(
+    utils::tar(staged_archive, c(members, "SHA256SUMS"), compression = "gzip", tar = "internal"),
+    finally = setwd(old)
+  )
+  if (status != 0L) stop("Cannot create marker archive")
+  unpack <- file.path(stage, "verify")
+  if (!dir.create(unpack) || utils::untar(staged_archive, exdir = unpack, tar = "internal") != 0L ||
+      !identical(vapply(file.path(unpack, members), .gact_sha256_file, character(1), USE.NAMES = FALSE), hashes) ||
+      !identical(readLines(file.path(unpack, "SHA256SUMS")), paste(hashes, members, sep = "  "))) {
+    stop("Marker archive did not pass readback verification")
+  }
+  checksum <- .gact_sha256_file(staged_archive)
+  staged_checksum <- paste0(staged_archive, ".sha256")
+  writeLines(paste(checksum, name, sep = "  "), staged_checksum)
+  suspendInterrupts({
+    if (!file.rename(staged_archive, archive)) stop("Cannot publish marker archive")
+    if (!file.rename(staged_checksum, checksum_file)) {
+      unlink(archive)
+      stop("Cannot publish marker archive checksum")
+    }
+  })
+  invisible(list(archive = archive, checksum_file = checksum_file, sha256 = checksum))
+}
+
 # NYGC genotype preparation and merging --------
 
 #' Prepare ancestry-specific NYGC GRCh38 genotype files
@@ -376,23 +656,22 @@ prepareNYGCGenotypes <- function(input_dir, marker_catalog, chromosome, out_dir,
   out_dir <- normalizePath(out_dir, winslash = "/", mustWork = TRUE)
   if (!dir.exists(out_dir)) stop("out_dir must be an existing directory.")
   label <- paste0("chr", chromosome)
-  name <- paste0("1kGP_high_coverage_Illumina.", label,
-                 ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")
-  vcf <- file.path(input_dir, name)
-  inputs <- c(vcf, paste0(vcf, ".tbi"))
+  spec <- .gact_reference_spec("NYGC", chromosome)
+  inputs <- file.path(input_dir, spec$files)
+  vcf <- inputs[1L]
+  manifest_file <- file.path(input_dir, spec$manifest)
+  sample_file <- file.path(input_dir, .gact_nygc_sample_file)
+  required <- c(inputs, manifest_file, sample_file)
+  missing <- required[!file.exists(required)]
+  if (length(missing)) stop("Missing NYGC preparation inputs for ", label, ":\n",
+                            paste(missing, collapse = "\n"))
   checksum <- unname(tools::md5sum(inputs))
-  manifest <- read.table(file.path(input_dir, "20220804_manifest.txt"),
-                         colClasses = "character")
-  expected <- manifest[[2L]][match(basename(inputs), manifest[[1L]])]
+  expected <- .gact_reference_checksums(manifest_file, spec)
   if (anyNA(checksum) || !identical(checksum, expected)) {
     stop("NYGC VCF or index checksum differs from the release manifest.")
   }
-  sample_file <- file.path(input_dir, "integrated_call_samples_v3.20130502.ALL.panel")
-  samples <- data.table::fread(sample_file, header = TRUE, sep = "\t", fill = TRUE,
-                              select = c("sample", "super_pop", "gender"))
-  populations <- c("AFR", "AMR", "EAS", "EUR", "SAS")
-  if (nrow(samples) != 2504L || anyNA(samples) || anyDuplicated(samples$sample) ||
-      !setequal(samples$super_pop, populations)) stop("Expected 2,504 unrelated 1000G samples.")
+  samples <- .gact_read_nygc_samples(sample_file)
+  populations <- .gact_nygc_populations
 
   paths <- .gact_nygc_chromosome_files(chromosome, region)
   prefixes <- paths$prefixes

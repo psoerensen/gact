@@ -13,7 +13,7 @@ createDB(version = NULL, dbdir = NULL)
 }
 \value{
 A list (GAlist) containing the database version, base directory,
-directory paths (GAlist$dirs), including results at the database root,
+directory paths (GAlist$dirs), including reference and results at the database root,
 and feature names. LD/eigen references remain under marker.
 }
 \description{

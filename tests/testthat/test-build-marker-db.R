@@ -38,6 +38,8 @@ test_that("GRCh38 marker build publishes an aligned catalog and descriptor", {
   expect_identical(ga$version, "hsa.GRCh38.0.0.1")
   expect_identical(ga$metadata$build, "GRCh38")
   expect_identical(ga$assembly, "GRCh38")
+  expect_identical(ga$dirs[["reference"]], file.path(ga$dbdir, "reference"))
+  expect_true(dir.exists(ga$dirs[["reference"]]))
   expect_identical(readRDS(file.path(ga$dbdir, "GAlist_hsa.GRCh38.0.0.1.rds")), ga)
   catalog <- data.table::fread(file.path(ga$dirs[["marker"]], "markers.txt.gz"))
   cpra <- data.table::fread(file.path(ga$dirs[["marker"]], "cpra.txt.gz"), header = FALSE)[[1L]]
@@ -69,6 +71,32 @@ test_that("catalog build rejects receipts with a wrong build or checksum", {
   jsonlite::write_json(receipt, file, auto_unbox = TRUE)
   expect_error(buildMarkerDB(x$input, x$root), "receipt or checksum for chromosome 1")
   expect_false(dir.exists(file.path(x$root, "hsa.GRCh38.0.0.1")))
+})
+
+test_that("marker release packaging preserves source files and verifies archive contents", {
+  x <- marker_build_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  ga <- buildMarkerDB(x$input, x$root)
+  paths <- list.files(ga$dbdir, full.names = TRUE, recursive = TRUE)
+  before <- tools::md5sum(paths)
+  out <- file.path(x$root, "release")
+  release <- packageMarkerDB(ga$dbdir, out)
+  expect_identical(tools::md5sum(paths), before)
+  expect_setequal(list.files(out), basename(c(release$archive, release$checksum_file)))
+  expect_identical(readLines(release$checksum_file),
+    paste(gact:::.gact_sha256_file(release$archive), basename(release$archive), sep = "  "))
+  members <- c("marker/markers.txt.gz", "marker/cpra.txt.gz", "marker/marker_manifest.json")
+  expect_setequal(utils::untar(release$archive, list = TRUE, tar = "internal"), c(members, "SHA256SUMS"))
+  unpack <- file.path(x$root, "unpack")
+  expect_equal(utils::untar(release$archive, exdir = unpack, tar = "internal"), 0)
+  hashes <- vapply(file.path(ga$dbdir, members), gact:::.gact_sha256_file, "", USE.NAMES = FALSE)
+  expect_identical(readLines(file.path(unpack, "SHA256SUMS")), paste(hashes, members, sep = "  "))
+  expect_error(packageMarkerDB(ga$dbdir, out), "already exists")
+  expect_error(packageMarkerDB(ga$dbdir, file.path(ga$dbdir, "release")), "outside")
+  writeLines("altered", file.path(ga$dirs[["marker"]], "cpra.txt.gz"))
+  bad <- file.path(x$root, "bad")
+  expect_error(packageMarkerDB(ga$dbdir, bad), "checksums do not match")
+  expect_length(list.files(bad, all.files = TRUE, no.. = TRUE), 0L)
 })
 
 test_that("database setup lists and accepts only build-specific release names", {

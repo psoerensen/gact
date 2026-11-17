@@ -13,7 +13,7 @@ mergeNYGCGenotypes(chromosome_dir, out_dir, regions = NULL)
 
 \item{regions}{Optional data frame with integer-valued \code{chromosome}, \code{start},
 and \code{end} columns and one inclusive interval per chromosome. Intended for
-bounded tests. Omit it to merge all 22 autosomes.}
+bounded tests. The default builds all 22 autosomes.}
 }
 \value{
 Invisibly, a data frame with the file prefix and sample and SNP
@@ -22,6 +22,6 @@ counts for each ancestry.
 \description{
 Verify chromosome receipts, PLINK BED layout, marker order, and identical
 FAM files within each ancestry. Merge in ascending chromosome order and
-publish one \code{g1000_<ancestry>} triplet per ancestry and a JSON receipt with
+publish one \verb{g1000_<ancestry>} triplet per ancestry and a JSON receipt with
 checksums, provenance, and counts. Existing directories are never reused.
 }

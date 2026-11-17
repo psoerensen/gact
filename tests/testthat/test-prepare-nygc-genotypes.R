@@ -42,7 +42,17 @@ test_that("NYGC preparation preserves catalog identity and ancestry-specific GT 
     pos = positions, ea = c("C", "G", "T", "T", "G", "C,G", "G"), nea = "A"),
     catalog, compress = "gzip")
 
-  result <- prepareNYGCGenotypes(root, catalog, 1L, out, region = c(10, 55))
+  downloads <- character()
+  testthat::local_mocked_bindings(curl_download = function(url, destfile, mode) {
+    downloads <<- c(downloads, basename(url))
+    stopifnot(file.copy(file.path(root, basename(url)), destfile))
+  }, .package = "curl")
+  cache <- file.path(root, "downloads")
+  input <- downloadReferenceInputs("NYGC", cache, chromosomes = 1L)
+  expect_length(downloads, 4L)
+  expect_identical(downloadReferenceInputs("NYGC", cache, chromosomes = 1L), input)
+  expect_length(downloads, 4L)
+  result <- prepareNYGCGenotypes(input$input_dir, catalog, 1L, out, region = c(10, 55))
   expect_equal(result$markers, c(3, 3, 3, 2, 3))
   expect_equal(result$samples, unname(as.integer(table(ancestry))))
   read_bim <- function(pop) data.table::fread(
@@ -59,4 +69,10 @@ test_that("NYGC preparation preserves catalog identity and ancestry-specific GT 
   stride <- ceiling(result$samples[1L] / 4)
   expect_identical(bytes[4 + (0:2) * stride], as.raw(c(0x00, 0xff, 0xaa)))
   expect_equal(jsonlite::read_json(file.path(out, "nygc-chr1-10-55.json"))$matched, 3L)
+  expect_error(prepareNYGCGenotypes(root, catalog, 2L, out),
+               "Missing NYGC preparation inputs for chr2")
+  writeLines("corrupt", file.path(input$input_dir, basename(index)))
+  expect_error(downloadReferenceInputs("NYGC", cache, chromosomes = 1L),
+               "Release checksum mismatch")
+  expect_length(downloads, 4L)
 })

@@ -42,8 +42,8 @@ associations and their multifaceted relationships in the context of complex trai
 \details{
 A build uses the published marker backbone for GRCh37 and
 runs \code{\link[=buildMarkerDB]{buildMarkerDB()}} for GRCh38 using prepared chromosome tables.
-It looks under \code{dbdir} and its parent for \code{prepared_grch38} or
-\verb{reference/grch38-prep.*/tables}. \code{\link[=prepareIGSRMarkers]{prepareIGSRMarkers()}} produces these
+It looks under \code{dbdir} and its parent for \code{reference/prepared_grch38},
+\code{prepared_grch38} or \verb{reference/grch38-prep.*/tables}. \code{\link[=prepareIGSRMarkers]{prepareIGSRMarkers()}} produces these
 chromosome tables and receipts. The build prepares Ensembl, regulatory, Reactome,
 STRING, STITCH, GO, and drug marker sets. GO and drug gene memberships
 come from the published annotation bundle. Both builds save their GAlist

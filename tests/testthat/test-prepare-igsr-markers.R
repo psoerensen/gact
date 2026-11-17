@@ -42,7 +42,34 @@ test_that("IGSR preparation preserves allele and rsID rules and writes verified 
   writeLines(paste(tools::md5sum(fasta), basename(fasta)),
              file.path(dirs[2L], "md5sum.txt"))
 
-  receipt <- prepareIGSRMarkers(1L, dirs[1L], dirs[2L], dirs[3L], dirs[4L])
+  gnomad <- file.path(dirs[3L], "gnomad.genomes.v4.1.sites.chr1.vcf.bgz")
+  lookup <- data.table::fread(rsid, header = TRUE, data.table = FALSE)
+  write_gz(c("##fileformat=VCFv4.2", "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+             do.call(paste, c(unname(as.list(lookup)),
+                             list(".", "PASS", ".", sep = "\t")))), gnomad)
+  md5 <- unname(tools::md5sum(gnomad))
+  hash <- openssl::base64_encode(as.raw(strtoi(substring(md5, seq(1, 31, 2),
+                                                        seq(2, 32, 2)), base = 16L)))
+  downloads <- character()
+  testthat::local_mocked_bindings(curl_download = function(url, destfile, mode) {
+    name <- basename(url)
+    downloads <<- c(downloads, name)
+    source <- if (name == basename(gnomad)) dirs[3L] else if (
+      grepl("hgdownload.soe.ucsc.edu", url, fixed = TRUE)) dirs[2L] else dirs[1L]
+    stopifnot(file.copy(file.path(source, name), destfile))
+  }, curl_fetch_memory = function(url) {
+    stopifnot(grepl("release%2F4.1%2Fvcf%2Fgenomes", url, fixed = TRUE))
+    list(status_code = 200L,
+         content = charToRaw(jsonlite::toJSON(list(md5Hash = hash), auto_unbox = TRUE)))
+  }, .package = "curl")
+  cache <- file.path(root, "downloads")
+  input <- downloadReferenceInputs("IGSR", cache, chromosomes = 1L)
+  expect_length(downloads, 5L)
+  expect_identical(downloadReferenceInputs("IGSR", cache, chromosomes = 1L), input)
+  expect_length(downloads, 5L)
+  receipt <- prepareIGSRMarkers(1L, input$panel_dir, input$fasta_dir, input$rsid_dir, dirs[4L])
+  expect_identical(receipt$sources[[3L]]$upstream$source_md5, md5)
+  expect_length(list.files(cache, pattern = "\\.vcf\\.bgz$", recursive = TRUE), 0L)
   table <- file.path(dirs[4L], "chr1.tsv.gz")
   markers <- data.table::fread(table)
   expect_identical(markers$rsids, c("rs1", "rs2", "rs8", "rs88", "rs10"))
@@ -55,4 +82,9 @@ test_that("IGSR preparation preserves allele and rsID rules and writes verified 
   write_gz(c(">chr1", "GGGGGGGGGG"), fasta)
   expect_error(prepareIGSRMarkers(1L, dirs[1L], dirs[2L], dirs[3L], dirs[4L]),
                "checksum mismatch")
+  expect_error(downloadReferenceInputs("IGSR", file.path(root, "bad"), chromosomes = 1L),
+               "Release checksum mismatch for chr1")
+  expect_false(file.exists(file.path(root, "bad", "ucsc-hg38", "chr1.fa.gz")))
+  expect_error(prepareIGSRMarkers(1L, dirs[1L], dirs[2L], file.path(root, "missing"), dirs[4L]),
+               "gnomad_rsid_chr1\\.tsv\\.bgz")
 })

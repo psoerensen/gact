@@ -24,8 +24,8 @@
 #' @param timeout Download timeout in seconds for the published release.
 #' @details A build uses the published marker backbone for GRCh37 and
 #'   runs [buildMarkerDB()] for GRCh38 using prepared chromosome tables.
-#'   It looks under `dbdir` and its parent for `prepared_grch38` or
-#'   `reference/grch38-prep.*/tables`. [prepareIGSRMarkers()] produces these
+#'   It looks under `dbdir` and its parent for `reference/prepared_grch38`,
+#'   `prepared_grch38` or `reference/grch38-prep.*/tables`. [prepareIGSRMarkers()] produces these
 #'   chromosome tables and receipts. The build prepares Ensembl, regulatory, Reactome,
 #'   STRING, STITCH, GO, and drug marker sets. GO and drug gene memberships
 #'   come from the published annotation bundle. Both builds save their GAlist
@@ -213,7 +213,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
 #' @param dbdir Character; parent directory path in which the version folder will be created.
 #'
 #' @return A list (GAlist) containing the database version, base directory,
-#'         directory paths (GAlist$dirs), including results at the database root,
+#'         directory paths (GAlist$dirs), including reference and results at the database root,
 #'         and feature names. LD/eigen references remain under marker.
 #' @export
 createDB <- function(version = NULL, dbdir = NULL) {
@@ -227,7 +227,7 @@ createDB <- function(version = NULL, dbdir = NULL) {
  dir.create(dbdir, recursive = TRUE)
  dirnames <- c(
   "glist", "gstat", "gsets", "gsea", "gbayes", "gtex", "gwas", "ldsc",
-  "marker", "drugdb", "download", "script", "vep", "recipes", "results",
+  "marker", "drugdb", "download", "script", "vep", "recipes", "results", "reference",
   # optional resources
   "ensembl", "string", "stitch", "reactome", "dgi", "gwascatalog", "diseases"
  )
