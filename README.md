@@ -448,6 +448,39 @@ the updated GAlist. On a rerun, use a fresh output directory. Accessions
 already represented in the database are skipped, including legacy GWAS
 Catalog study URLs.
 
+#### Stage a Pan-UK Biobank batch in C++
+
+`panUKBManifest()` reads the provider phenotype manifest and verifies reviewed
+phenotype-to-Catalog accession pairs against the harmonised file metadata.
+Use `analysis = "hq"` for the meta-analysis across ancestry groups that passed
+Pan-UKB QC. The adapter checks study sample counts and keeps them in study
+metadata. Catalog files used by this adapter are already harmonised to GRCh38.
+
+```r
+selection <- data.frame(
+  filename = c("biomarkers-30750-both_sexes-irnt.tsv.bgz",
+               "phecode-250-both_sexes.tsv.bgz"),
+  accession = c("GCST90692780", "GCST90692999"),
+  analysis = "hq"
+)
+prepared <- panUKBManifest(selection, "panukb-selection")
+report <- runGWASManifest(
+  prepared$manifest, descriptor = "GAlist.rds", data_dir = "download",
+  out_dir = "panukb-review", knowledge = prepared$knowledge,
+  engine = "cpp", workers = 2, import = FALSE
+)
+```
+
+After reviewing the report, call the same function with a fresh output directory
+and `import = TRUE`. The C++ option uses a bounded native preview, saves verified
+recipes in the database's `recipes/` directory, and stages full study tables
+and QC in parallel using a shared marker index. One writer publishes the
+successful studies in manifest order and refreshes the inventory and descriptor
+once. The R engine remains the default and handles profiles outside the native
+engine's gzip TSV, signed-beta, ordinary-p-value scope. Use a verified GRCh38
+Catalog accession for the adapter. The provider's GRCh37 files require a
+separate coordinate-conversion step.
+
 Analysis outputs use `GAlist$dirs[["results"]]`, created as `results/` at the
 database root by `createDB()`. Prepared association matrices remain in
 `gstat/matrix/`; shared LD and eigen references remain under `marker/`.

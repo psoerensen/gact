@@ -14,8 +14,9 @@ inspectGWAS(
   knowledge = NULL,
   preview_rows = 1000L,
   skip = 0L,
-  pattern = "\\\\.(tsv|txt|csv|sumstats|imp)(\\\\.(gz|bz2|xz))?$",
-  recursive = TRUE
+  pattern = "\\\\.(tsv|txt|csv|sumstats|imp)(\\\\.(gz|bgz|bz2|xz))?$",
+  recursive = TRUE,
+  reader = c("R", "cpp")
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ a directory name.}
 \item{pattern}{Regular expression selecting supported text files.}
 
 \item{recursive}{Search subdirectories.}
+
+\item{reader}{Use the R preview reader or the C++ reader for gzip TSVs.}
 }
 \value{
 Invisibly, a list with review, recipes, formats, metadata_columns,

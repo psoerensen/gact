@@ -768,9 +768,19 @@ SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP anc
   return R_NilValue;
 }
 
+}  // namespace
+
+extern "C" SEXP gact_gwas_index(SEXP, SEXP, SEXP);
+extern "C" SEXP gact_gwas_stage(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern "C" SEXP gact_gwas_preview(SEXP, SEXP);
+
+namespace {
 const R_CallMethodDef calls[] = {
     {"C_gact_write_z", reinterpret_cast<DL_FUNC>(&write_z_matrix), 11},
     {"C_gact_recode_sumstat", reinterpret_cast<DL_FUNC>(&recode_sumstat), 5},
+    {"C_gact_gwas_index", reinterpret_cast<DL_FUNC>(&gact_gwas_index), 3},
+    {"C_gact_gwas_stage", reinterpret_cast<DL_FUNC>(&gact_gwas_stage), 7},
+    {"C_gact_gwas_preview", reinterpret_cast<DL_FUNC>(&gact_gwas_preview), 2},
     {nullptr, nullptr, 0}
 };
 }  // namespace

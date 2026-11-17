@@ -25,6 +25,9 @@
 #' @param import Import automatically after a verified preview. Use `FALSE`
 #'   to check readiness without writing to the database.
 #' @param preview_rows Maximum number of rows per preview.
+#' @param engine Select the R importer or the C++ batch engine for supported
+#'   verified gzip TSV profiles.
+#' @param workers Number of C++ staging workers on Unix. Windows uses one worker.
 #' @return Invisibly, the per-study report written to `manifest_review.tsv`.
 #'   Status is `imported`, `already_imported`, `ready`, or `needs_review`.
 #'   Preview QC warnings are reported separately. Full-data QC counts are
@@ -32,7 +35,10 @@
 #' @export
 runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
                             knowledge = NULL, defaults = list(), import = TRUE,
-                            preview_rows = 1000L) {
+                            preview_rows = 1000L, engine = c("R", "cpp"), workers = 1L) {
+  engine <- match.arg(engine)
+  if (length(workers) != 1L || !is.finite(workers) || workers < 1 ||
+      workers > .Machine$integer.max || workers != floor(workers)) stop("workers must be a positive integer")
   required <- c("accession", "filename", "url", "md5", "source", "trait",
                 "type", "build", "ancestry")
   required_values <- setdiff(required, "url")
@@ -99,6 +105,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
   filenames <- .gact_gwas_path_key(manifest$filename)
   duplicate <- duplicated(accessions) | duplicated(accessions, fromLast = TRUE) |
     duplicated(filenames) | duplicated(filenames, fromLast = TRUE)
+  jobs <- vector("list", nrow(manifest))
   report <- data.frame(accession = manifest$accession, filename = manifest$filename,
     status = "needs_review", study_id = NA_character_, recipe = NA_character_,
     issues = NA_character_, warnings = NA_character_,
@@ -139,7 +146,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
       if (length(build) != 1L || is.na(build) || !identical(build, row$build)) {
         stop("Verify that the study and marker catalog use the same genome build")
       }
-      if (!grepl("^[[:alnum:]][[:alnum:]_. -]*\\.(tsv|txt|csv|sumstats|imp)(\\.(gz|bz2|xz))?$",
+      if (!grepl("^[[:alnum:]][[:alnum:]_. -]*\\.(tsv|txt|csv|sumstats|imp)(\\.(gz|bgz|bz2|xz))?$",
                  row$filename, ignore.case = TRUE)) {
         stop("filename must be a basename with a supported summary-statistics extension")
       }
@@ -152,7 +159,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
       inspection <- inspectGWAS(data_dir, row, file.path(out_dir, sprintf("study_%05d", i)),
                                 file_column = "filename", knowledge = knowledge,
                                 preview_rows = preview_rows,
-                                pattern = pattern, recursive = FALSE)
+                                pattern = pattern, recursive = FALSE, reader = engine)
       entry <- inspection$review
       if (nrow(entry) != 1L || !identical(entry$file, file) || entry$metadata_matches != 1L) {
         stop("Could not isolate the manifest input in the download directory")
@@ -164,14 +171,20 @@ runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
       if (!isTRUE(entry$preview_ok) || !isTRUE(recipe$inspection$profile_reused) || length(issues)) {
         stop(paste(c("Review the preview or verified format", issues), collapse = " | "))
       }
+      recipe$accession <- accession
+      recipe$input_md5 <- tolower(row$md5)
+      recipe$input_url <- row$url
+      if (engine == "cpp") .gact_cpp_gwas_mapping(recipe)
       if (!import) {
         report$status[i] <- "ready"
         next
       }
-      recipe$accession <- accession
-      recipe$input_md5 <- tolower(row$md5)
-      recipe$input_url <- row$url
-      supplied <- Filter(Negate(is.null), recipe[intersect(.gact_gwas_metadata_fields, names(recipe))])
+      if (engine == "cpp") {
+        jobs[[i]] <- list(recipe = recipe, file = file)
+        next
+      }
+      supplied_fields <- setdiff(.gact_gwas_metadata_fields, c("study_n_total", "study_n_case", "study_n_control"))
+      supplied <- Filter(Negate(is.null), recipe[intersect(supplied_fields, names(recipe))])
       result <- do.call(ingestStatDB, c(list(GAlist = GAlist,
         stat = .gact_gwas_read_source(file, skip = 0L), schema = recipe$mapping,
         recipe = recipe, descriptor = descriptor), supplied))
@@ -185,6 +198,9 @@ runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
     }, error = function(e) {
       report$issues[i] <<- conditionMessage(e)
     })
+  }
+  if (any(lengths(jobs) > 0L)) {
+    report <- .gact_cpp_gwas_batch(GAlist, descriptor, jobs, report, out_dir, as.integer(workers))
   }
   data.table::fwrite(report, file.path(out_dir, "manifest_review.tsv"), sep = "\t", na = "NA")
   invisible(report)

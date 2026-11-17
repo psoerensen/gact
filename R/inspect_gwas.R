@@ -1,6 +1,7 @@
 .gact_gwas_metadata_fields <- c("source", "trait", "type", "category", "efo",
   "gender", "ancestry", "build", "n", "ncase", "ncontrol", "reference",
-  "comments", "effect_scale", "p_scale", "strand")
+  "comments", "effect_scale", "p_scale", "strand",
+  "study_n_total", "study_n_case", "study_n_control")
 
 #' Inspect local GWAS files and prepare ingestion recipes
 #'
@@ -38,14 +39,16 @@
 #' @param skip Number of leading lines before the header.
 #' @param pattern Regular expression selecting supported text files.
 #' @param recursive Search subdirectories.
+#' @param reader Use the R preview reader or the C++ reader for gzip TSVs.
 #' @return Invisibly, a list with review, recipes, formats, metadata_columns,
 #'   unmatched_metadata, and script paths or values.
 #' @export
 inspectGWAS <- function(data_dir, metadata, out_dir, file_column = NULL,
                      metadata_mapping = NULL, defaults = list(), knowledge = NULL,
                      preview_rows = 1000L, skip = 0L,
-                     pattern = "\\.(tsv|txt|csv|sumstats|imp)(\\.(gz|bz2|xz))?$",
-                     recursive = TRUE) {
+                     pattern = "\\.(tsv|txt|csv|sumstats|imp)(\\.(gz|bgz|bz2|xz))?$",
+                     recursive = TRUE, reader = c("R", "cpp")) {
+  reader <- match.arg(reader)
   data_dir <- normalizePath(data_dir, winslash = "/", mustWork = TRUE)
   if (!dir.exists(data_dir)) stop("data_dir must be a directory")
   for (value in list(preview_rows, skip)) {
@@ -153,7 +156,8 @@ inspectGWAS <- function(data_dir, metadata, out_dir, file_column = NULL,
     }
     recipe$file_name <- file
     result <- tryCatch({
-      preview <- .gact_gwas_preview(file, preview_rows, skip)
+      preview <- if (reader == "cpp") .gact_cpp_gwas_preview(file, preview_rows, skip) else
+        .gact_gwas_preview(file, preview_rows, skip)
       headers <- names(preview)
       det <- detectStatSchema(preview, sample_n = NULL, alias_dict = aliases)
       recipe$mapping <- as.list(det$mapping)
@@ -249,7 +253,8 @@ inspectGWAS <- function(data_dir, metadata, out_dir, file_column = NULL,
 }
 
 .gact_gwas_connection <- function(path) {
-  switch(tolower(tools::file_ext(path)), gz = gzfile, bz2 = bzfile, xz = xzfile, base::file)
+  switch(tolower(tools::file_ext(path)), gz = gzfile, bgz = gzfile,
+         bz2 = bzfile, xz = xzfile, base::file)
 }
 
 .gact_gwas_preview <- function(file, rows, skip) {

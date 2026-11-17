@@ -12,7 +12,9 @@ runGWASManifest(
   knowledge = NULL,
   defaults = list(),
   import = TRUE,
-  preview_rows = 1000L
+  preview_rows = 1000L,
+  engine = c("R", "cpp"),
+  workers = 1L
 )
 }
 \arguments{
@@ -43,6 +45,10 @@ supplies the study URL when \code{reference} is missing.}
 to check readiness without writing to the database.}
 
 \item{preview_rows}{Maximum number of rows per preview.}
+
+\item{engine}{Select the R importer or the C++ batch engine for supported verified gzip TSV profiles.}
+
+\item{workers}{Number of C++ staging workers on Unix. Windows uses one worker.}
 }
 \value{
 Invisibly, the per-study report written to \code{manifest_review.tsv}.
