@@ -4,12 +4,12 @@
 \alias{createRegulatorySets}
 \title{Create regulatory element mappings (Ensembl Regulatory Build)}
 \usage{
-createRegulatorySets(GAlist, build = "GRCh37", overwrite = FALSE)
+createRegulatorySets(GAlist, build = NULL, overwrite = FALSE)
 }
 \arguments{
 \item{GAlist}{GACT database list (output of \code{\link[=createDB]{createDB()}})}
 
-\item{build}{Genome build: "GRCh37" or "GRCh38" (default: "GRCh37")}
+\item{build}{Optional assembly. Defaults to the assembly in GAlist.}
 
 \item{overwrite}{Logical; if TRUE, recompute even if outputs exist}
 }

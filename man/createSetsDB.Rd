@@ -37,6 +37,9 @@ Updated GAlist with all relevant mappings
 \description{
 Creates and updates Ensembl, gene–marker, functional, drug, disease,
 regulatory, and marker-level mapping sets.
+Coordinate mappings use the assembly recorded in GAlist and the marker
+catalog in that release. Supply Ensembl GTF release 87 for GRCh37 or 109
+for GRCh38 and the corresponding regulatory GFF in the ensembl directory.
 
 You can selectively build specific modules by providing \code{what}, e.g.:
 

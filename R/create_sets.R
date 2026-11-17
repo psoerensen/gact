@@ -3,6 +3,9 @@
 #' @description
 #' Creates and updates Ensembl, gene–marker, functional, drug, disease,
 #' regulatory, and marker-level mapping sets.
+#' Coordinate mappings use the assembly recorded in GAlist and the marker
+#' catalog in that release. Supply Ensembl GTF release 87 for GRCh37 or 109
+#' for GRCh38 and the corresponding regulatory GFF in the ensembl directory.
 #'
 #' You can selectively build specific modules by providing `what`, e.g.:
 #' ```
@@ -51,18 +54,21 @@ createSetsDB <- function(GAlist,
 
  # ENSEMBL
  if ("ensembl" %in% what) {
-  if (check_files(file.path(GAlist$dirs["ensembl"], "GRCh38.109.entrez.tsv.gz"), "Ensembl"))
+  if (check_files(.gact_set_input(GAlist, "entrez"), "Ensembl"))
    GAlist <- safe_call(createEnsemblMaps, GAlist=GAlist, overwrite=overwrite)
  }
 
  # GENE
  if ("gene" %in% what) {
-  gtf_files <- list.files(GAlist$dirs["ensembl"], pattern = "\\.gtf\\.gz$", full.names = TRUE)
+  gtf <- .gact_set_input(GAlist, "gtf")
   marker_file <- file.path(GAlist$dirs["marker"], "markers.txt.gz")
-  if (check_files(c(gtf_files, marker_file), "Gene–marker sets"))
-   GAlist <- safe_call(createGeneMarkerSets, GAlist=GAlist, upstream=upstream,
+  if (check_files(c(gtf, marker_file), "Gene–marker sets"))
+   GAlist <- createGeneMarkerSets(GAlist=GAlist, upstream=upstream,
                        downstream=downstream, overwrite=overwrite)
  }
+
+ if ("functional" %in% what)
+  GAlist <- createFunctionalSets(GAlist, min_combined_score, min_interactions, overwrite)
 
  if ("string" %in% what)
   GAlist <- safe_call(createStringSets, GAlist=GAlist, min_combined_score=min_combined_score,
@@ -91,18 +97,16 @@ createSetsDB <- function(GAlist,
 
  # REGULATORY
  if ("regulatory" %in% what) {
-  reg_files <- list.files(GAlist$dirs["ensembl"], pattern = "Regulatory_Build.*\\.gff\\.gz$", full.names = TRUE)
-  if (check_files(reg_files, "Regulatory sets")) {
-   GAlist <- safe_call(createRegulatorySets, GAlist=GAlist, overwrite=overwrite)
-   GAlist <- safe_call(createRegulatoryMarkerSets, GAlist, overwrite)
-  }
+  if (check_files(.gact_set_input(GAlist, "gff"), "Regulatory sets"))
+   GAlist <- createRegulatorySets(GAlist, overwrite=overwrite)
  }
 
  # MARKER
  if ("marker" %in% what) {
   gsets_dir <- GAlist$dirs["gsets"]
   if (check_files(file.path(gsets_dir, "ensg2rsids.rds"), "Marker sets"))
-   GAlist <- safe_call(createMarkerSetsDB, GAlist=GAlist, overwrite=overwrite)
+   GAlist <- createMarkerSetsDB(GAlist, what=c("GO", "reactome", "string", "stitch", "drug"),
+                                overwrite=overwrite)
  }
 
  if ("gwas" %in% what) {
@@ -167,8 +171,54 @@ safe_call <- function(fun, ...) {
 
 
 
+.gact_set_build <- function(GAlist, build = NULL) {
+ builds <- unique(c(.gact_catalog_build(GAlist), .gact_version_metadata(GAlist$version)$build,
+                    GAlist$assembly, GAlist$metadata$catalog$build, build))
+ if (length(builds) != 1L || !builds %in% c("GRCh37", "GRCh38"))
+  stop("Expected one consistent GRCh37 or GRCh38 assembly in GAlist.")
+ builds
+}
+
+.gact_set_input <- function(GAlist, type, build = NULL) {
+ dir <- GAlist$dirs[["ensembl"]]
+ if (type == "entrez") {
+  # The release-109 stable-ID crosswalk is shared by both builds.
+  name <- "GRCh38.109.entrez.tsv.gz"
+  candidates <- c(name, paste0("Homo_sapiens.", name))
+ } else {
+  build <- .gact_set_build(GAlist, build)
+  if (type == "gtf") {
+   release <- if (build == "GRCh37") "87" else "109"
+   name <- paste(build, release, "gtf.gz", sep = ".")
+   candidates <- c(name, paste0("Homo_sapiens.", name))
+  } else {
+   stem <- paste0(build, ".Regulatory_Build.regulatory_features")
+   date <- if (build == "GRCh37") "20201218" else "20221007"
+   candidates <- c(paste0(stem, ".gff.gz"), paste("homo_sapiens", stem, date, "gff.gz", sep="."))
+  }
+ }
+ paths <- file.path(dir, candidates)
+ present <- paths[file.exists(paths)]
+ if (length(present)) present[1L] else paths[1L]
+}
+
+.gact_read_set_intervals <- function(path, build) {
+ con <- gzfile(path, "rt")
+ on.exit(close(con))
+ skip <- 0L
+ repeat {
+  line <- readLines(con, n = 1L)
+  if (!length(line) || !startsWith(line, "#")) break
+  if (grepl("^#!genome-(build|version) ", line) && !grepl(build, line, fixed=TRUE))
+   stop("Genome build in annotation header disagrees with GAlist: ", path)
+  skip <- skip + 1L
+ }
+ data.table::fread(path, sep="\t", header=FALSE, skip=skip, quote="",
+                   col.names=c("chr","source","type","start","end","score","strand","phase","attributes"))
+}
+
 createEnsemblMaps <- function(GAlist, overwrite = FALSE) {
- file <- file.path(GAlist$dirs["ensembl"], "GRCh38.109.entrez.tsv.gz")
+ file <- .gact_set_input(GAlist, "entrez")
  if (!file.exists(file)) stop("Missing Ensembl annotation file: ", file)
 
  outfiles <- file.path(GAlist$dirs["gsets"], c(
@@ -220,20 +270,20 @@ createGeneMarkerSets <- function(GAlist, upstream = 35, downstream = 10, overwri
  upstream <- upstream * 1000
  downstream <- downstream * 1000
 
- gtf <- file.path(GAlist$dirs["ensembl"], "GRCh38.109.gtf.gz")
+ gtf <- .gact_set_input(GAlist, "gtf")
  if (!file.exists(gtf)) stop("Missing GTF file: ", gtf)
 
  message("📖 Reading gene annotation from: ", gtf)
- df <- data.table::fread(gtf, skip = 1, header = FALSE)
- colnames(df) <- c("chr","source","type","start","end","score","strand","phase","attributes")
+ df <- .gact_read_set_intervals(gtf, .gact_set_build(GAlist))
 
  df <- df[df$type == "gene" & df$source == "ensembl_havana", ]
- df$gene_id <- sub('.*gene_id "(.*?)";.*', '\\1', df$attributes)
+ df$gene_id <- sub('.*gene_id "([^"]+)";.*', '\\1', df$attributes)
  df$chr <- suppressWarnings(as.integer(df$chr))
  df <- subset(df, chr %in% 1:22)
 
  message("📖 Reading markers")
- markers <- data.table::fread(file.path(GAlist$dirs["marker"], "markers.txt.gz"))
+ markers <- data.table::fread(file.path(GAlist$dirs["marker"], "markers.txt.gz"),
+                              select=c("chr", "pos", "rsids"))
  markers_dt <- data.table(chr = markers$chr, start = markers$pos, end = markers$pos, rsid = markers$rsids)
 
  genes_dt <- data.table(chr = df$chr,
@@ -248,6 +298,8 @@ createGeneMarkerSets <- function(GAlist, upstream = 35, downstream = 10, overwri
  overlaps <- data.table::foverlaps(markers_dt, genes_dt, nomatch = 0L)
  ensg2rsids <- split(overlaps$rsid, overlaps$gene_id)
  saveRDS(ensg2rsids, outpath)
+ GAlist$sets_metadata$build <- .gact_set_build(GAlist)
+ GAlist$sets_metadata$modules <- unique(c(GAlist$sets_metadata$modules, "gene"))
 
  message("✅ Gene–marker mapping done: ", length(ensg2rsids), " genes.")
  return(GAlist)
@@ -909,7 +961,7 @@ createMarkerSetsDB <- function(GAlist,
   message("📖 Reading: ", basename(file_in))
   fset <- readRDS(file_in)
   fset <- mapSetsDB(fset, featureID = names(ensg2rsids))
-  sets <- lapply(fset, function(x) unique(unlist(ensg2rsids[x])))
+  sets <- lapply(fset, function(x) unique(unlist(ensg2rsids[x], use.names=FALSE)))
   sets <- sets[!sapply(sets, is.null)]
   saveRDS(sets, file_out)
   message("✅ Saved ", basename(file_out), " (", length(sets), " sets).")
@@ -1001,13 +1053,13 @@ createMarkerSetsDB <- function(GAlist,
   saveRDS(drug2string2ensg, file.path(gsets_dir, "drug2string2ensg.rds"))
 
   # Drug → SNP
-  drug2rsids <- lapply(drug2ensg, function(x) unique(unlist(ensg2rsids[x])))
+  drug2rsids <- lapply(drug2ensg, function(x) unique(unlist(ensg2rsids[x], use.names=FALSE)))
   drug2rsids <- drug2rsids[!sapply(drug2rsids, is.null)]
   saveRDS(drug2rsids, file.path(gsets_dir, "drug2rsids.rds"))
 
   # Drug + STRING neighbours → SNP
   drug2string2rsids <- lapply(drug2string2ensg, function(x)
-   unique(unlist(ensg2rsids[x]))
+   unique(unlist(ensg2rsids[x], use.names=FALSE))
   )
   drug2string2rsids <- drug2string2rsids[!sapply(drug2string2rsids, is.null)]
   saveRDS(drug2string2rsids, file.path(gsets_dir, "drug2string2rsids.rds"))
@@ -1029,27 +1081,30 @@ createMarkerSetsDB <- function(GAlist,
 #' from Ensembl Regulatory Build annotations.
 #'
 #' @param GAlist GACT database list (output of [createDB()])
-#' @param build Genome build: "GRCh37" or "GRCh38" (default: "GRCh37")
+#' @param build Optional assembly. Defaults to the assembly in GAlist.
 #' @param overwrite Logical; if TRUE, recompute even if outputs exist
 #' @return Updated GAlist with regulatory mappings added to gsets/
 #' @export
 createRegulatorySets <- function(GAlist,
-                                 build = "GRCh37",
+                                 build = NULL,
                                  overwrite = FALSE) {
 
   dirs <- GAlist$dirs
   dirs <- lapply(dirs, normalizePath, winslash = "/", mustWork = FALSE)
   gsets_dir <- dirs[["gsets"]]
-  ensembl_dir <- dirs[["ensembl"]]
   marker_dir <- dirs[["marker"]]
+  build <- .gact_set_build(GAlist, build)
+  outputs <- c("regulatory_annotation", "reg2ensr", "ensr2rsids", "reg2rsids",
+               "ensr2ensg", "ensg2ensr")
+  if (!overwrite && all(file.exists(file.path(gsets_dir, paste0(outputs, ".rds")))))
+    return(GAlist)
 
   message("🧬 Creating regulatory element mappings (", build, ")")
 
   #--------------------------------------------------
   # Input checks
   #--------------------------------------------------
-  gff_file <- file.path(ensembl_dir,
-    paste0(build, ".Regulatory_Build.regulatory_features.gff.gz"))
+  gff_file <- .gact_set_input(GAlist, "gff", build)
   if (!file.exists(gff_file))
     stop("Missing regulatory GFF file: ", gff_file)
 
@@ -1065,18 +1120,15 @@ createRegulatorySets <- function(GAlist,
   #--------------------------------------------------
   # Read regulatory annotation
   #--------------------------------------------------
-  df <- data.table::fread(gff_file, data.table = FALSE)
-  colnames(df) <- c("chr","source","type","start","end","score","strand","phase","attributes")
+  df <- as.data.frame(.gact_read_set_intervals(gff_file, build))
   df <- subset(df, chr %in% as.character(1:22))
   df$chr <- as.integer(df$chr)
   df <- df[!is.na(df$chr), ]
 
   # Extract regulatory IDs (ENSR)
-  att <- strsplit(df$attributes, ";")
-  att <- lapply(att, function(x) gsub("\"", "", x))
-  att <- sapply(att, function(x) x[grep("ID=", x)])
-  att <- strsplit(att, ":")
-  df$reg_id <- sapply(att, function(x) x[2])
+  ids <- regexec("(?:^|;)ID=(?:[^:;]+:)?([^;:]+)(?:;|$)", df$attributes, perl=TRUE)
+  df$reg_id <- vapply(regmatches(df$attributes, ids), `[`, character(1L), 2L)
+  if (anyNA(df$reg_id) || anyDuplicated(df$reg_id)) stop("Invalid regulatory feature IDs.")
   rownames(df) <- df$reg_id
 
   # Save base annotation
@@ -1090,70 +1142,30 @@ createRegulatorySets <- function(GAlist,
   saveRDS(reg2ensr, file = file.path(gsets_dir, "reg2ensr.rds"))
 
   message("⚙️ Mapping regulatory elements to SNPs ...")
-  markers <- data.table::fread(markers_file, data.table = FALSE)
-  maxpos <- max(markers$pos, df$end)
-  ensr2rsids <- vector("list", nrow(df))
-
-  #for (chr in 1:22) {
-  #  chr_idx <- which(df$chr == chr)
-  #  if (length(chr_idx) == 0) next
-  #  rsids_chr <- rep(NA, maxpos)
-  #  pos_chr <- markers$pos[markers$chr == chr]
-  #  rs_chr <- markers$rsids[markers$chr == chr]
-  #  rsids_chr[pos_chr] <- rs_chr
-  #  for (i in chr_idx) {
-  #    region <- rsids_chr[df$start[i]:df$end[i]]
-  #    ensr2rsids[[i]] <- region[!is.na(region)]
-  #  }
-  #}
-
-  for (chr in 1:22) {
-   chr_df <- df[df$chr == chr, ]
-   chr_markers <- markers[markers$chr == chr, ]
-   if (nrow(chr_df) == 0L || nrow(chr_markers) == 0L) next
-
-   for (i in seq_len(nrow(chr_df))) {
-    range_idx <- which(chr_markers$pos >= chr_df$start[i] &
-                        chr_markers$pos <= chr_df$end[i])
-    if (length(range_idx)) {
-     ensr2rsids[[chr_df$reg_id[i]]] <- chr_markers$rsids[range_idx]
-    }
-   }
-   message("Completed creating regulatory element mappings for chromosome(", chr, ")")
-  }
-
-
-  names(ensr2rsids) <- df$reg_id
-  ensr2rsids <- ensr2rsids[!sapply(ensr2rsids, function(x) identical(x, character(0)))]
+  markers <- data.table::fread(markers_file, select=c("chr", "pos", "rsids"))
+  points <- data.table(chr=markers$chr, start=markers$pos, end=markers$pos)
+  intervals <- data.table(chr=df$chr, start=df$start, end=df$end, id=df$reg_id)
+  data.table::setkey(intervals, chr, start, end)
+  hits <- data.table::foverlaps(points, intervals, which=TRUE, nomatch=0L)
+  ensr2rsids <- split(markers$rsids[hits$xid], intervals$id[hits$yid])
   saveRDS(ensr2rsids, file = file.path(gsets_dir, "ensr2rsids.rds"))
 
   # Type-level sets: reg2rsids
-  reg2rsids <- sapply(reg2ensr, function(x) unique(unlist(ensr2rsids[x])))
+  reg2rsids <- lapply(reg2ensr, function(x) unique(unlist(ensr2rsids[x], use.names=FALSE)))
   saveRDS(reg2rsids, file = file.path(gsets_dir, "reg2rsids.rds"))
 
   #--------------------------------------------------
   # Map ENSR ↔ ENSG via shared SNPs
   #--------------------------------------------------
   message("🔗 Linking regulatory features ↔ genes")
-  ensr_df <- data.frame(
-    rsids = unlist(ensr2rsids, use.names = FALSE),
-    ensr = rep(names(ensr2rsids), times = sapply(ensr2rsids, length))
-  )
-  ensg_df <- data.frame(
-    rsids = unlist(ensg2rsids, use.names = FALSE),
-    ensg = rep(names(ensg2rsids), times = sapply(ensg2rsids, length))
-  )
-  merged_df <- merge(ensr_df, ensg_df, by = "rsids")
-
-  ensr2ensg <- split(merged_df$ensr, merged_df$ensg)
-  ensr2ensg <- lapply(ensr2ensg, unique)
-  ensr2ensg <- ensr2ensg[!sapply(ensr2ensg, function(x) identical(x, character(0)))]
-  saveRDS(ensr2ensg, file = file.path(gsets_dir, "ensr2ensg.rds"))
-
-  ensg2ensr <- split(merged_df$ensg, merged_df$ensr)
-  ensg2ensr <- lapply(ensg2ensr, unique)
-  ensg2ensr <- ensg2ensr[!sapply(ensg2ensr, function(x) identical(x, character(0)))]
-  saveRDS(ensg2ensr, file = file.path(gsets_dir, "ensg2ensr.rds"))
+  ensr_df <- data.table(rsids=as.character(unlist(ensr2rsids, use.names=FALSE)),
+                        ensr=rep(names(ensr2rsids), lengths(ensr2rsids)))
+  ensg_df <- data.table(rsids=as.character(unlist(ensg2rsids, use.names=FALSE)),
+                        ensg=rep(names(ensg2rsids), lengths(ensg2rsids)))
+  pairs <- unique(ensg_df[ensr_df, on="rsids", nomatch=NULL, allow.cartesian=TRUE,
+                          list(ensr=i.ensr, ensg=ensg)])
+  saveRDS(split(pairs$ensg, pairs$ensr), file.path(gsets_dir, "ensr2ensg.rds"))
+  saveRDS(split(pairs$ensr, pairs$ensg), file.path(gsets_dir, "ensg2ensr.rds"))
 
   GAlist$sets_metadata$modules <-
     unique(c(GAlist$sets_metadata$modules, "regulatory"))

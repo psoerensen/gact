@@ -562,6 +562,10 @@ getMarkerSets <- function(GAlist = NULL, feature = NULL, featureID = NULL,
  if(feature=="ChemicalComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"stitch2rsids.rds")
  if(feature=="DrugGenes") setsfile <- file.path(GAlist$dirs["gsets"],"drug2ensg.rds")
  if(feature=="DrugComplexes") setsfile <- file.path(GAlist$dirs["gsets"],"drug2string2ensg.rds")
+ if(feature %in% c("DrugGenes", "DrugComplexes")) {
+  marker_file <- sub("ensg\\.rds$", "rsids.rds", setsfile)
+  if(file.exists(marker_file)) setsfile <- marker_file
+ }
  if(!is.null(setsfile)) sets <- readRDS(file=setsfile)
 
  if(feature=="Chromosomes") {
