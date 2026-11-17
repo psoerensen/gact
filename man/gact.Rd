@@ -43,8 +43,12 @@ associations and their multifaceted relationships in the context of complex trai
 A build uses the published marker backbone for GRCh37 and
 runs \code{\link[=buildMarkerDB]{buildMarkerDB()}} for GRCh38 using prepared chromosome tables.
 It looks under \code{dbdir} and its parent for \code{reference/prepared_grch38},
-\code{prepared_grch38} or \verb{reference/grch38-prep.*/tables}. \code{\link[=prepareIGSRMarkers]{prepareIGSRMarkers()}} produces these
-chromosome tables and receipts. The build prepares Ensembl, regulatory, Reactome,
+\code{prepared_grch38} or \verb{reference/grch38-prep.*/tables}. If no complete
+set exists, it downloads verified inputs with \code{\link[=downloadReferenceInputs]{downloadReferenceInputs()}}
+and runs \code{\link[=prepareIGSRMarkers]{prepareIGSRMarkers()}} for each missing autosome. The automatic
+preparation requires gsim with \code{gsim_scan_vcf()} and caches the results in
+\code{dbdir/reference/grch38-prep.auto/tables} for retries.
+The build prepares Ensembl, regulatory, Reactome,
 STRING, STITCH, GO, and drug marker sets. GO and drug gene memberships
 come from the published annotation bundle. Both builds save their GAlist
 in the new version directory and report the final marker count and path.

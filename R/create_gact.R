@@ -25,8 +25,12 @@
 #' @details A build uses the published marker backbone for GRCh37 and
 #'   runs [buildMarkerDB()] for GRCh38 using prepared chromosome tables.
 #'   It looks under `dbdir` and its parent for `reference/prepared_grch38`,
-#'   `prepared_grch38` or `reference/grch38-prep.*/tables`. [prepareIGSRMarkers()] produces these
-#'   chromosome tables and receipts. The build prepares Ensembl, regulatory, Reactome,
+#'   `prepared_grch38` or `reference/grch38-prep.*/tables`. If no complete
+#'   set exists, it downloads verified inputs with [downloadReferenceInputs()]
+#'   and runs [prepareIGSRMarkers()] for each missing autosome. The automatic
+#'   preparation requires gsim with `gsim_scan_vcf()` and caches the results in
+#'   `dbdir/reference/grch38-prep.auto/tables` for retries.
+#'   The build prepares Ensembl, regulatory, Reactome,
 #'   STRING, STITCH, GO, and drug marker sets. GO and drug gene memberships
 #'   come from the published annotation bundle. Both builds save their GAlist
 #'   in the new version directory and report the final marker count and path.
@@ -153,7 +157,13 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
 
  if (.gact_version_metadata(version)$build == "GRCh38") {
-  ga <- buildMarkerDB(.gact_grch38_marker_tables(dbdir), dbdir = stage)
+  tables <- .gact_grch38_marker_tables(dbdir)
+  if (is.null(tables)) {
+   tables <- .gact_prepare_grch38_marker_tables(file.path(dbdir, "reference"))
+  } else {
+   message("Using prepared GRCh38 chromosome tables at ", tables)
+  }
+  ga <- buildMarkerDB(tables, dbdir = stage)
  } else {
   ga <- downloadDB(createDB(version, stage), what = "marker")
   if (!length(ga$rsids) || !file.exists(file.path(ga$dirs[["marker"]], "cpra.txt.gz")))

@@ -43,7 +43,8 @@ test_that("NYGC preparation preserves catalog identity and ancestry-specific GT 
     catalog, compress = "gzip")
 
   downloads <- character()
-  testthat::local_mocked_bindings(curl_download = function(url, destfile, mode) {
+  testthat::local_mocked_bindings(curl_download = function(url, destfile, quiet, mode) {
+    expect_false(quiet)
     downloads <<- c(downloads, basename(url))
     stopifnot(file.copy(file.path(root, basename(url)), destfile))
   }, .package = "curl")

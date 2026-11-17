@@ -51,7 +51,8 @@ test_that("IGSR preparation preserves allele and rsID rules and writes verified 
   hash <- openssl::base64_encode(as.raw(strtoi(substring(md5, seq(1, 31, 2),
                                                         seq(2, 32, 2)), base = 16L)))
   downloads <- character()
-  testthat::local_mocked_bindings(curl_download = function(url, destfile, mode) {
+  testthat::local_mocked_bindings(curl_download = function(url, destfile, quiet, mode) {
+    expect_false(quiet)
     name <- basename(url)
     downloads <<- c(downloads, name)
     source <- if (name == basename(gnomad)) dirs[3L] else if (

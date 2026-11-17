@@ -77,8 +77,21 @@ test_that("gact builds both releases with their own backbone and coordinates", {
     versions[[version]]$sources <- sources
   }
 
+  downloads <- integer()
+  fail_on <- NA_integer_
   testthat::local_mocked_bindings(
     .gact_version_metadata = function(version) versions[[version]],
+    .gact_require_vcf_scan = function() NULL,
+    downloadReferenceInputs = function(panel, reference_dir, chromosomes) {
+      expect_identical(panel, "IGSR")
+      downloads <<- c(downloads, chromosomes)
+      list(panel_dir = reference_dir, fasta_dir = reference_dir, rsid_dir = reference_dir)
+    },
+    prepareIGSRMarkers = function(chromosome, panel_dir, fasta_dir, rsid_dir, out_dir) {
+      if (identical(chromosome, fail_on)) stop("Simulated preparation failure")
+      files <- paste0("chr", chromosome, c(".tsv.gz", ".json"))
+      stopifnot(all(file.copy(file.path(tables, files), out_dir)))
+    },
     download_zenodo = function(doi, path, parallel) {
       if (identical(doi, versions[["hsa.GRCh37.0.0.1"]]$sources$marker)) {
         data.table::fwrite(marker, file.path(path, "markers.txt.gz"))
@@ -116,7 +129,10 @@ test_that("gact builds both releases with their own backbone and coordinates", {
       expect_length(manifest$inputs, 22L)
     }
   }
+  expect_length(downloads, 0L)
+
   retry <- file.path(root, "retry")
+  reactome <- readLines(file.path(shared, "ReactomePathways.txt"))
   unlink(file.path(shared, "ReactomePathways.txt"))
   expect_warning(
     expect_error(gact(version = "hsa.GRCh38.0.0.1", task = "build", dbdir = retry),
@@ -124,4 +140,27 @@ test_that("gact builds both releases with their own backbone and coordinates", {
     "ReactomePathways.txt"
   )
   expect_length(list.files(retry, all.files = TRUE, no.. = TRUE), 0L)
+  writeLines(reactome, file.path(shared, "ReactomePathways.txt"))
+
+  new_root <- file.path(root, "automatic", "release")
+  version <- "hsa.GRCh38.0.0.1"
+  fail_on <- 2L
+  expect_error(gact(version = version, task = "build", dbdir = new_root),
+               "Simulated preparation failure")
+  expect_identical(downloads, c(1L, 2L))
+  expect_false(dir.exists(file.path(new_root, version)))
+  cache <- file.path(new_root, "reference", "grch38-prep.auto", "tables")
+  expect_setequal(list.files(cache, all.files = TRUE, no.. = TRUE),
+                  c("chr1.tsv.gz", "chr1.json"))
+  fail_on <- NA_integer_
+  downloads <- integer()
+  messages <- capture.output(ga <- gact(version = version, task = "build", dbdir = new_root),
+                             type = "message")
+  expect_identical(downloads, 2:22)
+  expect_identical(ga$rsids[1L], "rs38")
+  expect_true(file.exists(file.path(ga$dbdir, paste0("GAlist_", version, ".rds"))))
+  expect_true(any(grepl("21 of 22 to prepare", messages, fixed = TRUE)))
+  expect_true(any(grepl("Chromosome 2/22: downloading or verifying reference inputs",
+                       messages, fixed = TRUE)))
+  expect_true(any(grepl("Chromosome 22/22: marker table ready", messages, fixed = TRUE)))
 })

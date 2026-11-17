@@ -327,9 +327,14 @@ GAlist <- gact(version = "hsa.GRCh37.0.0.1", dbdir = dbdir, task = "build")
 GAlist <- gact(version = "hsa.GRCh38.0.0.1", dbdir = dbdir, task = "build")
 ```
 
-For GRCh38, gact looks under `dbdir` and its parent for `reference/prepared_grch38/`, `prepared_grch38/`
-or `reference/grch38-prep.*/tables/`. Keep one complete set of chromosome
-tables and receipts for future builds.
+For GRCh38, gact looks under `dbdir` and its parent for `reference/prepared_grch38/`,
+`prepared_grch38/`, or `reference/grch38-prep.*/tables/`. If it finds no complete
+set, it downloads and verifies the IGSR, UCSC and gnomAD inputs and prepares
+the tables chromosome by chromosome. This requires gsim with
+`gsim_scan_vcf()` and disk space for the raw inputs, including one full
+gnomAD VCF at a time. The build reports download and preparation progress
+and keeps completed chromosome pairs in `dbdir/reference/grch38-prep.auto/tables/`
+for retries.
 
 ### Install prepared NYGC genotype panels
 
@@ -346,10 +351,9 @@ It verifies the archive and member SHA-256 checksums and puts the
 
 `hsa.GRCh38.0.0.1` has a local build workflow for marker sets and GWAS data.
 Each release folder includes `reference/`, available as
-`GAlist$dirs[["reference"]]`. For a new GRCh38 build, prepare the input
-tables before creating the release folder.
-Prepare chromosomes 1–22 with `prepareIGSRMarkers()` and a version of gsim
-that exports `gsim_scan_vcf()`.
+`GAlist$dirs[["reference"]]`. To prepare the marker backbone separately,
+run `prepareIGSRMarkers()` for chromosomes 1–22 with a version of gsim that
+exports `gsim_scan_vcf()`.
 The downloader verifies the [IGSR 2019-03-12 GRCh38 VCFs](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/)
 and [UCSC chromosome FASTAs](https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/)
 against their release manifests. It also verifies the gnomAD v4.1 genomes

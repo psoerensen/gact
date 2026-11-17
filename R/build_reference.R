@@ -119,7 +119,7 @@ downloadReferenceInputs <- function(panel = c("IGSR", "NYGC"), reference_dir = "
   if (!file.exists(target)) {
     message("Downloading ", name)
     incoming <- file.path(stage, name)
-    curl::curl_download(paste0(base, name), incoming, mode = "wb")
+    curl::curl_download(paste0(base, name), incoming, quiet = FALSE, mode = "wb")
     verify(incoming)
     if (file.exists(target) || !file.rename(incoming, target))
       stop("Cannot publish reference input: ", target)
@@ -157,7 +157,7 @@ downloadReferenceInputs <- function(panel = c("IGSR", "NYGC"), reference_dir = "
   expected <- paste(sprintf("%02x", as.integer(openssl::base64_decode(hash))), collapse = "")
   vcf <- file.path(stage, basename(object))
   message("Downloading gnomAD v4.1 genome sites for ", label)
-  curl::curl_download(url, vcf, mode = "wb")
+  curl::curl_download(url, vcf, quiet = FALSE, mode = "wb")
   if (!identical(unname(tools::md5sum(vcf)), expected))
     stop("gnomAD VCF checksum mismatch for ", label)
 
@@ -424,14 +424,47 @@ prepareIGSRMarkers <- function(chromosome, panel_dir, fasta_dir, rsid_dir,
  files <- paste0("chr", rep(1:22, 2L), rep(c(".tsv.gz", ".json"), each = 22L))
  ready <- vapply(candidates, function(path) all(file.exists(file.path(path, files))),
                 logical(1L))
- if (!any(ready)) {
-  stop("Cannot find prepared GRCh38 chromosome tables under ", dbdir,
-       " or its parent. Prepare the chromosome tables with prepareIGSRMarkers().")
- }
+ if (!any(ready)) return(NULL)
  tables <- unique(normalizePath(candidates[ready], winslash = "/", mustWork = TRUE))
  if (length(tables) > 1L)
   stop("Found multiple complete GRCh38 preparations: ", paste(tables, collapse = ", "))
  tables
+}
+
+.gact_prepare_grch38_marker_tables <- function(reference_dir) {
+  out_dir <- file.path(reference_dir, "grch38-prep.auto", "tables")
+  if (!dir.exists(out_dir) && !dir.create(out_dir, recursive = TRUE, showWarnings = FALSE) &&
+      !dir.exists(out_dir)) {
+    stop("Cannot create GRCh38 preparation directory: ", out_dir)
+  }
+  lock <- file.path(out_dir, ".prepare.lock")
+  if (!dir.create(lock, showWarnings = FALSE)) stop("Cannot lock GRCh38 preparation: ", lock)
+  on.exit(unlink(lock, recursive = TRUE), add = TRUE)
+
+  chromosomes <- seq_len(22L)
+  labels <- paste0("chr", chromosomes)
+  has_table <- file.exists(file.path(out_dir, paste0(labels, ".tsv.gz")))
+  has_receipt <- file.exists(file.path(out_dir, paste0(labels, ".json")))
+  incomplete <- labels[xor(has_table, has_receipt)]
+  if (length(incomplete)) {
+    stop("Incomplete GRCh38 chromosome pairs in ", out_dir, ": ",
+         paste(incomplete, collapse = ", "),
+         ". Move those partial outputs aside and retry.")
+  }
+  missing <- chromosomes[!has_table]
+  if (!length(missing)) return(out_dir)
+  .gact_require_vcf_scan()
+  message("Preparing GRCh38 chromosome tables in ", out_dir, " (",
+          length(missing), " of ", length(chromosomes), " to prepare).")
+  for (chr in missing) {
+    message("Chromosome ", chr, "/22: downloading or verifying reference inputs")
+    inputs <- downloadReferenceInputs("IGSR", reference_dir, chromosomes = chr)
+    message("Chromosome ", chr, "/22: preparing marker table")
+    prepareIGSRMarkers(chr, panel_dir = inputs$panel_dir, fasta_dir = inputs$fasta_dir,
+                       rsid_dir = inputs$rsid_dir, out_dir = out_dir)
+    message("Chromosome ", chr, "/22: marker table ready")
+  }
+  out_dir
 }
 
 #' Build the GRCh38 human GWAS database marker catalog
