@@ -36,14 +36,22 @@ cpp_gwas_fixture <- function() {
 test_that("native staging publishes verified recipes and reads both studies", {
   x <- cpp_gwas_fixture()
   on.exit(unlink(x$root, recursive = TRUE))
+  scratch <- file.path(x$root, "scratch")
+  dir.create(scratch)
+  writeLines("owned by the caller", file.path(scratch, "keep.me"))
   run <- function(name, import = TRUE) runGWASManifest(x$manifest, x$descriptor,
-    x$ga$dirs[["download"]], file.path(x$root, name), knowledge = x$knowledge,
-    engine = "cpp", workers = 2L, import = import)
+    out_dir = if (is.null(name)) NULL else file.path(x$root, name),
+    knowledge = x$knowledge, engine = "cpp", workers = 2L, import = import,
+    scratch_dir = scratch)
   original <- gact:::.publish_gwas_import_file
   fail <- TRUE
   writes <- 0L
   testthat::local_mocked_bindings(.publish_gwas_import_file = function(from, to, ...) {
     if (identical(to, x$descriptor)) {
+      work <- setdiff(list.files(scratch, full.names = TRUE), file.path(scratch, "keep.me"))
+      expect_length(work, 1L)
+      expect_true(file.exists(file.path(work, "marker-index.bin")))
+      expect_length(list.files(work, pattern = "\\.txt\\.gz$"), 2L)
       writes <<- writes + 1L
       if (fail) stop("Simulated batch descriptor failure")
     }
@@ -51,18 +59,27 @@ test_that("native staging publishes verified recipes and reads both studies", {
   }, .package = "gact")
   expect_identical(run("preview", FALSE)$status, rep("ready", 2))
   expect_false(dir.exists(file.path(x$root, "recipes")))
+  expect_identical(list.files(scratch), "keep.me")
   failed <- run("failure")
   expect_identical(failed$status, rep("needs_review", 2))
   expect_match(failed$issues, "Simulated batch descriptor failure", all = TRUE)
   expect_length(list.files(x$ga$dirs[["gstat"]], all.files = TRUE, no.. = TRUE), 0L)
   expect_length(readRDS(x$descriptor)$study$id, 0L)
+  expect_identical(list.files(scratch), "keep.me")
   fail <- FALSE
   writes <- 0L
-  result <- run("retry")
+  result <- run(NULL)
   expect_identical(result$status, rep("imported", 2))
   expect_equal(result$n_flipped, c(1, 1))
   expect_equal(writes, 1L)
   expect_true(all(file.exists(result$recipe)))
+  reviews <- normalizePath(file.path(x$root, "recipes", "reviews"), winslash = "/")
+  reports <- attr(result, "out_dir")
+  expect_identical(dirname(reports), reviews)
+  expect_true(all(file.exists(file.path(reports, c("manifest.tsv", "manifest_review.tsv")))))
+  expect_length(list.files(reports, recursive = TRUE, pattern = "\\.(gz|bin)$"), 0L)
+  expect_identical(list.files(scratch), "keep.me")
+  expect_true(all(file.exists(x$files)))
   ga <- readRDS(x$descriptor)
   expect_identical(ga$study$id, c("GWAS1", "GWAS2"))
   expect_equal(ga$study$study_n_total, c(1200, 1000))

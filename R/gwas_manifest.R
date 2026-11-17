@@ -14,9 +14,11 @@
 #' @param descriptor Path to the existing database's GAlist RDS. Successful
 #'   imports update this file. Previously imported studies are detected by
 #'   accession, including legacy GWAS Catalog study URLs in `reference`.
-#' @param data_dir Download and cache directory.
+#' @param data_dir Download and cache directory. Defaults to the database's
+#'   download directory.
 #' @param out_dir New or empty report directory outside `data_dir`. Use a
 #'   fresh report directory on subsequent runs to preserve earlier reports.
+#'   Defaults to a new batch directory under the database's recipes/reviews.
 #' @param knowledge Path to verified `formats.json` from [inspectGWAS()].
 #'   With no verified match, the workflow produces a preview for review.
 #' @param defaults Named list of shared study metadata for this release.
@@ -28,14 +30,19 @@
 #' @param engine Select the R importer or the C++ batch engine for supported
 #'   verified gzip TSV profiles.
 #' @param workers Number of C++ staging workers on Unix. Windows uses one worker.
+#' @param scratch_dir Parent directory for temporary C++ working files.
+#'   Defaults to SLURM_TMPDIR when available, or R's temporary directory.
+#'   Each run removes its own working directory when it exits.
 #' @return Invisibly, the per-study report written to `manifest_review.tsv`.
 #'   Status is `imported`, `already_imported`, `ready`, or `needs_review`.
 #'   Preview QC warnings are reported separately. Full-data QC counts are
 #'   included for newly imported studies.
+#'   The out_dir attribute gives the batch report directory.
 #' @export
-runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
+runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NULL,
                             knowledge = NULL, defaults = list(), import = TRUE,
-                            preview_rows = 1000L, engine = c("R", "cpp"), workers = 1L) {
+                            preview_rows = 1000L, engine = c("R", "cpp"), workers = 1L,
+                            scratch_dir = NULL) {
   engine <- match.arg(engine)
   if (length(workers) != 1L || !is.finite(workers) || workers < 1 ||
       workers > .Machine$integer.max || workers != floor(workers)) stop("workers must be a positive integer")
@@ -70,10 +77,11 @@ runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
   if (!is.null(knowledge)) knowledge <- normalizePath(knowledge, mustWork = TRUE)
   descriptor <- normalizePath(descriptor, winslash = "/", mustWork = TRUE)
   GAlist <- readRDS(descriptor)
-  inventory <- file.path(GAlist$dirs[["gstat"]], "GWAS_information.csv")
-  if (!length(inventory) || !dir.exists(dirname(inventory))) {
+  gstat <- GAlist$dirs[["gstat"]]
+  if (length(gstat) != 1L || is.na(gstat) || !dir.exists(gstat)) {
     stop("GAlist must point to an existing gstat directory")
   }
+  inventory <- file.path(gstat, "GWAS_information.csv")
   inventory_ids <- if (file.exists(inventory)) {
     ids <- read.csv2(inventory, colClasses = "character")$id
     if (is.null(ids)) stop("GWAS_information.csv is missing the id column")
@@ -85,6 +93,15 @@ runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
     stop("GAlist study IDs differ from GWAS_information.csv. Load the current descriptor.")
   }
 
+  database <- dirname(gstat)
+  recipes <- file.path(database, "recipes")
+  if (is.null(data_dir)) {
+    if ("download" %in% names(GAlist$dirs)) data_dir <- GAlist$dirs[["download"]]
+    if (!length(data_dir) || is.na(data_dir)) data_dir <- file.path(database, "download")
+  }
+  if (is.null(out_dir)) {
+    out_dir <- tempfile("batch-", tmpdir = file.path(recipes, "reviews"))
+  }
   data_dir <- .gact_gwas_output_path(path.expand(data_dir))
   out_dir <- .gact_gwas_output_path(path.expand(out_dir))
   input_key <- .gact_gwas_path_key(data_dir)
@@ -101,6 +118,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
     }
   }
 
+  data.table::fwrite(manifest, file.path(out_dir, "manifest.tsv"), sep = "\t", na = "NA")
   accessions <- toupper(manifest$accession)
   filenames <- .gact_gwas_path_key(manifest$filename)
   duplicate <- duplicated(accessions) | duplicated(accessions, fromLast = TRUE) |
@@ -200,9 +218,12 @@ runGWASManifest <- function(manifest, descriptor, data_dir, out_dir,
     })
   }
   if (any(lengths(jobs) > 0L)) {
-    report <- .gact_cpp_gwas_batch(GAlist, descriptor, jobs, report, out_dir, as.integer(workers))
+    work_dir <- .gact_gwas_work_dir(scratch_dir)
+    on.exit(unlink(work_dir, recursive = TRUE), add = TRUE)
+    report <- .gact_cpp_gwas_batch(GAlist, descriptor, jobs, report, recipes, work_dir, as.integer(workers))
   }
   data.table::fwrite(report, file.path(out_dir, "manifest_review.tsv"), sep = "\t", na = "NA")
+  attr(report, "out_dir") <- out_dir
   invisible(report)
 }
 

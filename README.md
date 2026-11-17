@@ -465,10 +465,10 @@ selection <- data.frame(
 )
 prepared <- panUKBManifest(selection, "panukb-selection")
 report <- runGWASManifest(
-  prepared$manifest, descriptor = "GAlist.rds", data_dir = "download",
-  out_dir = "panukb-review", knowledge = prepared$knowledge,
+  prepared$manifest, descriptor = "GAlist.rds", knowledge = prepared$knowledge,
   engine = "cpp", workers = 2, import = FALSE
 )
+attr(report, "out_dir")
 ```
 
 After reviewing the report, call the same function with a fresh output directory
@@ -480,6 +480,13 @@ once. The R engine remains the default and handles profiles outside the native
 engine's gzip TSV, signed-beta, ordinary-p-value scope. Use a verified GRCh38
 Catalog accession for the adapter. The provider's GRCh37 files require a
 separate coordinate-conversion step.
+
+By default the manifest runner caches input files in the database's
+`download/` directory and writes the batch manifest and review reports under
+`recipes/reviews/`. Pass `data_dir` or `out_dir` to override those locations.
+The C++ marker index and staged outputs live in a per-run scratch directory
+that gact removes on exit. Set `scratch_dir` to choose its parent. Otherwise
+gact uses `SLURM_TMPDIR` when available or R's temporary directory.
 
 Analysis outputs use `GAlist$dirs[["results"]]`, created as `results/` at the
 database root by `createDB()`. Prepared association matrices remain in

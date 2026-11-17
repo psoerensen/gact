@@ -7,14 +7,15 @@
 runGWASManifest(
   manifest,
   descriptor,
-  data_dir,
-  out_dir,
+  data_dir = NULL,
+  out_dir = NULL,
   knowledge = NULL,
   defaults = list(),
   import = TRUE,
   preview_rows = 1000L,
   engine = c("R", "cpp"),
-  workers = 1L
+  workers = 1L,
+  scratch_dir = NULL
 )
 }
 \arguments{
@@ -29,10 +30,12 @@ fields from \code{\link[=inspectGWAS]{inspectGWAS()}} are optional.}
 imports update this file. Previously imported studies are detected by
 accession, including legacy GWAS Catalog study URLs in \code{reference}.}
 
-\item{data_dir}{Download and cache directory.}
+\item{data_dir}{Download and cache directory. Defaults to the database's
+download directory.}
 
-\item{out_dir}{New or empty report directory outside \code{data_dir}. Use a
-fresh report directory on subsequent runs to preserve earlier reports.}
+\item{out_dir}{New or empty report directory outside \code{data_dir}.
+Defaults to a new batch directory under the database's \code{recipes/reviews}.
+Use a fresh explicit report directory on subsequent runs.}
 
 \item{knowledge}{Path to verified \code{formats.json} from \code{\link[=inspectGWAS]{inspectGWAS()}}.
 With no verified match, the workflow produces a preview for review.}
@@ -49,10 +52,15 @@ to check readiness without writing to the database.}
 \item{engine}{Select the R importer or the C++ batch engine for supported verified gzip TSV profiles.}
 
 \item{workers}{Number of C++ staging workers on Unix. Windows uses one worker.}
+
+\item{scratch_dir}{Parent directory for temporary C++ working files.
+Defaults to \code{SLURM_TMPDIR} when available or R's temporary directory.
+Each run removes its own working directory when it exits.}
 }
 \value{
 Invisibly, the per-study report written to \code{manifest_review.tsv}.
 Status is \code{imported}, \code{already_imported}, \code{ready}, or \code{needs_review}.
+The \code{out_dir} attribute gives the batch report directory.
 Preview QC warnings are reported separately. Full-data QC counts are
 included for newly imported studies.
 }

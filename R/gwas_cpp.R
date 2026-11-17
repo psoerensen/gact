@@ -25,19 +25,35 @@
   unname(as.character(mapping[fields]))
 }
 
-.gact_cpp_gwas_batch <- function(ga, descriptor, jobs, report, out_dir, workers) {
+.gact_gwas_work_dir <- function(parent) {
+  if (is.null(parent)) {
+    parent <- Sys.getenv("SLURM_TMPDIR", unset = "")
+    if (!nzchar(parent) || !dir.exists(parent)) parent <- tempdir()
+  }
+  if (!is.character(parent) || length(parent) != 1L || is.na(parent) || !nzchar(parent)) {
+    stop("scratch_dir must name a directory")
+  }
+  parent <- path.expand(parent)
+  if (!dir.exists(parent) && !dir.create(parent, recursive = TRUE, showWarnings = FALSE)) {
+    stop("Cannot create scratch_dir: ", parent)
+  }
+  work <- tempfile("gact-gwas-", tmpdir = normalizePath(parent, winslash = "/", mustWork = TRUE))
+  if (!dir.create(work, mode = "0700")) stop("Cannot create a GWAS work directory in ", parent)
+  work
+}
+
+.gact_cpp_gwas_batch <- function(ga, descriptor, jobs, report, recipe_dir, work_dir, workers) {
   marker <- ga$dirs[["marker"]]
   markers <- file.path(marker, "markers.txt.gz")
   cpra <- file.path(marker, "cpra.txt.gz")
   stopifnot(file.exists(markers), file.exists(cpra))
-  index <- file.path(out_dir, "marker-index.bin")
+  index <- file.path(work_dir, "marker-index.bin")
   files <- c(markers, cpra)
   fingerprint <- tools::md5sum(files)
   ids <- data.table::fread(markers, select = "rsids")$rsids
   if (!identical(as.character(ga$rsids), as.character(ids))) stop("Marker catalog and GAlist disagree")
   rm(ids)
   .Call(C_gact_gwas_index, markers, cpra, index)
-  recipe_dir <- file.path(dirname(ga$dirs[["gstat"]]), "recipes")
   dir.create(recipe_dir, showWarnings = FALSE)
   if (!dir.exists(recipe_dir)) stop("Cannot create database recipe directory")
   active <- which(lengths(jobs) > 0L)
@@ -64,8 +80,9 @@
   stage_one <- function(i) {
     job <- jobs[[i]]
     tryCatch({
-      file <- file.path(out_dir, sprintf("study_%05d", i), "staged.txt.gz")
-      qc <- file.path(dirname(file), "staged.qc.json")
+      base <- file.path(work_dir, sprintf("study_%05d", i))
+      file <- paste0(base, ".txt.gz")
+      qc <- paste0(base, ".qc.json")
       recipe <- jsonlite::read_json(job$recipe_path)
       if (!identical(unname(tools::md5sum(job$file)), recipe$input_md5)) stop("Input checksum changed before staging")
       .Call(C_gact_gwas_stage, index, job$file, file, qc,
