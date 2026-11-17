@@ -247,17 +247,20 @@ These notes and scripts are prepared in the BALDER project funded by the ODIN pl
 `hsa.GRCh38.0.0.1` is a locally built database for GWAS ingestion and retrieval.
 Use `gact(version = "hsa.GRCh37.0.0.1", dbdir = dbdir, task = "download")`
 to install the published GRCh37 bundle.
-Prepare chromosomes 1–22 with `system.file("scripts", "prepare_igsr_grch38.py",
-package = "gact")` and Python 3.9 or newer. For each chromosome, call the script
-with its number and `--panel`, `--fasta`, `--rsids`, and `--out` directories.
+Prepare chromosomes 1–22 with `prepareIGSRMarkers()` and a version of gsim
+that exports `gsim_scan_vcf()`.
 Use the [IGSR 2019-03-12 GRCh38 release](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/)
 with its checksum manifest, the [UCSC chromosome FASTAs](https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/)
 with `md5sum.txt`, and the GRCh38 gnomAD v4.1 rsID lookup tables with columns
-`#CHROM`, `POS`, `ID`, `REF`, and `ALT`. The script checks reference alleles and
+`#CHROM`, `POS`, `ID`, `REF`, and `ALT`, sorted by position. Preparation checks reference alleles and
 uses the panel's global alternate allele count divided by allele number. The
 default scope is PASS, biallelic autosomal SNVs with a global MAF of at least 1%.
 
 ```r
+for (chr in 1:22) {
+  prepareIGSRMarkers(chr, panel_dir = "igsr", fasta_dir = "ucsc-hg38",
+    rsid_dir = "gnomad-rsids", out_dir = "prepared_grch38")
+}
 GAlist <- buildMarkerDB(input_dir = "prepared_grch38", dbdir = "/path/to/gactcore")
 ```
 
@@ -287,8 +290,9 @@ chromosome, position, REF and ALT. The BED dosage counts catalog ALT.
 
 Put the [2022-04-22 phased VCFs, indexes and checksum manifest](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/)
 and the [Phase 3 sample panel](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel)
-in the input directory. Install a version of gsim with phased VCF import
-and BED export, and put bcftools on PATH for indexed extraction.
+in the input directory. Install gsim with `gsim_scan_vcf()`, phased VCF import
+and BED export. gsim streams the chromosome VCF and extracts the genetic map
+from `INFO/CM`. Region requests also scan sequentially.
 
 ```r
 buildNYGCGenotypes(input_dir = "download/nygc-30x",

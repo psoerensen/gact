@@ -9,7 +9,7 @@ buildMarkerDB(input_dir, dbdir = getwd())
 \arguments{
 \item{input_dir}{Directory containing the checksum-verified \code{chr1.tsv.gz}
 to \code{chr22.tsv.gz} tables and their \code{chr1.json} to \code{chr22.json} receipts
-from the bundled \code{prepare_igsr_grch38.py} script.}
+from \code{\link[=prepareIGSRMarkers]{prepareIGSRMarkers()}}.}
 
 \item{dbdir}{Parent directory for the new database directory.
 The build stops if that database directory already exists.}

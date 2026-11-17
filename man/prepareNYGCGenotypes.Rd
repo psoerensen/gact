@@ -4,11 +4,17 @@
 \alias{prepareNYGCGenotypes}
 \title{Prepare ancestry-specific NYGC GRCh38 genotype files}
 \usage{
-prepareNYGCGenotypes(input_dir, marker_catalog, chromosome, out_dir, region = NULL)
+prepareNYGCGenotypes(
+  input_dir,
+  marker_catalog,
+  chromosome,
+  out_dir,
+  region = NULL
+)
 }
 \arguments{
 \item{input_dir}{Directory with the official NYGC VCF, tabix index,
-\code{20220804_manifest.txt} and \code{integrated_call_samples_v3.20130502.ALL.panel}.}
+\verb{20220804_manifest.txt} and \code{integrated_call_samples_v3.20130502.ALL.panel}.}
 
 \item{marker_catalog}{Path to the GRCh38 \code{markers.txt.gz} file with ALT
 as the effect allele.}
@@ -31,7 +37,7 @@ Genotypes come from the 2,504 unrelated Phase 3 samples, split by
 super-population. The catalog and GAlist are read only.
 }
 \details{
-Requires bcftools on PATH for indexed VCF selection and genetic map
-extraction, and gsim for conversion. Incomplete or unphased genotypes
-are excluded per ancestry by the gsim importer.
+Requires gsim with site scanning and genotype conversion.
+Region requests scan the chromosome VCF sequentially. Incomplete or
+unphased genotypes are excluded per ancestry by the gsim importer.
 }

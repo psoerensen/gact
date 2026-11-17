@@ -9,7 +9,7 @@
 #'
 #' @param input_dir Directory containing the checksum-verified `chr1.tsv.gz`
 #'   to `chr22.tsv.gz` tables and their `chr1.json` to `chr22.json` receipts
-#'   from the bundled `prepare_igsr_grch38.py` script.
+#'   from [prepareIGSRMarkers()].
 #' @param dbdir Parent directory for the new database directory.
 #'   The build stops if that database directory already exists.
 #' @return Invisibly, the saved GAlist.

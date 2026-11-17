@@ -15,17 +15,15 @@
 #'   Existing files are never overwritten.
 #' @param region Optional inclusive `c(start, end)` for a bounded test.
 #' @return Invisibly, a per-ancestry summary of sample and marker counts.
-#' @details Requires bcftools on PATH for indexed VCF selection and genetic
-#'   map extraction, and gsim for conversion. Incomplete or unphased
-#'   genotypes are excluded per ancestry by the gsim importer.
+#' @details Requires gsim with site scanning and genotype conversion.
+#'   Region requests scan the chromosome VCF sequentially. Incomplete or
+#'   unphased genotypes are excluded per ancestry by the gsim importer.
 #' @export
 prepareNYGCGenotypes <- function(input_dir, marker_catalog, chromosome, out_dir,
                                  region = NULL) {
   if (!requireNamespace("gsim", quietly = TRUE) ||
       !all(c("gsim_import_vcf", "gsim_simulate_pedigree", "gsim_pedigree_from_table") %in%
            getNamespaceExports("gsim"))) stop("Install gsim with phased VCF and BED support.")
-  bcftools <- Sys.which("bcftools")
-  if (!nzchar(bcftools)) stop("Install bcftools to extract the indexed VCF and map.")
   if (length(chromosome) != 1L || !chromosome %in% seq_len(22L)) {
     stop("Specify an autosome from 1 to 22.")
   }
@@ -71,33 +69,15 @@ prepareNYGCGenotypes <- function(input_dir, marker_catalog, chromosome, out_dir,
   if (!nrow(catalog) || anyDuplicated(catalog$rsids) || anyNA(catalog)) {
     stop("Expected unique catalog markers in the requested region.")
   }
-  catalog_keys <- with(catalog, paste(pos, nea, ea))
-  if (anyDuplicated(catalog_keys)) stop("Catalog allele keys must be unique.")
-  targets_file <- file.path(lock, "positions.tsv")
-  data.table::fwrite(data.frame(chr = label, pos = sort(unique(catalog$pos))), targets_file,
-                     sep = "\t", col.names = FALSE)
-  all_samples <- file.path(lock, "samples.txt")
-  writeLines(samples$sample, all_samples)
-  selected <- file.path(lock, "selected.bcf")
-  where <- if (is.null(region)) label else paste0(label, ":", paste(region, collapse = "-"))
-  .gact_run_bcftools(bcftools, c("view", "-r", where, "-T", targets_file, "-S", all_samples,
-    "-f", "PASS,.", "-m2", "-M2", "-v", "snps", "-Ob", "-o", selected, vcf))
-  query <- file.path(lock, "variants.tsv")
-  .gact_run_bcftools(bcftools, c("query", "-f", "%CHROM\\t%POS\\t%ID\\t%REF\\t%ALT\\t%INFO/CM\\n",
-                                "-o", query, selected))
-  variants <- data.table::fread(query, header = FALSE,
-    col.names = c("chromosome", "base_pair_position", "id", "ref", "alt", "genetic_position_cm"))
-  at <- match(with(variants, paste(base_pair_position, ref, alt)), catalog_keys)
-  variants$rsid <- catalog$rsids[at]
-  variants <- variants[!is.na(variants$rsid)]
+  if (anyDuplicated(catalog, by = c("pos", "nea", "ea"))) {
+    stop("Catalog allele keys must be unique.")
+  }
+  filtered <- file.path(lock, "matched.vcf.gz")
+  variants <- .gact_select_nygc_variants(vcf, catalog, label, region, filtered)
   if (!nrow(variants) || anyDuplicated(variants$id) || anyDuplicated(variants$rsid) ||
-      anyNA(variants$genetic_position_cm) || any(!is.finite(variants$genetic_position_cm))) {
+      any(!is.finite(variants$genetic_position_cm))) {
     stop("Expected unique matching NYGC alleles and a complete genetic map.")
   }
-  ids <- file.path(lock, "variants.txt")
-  writeLines(variants$id, ids)
-  filtered <- file.path(lock, "matched.vcf.gz")
-  .gact_run_bcftools(bcftools, c("view", "-i", paste0("ID=@", ids), "-Oz", "-o", filtered, selected))
   map_columns <- c("chromosome", "base_pair_position", "genetic_position_cm")
   map <- as.data.frame(variants[, map_columns, with = FALSE])
   same_position <- duplicated(map$base_pair_position)
@@ -147,9 +127,26 @@ prepareNYGCGenotypes <- function(input_dir, marker_catalog, chromosome, out_dir,
   invisible(result)
 }
 
-.gact_run_bcftools <- function(binary, args) {
-  status <- system2(binary, shQuote(args))
-  if (!identical(status, 0L)) stop("bcftools ", args[1L], " failed with status ", status)
+.gact_select_nygc_variants <- function(vcf, catalog, chromosome, region, output) {
+  data.table::setkeyv(catalog, c("pos", "nea", "ea"))
+  selected <- list()
+  bases <- c("A", "C", "G", "T")
+  .gact_vcf_scan(vcf, function(batch) {
+    keys <- data.table::as.data.table(batch[c("pos", "ref", "alt")])
+    at <- catalog[keys, on = c(pos = "pos", nea = "ref", ea = "alt"), which = TRUE]
+    keep <- !is.na(at) & batch$filter %in% c("PASS", ".") &
+      batch$ref %in% bases & batch$alt %in% bases & batch$ref != batch$alt
+    if (any(keep)) {
+      selected[[length(selected) + 1L]] <<- data.table::data.table(
+        chromosome = batch$chrom[keep], base_pair_position = batch$pos[keep],
+        id = batch$id[keep], ref = batch$ref[keep], alt = batch$alt[keep],
+        genetic_position_cm = suppressWarnings(as.numeric(batch$info_CM[keep])),
+        rsid = catalog$rsids[at[keep]])
+    }
+    keep
+  }, info = "CM", chromosome = chromosome, region = region, batch_size = 1024L,
+  output = output)
+  data.table::rbindlist(selected)
 }
 
 .gact_nygc_chromosome_files <- function(chromosome, region) {
