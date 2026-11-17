@@ -23,3 +23,4 @@ reviewed Catalog match.}
 Check reviewed Pan-UKB phenotype filename and Catalog accession pairs against
 provider metadata. Keep cohort counts as study metadata.
 }
+\seealso{\code{\link{scanGWAS}} for Catalog discovery and remote previews.}

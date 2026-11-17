@@ -1,9 +1,9 @@
-.gact_cpp_gwas_preview <- function(file, rows, skip) {
+.gact_cpp_gwas_preview <- function(file, rows, skip, prefix = FALSE) {
   if (!grepl("\\.tsv\\.(gz|bgz)$", file, ignore.case = TRUE) || skip != 0L ||
       rows >= .Machine$integer.max) {
     stop("The C++ reader expects a gzip TSV with a header on the first line")
   }
-  text <- .Call(C_gact_gwas_preview, file, as.integer(rows))
+  text <- .Call(C_gact_gwas_preview, file, as.integer(rows), prefix)
   if (length(strsplit(text, "\n", fixed = TRUE)[[1L]]) < 2L) stop("Preview has no data rows")
   data.table::fread(text = text, sep = "\t", nrows = rows, data.table = FALSE, check.names = FALSE)
 }

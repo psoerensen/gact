@@ -45,7 +45,7 @@ public:
         require(gzbuffer(file, 1 << 20) == 0, "Cannot allocate gzip buffer");
     }
     ~Gzip() { if (file) gzclose(file); }
-    bool read(string& line) {
+    bool read(string& line, bool prefix = false) {
         line.clear();
         char buffer[4096];
         while (gzgets(file, buffer, sizeof buffer)) {
@@ -59,6 +59,7 @@ public:
         }
         int error;
         gzerror(file, &error);
+        if (prefix && (error == Z_BUF_ERROR || error == Z_OK || error == Z_STREAM_END)) return false;
         require(error == Z_OK || error == Z_STREAM_END, "Invalid or truncated gzip input");
         return !line.empty();
     }
@@ -511,12 +512,13 @@ extern "C" SEXP gact_gwas_stage(SEXP index_path, SEXP input, SEXP output, SEXP q
     return R_NilValue;
 }
 
-extern "C" SEXP gact_gwas_preview(SEXP file, SEXP limit) {
+extern "C" SEXP gact_gwas_preview(SEXP file, SEXP limit, SEXP prefix) {
     try {
         Gzip input(path(file), "rb");
         string line, text;
         int count = Rf_asInteger(limit);
-        for (int i = 0; i <= count && input.read(line); ++i) {
+        const bool partial = Rf_asLogical(prefix) == TRUE;
+        for (int i = 0; i <= count && input.read(line, partial); ++i) {
             text += line;
             text.push_back('\n');
         }

@@ -450,29 +450,35 @@ Catalog study URLs.
 
 #### Stage a Pan-UK Biobank batch in C++
 
-`panUKBManifest()` reads the provider phenotype manifest and verifies reviewed
-phenotype-to-Catalog accession pairs against the harmonised file metadata.
-Use `analysis = "hq"` for the meta-analysis across ancestry groups that passed
-Pan-UKB QC. The adapter checks study sample counts and keeps them in study
-metadata. Catalog files used by this adapter are already harmonised to GRCh38.
+`scanGWAS()` reads the provider phenotype manifest and looks for a matching
+harmonised GRCh38 Catalog file for each selected analysis. It checks study
+metadata and uses the C++ reader on a bounded HTTP byte range. The scan writes
+recipes and a report without opening a database. Use `analysis = "hq"` for the
+meta-analysis across ancestry groups that passed Pan-UKB QC. Supply a reviewed
+`accession` when the report flags an ambiguous match.
 
 ```r
 selection <- data.frame(
   filename = c("biomarkers-30750-both_sexes-irnt.tsv.bgz",
                "phecode-250-both_sexes.tsv.bgz"),
-  accession = c("GCST90692780", "GCST90692999"),
   analysis = "hq"
 )
-prepared <- panUKBManifest(selection, "panukb-selection")
+prepared <- scanGWAS(selection, "panukb-selection")
+prepared$review
+```
+
+Once the scan report is ready, run the manifest to fetch, checksum, and import
+the full files. The manifest contains only ready studies.
+
+```r
 report <- runGWASManifest(
   prepared$manifest, descriptor = "GAlist.rds", knowledge = prepared$knowledge,
-  engine = "cpp", workers = 2, import = FALSE
+  engine = "cpp", workers = 2
 )
 attr(report, "out_dir")
 ```
 
-After reviewing the report, call the same function with a fresh output directory
-and `import = TRUE`. The C++ option uses a bounded native preview, saves verified
+The C++ option uses a bounded native preview, saves verified
 recipes in the database's `recipes/` directory, and stages full study tables
 and QC in parallel using a shared marker index. One writer publishes the
 successful studies in manifest order and refreshes the inventory and descriptor
