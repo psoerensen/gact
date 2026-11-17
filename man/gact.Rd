@@ -15,13 +15,15 @@ gact(
 \arguments{
 \item{GAlist}{A list object providing information and infrastructure of the gact database.}
 
-\item{version}{The version of the gact database to use.
-Use \code{"hsa.GRCh37.0.0.1"} for the published GRCh37 bundle. For the
-locally built \code{"hsa.GRCh38.0.0.1"} database, use \code{\link[=buildMarkerDB]{buildMarkerDB()}}.}
+\item{version}{Database release, \code{"hsa.GRCh37.0.0.1"} or \code{"hsa.GRCh38.0.0.1"}.}
 
-\item{task}{The task to perform, either "download" or "process". By default "download".}
+\item{task}{\code{"download"} installs a published release. \code{"build"} creates a
+new release with marker and annotation sets. \code{"createSets"} builds sets
+in an existing GAlist.}
 
 \item{dbdir}{The directory where the database should be stored, by default the current working directory.}
+
+\item{timeout}{Download timeout in seconds for the published release.}
 }
 \value{
 A list providing information and infrastructure of the gact database.
@@ -37,9 +39,20 @@ proteins, and an array of complexes (chemical, protein) as well as various
 biological pathways. This integration aims to provide a holistic view of genomic
 associations and their multifaceted relationships in the context of complex traits.
 }
+\details{
+A build uses the published marker backbone for GRCh37 and
+runs \code{\link[=buildMarkerDB]{buildMarkerDB()}} for GRCh38 using prepared chromosome tables.
+It looks under \code{dbdir} and its parent for \code{prepared_grch38} or
+\verb{reference/grch38-prep.*/tables}. \code{\link[=prepareIGSRMarkers]{prepareIGSRMarkers()}} produces these
+chromosome tables and receipts. The build prepares Ensembl, regulatory, Reactome,
+STRING, STITCH, GO, and drug marker sets. GO and drug gene memberships
+come from the published annotation bundle. Both builds save their GAlist
+in the new version directory.
+}
 \examples{
 \dontrun{
-GAlist <- gact()
+GAlist <- gact(version = "hsa.GRCh37.0.0.1", task = "build")
+GAlist <- gact(version = "hsa.GRCh38.0.0.1", task = "build")
 }
 
 }

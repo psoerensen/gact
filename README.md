@@ -313,9 +313,26 @@ number NNF20SA0061466)
     *Plos Genetics* 21 (1), e1011519 (2025).
     <https://doi.org/10.1371/journal.pgen.1011519>.
 
-### Build the GRCh38 marker database
+### Build a database from source annotations
 
-`hsa.GRCh38.0.0.1` is a locally built database for GWAS ingestion and retrieval.
+Use `task = "build"` to prepare a new database and its marker sets. GRCh37
+uses the published marker backbone. GRCh38 builds its backbone from prepared
+chromosome tables and receipts. Both builds download the source
+annotations, build the sets with `createSetsDB()`, and save `GAlist` in the
+new version directory. GO and drug gene memberships come from the published
+annotation bundle.
+
+```r
+GAlist <- gact(version = "hsa.GRCh37.0.0.1", dbdir = dbdir, task = "build")
+GAlist <- gact(version = "hsa.GRCh38.0.0.1", dbdir = dbdir, task = "build")
+```
+
+For GRCh38, gact looks under `dbdir` and its parent for `prepared_grch38/`
+or `reference/grch38-prep.*/tables/`.
+
+### Prepare the GRCh38 marker backbone
+
+`hsa.GRCh38.0.0.1` has a local build workflow for marker sets and GWAS data.
 Use `gact(version = "hsa.GRCh37.0.0.1", dbdir = dbdir, task = "download")`
 to install the published GRCh37 bundle.
 Prepare chromosomes 1–22 with `prepareIGSRMarkers()` and a version of gsim

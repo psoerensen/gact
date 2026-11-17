@@ -16,11 +16,20 @@
 #' associations and their multifaceted relationships in the context of complex traits.
 #'
 #' @param GAlist A list object providing information and infrastructure of the gact database.
-#' @param version The version of the gact database to use.
-#'   Use `"hsa.GRCh37.0.0.1"` for the published GRCh37 bundle. For the
-#'   locally built `"hsa.GRCh38.0.0.1"` database, use [buildMarkerDB()].
-#' @param task The task to perform, either "download" or "process". By default "download".
+#' @param version Database release, `"hsa.GRCh37.0.0.1"` or `"hsa.GRCh38.0.0.1"`.
+#' @param task `"download"` installs a published release. `"build"` creates a
+#'   new release with marker and annotation sets. `"createSets"` builds sets
+#'   in an existing GAlist.
 #' @param dbdir The directory where the database should be stored, by default the current working directory.
+#' @param timeout Download timeout in seconds for the published release.
+#' @details A build uses the published marker backbone for GRCh37 and
+#'   runs [buildMarkerDB()] for GRCh38 using prepared chromosome tables.
+#'   It looks under `dbdir` and its parent for `prepared_grch38` or
+#'   `reference/grch38-prep.*/tables`. [prepareIGSRMarkers()] produces these
+#'   chromosome tables and receipts. The build prepares Ensembl, regulatory, Reactome,
+#'   STRING, STITCH, GO, and drug marker sets. GO and drug gene memberships
+#'   come from the published annotation bundle. Both builds save their GAlist
+#'   in the new version directory.
 #'
 #' @return A list providing information and infrastructure of the gact database.
 #'
@@ -28,7 +37,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' GAlist <- gact()
+#' GAlist <- gact(version = "hsa.GRCh37.0.0.1", task = "build")
+#' GAlist <- gact(version = "hsa.GRCh38.0.0.1", task = "build")
 #' }
 #'
 #' @importFrom R.utils gzip
@@ -61,6 +71,8 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
    )
   )
  }
+
+ if (identical(task, "build")) return(.gact_build_release(version, dbdir))
 
  if(task=="download") {
   if (isTRUE(version_metadata$local_build)) {
@@ -125,6 +137,88 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   #GAlist <- createMarkerSetsDB(GAlist=GAlist, what="stitch")
  }
  return(GAlist)
+}
+
+.gact_build_release <- function(version, dbdir) {
+ download_options <- options(c("download.file.method", "url.method", "timeout"))
+ on.exit(options(download_options), add = TRUE)
+ if (!dir.exists(dbdir) && !dir.create(dbdir, recursive = TRUE))
+  stop("Cannot create database parent directory: ", dbdir)
+ dbdir <- normalizePath(dbdir, winslash = "/", mustWork = TRUE)
+ target <- file.path(dbdir, version)
+ if (file.exists(target)) stop("Database already exists: ", target)
+ stage <- tempfile(".gact-build-", tmpdir = dbdir)
+ if (!dir.create(stage, mode = "0700")) stop("Cannot stage the database build.")
+ on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+
+ if (.gact_version_metadata(version)$build == "GRCh38") {
+  ga <- buildMarkerDB(.gact_grch38_marker_tables(dbdir), dbdir = stage)
+ } else {
+  ga <- downloadDB(createDB(version, stage), what = "marker")
+  if (!length(ga$rsids) || !file.exists(file.path(ga$dirs[["marker"]], "cpra.txt.gz")))
+   stop("Could not install the GRCh37 marker backbone.")
+ }
+
+ ensembl_urls <- strsplit(ga$metadata$sources$ensembl, ";", fixed = TRUE)[[1L]]
+ assembly_file <- grepl(paste0(".", ga$metadata$build, "."), basename(ensembl_urls), fixed = TRUE)
+ id_crosswalk <- endsWith(ensembl_urls, ".entrez.tsv.gz")
+ ga$metadata$sources$ensembl <- paste(ensembl_urls[assembly_file | id_crosswalk], collapse = ";")
+ for (resource in c("ensembl", "reactome", "string", "stitch", "gene_memberships")) {
+  ga <- downloadDB(ga, what = resource)
+  failed <- ga$downloads$what == resource & ga$downloads$status == "failed"
+  if (any(failed))
+   stop("Could not download ", resource, ": ", ga$downloads$message[which(failed)[1L]])
+ }
+ ga <- createSetsDB(ga, what = c("ensembl", "gene", "functional", "regulatory",
+                                 "marker", "gene_annotation"))
+ outputs <- paste0(c("ensg2rsids", "genesplus_annotation", "ensr2rsids", "reg2rsids",
+                     "reactome2rsids", "string2rsids", "stitch2rsids", "go2rsids",
+                     "drug2rsids", "drug2string2rsids"), ".rds")
+ gsets <- ga$dirs[["gsets"]]
+ missing <- outputs[!file.exists(file.path(gsets, outputs))]
+ if (length(missing) || !length(ga$map$ensp2ensg))
+  stop("Incomplete annotation build. Missing outputs: ",
+       paste(c(missing, if (!length(ga$map$ensp2ensg)) "Ensembl ID maps"), collapse = ", "))
+ saveRDS(ga$map, file.path(gsets, "map.rds"))
+
+ staged_db <- ga$dbdir
+ rebase <- function(path) {
+  is_local <- startsWith(path, paste0(staged_db, "/"))
+  path[is_local] <- paste0(target, substring(path[is_local], nchar(staged_db) + 1L))
+  path
+ }
+ ga$dbdir <- target
+ ga$dirs[] <- rebase(ga$dirs)
+ ga$downloads$dest_file <- rebase(ga$downloads$dest_file)
+ if (length(ga$ldRegions[[ga$assembly]])) {
+  ga$ldRegions[[ga$assembly]] <- lapply(ga$ldRegions[[ga$assembly]], function(region) {
+   region$file <- rebase(region$file)
+   region
+  })
+ }
+ saveRDS(ga, file.path(staged_db, paste0("GAlist_", version, ".rds")))
+ if (file.exists(target) || !file.rename(staged_db, target))
+  stop("Cannot publish database at ", target)
+ ga
+}
+
+.gact_grch38_marker_tables <- function(dbdir) {
+ roots <- unique(c(dbdir, dirname(dbdir)))
+ reference <- file.path(roots, "reference")
+ runs <- as.character(unlist(lapply(reference, list.dirs, full.names = TRUE, recursive = FALSE)))
+ runs <- runs[startsWith(basename(runs), "grch38-prep.")]
+ candidates <- c(file.path(roots, "prepared_grch38"), file.path(runs, "tables"))
+ files <- paste0("chr", rep(1:22, 2L), rep(c(".tsv.gz", ".json"), each = 22L))
+ ready <- vapply(candidates, function(path) all(file.exists(file.path(path, files))),
+                logical(1L))
+ if (!any(ready)) {
+  stop("Cannot find prepared GRCh38 chromosome tables under ", dbdir,
+       " or its parent. Prepare the chromosome tables with prepareIGSRMarkers().")
+ }
+ tables <- unique(normalizePath(candidates[ready], winslash = "/", mustWork = TRUE))
+ if (length(tables) > 1L)
+  stop("Found multiple complete GRCh38 preparations: ", paste(tables, collapse = ", "))
+ tables
 }
 
 #' Create GACT database directory structure
@@ -277,11 +371,25 @@ gact_versions <- list(
   species = "Homo sapiens",
   build = "GRCh38",
   local_build = TRUE,
-  description = "GRCh38 human database for GWAS ingestion and retrieval",
+  description = "Locally built GRCh38 human marker and annotation database",
   created = "2026-11-16",
-  sources = list(`1000G` = "10.5281/zenodo.24292610")
+  sources = list(
+   `1000G` = "10.5281/zenodo.24292610",
+   ensembl = paste(
+    "https://ftp.ensembl.org/pub/release-109/tsv/homo_sapiens/Homo_sapiens.GRCh38.109.entrez.tsv.gz",
+    "https://ftp.ensembl.org/pub/release-109/gtf/homo_sapiens/Homo_sapiens.GRCh38.109.gtf.gz",
+    "https://ftp.ensembl.org/pub/release-109/regulation/homo_sapiens/homo_sapiens.GRCh38.Regulatory_Build.regulatory_features.20221007.gff.gz",
+    sep = ";"
+   )
+  )
  )
 )
+
+# Interaction and pathway sources use stable identifiers for both assemblies.
+shared_resources <- c("reactome", "string", "stitch")
+gact_versions[["hsa.GRCh38.0.0.1"]]$sources[shared_resources] <-
+ gact_versions[["hsa.GRCh37.0.0.1"]]$sources[shared_resources]
+rm(shared_resources)
 
 .gact_version_metadata <- function(version) {
  if (!is.character(version) || length(version) != 1L || is.na(version)) return(NULL)
@@ -366,7 +474,8 @@ downloadDB <- function(GAlist = NULL, what = NULL,
   GAlist$downloads$file_size_MB[row] <- round(sum(file.size(files)) / 1e6, 3)
   return(GAlist)
  }
- if (isTRUE(.gact_version_metadata(GAlist$version)$local_build)) {
+ if (isTRUE(.gact_version_metadata(GAlist$version)$local_build) &&
+     !what %in% c("ensembl", "reactome", "string", "stitch", "gene_memberships")) {
   stop("Use buildMarkerDB() to build the ", GAlist$version,
        " marker catalog.")
  }
@@ -666,6 +775,24 @@ paste(res, "downloaded"),
 paste(res, "failed: "))
 
   }
+ }
+
+ if (identical(what, "gene_memberships")) {
+  doi <- gact_versions[["hsa.GRCh37.0.0.1"]]$sources$annotation
+  dest <- GAlist$dirs[["gsets"]]
+  stage <- tempfile(".gene-memberships-", tmpdir = GAlist$dirs[["download"]])
+  if (!dir.create(stage)) stop("Cannot stage gene membership download.")
+  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+  download_zenodo(doi, path = stage, parallel = TRUE)
+  archive <- file.path(stage, "hsa.0.0.1.zip")
+  files <- c("go.rds", "drug2ensg.rds")
+  contents <- utils::unzip(archive, list = TRUE)$Name
+  if (!all(files %in% contents)) stop("The annotation bundle is missing gene memberships.")
+  utils::unzip(archive, files = files, exdir = dest, overwrite = FALSE)
+  if (!all(file.exists(file.path(dest, files)))) stop("Could not extract gene memberships.")
+  GAlist <- log_download(GAlist, what, "Zenodo", doi, dest, "success",
+                         "GO and drug gene memberships extracted")
+  GAlist$downloads$dest_file[nrow(GAlist$downloads)] <- dest
  }
 
  # --------------------------------------------------------------------
