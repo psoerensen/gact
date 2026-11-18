@@ -578,8 +578,8 @@ and QC in parallel using a shared marker index. One writer publishes the
 successful studies in manifest order and refreshes the inventory and descriptor
 once. The R engine remains the default and handles profiles outside the native
 engine's gzip TSV, signed-beta, ordinary-p-value scope. Use a verified GRCh38
-Catalog accession for the adapter. The provider's GRCh37 files require a
-separate coordinate-conversion step.
+Catalog accession for the adapter. The original GRCh37 files can use the
+liftover map described below.
 
 By default the manifest runner caches input files in the database's
 `download/` directory and writes the batch manifest and review reports under
@@ -592,3 +592,30 @@ Analysis outputs use `GAlist$dirs[["results"]]`, created as `results/` at the
 database root by `createDB()`. Prepared association matrices remain in
 `gstat/matrix/`; shared LD and eigen references remain under `marker/`.
 This directory registration does not download data or run analyses.
+
+#### Lift GRCh37 GWAS positions during alignment
+
+Build the coordinate map once from a GRCh37 source variant list, such as the
+[Pan-UKB variant manifest](https://pan.ukbb.broadinstitute.org/docs/per-phenotype-files/#variant-manifest-file)
+and the [UCSC hg19-to-hg38 chain](https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/).
+```r
+map <- buildLiftoverMap(GAlist, "panukb-variants.tsv.bgz", "hg19ToHg38.over.chain.gz")
+runGWASManifest(manifest, descriptor, knowledge = "formats.json",
+                engine = "cpp", liftover_map = map)
+```
+
+By default the map builder saves a binary index, chromosome tables, and
+checksums under `marker/liftover-grch37-grch38/`. For later
+batches, pass that directory as `liftover_map`. A verified forward-strand
+format profile identifies the coordinate and association columns. For
+original Pan-UKB files, select a single-ancestry profile and use
+`"neglog10p"` for the p-value scale. Other studies can reuse the same map
+for variants that it covers.
+
+The preview must agree with the manifest's source build. Verification needs
+at least 10 distinct keys that support only one build and 90% agreement among
+those keys. Inconclusive or conflicting previews go to review. The native
+worker opens the saved index and lifts GRCh37 rows during alignment. GRCh38
+rows go directly to alignment. The same study QC JSON records `n_lifted` and
+`liftover_unmapped` for lifted studies. `scanGWAS()` continues to find Catalog
+files.

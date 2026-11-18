@@ -15,7 +15,8 @@ runGWASManifest(
   preview_rows = 1000L,
   engine = c("R", "cpp"),
   workers = 1L,
-  scratch_dir = NULL
+  scratch_dir = NULL,
+  liftover_map = NULL
 )
 }
 \arguments{
@@ -59,6 +60,13 @@ verified gzip TSV profiles.}
 \item{scratch_dir}{Parent directory for temporary C++ working files.
 Defaults to SLURM_TMPDIR when available, or R's temporary directory.
 Each run removes its own working directory when it exits.}
+
+\item{liftover_map}{Directory from \code{\link[=buildLiftoverMap]{buildLiftoverMap()}}. With \code{engine = "cpp"},
+inputs with a verified forward-strand profile are checked against both
+builds using the mapped chromosome, position and allele columns.
+The declared build must agree. GRCh37
+variants are lifted during alignment to the GRCh38 catalog using the saved
+index. The study QC includes lifted rows and unmapped liftover drops.}
 }
 \value{
 Invisibly, the per-study report written to \code{manifest_review.tsv}.

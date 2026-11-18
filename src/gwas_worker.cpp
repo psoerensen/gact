@@ -132,7 +132,14 @@ Key key(int chr, int pos, int effect, int other) {
     return (Key(chr) << 35) | (Key(pos) << 4) | (effect << 2) | other;
 }
 
+Key swap_alleles(Key variant) {
+    return (variant & ~Key{15}) | ((variant & 3) << 2) | ((variant >> 2) & 3);
+}
+
 struct Header { uint64_t signature, size, pool_size; };
+constexpr uint64_t lift_magic = 0x474143544C465431ULL;
+struct LiftHeader { uint64_t signature, size; };
+struct Lift { Key source, target; };
 struct Marker {
     Key key;
     double eaf;
@@ -140,7 +147,46 @@ struct Marker {
     uint32_t shared;
 };
 struct Lookup { Key key; uint32_t row; uint32_t unused; };
-static_assert(sizeof(Header) == 24 && sizeof(Marker) == 24 && sizeof(Lookup) == 16);
+static_assert(sizeof(Header) == 24 && sizeof(Marker) == 24 && sizeof(Lookup) == 16 &&
+              sizeof(LiftHeader) == 16 && sizeof(Lift) == 16);
+
+std::vector<Lift> read_liftover(SEXP paths) {
+    std::vector<Lift> entries;
+    for (R_xlen_t i = 0; i < XLENGTH(paths); ++i) {
+        Gzip input(CHAR(STRING_ELT(paths, i)), "rb");
+        string line;
+        require(input.read(line) && line == "chr\tpos\tref\talt\ttarget_pos\tnea\tea\treversed\trsids",
+                "Invalid liftover header");
+        while (input.read(line)) {
+            auto col = fields<9>(line, '\t');
+            int chr = chromosome(col[0]), pos = integer(col[1]), target = integer(col[4]);
+            int ea = allele(col[3]), nea = allele(col[2]);
+            int target_ea = allele(col[6]), target_nea = allele(col[5]);
+            require(chr >= 1 && chr <= 22 && pos > 0 && target > 0 &&
+                    ea >= 0 && nea >= 0 && ea != nea && target_ea >= 0 && target_nea >= 0 &&
+                    ((col[7] == "TRUE" && target_ea == 3 - ea && target_nea == 3 - nea) ||
+                     (col[7] == "FALSE" && target_ea == ea && target_nea == nea)),
+                    "Invalid liftover mapping");
+            entries.push_back({key(chr, pos, ea, nea), key(chr, target, target_ea, target_nea)});
+        }
+    }
+    std::sort(entries.begin(), entries.end(), [](const auto& a, const auto& b) { return a.source < b.source; });
+    auto duplicate = std::adjacent_find(entries.begin(), entries.end(),
+        [](const auto& a, const auto& b) { return a.source == b.source; });
+    require(duplicate == entries.end(), "Duplicate source key in liftover map");
+    return entries;
+}
+
+void write_liftover(SEXP paths, const char* output) {
+    auto entries = read_liftover(paths);
+    require(!entries.empty(), "Empty liftover map");
+    std::ofstream out(output, std::ios::binary);
+    LiftHeader header{lift_magic, entries.size()};
+    out.write(reinterpret_cast<const char*>(&header), sizeof header);
+    out.write(reinterpret_cast<const char*>(entries.data()), sizeof(Lift) * entries.size());
+    out.close();
+    require(out.good(), "Cannot write liftover index");
+}
 
 void index(const char* markers, const char* cpra, const char* output) {
     Gzip input(markers, "rb");
@@ -187,56 +233,86 @@ void index(const char* markers, const char* cpra, const char* output) {
     require(out.good(), "Cannot write marker index");
 }
 
-class Catalog {
+class MappedFile {
 #ifdef _WIN32
     std::vector<uint64_t> storage;
 #endif
+public:
     void* mapping;
     size_t bytes;
+    MappedFile(const char* path, size_t min_size) : mapping(nullptr), bytes(0) {
+        if (!path) return;
+#ifdef _WIN32
+        std::ifstream in(path, std::ios::binary | std::ios::ate);
+        require(in.good() && in.tellg() >= static_cast<std::streamoff>(min_size),
+                "Invalid alignment index size");
+        bytes = static_cast<size_t>(in.tellg());
+        storage.resize((bytes + sizeof(uint64_t) - 1) / sizeof(uint64_t));
+        in.seekg(0);
+        in.read(reinterpret_cast<char*>(storage.data()), bytes);
+        require(in.good(), "Cannot read alignment index");
+        mapping = storage.data();
+#else
+        int fd = open(path, O_RDONLY);
+        require(fd >= 0, "Cannot open alignment index");
+        struct stat info;
+        if (fstat(fd, &info) != 0 || info.st_size < static_cast<off_t>(min_size)) {
+            close(fd);
+            throw std::runtime_error("Invalid alignment index size");
+        }
+        bytes = info.st_size;
+        mapping = mmap(nullptr, bytes, PROT_READ, MAP_SHARED, fd, 0);
+        close(fd);
+        require(mapping != MAP_FAILED, "Cannot memory-map alignment index");
+#endif
+    }
+    ~MappedFile() {
+#ifndef _WIN32
+        if (mapping) munmap(mapping, bytes);
+#endif
+    }
+    MappedFile(const MappedFile&) = delete;
+};
+
+class Liftover {
+    MappedFile file;
+    const Lift* entries = nullptr;
+    size_t size = 0;
+public:
+    explicit Liftover(const char* path) : file(path, sizeof(LiftHeader)) {
+        if (!path) return;
+        auto h = static_cast<const LiftHeader*>(file.mapping);
+        require(h->signature == lift_magic && h->size && h->size < UINT32_MAX &&
+                file.bytes == sizeof(LiftHeader) + h->size * sizeof(Lift),
+                "Invalid liftover index");
+        entries = reinterpret_cast<const Lift*>(h + 1);
+        size = h->size;
+    }
+    Key find(Key source) const {
+        auto end = entries + size;
+        auto hit = std::lower_bound(entries, end, source,
+            [](const Lift& row, Key target) { return row.source < target; });
+        return hit != end && hit->source == source ? hit->target : 0;
+    }
+};
+
+class Catalog {
+    MappedFile file;
     const Lookup* lookup;
     const char* pool;
 public:
     const Marker* marker;
     size_t size;
-    explicit Catalog(const char* path) {
-#ifdef _WIN32
-        std::ifstream in(path, std::ios::binary | std::ios::ate);
-        require(in.good() && in.tellg() >= static_cast<std::streamoff>(sizeof(Header)),
-                "Invalid marker index size");
-        bytes = static_cast<size_t>(in.tellg());
-        storage.resize((bytes + sizeof(uint64_t) - 1) / sizeof(uint64_t));
-        in.seekg(0);
-        in.read(reinterpret_cast<char*>(storage.data()), bytes);
-        require(in.good(), "Cannot read marker index");
-        mapping = storage.data();
-#else
-        int fd = open(path, O_RDONLY);
-        require(fd >= 0, "Cannot open marker index");
-        struct stat info;
-        if (fstat(fd, &info) != 0 || info.st_size < static_cast<off_t>(sizeof(Header))) {
-            close(fd);
-            throw std::runtime_error("Invalid marker index size");
-        }
-        bytes = info.st_size;
-        mapping = mmap(nullptr, bytes, PROT_READ, MAP_SHARED, fd, 0);
-        close(fd);
-        require(mapping != MAP_FAILED, "Cannot memory-map marker index");
-#endif
-        auto h = static_cast<const Header*>(mapping);
+    explicit Catalog(const char* path) : file(path, sizeof(Header)) {
+        auto h = static_cast<const Header*>(file.mapping);
         require(h->signature == magic && h->size < UINT32_MAX && h->pool_size < UINT32_MAX &&
-                bytes == sizeof(Header) + h->size * (sizeof(Marker) + sizeof(Lookup)) + h->pool_size,
+                file.bytes == sizeof(Header) + h->size * (sizeof(Marker) + sizeof(Lookup)) + h->pool_size,
                 "Invalid marker index");
         size = h->size;
         marker = reinterpret_cast<const Marker*>(h + 1);
         lookup = reinterpret_cast<const Lookup*>(marker + size);
         pool = reinterpret_cast<const char*>(lookup + size);
     }
-    ~Catalog() {
-#ifndef _WIN32
-        munmap(mapping, bytes);
-#endif
-    }
-    Catalog(const Catalog&) = delete;
     const Lookup* find(Key variant) const {
         auto end = lookup + size;
         auto hit = std::lower_bound(lookup, end, variant,
@@ -249,7 +325,7 @@ public:
     const char* id(uint32_t row) const { return pool + marker[row].id; }
 };
 
-enum Drop { Missing, Unsplit, Strand, Unmatched, Ambiguous, Shared, Conflict, Redundant, Maf, Drops };
+enum Drop { Missing, Unsplit, Strand, Unmatched, Ambiguous, Shared, Conflict, Redundant, Maf, LiftUnmapped, Drops };
 enum State : uint32_t { Empty, Direct, Flipped, Conflicting };
 
 bool equal(double a, double b) { return a == b || (std::isnan(a) && std::isnan(b)); }
@@ -334,8 +410,9 @@ bool precedes(const Schema& schema, const std::vector<string_view>& row, const s
 enum Output { Raw, MarkerID, Chromosome, Position, Effect, Other, Coefficient, Error, Probability, Frequency };
 
 void process(const char* index_path, const char* source, const char* output, const char* qc_path,
-             const Schema& schema) {
+             const Schema& schema, const char* lift_path, bool neglog10p) {
     Catalog catalog(index_path);
+    Liftover liftover(lift_path);
     Gzip input(source, "rb");
     string line;
     require(input.read(line) && line == schema.header, "Input header differs from verified recipe");
@@ -344,7 +421,7 @@ void process(const char* index_path, const char* source, const char* output, con
     std::vector<string> original(catalog.size);
     std::vector<string_view> columns, previous;
     std::array<uint64_t, Drops> drops{};
-    uint64_t rows = 0, retained = 0, flipped = 0, mapped = 0;
+    uint64_t rows = 0, retained = 0, flipped = 0, mapped = 0, lifted = 0;
     std::array<bool, EAF> present{};
     bool supplied_eaf = schema.field[EAF] < schema.names.size();
     while (input.read(line)) {
@@ -354,7 +431,7 @@ void process(const char* index_path, const char* source, const char* output, con
         int chr = chromosome(value(Chr)), pos = integer(value(Pos));
         double beta = real(value(Beta)), se = real(value(SE)), p = real(value(P));
         double eaf = supplied_eaf ? real(value(EAF)) : missing;
-        require((std::isnan(se) || se > 0) && (std::isnan(p) || (p >= 0 && p <= 1)) &&
+        require((std::isnan(se) || se > 0) && (std::isnan(p) || (p >= 0 && (neglog10p || p <= 1))) &&
                 (std::isnan(eaf) || (eaf >= 0 && eaf <= 1)), "SE, p-value or EAF outside the allowed range");
         bool observed[] = {chr != missing_integer, pos != missing_integer,
                            !absent(value(EA)), !absent(value(NEA)), !std::isnan(beta),
@@ -378,8 +455,17 @@ void process(const char* index_path, const char* source, const char* output, con
             ++drops[Unmatched];
             continue;
         }
-        auto direct = catalog.find(key(chr, pos, ea, nea));
-        auto swap = catalog.find(key(chr, pos, nea, ea));
+        Key variant = key(chr, pos, ea, nea);
+        if (lift_path) {
+            auto lifted_direct = liftover.find(variant);
+            auto lifted_swap = liftover.find(swap_alleles(variant));
+            if (lifted_direct && lifted_swap) { ++drops[Ambiguous]; continue; }
+            variant = lifted_direct ? lifted_direct : swap_alleles(lifted_swap);
+            if (!variant) { ++drops[LiftUnmapped]; continue; }
+            ++lifted;
+        }
+        auto direct = catalog.find(variant);
+        auto swap = catalog.find(swap_alleles(variant));
         if ((direct && swap) || catalog.duplicate(direct) || catalog.duplicate(swap)) {
             ++drops[Ambiguous];
             continue;
@@ -389,6 +475,7 @@ void process(const char* index_path, const char* source, const char* output, con
         auto& marker = catalog.marker[match->row];
         if (marker.shared) { ++drops[Shared]; continue; }
         ++mapped;
+        if (neglog10p) p = std::pow(10.0, -p);
         if (p == 0) p = std::numeric_limits<double>::min();
         if (!supplied_eaf) eaf = marker.eaf;
         else if (!direct) eaf = 1 - eaf;
@@ -479,13 +566,15 @@ void process(const char* index_path, const char* source, const char* output, con
     require(retained && rows == retained + dropped, "No retained variants or inconsistent QC counters");
     constexpr const char* reasons[] = {"missing_required", "unsplit_multiallelic",
         "unresolved_strand", "unmatched", "ambiguous_catalog_match", "shared_catalog_rsid",
-        "conflicting_duplicate", "redundant_duplicate", "eaf_mismatch"};
+        "conflicting_duplicate", "redundant_duplicate", "eaf_mismatch", "liftover_unmapped"};
     std::ofstream qc(qc_path);
     qc << "{\"strand\":\"" << (schema.forward ? "forward" : "unknown")
        << "\",\"n_input\":" << rows << ",\"n_mapped\":" << mapped << ",\"n_final\":" << retained
        << ",\"n_dropped\":" << dropped << ",\"n_flipped\":" << flipped
-       << ",\"n_removed_maf\":" << drops[Maf] << ",\"dropped_by_reason\":{";
-    for (size_t i = 0; i < Drops; ++i) {
+       << ",\"n_removed_maf\":" << drops[Maf];
+    if (lift_path) qc << ",\"n_lifted\":" << lifted;
+    qc << ",\"dropped_by_reason\":{";
+    for (size_t i = 0; i < (lift_path ? Drops : LiftUnmapped); ++i) {
         if (i) qc << ',';
         qc << '"' << reasons[i] << "\":" << drops[i];
     }
@@ -503,11 +592,19 @@ extern "C" SEXP gact_gwas_index(SEXP markers, SEXP cpra, SEXP output) {
     return R_NilValue;
 }
 
+extern "C" SEXP gact_gwas_liftover_index(SEXP paths, SEXP output) {
+    try { write_liftover(paths, path(output)); }
+    catch (const std::exception& e) { Rf_error("%s", e.what()); }
+    return R_NilValue;
+}
+
 extern "C" SEXP gact_gwas_stage(SEXP index_path, SEXP input, SEXP output, SEXP qc,
-                                SEXP headers, SEXP mapping, SEXP forward) {
+                                SEXP headers, SEXP mapping, SEXP forward, SEXP liftover,
+                                SEXP neglog10p) {
     try {
         const Schema schema(headers, mapping, Rf_asLogical(forward) == TRUE);
-        process(path(index_path), path(input), path(output), path(qc), schema);
+        process(path(index_path), path(input), path(output), path(qc), schema,
+                liftover == R_NilValue ? nullptr : path(liftover), Rf_asLogical(neglog10p) == TRUE);
     } catch (const std::exception& e) { Rf_error("%s", e.what()); }
     return R_NilValue;
 }

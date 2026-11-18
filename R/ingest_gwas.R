@@ -743,6 +743,263 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   count
 }
 
+# GWAS coordinate conversion --------
+
+.gact_read_liftover_chain <- function(path) {
+  con <- gzfile(path, "rt")
+  on.exit(close(con), add = TRUE)
+  lines <- trimws(readLines(con))
+  lines <- lines[nzchar(lines) & !startsWith(lines, "#")]
+  fields <- strsplit(lines, "[[:space:]]+")
+  header <- startsWith(lines, "chain ") | startsWith(lines, "chain\t")
+  if (!length(fields) || !header[1L] || any(lengths(fields[header]) != 13L))
+    stop("Invalid UCSC chain header.")
+  chain <- cumsum(header)[!header]
+  blocks <- fields[!header]
+  last <- !duplicated(chain, fromLast = TRUE)
+  if (length(unique(chain)) != sum(header) ||
+      !identical(lengths(blocks), ifelse(last, 1L, 3L)))
+    stop("Invalid UCSC chain blocks.")
+  headers <- do.call(rbind, fields[header])
+  coordinates <- suppressWarnings(matrix(as.integer(headers[, c(4, 6, 7, 9, 11, 12)]),
+                                          ncol = 6L))
+  values <- suppressWarnings(matrix(as.integer(unlist(lapply(blocks, function(x)
+    c(x, rep("0", 3L - length(x)))))), byrow = TRUE, ncol = 3L))
+  if (anyNA(coordinates) || anyNA(values) || any(values < 0L) || any(values[, 1L] == 0L) ||
+      any(headers[, 5L] != "+") || !all(headers[, 10L] %in% c("+", "-")) ||
+      any(coordinates[, c(2, 5)] < 0L) || any(coordinates[, c(3, 6)] > coordinates[, c(1, 4)]))
+    stop("Invalid UCSC chain coordinates.")
+  blocks <- data.table::data.table(chain = chain, size = values[, 1L],
+                                   dt = values[, 2L], dq = values[, 3L])
+  blocks[, c("source_start", "query_start") := list(
+    coordinates[chain[1L], 2L] + cumsum(size + dt) - size - dt,
+    coordinates[chain[1L], 5L] + cumsum(size + dq) - size - dq), by = chain]
+  if (any(blocks$source_start[last] + blocks$size[last] != coordinates[, 3L]) ||
+      any(blocks$query_start[last] + blocks$size[last] != coordinates[, 6L]))
+    stop("UCSC chain blocks disagree with their header spans.")
+  blocks[, `:=`(
+    chr = sub("^chr", "", headers[chain, 3L]), target_chr = sub("^chr", "", headers[chain, 8L]),
+    lo = source_start + 1L, hi = source_start + size,
+    reversed = headers[chain, 10L] == "-")]
+  blocks[, offset := ifelse(reversed, coordinates[chain, 4L] - query_start + lo,
+                            query_start - source_start)]
+  blocks[, list(chr, target_chr, lo, hi, reversed, offset)]
+}
+
+.gact_liftover_map_chromosome <- function(variants, blocks, markers, chr) {
+  bases <- c(A = "T", C = "G", G = "C", T = "A")
+  snp <- variants$ref %in% names(bases) & variants$alt %in% names(bases) &
+    variants$ref != variants$alt & !is.na(variants$pos) & variants$pos > 0
+  snps <- variants[snp]
+  duplicate <- duplicated(snps, by = c("pos", "ref", "alt")) |
+    duplicated(snps, by = c("pos", "ref", "alt"), fromLast = TRUE)
+  sites <- snps[!duplicate]
+  hits <- unique(blocks[data.table::data.table(pos = unique(sites$pos)),
+    on = list(lo <= pos, hi >= pos), allow.cartesian = TRUE, nomatch = 0L,
+    list(pos = i.pos, target_chr, reversed,
+         target_pos = as.integer(ifelse(reversed, offset - i.pos, offset + i.pos)))])
+  mapped <- sites$pos %in% hits$pos
+  ambiguous <- hits$pos[duplicated(hits$pos) | duplicated(hits$pos, fromLast = TRUE)]
+  unique_hits <- hits[!pos %in% ambiguous]
+  positions <- unique_hits[sites[mapped & !pos %in% ambiguous], on = "pos", nomatch = 0L]
+  same_chr <- positions$target_chr == chr
+  lifted <- positions[same_chr]
+  lifted[, `:=`(nea = as.character(ifelse(reversed, bases[ref], ref)),
+                 ea = as.character(ifelse(reversed, bases[alt], alt)))]
+  if (anyDuplicated(markers, by = c("pos", "nea", "ea")))
+    stop("Duplicate allele keys in the GRCh38 marker catalog on chromosome ", chr)
+  at <- markers[lifted, on = list(pos = target_pos, nea, ea), which = TRUE]
+  matched <- !is.na(at)
+  result <- lifted[matched, list(chr, pos, ref, alt, target_pos, nea, ea, reversed)]
+  result[, rsids := markers$rsids[at[matched]]]
+  duplicate_target <- duplicated(result$rsids) | duplicated(result$rsids, fromLast = TRUE)
+  map <- result[!duplicate_target]
+  counts <- c(input = nrow(variants), unsupported = sum(!snp), duplicate_source = sum(duplicate),
+              unmapped = sum(!mapped), ambiguous = sum(sites$pos %in% ambiguous),
+              different_chromosome = sum(!same_chr),
+              outside_backbone = sum(!lifted$target_pos %in% markers$pos),
+              allele_mismatch = sum(!matched & lifted$target_pos %in% markers$pos),
+              duplicate_target = sum(duplicate_target), retained = nrow(map))
+  list(map = map, counts = as.list(counts))
+}
+
+#' Build a reusable GRCh37 to GRCh38 SNP map
+#'
+#' Lift a GRCh37 source variant list once with a UCSC hg19-to-hg38
+#' chain. Process autosomal SNPs by chromosome and keep unique mappings
+#' whose REF and ALT agree with the release marker catalog. Saves one
+#' compressed table per chromosome, a reusable C++ index, QC counts, and checksums.
+#' @param GAlist GRCh38 database descriptor from the IGSR marker build.
+#' @param variant_manifest Local GRCh37 variant list with chr, pos, ref, and alt columns.
+#' @param chain Local UCSC hg19-to-hg38 chain file, plain or gzip compressed.
+#' @param out_dir New output directory. Defaults to liftover-grch37-grch38 under the release marker directory.
+#' @return Invisibly, the map directory. Pass it to [liftGWASStats()].
+#' @export
+buildLiftoverMap <- function(GAlist, variant_manifest, chain, out_dir = NULL) {
+  if (!identical(.gact_catalog_build(GAlist), "GRCh38"))
+    stop("A GRCh38 marker backbone is required.")
+  if (is.null(out_dir)) out_dir <- file.path(GAlist$dirs[["marker"]], "liftover-grch37-grch38")
+  parent <- normalizePath(dirname(out_dir), winslash = "/", mustWork = TRUE)
+  out_dir <- file.path(parent, basename(out_dir))
+  if (file.exists(out_dir)) stop("Liftover output already exists: ", out_dir)
+  catalog <- file.path(GAlist$dirs[["marker"]], "markers.txt.gz")
+  provenance <- jsonlite::read_json(file.path(dirname(catalog), "marker_manifest.json"))
+  if (!identical(provenance$build, "GRCh38") || !identical(provenance$effect_allele, "ALT"))
+    stop("Expected a GRCh38 marker catalog with ALT as its effect allele.")
+  inputs <- c(variant_manifest = variant_manifest, chain = chain, marker_catalog = catalog)
+  hashes <- tools::md5sum(inputs)
+  if (anyNA(hashes) || !identical(unname(hashes[3L]), provenance$checksums[["markers.txt.gz"]]))
+    stop("Missing liftover input or marker catalog checksum mismatch.")
+  variants <- data.table::fread(variant_manifest, select = c("chr", "pos", "ref", "alt"),
+                                 colClasses = list(character = c("chr", "ref", "alt"), integer = "pos"))
+  variants[, chr := sub("^chr", "", chr)]
+  data.table::setkeyv(variants, "chr")
+  markers <- data.table::fread(catalog, select = c("rsids", "chr", "pos", "nea", "ea"),
+                                colClasses = list(character = "chr", integer = "pos"))
+  data.table::setkeyv(markers, "chr")
+  blocks <- .gact_read_liftover_chain(chain)
+  data.table::setkeyv(blocks, "chr")
+  stage <- tempfile(".gact-liftover-", tmpdir = parent)
+  if (!dir.create(stage)) stop("Cannot stage liftover map.")
+  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+  autosomes <- as.character(seq_len(22L))
+  receipts <- lapply(autosomes, function(chromosome) {
+    result <- .gact_liftover_map_chromosome(variants[chromosome, nomatch = 0L],
+      blocks[chromosome, nomatch = 0L], markers[chromosome, nomatch = 0L], chromosome)
+    chr <- chromosome
+    file <- paste0("chr", chr, ".tsv.gz")
+    path <- file.path(stage, file)
+    data.table::fwrite(result$map, path, sep = "\t")
+    message("Liftover chr", chr, ": ", result$counts$retained,
+            " of ", result$counts$input, " variants retained")
+    list(chromosome = chr, file = file, md5 = unname(tools::md5sum(path)), counts = result$counts)
+  })
+  populated <- Filter(function(x) x$counts$retained > 0L, receipts)
+  if (!length(populated))
+    stop("No variants matched the GRCh38 marker backbone.")
+  index <- file.path(stage, "index.bin")
+  shards <- vapply(populated, function(x) x$file, character(1L))
+  .Call(C_gact_gwas_liftover_index, file.path(stage, shards), index)
+  jsonlite::write_json(list(source_build = "GRCh37", build = "GRCh38",
+    index = list(file = basename(index), md5 = unname(tools::md5sum(index))),
+    inputs = Map(function(file, md5) list(file = basename(file), md5 = md5),
+                 as.list(inputs), as.list(unname(hashes))),
+    non_autosomal = sum(!variants$chr %in% autosomes), chromosomes = receipts),
+    file.path(stage, "manifest.json"), pretty = TRUE, auto_unbox = TRUE)
+  if (file.exists(out_dir) || !file.rename(stage, out_dir)) stop("Cannot publish liftover map.")
+  invisible(out_dir)
+}
+
+.gact_liftover_stat_keys <- c("chr", "pos", "ref", "alt")
+
+.gact_liftover_sites <- function(stat) {
+  if (!is.data.frame(stat) || !all(.gact_liftover_stat_keys %in% names(stat)))
+    stop("Supply chr, pos, ref and alt columns.")
+  pos <- stat$pos
+  if (!is.numeric(pos)) pos <- suppressWarnings(as.numeric(as.character(pos)))
+  data.table::data.table(chr = sub("^chr", "", as.character(stat$chr), ignore.case = TRUE),
+    pos = pos,
+    ref = toupper(as.character(stat$ref)), alt = toupper(as.character(stat$alt)))
+}
+
+.gact_liftover_map_manifest <- function(map_dir) {
+  manifest <- jsonlite::read_json(file.path(map_dir, "manifest.json"))
+  if (!identical(manifest$source_build, "GRCh37") || !identical(manifest$build, "GRCh38"))
+    stop("Expected a GRCh37 to GRCh38 map.")
+  manifest
+}
+
+.gact_read_liftover_shard <- function(map_dir, receipt) {
+  path <- file.path(map_dir, receipt$file)
+  if (!identical(unname(tools::md5sum(path)), receipt$md5))
+    stop("Liftover map checksum mismatch: ", receipt$file)
+  data.table::fread(path, colClasses = list(character = c("chr", "ref", "alt", "nea", "ea", "rsids"),
+                                            integer = c("pos", "target_pos")))
+}
+
+#' Verify the genome build of a GWAS preview
+#'
+#' Compare distinct coordinate and allele-pair keys with both sides of the map.
+#' A key supports a build when it matches that build only. Verification
+#' requires at least `min_informative` such keys and 90 percent agreement.
+#' An unresolved preview has an `NA` build and requires review.
+#' @param preview Data frame with chr, pos, ref and alt columns.
+#' @param map_dir Output directory from [buildLiftoverMap()].
+#' @param min_informative Minimum number of distinct build-informative keys.
+#' @return List with the verified build and counts for GRCh37-only, GRCh38-only,
+#'   both, and neither.
+#' @export
+verifyGWASBuild <- function(preview, map_dir, min_informative = 10L) {
+  if (!is.numeric(min_informative) || length(min_informative) != 1L ||
+      !is.finite(min_informative) || min_informative < 1 || min_informative %% 1 != 0)
+    stop("min_informative must be a positive integer.")
+  sites <- .gact_liftover_sites(preview)
+  sites[, c("ref", "alt") := list(pmin(ref, alt), pmax(ref, alt))]
+  sites <- unique(sites)
+  matches37 <- matches38 <- rep(FALSE, nrow(sites))
+  for (receipt in .gact_liftover_map_manifest(map_dir)$chromosomes) {
+    rows <- which(sites$chr == receipt$chromosome)
+    if (!length(rows) || !receipt$counts$retained) next
+    map <- .gact_read_liftover_shard(map_dir, receipt)
+    if (!nrow(map)) next
+    keys <- sites[rows]
+    matches37[rows] <- !is.na(map[keys, on = .gact_liftover_stat_keys, which = TRUE])
+    matches38[rows] <- !is.na(map[keys, on = list(chr, target_pos = pos, nea = ref, ea = alt),
+                                   which = TRUE, mult = "first"])
+    keys[, c("ref", "alt") := list(alt, ref)]
+    matches37[rows] <- matches37[rows] |
+      !is.na(map[keys, on = .gact_liftover_stat_keys, which = TRUE])
+    matches38[rows] <- matches38[rows] |
+      !is.na(map[keys, on = list(chr, target_pos = pos, nea = ref, ea = alt),
+                 which = TRUE, mult = "first"])
+  }
+  support <- c(GRCh37 = sum(matches37 & !matches38), GRCh38 = sum(matches38 & !matches37))
+  informative <- sum(support)
+  build <- if (informative >= min_informative && max(support) / informative >= 0.9)
+    names(support)[which.max(support)] else NA_character_
+  list(build = build, grch37_only = unname(support[1L]), grch38_only = unname(support[2L]),
+       both = sum(matches37 & matches38), neither = sum(!matches37 & !matches38))
+}
+
+#' Lift GRCh37 SNP summary statistics to GRCh38
+#'
+#' Join the original chr, pos, ref and alt to a saved liftover map.
+#' Replaces coordinates and allele labels in the retained rows, preserving
+#' order and association values, and adds the catalog rsID as marker.
+#' Reports the retained and dropped row counts.
+#' @param stat GRCh37 rows with chr, pos, ref and alt columns.
+#' @param map_dir Output directory from [buildLiftoverMap()].
+#' @return Data frame of lifted rows, with liftover counts in the `liftover_qc` attribute.
+#' @export
+liftGWASStats <- function(stat, map_dir) {
+  keys <- .gact_liftover_stat_keys
+  sites <- .gact_liftover_sites(stat)
+  chromosome_rows <- split(seq_len(nrow(sites)), sites$chr)
+  retained <- lapply(.gact_liftover_map_manifest(map_dir)$chromosomes, function(receipt) {
+    rows <- chromosome_rows[[receipt$chromosome]]
+    if (!length(rows) || !receipt$counts$retained) return(NULL)
+    map <- .gact_read_liftover_shard(map_dir, receipt)
+    if (!nrow(map)) return(NULL)
+    at <- map[sites[rows], on = keys, which = TRUE]
+    keep <- !is.na(at)
+    list(rows = rows[keep], chr = map$chr[at[keep]], pos = map$target_pos[at[keep]],
+         ref = map$nea[at[keep]], alt = map$ea[at[keep]], marker = map$rsids[at[keep]])
+  })
+  mapped <- data.table::rbindlist(retained)
+  if (nrow(mapped)) {
+    data.table::setorderv(mapped, "rows")
+    result <- as.data.frame(stat)[mapped$rows, , drop = FALSE]
+    fields <- c(keys, "marker")
+    result[fields] <- as.data.frame(mapped[, fields, with = FALSE])
+  } else {
+    result <- as.data.frame(stat)[FALSE, , drop = FALSE]
+    result$marker <- character()
+  }
+  attr(result, "liftover_qc") <- list(n_input = nrow(stat), n_lifted = nrow(result),
+                                     n_dropped = nrow(stat) - nrow(result))
+  result
+}
+
 # Study inspection and recipe generation --------
 
 .gact_gwas_metadata_fields <- c("source", "trait", "type", "category", "efo",
@@ -2633,6 +2890,12 @@ recodeSumstat <- recodeStat
 #' @param scratch_dir Parent directory for temporary C++ working files.
 #'   Defaults to SLURM_TMPDIR when available, or R's temporary directory.
 #'   Each run removes its own working directory when it exits.
+#' @param liftover_map Directory from [buildLiftoverMap()]. With `engine = "cpp"`,
+#'   inputs with a verified forward-strand profile are checked against both
+#'   builds using the mapped chromosome, position and allele columns.
+#'   The declared build must agree. GRCh37
+#'   variants are lifted during alignment to the GRCh38 catalog using the saved
+#'   index. The study QC includes lifted rows and unmapped liftover drops.
 #' @return Invisibly, the per-study report written to `manifest_review.tsv`.
 #'   Status is `imported`, `already_imported`, `ready`, or `needs_review`.
 #'   Preview QC warnings are reported separately. Full-data QC counts are
@@ -2643,8 +2906,9 @@ recodeSumstat <- recodeStat
 runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NULL,
                             knowledge = NULL, defaults = list(), import = TRUE,
                             preview_rows = 1000L, engine = c("R", "cpp"), workers = 1L,
-                            scratch_dir = NULL) {
+                            scratch_dir = NULL, liftover_map = NULL) {
   engine <- match.arg(engine)
+  if (!is.null(liftover_map) && engine != "cpp") stop("liftover_map requires engine = 'cpp'")
   if (length(workers) != 1L || !is.finite(workers) || workers < 1 ||
       workers > .Machine$integer.max || workers != floor(workers)) stop("workers must be a positive integer")
   required <- c("accession", "filename", "url", "md5", "source", "trait",
@@ -2678,6 +2942,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   if (!is.null(knowledge)) knowledge <- normalizePath(knowledge, mustWork = TRUE)
   descriptor <- normalizePath(descriptor, winslash = "/", mustWork = TRUE)
   GAlist <- readRDS(descriptor)
+  build <- .gact_catalog_build(GAlist)
+  map_info <- NULL
   gstat <- GAlist$dirs[["gstat"]]
   if (length(gstat) != 1L || is.na(gstat) || !dir.exists(gstat)) {
     stop("GAlist must point to an existing gstat directory")
@@ -2761,8 +3027,9 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
           !row$build %in% c("GRCh37", "GRCh38")) {
         stop("Specify type (binary or quantitative) and build (GRCh37 or GRCh38)")
       }
-      build <- .gact_catalog_build(GAlist)
-      if (length(build) != 1L || is.na(build) || !identical(build, row$build)) {
+      needs_lift <- !identical(build, row$build)
+      if (needs_lift && (is.null(liftover_map) || !identical(build, "GRCh38") ||
+                         !identical(row$build, "GRCh37"))) {
         stop("Verify that the study and marker catalog use the same genome build")
       }
       if (!grepl("^[[:alnum:]][[:alnum:]_. -]*\\.(tsv|txt|csv|sumstats|imp)(\\.(gz|bgz|bz2|xz))?$",
@@ -2775,7 +3042,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       }
       path <- .gact_verified_recipe_path(recipes, accession, row$md5)
       recipe <- .gact_read_verified_recipe(path, row)
-      if (is.null(recipe)) {
+      inspected <- is.null(recipe)
+      if (inspected) {
         file <- .gact_gwas_manifest_file(row, data_dir)
         pattern <- paste0("^", gsub(".", "[.]", row$filename, fixed = TRUE), "$")
         inspection <- inspectGWAS(data_dir, row, file.path(out_dir, sprintf("study_%05d", i)),
@@ -2803,13 +3071,38 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
           recipe$file_name <- file
         }
       }
+      forward <- identical(recipe$strand, "forward")
+      if (!is.null(liftover_map) && (needs_lift || forward)) {
+        if (!forward || !identical(build, "GRCh38"))
+          stop("Liftover requires a GRCh38 catalog and a verified forward-strand profile")
+        if (is.null(map_info)) map_info <- .gact_liftover_index(liftover_map, GAlist)
+        check <- recipe$build_check
+        if (is.null(check)) {
+          if (!inspected && !import) file <- .gact_gwas_manifest_file(row, data_dir)
+          preview <- .gact_cpp_gwas_preview(file, preview_rows, 0L)
+          mapping <- unlist(recipe$mapping)
+          preview <- stats::setNames(preview[unname(mapping[c("chr", "pos", "nea", "ea")])],
+                                    .gact_liftover_stat_keys)
+          check <- verifyGWASBuild(preview, liftover_map)
+          check$index_md5 <- map_info$md5
+          recipe$build_check <- check
+          if (inspected) jsonlite::write_json(recipe, entry$recipe, pretty = TRUE, auto_unbox = TRUE)
+        }
+        if (!identical(check$index_md5, map_info$md5) || !identical(check$build, row$build)) {
+          stop("Preview does not verify the declared build ", row$build, " with this map (",
+               check$grch37_only, " GRCh37-only, ", check$grch38_only, " GRCh38-only)")
+        }
+        recipe$filename <- row$filename
+        recipe$verified <- TRUE
+      }
       report$warnings[i] <- paste(unlist(recipe$validation$warnings), collapse = " | ")
       if (!import) {
         report$status[i] <- "ready"
         next
       }
       if (engine == "cpp") {
-        jobs[[i]] <- list(recipe = recipe, file = file)
+        jobs[[i]] <- list(recipe = recipe, file = file,
+                          lift_index = if (needs_lift) map_info$path else NULL)
         next
       }
       supplied_fields <- setdiff(.gact_gwas_metadata_fields, c("study_n_total", "study_n_case", "study_n_control"))
@@ -2941,16 +3234,30 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   mapping <- unlist(recipe$mapping)
   mapping <- mapping[!is.na(mapping)]
   header <- unlist(recipe$inspection$headers, use.names = FALSE)
-  if (!all(c("marker", fields[-8L]) %in% names(mapping)) ||
+  if (!all(fields[-8L] %in% names(mapping)) ||
       !all(names(mapping) %in% c("marker", fields)) ||
       anyDuplicated(header) || any(!nzchar(header)) ||
       any(grepl('[,"\t\r\n]', header)) ||
       any(c("n", "ncase", "ncontrol", "info", "z", "z_score") %in% header) ||
-      !identical(recipe$effect_scale, "beta") || !identical(recipe$p_scale, "p") ||
+      !identical(recipe$effect_scale, "beta") ||
+      !isTRUE(recipe$p_scale %in% c("p", "neglog10p")) ||
       !is.null(recipe[["n"]])) {
     stop("Verified recipe is outside the C++ profile. Use the R engine for this study")
   }
   unname(as.character(mapping[fields]))
+}
+
+.gact_liftover_index <- function(map_dir, ga) {
+  manifest <- .gact_liftover_map_manifest(map_dir)
+  index <- manifest$index
+  if (!identical(index$file, "index.bin") || !isTRUE(grepl("^[a-f0-9]{32}$", index$md5)))
+    stop("Use buildLiftoverMap() to prepare the reusable liftover index")
+  catalog <- file.path(ga$dirs[["marker"]], "markers.txt.gz")
+  if (!identical(unname(tools::md5sum(catalog)), manifest$inputs$marker_catalog$md5))
+    stop("Liftover map was built for a different GRCh38 marker catalog")
+  path <- normalizePath(file.path(map_dir, index$file), winslash = "/", mustWork = TRUE)
+  if (!identical(unname(tools::md5sum(path)), index$md5)) stop("Liftover index checksum mismatch")
+  list(path = path, md5 = index$md5)
 }
 
 .gact_gwas_work_dir <- function(parent) {
@@ -2998,6 +3305,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     stored <- jsonlite::read_json(path)
     fields <- c("accession", "input_md5", "mapping", .gact_gwas_metadata_fields)
     if (!identical(stored[fields], recipe[fields]) ||
+        (!is.null(stored$build_check) && !identical(stored$build_check, recipe$build_check)) ||
         !identical(stored$inspection$headers, recipe$inspection$headers)) {
       stop("Existing recipe disagrees with reviewed recipe: ", path)
     }
@@ -3015,7 +3323,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       if (!identical(unname(tools::md5sum(job$file)), recipe$input_md5)) stop("Input checksum changed before staging")
       .Call(C_gact_gwas_stage, index, job$file, file, qc,
             unlist(recipe$inspection$headers, use.names = FALSE),
-            .gact_cpp_gwas_mapping(recipe), identical(recipe$strand, "forward"))
+            .gact_cpp_gwas_mapping(recipe), identical(recipe$strand, "forward"),
+            job$lift_index, identical(recipe$p_scale, "neglog10p"))
       metrics <- jsonlite::read_json(qc, simplifyVector = TRUE)
       checksum <- unname(tools::md5sum(file))
       stopifnot(!is.na(checksum), metrics$n_final > 0,
@@ -3098,6 +3407,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   for (j in seq_along(staged)) {
     item <- staged[[j]]
     recipe <- item$recipe
+    if (!is.null(item$lift_index)) recipe$build <- "GRCh38"
     id <- new_ids[j]
     at <- length(current$study$id) + 1L
     current$study <- lapply(current$study, function(column) { length(column) <- at; column })
