@@ -40,6 +40,11 @@ test_that("GRCh38 marker build publishes an aligned catalog and descriptor", {
   expect_identical(ga$assembly, "GRCh38")
   expect_identical(ga$dirs[["reference"]], file.path(ga$dbdir, "reference"))
   expect_true(dir.exists(ga$dirs[["reference"]]))
+  prepared <- file.path(ga$dirs[["reference"]], "prepared_grch38")
+  files <- list.files(x$input)
+  expect_setequal(list.files(prepared), files)
+  expect_identical(unname(tools::md5sum(file.path(prepared, files))),
+                   unname(tools::md5sum(file.path(x$input, files))))
   expect_identical(readRDS(file.path(ga$dbdir, "GAlist_hsa.GRCh38.0.0.1.rds")), ga)
   catalog <- data.table::fread(file.path(ga$dirs[["marker"]], "markers.txt.gz"))
   cpra <- data.table::fread(file.path(ga$dirs[["marker"]], "cpra.txt.gz"), header = FALSE)[[1L]]
@@ -56,6 +61,57 @@ test_that("GRCh38 marker build publishes an aligned catalog and descriptor", {
   stat <- transform(as.data.frame(catalog), b = 0.2, seb = 0.1, p = 0.05)
   expect_equal(nrow(qcStatDB(ga, stat)), 22)
   expect_error(updateStatDB(ga, stat, build = "GRCh37"), "differs from marker catalog")
+})
+
+test_that("reference packaging uses release inputs and supports the old build cache", {
+  x <- marker_build_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  cache <- file.path(x$root, "reference")
+  lookup_dir <- file.path(cache, "gnomad-rsids")
+  dir.create(lookup_dir, recursive = TRUE)
+  paths <- file.path(lookup_dir, gact:::.gact_gnomad_lookup_files(1L))
+  con <- gzfile(paths[1L], "wt")
+  writeLines(c("#CHROM\tPOS\tID\tREF\tALT", "chr1\t100\trs1\tA\tC"), con)
+  close(con)
+  hash <- unname(tools::md5sum(paths[1L]))
+  upstream <- list(version = "4.1", chromosome = 1L, url = "https://example.org/chr1.vcf.bgz",
+                   source_md5 = strrep("a", 32L), output_md5 = hash)
+  jsonlite::write_json(upstream, paths[2L], auto_unbox = TRUE)
+  receipt_file <- file.path(x$input, "chr1.json")
+  receipt <- jsonlite::read_json(receipt_file)
+  receipt$sources <- list(list(), list(), list(file = basename(paths[1L]), md5 = hash,
+                                              upstream = upstream))
+  jsonlite::write_json(receipt, receipt_file, auto_unbox = TRUE)
+  ga <- buildMarkerDB(x$input, x$root)
+  reference <- ga$dirs[["reference"]]
+  copied <- file.path(reference, "gnomad-rsids", basename(paths))
+  expect_identical(unname(tools::md5sum(copied)), unname(tools::md5sum(paths)))
+  preserved <- list.files(reference, recursive = TRUE, full.names = TRUE)
+  prior <- tools::md5sum(preserved)
+  bundles <- packageReference(ga)
+  expect_identical(names(bundles), c("tables", "gnomad"))
+  expect_identical(dirname(bundles$tables$archive), reference)
+  expect_identical(tools::md5sum(preserved), prior)
+  expect_setequal(utils::untar(bundles$tables$archive, list = TRUE, tar = "internal"),
+                  list.files(x$input))
+  expect_match(readLines(bundles$tables$checksum_file), bundles$tables$sha256)
+  installed <- installGnomadLookups(bundles$gnomad$archive, file.path(x$root, "installed"))
+  expect_identical(unname(tools::md5sum(file.path(installed, basename(paths)))),
+                   unname(tools::md5sum(paths)))
+  expect_error(packageReference(ga), "already exists")
+
+  # Simulate a release built before reference inputs were copied into it.
+  legacy_tables <- file.path(cache, "grch38-prep.auto", "tables")
+  dir.create(dirname(legacy_tables))
+  expect_true(file.rename(x$input, legacy_tables))
+  unlink(file.path(reference, c("prepared_grch38", "gnomad-rsids")), recursive = TRUE)
+  legacy_ga <- ga
+  legacy_ga$dirs <- ga$dirs[names(ga$dirs) != "reference"]
+  from_cache <- packageReference(legacy_ga, out_dir = file.path(x$root, "legacy-artifacts"))
+  expect_identical(names(from_cache), c("tables", "gnomad"))
+  writeLines("corrupt", file.path(legacy_tables, "chr1.tsv.gz"))
+  expect_error(packageReference(ga, out_dir = file.path(x$root, "bad")),
+               "differ from the built catalog")
 })
 
 test_that("catalog build rejects receipts with a wrong build or checksum", {

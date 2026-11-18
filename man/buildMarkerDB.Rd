@@ -25,4 +25,6 @@ Rows at repeated chromosome-position pairs or with repeated rsIDs are
 omitted. All 22 autosomes must have retained markers. This version
 provides resources for GWAS ingestion and retrieval.
 The build reports progress as it verifies and reads each chromosome.
+Prepared tables and any matching verified gnomAD lookup pairs are copied
+into the new release's reference directory.
 }

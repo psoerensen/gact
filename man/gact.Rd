@@ -51,7 +51,9 @@ It looks under \code{dbdir} and its parent for \code{reference/prepared_grch38},
 set exists, it downloads verified inputs with \code{\link[=downloadReferenceInputs]{downloadReferenceInputs()}}
 and runs \code{\link[=prepareIGSRMarkers]{prepareIGSRMarkers()}} for each missing autosome. The automatic
 preparation requires gsim with \code{gsim_scan_vcf()} and caches the results in
-\code{dbdir/reference/grch38-prep.auto/tables} for retries.
+\code{dbdir/reference/grch38-prep.auto/tables} for retries. The finished
+release contains the prepared tables and matching gnomAD lookups under
+\code{GAlist$dirs[["reference"]]}, ready for \code{\link[=packageReference]{packageReference()}}.
 The build prepares Ensembl, regulatory, Reactome,
 STRING, STITCH, GO, and drug marker sets. GO and drug gene memberships
 come from the published annotation bundle. Both builds save their GAlist

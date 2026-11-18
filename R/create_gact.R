@@ -31,7 +31,9 @@
 #'   set exists, it downloads verified inputs with [downloadReferenceInputs()]
 #'   and runs [prepareIGSRMarkers()] for each missing autosome. The automatic
 #'   preparation requires gsim with `gsim_scan_vcf()` and caches the results in
-#'   `dbdir/reference/grch38-prep.auto/tables` for retries.
+#'   `dbdir/reference/grch38-prep.auto/tables` for retries. The finished
+#'   release contains the prepared tables and matching gnomAD lookups under
+#'   `GAlist$dirs[["reference"]]`, ready for [packageReference()].
 #'   The build prepares Ensembl, regulatory, Reactome,
 #'   STRING, STITCH, GO, and drug marker sets. GO and drug gene memberships
 #'   come from the published annotation bundle. Both builds save their GAlist

@@ -129,6 +129,7 @@ test_that("gact builds both releases with their own backbone and coordinates", {
       manifest <- jsonlite::read_json(file.path(ga$dirs[["marker"]], "marker_manifest.json"))
       expect_equal(manifest$n_markers, 22)
       expect_length(manifest$inputs, 22L)
+      expect_length(list.files(file.path(ga$dirs[["reference"]], "prepared_grch38")), 44L)
     }
   }
   expect_length(downloads, 0L)
@@ -163,6 +164,7 @@ test_that("gact builds both releases with their own backbone and coordinates", {
   expect_identical(downloads, 2:22)
   expect_identical(worker_counts, 2L)
   expect_identical(ga$rsids[1L], "rs38")
+  expect_length(list.files(file.path(ga$dirs[["reference"]], "prepared_grch38")), 44L)
   expect_true(file.exists(file.path(ga$dbdir, paste0("GAlist_", version, ".rds"))))
   expect_true(any(grepl("21 of 22 to prepare", messages, fixed = TRUE)))
   expect_true(any(grepl("Downloading or verifying reference inputs for 21 chromosomes.",

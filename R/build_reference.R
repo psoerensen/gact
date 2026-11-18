@@ -325,21 +325,28 @@ packageGnomadLookups <- function(reference_dir, out_dir = getwd(), chromosomes =
   jsonlite::write_json(manifest, file.path(payload, "manifest.json"),
                        auto_unbox = TRUE, pretty = TRUE)
 
+  .gact_pack_reference_tar(payload, c("manifest.json", members), archive, stage)
+}
+
+.gact_pack_reference_tar <- function(directory, members, archive, stage) {
+  name <- basename(archive)
+  checksum_file <- paste0(archive, ".sha256")
   staged_archive <- file.path(stage, name)
-  old <- setwd(payload)
+  old <- setwd(directory)
   status <- tryCatch(
-    utils::tar(staged_archive, c("manifest.json", members), compression = "gzip", tar = "internal"),
+    utils::tar(staged_archive, members, compression = "gzip", tar = "internal"),
     finally = setwd(old)
   )
-  if (status != 0L) stop("Cannot create gnomAD lookup archive.")
+  if (status != 0L) stop("Cannot create reference archive: ", archive)
   checksum <- unclass(.gact_sha256_file(staged_archive))
   staged_checksum <- paste0(staged_archive, ".sha256")
   writeLines(paste(checksum, name, sep = "  "), staged_checksum)
   suspendInterrupts({
-    if (!file.rename(staged_archive, archive)) stop("Cannot publish gnomAD lookup archive.")
+    if (any(file.exists(c(archive, checksum_file))) || !file.rename(staged_archive, archive))
+      stop("Cannot publish reference archive: ", archive)
     if (!file.rename(staged_checksum, checksum_file)) {
       unlink(archive)
-      stop("Cannot publish gnomAD archive checksum.")
+      stop("Cannot publish reference archive checksum: ", checksum_file)
     }
   })
   invisible(list(archive = archive, checksum_file = checksum_file, sha256 = checksum))
@@ -640,6 +647,12 @@ prepareIGSRMarkers <- function(chromosome, panel_dir, fasta_dir, rsid_dir,
 
 # Marker catalog build and release packaging --------
 
+.gact_chromosome_files <- function(directory) {
+  labels <- paste0("chr", seq_len(22L))
+  list(tables = file.path(directory, paste0(labels, ".tsv.gz")),
+       receipts = file.path(directory, paste0(labels, ".json")))
+}
+
 .gact_grch38_marker_tables <- function(dbdir) {
  roots <- unique(c(dbdir, dirname(dbdir)))
  reference <- file.path(roots, "reference")
@@ -647,14 +660,45 @@ prepareIGSRMarkers <- function(chromosome, panel_dir, fasta_dir, rsid_dir,
  runs <- runs[startsWith(basename(runs), "grch38-prep.")]
  candidates <- c(file.path(reference, "prepared_grch38"),
                  file.path(roots, "prepared_grch38"), file.path(runs, "tables"))
- files <- paste0("chr", rep(1:22, 2L), rep(c(".tsv.gz", ".json"), each = 22L))
- ready <- vapply(candidates, function(path) all(file.exists(file.path(path, files))),
+ ready <- vapply(candidates, function(path) all(file.exists(unlist(.gact_chromosome_files(path)))),
                 logical(1L))
  if (!any(ready)) return(NULL)
  tables <- unique(normalizePath(candidates[ready], winslash = "/", mustWork = TRUE))
  if (length(tables) > 1L)
   stop("Found multiple complete GRCh38 preparations: ", paste(tables, collapse = ", "))
  tables
+}
+
+.gact_lookup_roots <- function(input_dir, dbdir) {
+  unique(c(dirname(input_dir), dirname(dirname(input_dir)),
+           file.path(c(dbdir, dirname(dbdir)), "reference")))
+}
+
+.gact_copy_release_lookups <- function(roots, provenance, reference_dir) {
+  lookup_dir <- file.path(reference_dir, "gnomad-rsids")
+  retained <- integer()
+  for (chr in seq_along(provenance)) {
+    sources <- provenance[[chr]]$sources
+    if (length(sources) < 3L) next
+    expected <- sources[[3L]]
+    members <- .gact_gnomad_lookup_files(chr)
+    if (!identical(expected$file, members[1L])) next
+    for (root in roots) {
+      directory <- file.path(root, "gnomad-rsids")
+      paths <- file.path(directory, members)
+      if (!all(file.exists(paths) & !dir.exists(paths))) next
+      saved <- jsonlite::read_json(paths[2L])
+      if (!identical(saved$output_md5, expected$md5) ||
+          (!is.null(expected$upstream) && !identical(saved, expected$upstream))) next
+      if (!dir.exists(lookup_dir) && !dir.create(lookup_dir))
+        stop("Cannot create release lookup directory: ", lookup_dir)
+      if (!all(file.copy(paths, lookup_dir))) stop("Cannot copy lookup for chromosome ", chr)
+      .gact_verify_gnomad_lookup(chr, lookup_dir)
+      retained <- c(retained, chr)
+      break
+    }
+  }
+  retained
 }
 
 .gact_prepare_grch38_marker_tables <- function(reference_dir, workers) {
@@ -710,6 +754,8 @@ prepareIGSRMarkers <- function(chromosome, panel_dir, fasta_dir, rsid_dir,
 #' omitted. All 22 autosomes must have retained markers. This version
 #' provides resources for GWAS ingestion and retrieval.
 #' The build reports progress as it verifies and reads each chromosome.
+#' Prepared tables and any matching verified gnomAD lookup pairs are copied
+#' into the new release's reference directory.
 #'
 #' @param input_dir Directory containing the checksum-verified `chr1.tsv.gz`
 #'   to `chr22.tsv.gz` tables and their `chr1.json` to `chr22.json` receipts
@@ -724,13 +770,23 @@ buildMarkerDB <- function(input_dir, dbdir = getwd()) {
   target <- file.path(dbdir, version)
   if (file.exists(target)) stop("Database already exists: ", target)
   autosomes <- seq_len(22L)
-  files <- file.path(input_dir, paste0("chr", autosomes, ".tsv.gz"))
-  receipts <- file.path(input_dir, paste0("chr", autosomes, ".json"))
-  if (!all(file.exists(c(files, receipts)))) {
+  inputs <- unlist(.gact_chromosome_files(input_dir), use.names = FALSE)
+  if (!all(file.exists(inputs) & !dir.exists(inputs))) {
     stop("Supply prepared marker tables and receipts for all 22 autosomes.")
   }
+  stage <- tempfile(".gact-marker-db-", tmpdir = dbdir)
+  if (!dir.create(stage, mode = "0700")) stop("Cannot create marker database staging directory.")
+  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+  ga <- createDB(version, dbdir = stage)
+  reference_dir <- ga$dirs[["reference"]]
+  tables <- file.path(reference_dir, "prepared_grch38")
+  message("Saving prepared GRCh38 tables in the release reference folder.")
+  if (!dir.create(tables) || !all(file.copy(inputs, tables)))
+    stop("Cannot copy prepared chromosome tables into the release.")
+  prepared <- .gact_chromosome_files(tables)
+  files <- prepared$tables
   message("Preparing the GRCh38 marker backbone from ", input_dir)
-  provenance <- lapply(receipts, jsonlite::read_json)
+  provenance <- lapply(prepared$receipts, jsonlite::read_json)
   expected <- c("rsids", "chr", "pos", "ref", "alt", "af")
   parts <- lapply(autosomes, function(i) {
     message("Chromosome ", i, "/", length(autosomes), ": checking and reading ", basename(files[i]))
@@ -770,11 +826,9 @@ buildMarkerDB <- function(input_dir, dbdir = getwd()) {
   data.table::setnames(markers, c("ref", "alt", "af"), c("nea", "ea", "eaf"))
   data.table::setcolorder(markers, c("rsids", "chr", "pos", "ea", "nea", "eaf"))
 
+  lookups <- .gact_copy_release_lookups(.gact_lookup_roots(input_dir, dbdir), provenance, reference_dir)
+  if (length(lookups)) message("Saved ", length(lookups), " verified gnomAD lookups in the release.")
   message("Writing the marker catalog and coordinate index.")
-  stage <- tempfile(".gact-marker-db-", tmpdir = dbdir)
-  if (!dir.create(stage, mode = "0700")) stop("Cannot create marker database staging directory.")
-  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
-  ga <- createDB(version, dbdir = stage)
   marker_dir <- ga$dirs[["marker"]]
   catalog <- file.path(marker_dir, "markers.txt")
   index <- file.path(marker_dir, "cpra.txt")
@@ -803,6 +857,78 @@ buildMarkerDB <- function(input_dir, dbdir = getwd()) {
     stop("Cannot publish marker database at ", target)
   }
   invisible(ga)
+}
+
+#' Package the reference inputs for a GRCh38 release
+#'
+#' Packages the 22 prepared chromosome tables and receipts, plus any
+#' matching compact gnomAD lookup pairs, into archives with SHA-256
+#' checksum files. Looks in the release's reference directory first
+#' and can reuse the build cache for older releases.
+#' @param GAlist Descriptor of a built GRCh38 database.
+#' @param out_dir Output directory. Defaults to the release's reference directory.
+#' @return Invisibly, archive and checksum details for the tables and available lookups.
+#' @seealso [installGnomadLookups()], [packageMarkerDB()]
+#' @export
+packageReference <- function(GAlist, out_dir = NULL) {
+  if (!identical(.gact_catalog_build(GAlist), "GRCh38"))
+    stop("packageReference() requires a built GRCh38 database.")
+  dbdir <- dirname(normalizePath(GAlist$dbdir, winslash = "/", mustWork = TRUE))
+  reference_dir <- if ("reference" %in% names(GAlist$dirs)) GAlist$dirs[["reference"]] else
+    file.path(GAlist$dbdir, "reference")
+  catalog <- jsonlite::read_json(file.path(GAlist$dirs[["marker"]], "marker_manifest.json"))
+  tables <- file.path(reference_dir, "prepared_grch38")
+  if (!dir.exists(tables)) tables <- .gact_grch38_marker_tables(dbdir)
+  if (is.null(tables)) stop("Cannot find the prepared GRCh38 chromosome tables for this release.")
+  files <- .gact_chromosome_files(tables)
+  members <- unlist(files, use.names = FALSE)
+  if (!all(file.exists(members) & !dir.exists(members)))
+    stop("Supply prepared marker tables and receipts for all 22 autosomes.")
+  provenance <- lapply(files$receipts, jsonlite::read_json)
+  expected <- vapply(provenance, function(receipt) receipt$output$md5, character(1L))
+  if (!identical(provenance, catalog$inputs) ||
+      !identical(unname(tools::md5sum(files$tables)), expected))
+    stop("Prepared chromosome tables or receipts differ from the built catalog.")
+
+  if (is.null(out_dir)) out_dir <- reference_dir
+  if (!dir.exists(out_dir) && !dir.create(out_dir, recursive = TRUE))
+    stop("Cannot create reference package directory: ", out_dir)
+  out_dir <- normalizePath(out_dir, winslash = "/", mustWork = TRUE)
+  stage <- file.path(out_dir, ".gact-package-reference")
+  if (!dir.create(stage, mode = "0700", showWarnings = FALSE))
+    stop("Cannot stage reference package: ", stage)
+  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+  artifacts <- file.path(stage, "artifacts")
+  if (!dir.create(artifacts)) stop("Cannot stage reference archives.")
+  lookup_roots <- unique(c(reference_dir, .gact_lookup_roots(tables, dbdir)))
+  lookups <- .gact_copy_release_lookups(lookup_roots, provenance, stage)
+  names <- c("grch38-prepared-chromosome-tables.tar.gz",
+             if (length(lookups)) "gnomad-v4.1-grch38-rsids.tar.gz")
+  outputs <- file.path(out_dir, c(names, paste0(names, ".sha256")))
+  if (any(file.exists(outputs))) stop("Reference archive or checksum already exists in ", out_dir)
+
+  bundles <- list(tables = .gact_pack_reference_tar(tables, basename(members),
+                                                   file.path(artifacts, names[1L]), stage))
+  if (length(lookups))
+    bundles$gnomad <- packageGnomadLookups(stage, out_dir = artifacts, chromosomes = lookups)
+  published <- character()
+  committed <- FALSE
+  on.exit(if (!committed) unlink(published), add = TRUE)
+  suspendInterrupts({
+    for (target in outputs) {
+      if (file.exists(target) || !file.rename(file.path(artifacts, basename(target)), target))
+        stop("Cannot publish reference package file: ", target)
+      published <- c(published, target)
+    }
+    committed <- TRUE
+  })
+  bundles <- lapply(bundles, function(bundle) {
+    bundle$archive <- file.path(out_dir, basename(bundle$archive))
+    bundle$checksum_file <- paste0(bundle$archive, ".sha256")
+    bundle
+  })
+  message("Packaged GRCh38 tables and ", length(lookups), " gnomAD lookup pairs in ", out_dir)
+  invisible(bundles)
 }
 
 #' Package a GRCh38 marker database for release

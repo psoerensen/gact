@@ -351,8 +351,11 @@ It verifies the archive and member SHA-256 checksums and puts the
 ### Rebuild the GRCh38 marker backbone from IGSR inputs
 
 `hsa.GRCh38.0.0.1` has a local build workflow for marker sets and GWAS data.
-Each release folder includes `reference/`, available as
-`GAlist$dirs[["reference"]]`. To prepare the marker backbone separately,
+The finished release saves all 22 prepared chromosome tables, their receipts,
+and matching compact gnomAD lookups under `GAlist$dirs[["reference"]]`.
+The preparation cache beside the release is retained for retries.
+
+To prepare the marker backbone separately,
 run `prepareIGSRMarkers()` for chromosomes 1–22 with a version of gsim that
 exports `gsim_scan_vcf()`.
 The downloader verifies the [IGSR 2019-03-12 GRCh38 VCFs](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/)
@@ -389,22 +392,23 @@ and `out_dir` is a separate release directory. Upload the returned
 `archive` and `checksum_file` to Zenodo. The GRCh38 download installer
 requires a published marker bundle registered for the release.
 
-### Reuse compact gnomAD rsID lookups
-
-Once the lookups have been prepared, package them from the reference cache.
-The archive contains the lookup tables, their original provenance receipts and
-member SHA-256 checksums. Keep the archive and its `.sha256` file together.
+### Package and reuse the GRCh38 reference
 
 ```r
-bundle <- packageGnomadLookups(file.path(dbdir, "reference"), out_dir = "release")
-installGnomadLookups(bundle$archive, file.path(new_dbdir, "reference"))
+bundles <- packageReference(GAlist)
 ```
 
-Use the destination build's parent directory as `new_dbdir`. The installer
-checks the archive and its contents before populating the cache. Both
-`gact(task = "build")` and `downloadReferenceInputs("IGSR")` reuse the verified
-lookups for the included chromosomes. For any full gnomAD VCFs still needed,
-the log reports download, checksum verification, and scan-and-write times separately.
+This writes the prepared chromosome archive and, when available, the compact
+gnomAD lookup archive with their SHA-256 files in the release's `reference/`
+directory. The files include the original receipts. For an older release,
+gact can also package the matching tables and lookups from its build cache.
+
+For a future build, verify the table archive's SHA-256 and extract its files
+into `<new dbdir>/reference/prepared_grch38/` to skip chromosome preparation.
+To repeat chromosome preparation with the archived lookups, call
+`installGnomadLookups(bundles$gnomad$archive, file.path(new_dbdir, "reference"))`.
+The log reports download, checksum, and scan-and-write times for any full
+gnomAD VCFs still needed.
 
 ### Rebuild NYGC 30× GRCh38 genotype panels from VCFs
 
