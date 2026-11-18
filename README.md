@@ -331,8 +331,9 @@ For GRCh38, gact looks under `dbdir` and its parent for `reference/prepared_grch
 `prepared_grch38/`, or `reference/grch38-prep.*/tables/`. If it finds no complete
 set, it downloads and verifies the IGSR, UCSC and gnomAD inputs and prepares
 the tables chromosome by chromosome. This requires gsim with
-`gsim_scan_vcf()` and disk space for the raw inputs, including one full
-gnomAD VCF at a time. The build reports download and preparation progress
+`gsim_scan_vcf()` and disk space for the raw inputs. Set `workers = 2L` in
+`gact()` to prepare two gnomAD lookups concurrently. Each active worker
+can stage a full gnomAD chromosome VCF. The build reports download and preparation progress
 and keeps completed chromosome pairs in `dbdir/reference/grch38-prep.auto/tables/`
 for retries.
 
@@ -387,6 +388,23 @@ To prepare the existing marker database for publication, use
 and `out_dir` is a separate release directory. Upload the returned
 `archive` and `checksum_file` to Zenodo. The GRCh38 download installer
 requires a published marker bundle registered for the release.
+
+### Reuse compact gnomAD rsID lookups
+
+Once the lookups have been prepared, package them from the reference cache.
+The archive contains the lookup tables, their original provenance receipts and
+member SHA-256 checksums. Keep the archive and its `.sha256` file together.
+
+```r
+bundle <- packageGnomadLookups(file.path(dbdir, "reference"), out_dir = "release")
+installGnomadLookups(bundle$archive, file.path(new_dbdir, "reference"))
+```
+
+Use the destination build's parent directory as `new_dbdir`. The installer
+checks the archive and its contents before populating the cache. Both
+`gact(task = "build")` and `downloadReferenceInputs("IGSR")` reuse the verified
+lookups for the included chromosomes. For any full gnomAD VCFs still needed,
+the log reports download, checksum verification, and scan-and-write times separately.
 
 ### Rebuild NYGC 30× GRCh38 genotype panels from VCFs
 

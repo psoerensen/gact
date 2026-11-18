@@ -78,13 +78,15 @@ test_that("gact builds both releases with their own backbone and coordinates", {
   }
 
   downloads <- integer()
+  worker_counts <- integer()
   fail_on <- NA_integer_
   testthat::local_mocked_bindings(
     .gact_version_metadata = function(version) versions[[version]],
     .gact_require_vcf_scan = function() NULL,
-    downloadReferenceInputs = function(panel, reference_dir, chromosomes) {
+    downloadReferenceInputs = function(panel, reference_dir, chromosomes, workers = 1L) {
       expect_identical(panel, "IGSR")
       downloads <<- c(downloads, chromosomes)
+      worker_counts <<- c(worker_counts, workers)
       list(panel_dir = reference_dir, fasta_dir = reference_dir, rsid_dir = reference_dir)
     },
     prepareIGSRMarkers = function(chromosome, panel_dir, fasta_dir, rsid_dir, out_dir) {
@@ -154,13 +156,18 @@ test_that("gact builds both releases with their own backbone and coordinates", {
                   c("chr1.tsv.gz", "chr1.json"))
   fail_on <- NA_integer_
   downloads <- integer()
-  messages <- capture.output(ga <- gact(version = version, task = "build", dbdir = new_root),
+  worker_counts <- integer()
+  messages <- capture.output(ga <- gact(version = version, task = "build", dbdir = new_root,
+                                        workers = 2L),
                              type = "message")
   expect_identical(downloads, 2:22)
+  expect_identical(worker_counts, 2L)
   expect_identical(ga$rsids[1L], "rs38")
   expect_true(file.exists(file.path(ga$dbdir, paste0("GAlist_", version, ".rds"))))
   expect_true(any(grepl("21 of 22 to prepare", messages, fixed = TRUE)))
-  expect_true(any(grepl("Chromosome 2/22: downloading or verifying reference inputs",
+  expect_true(any(grepl("Downloading or verifying reference inputs for 21 chromosomes.",
                        messages, fixed = TRUE)))
   expect_true(any(grepl("Chromosome 22/22: marker table ready", messages, fixed = TRUE)))
+  expect_error(gact(version = version, task = "build", dbdir = new_root, workers = 0),
+               "workers must be a positive integer")
 })

@@ -9,7 +9,8 @@ gact(
   version = NULL,
   task = "download",
   dbdir = NULL,
-  timeout = 3000
+  timeout = 3000,
+  workers = 1L
 )
 }
 \arguments{
@@ -24,6 +25,9 @@ in an existing GAlist.}
 \item{dbdir}{The directory where the database should be stored, by default the current working directory.}
 
 \item{timeout}{Download timeout in seconds for the published release.}
+
+\item{workers}{Number of chromosomes to process concurrently for gnomAD
+lookup preparation in a GRCh38 build. Defaults to 1.}
 }
 \value{
 A list providing information and infrastructure of the gact database.

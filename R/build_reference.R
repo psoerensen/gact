@@ -7,6 +7,8 @@
 #' The NYGC sample panel is checked for the expected sample count, unique
 #' IDs and ancestry groups. Existing verified files are reused and conflicting files cause an
 #' error. IGSR also prepares rsID lookup tables from gnomAD v4.1 genome VCFs.
+#' It reuses verified tables from [installGnomadLookups()] and reports elapsed
+#' download, checksum, and scan-and-write times for newly processed gnomAD VCFs.
 #'
 #' @param panel One of "IGSR" or "NYGC".
 #' @param reference_dir Parent directory for the raw downloads. Defaults to
@@ -14,14 +16,18 @@
 #'   use `GAlist$dirs[["reference"]]`.
 #' @param chromosomes Autosomes to download, from 1 to 22.
 #' @param include_rsids For IGSR, prepare gnomAD rsID lookup tables. Set to
-#'   FALSE to use separately prepared tables. gnomAD VCFs are processed
-#'   one chromosome at a time and discarded after preparation.
+#'   FALSE to use separately prepared tables. gnomAD VCFs are discarded
+#'   after preparation.
+#' @param workers Number of concurrent chromosomes for gnomAD lookup
+#'   preparation. Defaults to 1. Each worker can stage a full gnomAD VCF.
 #' @return Invisibly, the input paths for the corresponding preparation functions.
-#' @seealso [prepareIGSRMarkers()], [buildMarkerDB()], [buildNYGCGenotypes()]
+#' @seealso [prepareIGSRMarkers()], [buildMarkerDB()], [buildNYGCGenotypes()],
+#'   [installGnomadLookups()]
 #' @export
 downloadReferenceInputs <- function(panel = c("IGSR", "NYGC"), reference_dir = "reference",
-                                    chromosomes = 1:22, include_rsids = TRUE) {
+                                    chromosomes = 1:22, include_rsids = TRUE, workers = 1L) {
   panel <- match.arg(panel)
+  workers <- .gact_reference_workers(workers)
   if (!length(chromosomes) || !all(chromosomes %in% 1:22) || anyDuplicated(chromosomes))
     stop("Supply unique autosomes from 1 to 22.")
   if (!dir.exists(reference_dir) && !dir.create(reference_dir, recursive = TRUE))
@@ -55,7 +61,7 @@ downloadReferenceInputs <- function(panel = c("IGSR", "NYGC"), reference_dir = "
       dirs$rsid_dir <- file.path(reference_dir, "gnomad-rsids")
       if (!dir.exists(dirs$rsid_dir) && !dir.create(dirs$rsid_dir))
         stop("Cannot create rsID lookup directory: ", dirs$rsid_dir)
-      for (chr in chromosomes) .gact_prepare_gnomad_lookup(chr, dirs$rsid_dir, lock)
+      .gact_prepare_gnomad_lookups(chromosomes, dirs$rsid_dir, lock, workers)
     }
   } else {
     dirs <- list(input_dir = file.path(reference_dir, "nygc-30x"))
@@ -129,16 +135,89 @@ downloadReferenceInputs <- function(panel = c("IGSR", "NYGC"), reference_dir = "
   invisible(target)
 }
 
+.gact_gnomad_lookup_files <- function(chr) {
+  lookup <- paste0("gnomad_rsid_chr", chr, ".tsv.bgz")
+  c(lookup, paste0(lookup, ".json"))
+}
+
+.gact_reference_workers <- function(workers) {
+  if (!is.numeric(workers) || length(workers) != 1L || !is.finite(workers) ||
+      workers < 1 || workers > .Machine$integer.max || workers != floor(workers))
+    stop("workers must be a positive integer.")
+  as.integer(workers)
+}
+
+.gact_gnomad_lookup_worker <- function(chr, directory, stage) {
+  log <- character()
+  warning_text <- character()
+  error <- tryCatch({
+    chr_stage <- file.path(stage, paste0("chr", chr))
+    if (!dir.create(chr_stage)) stop("Cannot create staging directory: ", chr_stage)
+    on.exit(unlink(chr_stage, recursive = TRUE), add = TRUE)
+    withCallingHandlers(.gact_prepare_gnomad_lookup(chr, directory, chr_stage),
+      message = function(condition) {
+        line <- trimws(conditionMessage(condition))
+        if (grepl("^gnomAD chr|^Reusing verified gnomAD", line)) {
+          log <<- c(log, line)
+          invokeRestart("muffleMessage")
+        }
+      },
+      warning = function(condition) {
+        warning_text <<- c(warning_text, conditionMessage(condition))
+        invokeRestart("muffleWarning")
+      })
+    NULL
+  }, error = conditionMessage)
+  list(log = log, warnings = warning_text, error = error)
+}
+
+.gact_prepare_gnomad_lookups <- function(chromosomes, directory, stage, workers) {
+  count <- min(workers, length(chromosomes))
+  if (count == 1L) {
+    for (chr in chromosomes) .gact_prepare_gnomad_lookup(chr, directory, stage)
+    return(invisible(NULL))
+  }
+
+  message("Preparing or verifying gnomAD lookups with ", count, " workers.")
+  cluster <- parallel::makePSOCKcluster(count, outfile = "")
+  on.exit(parallel::stopCluster(cluster), add = TRUE)
+  parallel::clusterCall(cluster, .libPaths, .libPaths())
+  results <- parallel::parLapplyLB(cluster, chromosomes, .gact_gnomad_lookup_worker,
+                                  directory = directory, stage = stage, chunk.size = 1L)
+  for (result in results) {
+    for (line in result$log) message(line)
+    for (line in result$warnings) warning(line, call. = FALSE)
+  }
+  failed <- which(vapply(results, function(result) !is.null(result$error), logical(1L)))
+  if (length(failed)) {
+    details <- vapply(results[failed], `[[`, character(1L), "error")
+    stop("gnomAD lookup preparation failed for ",
+         paste0("chr", chromosomes[failed], ": ", details, collapse = "\n"))
+  }
+  invisible(NULL)
+}
+
+.gact_verify_gnomad_lookup <- function(chr, directory) {
+  paths <- file.path(directory, .gact_gnomad_lookup_files(chr))
+  if (!all(file.exists(paths) & !dir.exists(paths)))
+    stop("Incomplete gnomAD lookup: ", paths[1L])
+  saved <- jsonlite::read_json(paths[2L])
+  if (!identical(saved$version, "4.1") || !isTRUE(saved$chromosome == chr) ||
+      !is.character(saved$url) || length(saved$url) != 1L || !isTRUE(nzchar(saved$url)) ||
+      !isTRUE(grepl("^[0-9a-f]{32}$", saved$source_md5)) ||
+      !identical(saved$output_md5, unname(tools::md5sum(paths[1L]))))
+    stop("Invalid gnomAD lookup or provenance: ", paths[1L])
+  paths
+}
+
 .gact_prepare_gnomad_lookup <- function(chr, directory, stage) {
   label <- paste0("chr", chr)
-  target <- file.path(directory, paste0("gnomad_rsid_", label, ".tsv.bgz"))
-  receipt <- paste0(target, ".json")
+  paths <- file.path(directory, .gact_gnomad_lookup_files(chr))
+  target <- paths[1L]
+  receipt <- paths[2L]
   if (file.exists(target) || file.exists(receipt)) {
-    if (!all(file.exists(c(target, receipt)))) stop("Incomplete gnomAD lookup: ", target)
-    saved <- jsonlite::read_json(receipt)
-    if (!identical(saved$version, "4.1") || !isTRUE(saved$chromosome == chr) ||
-        !identical(saved$output_md5, unname(tools::md5sum(target))))
-      stop("Existing gnomAD lookup differs from its receipt: ", target)
+    .gact_verify_gnomad_lookup(chr, directory)
+    message("Reusing verified gnomAD rsID lookup for ", label)
     return(invisible(target))
   }
 
@@ -157,11 +236,18 @@ downloadReferenceInputs <- function(panel = c("IGSR", "NYGC"), reference_dir = "
   expected <- paste(sprintf("%02x", as.integer(openssl::base64_decode(hash))), collapse = "")
   vcf <- file.path(stage, basename(object))
   message("Downloading gnomAD v4.1 genome sites for ", label)
+  start <- proc.time()[["elapsed"]]
   curl::curl_download(url, vcf, quiet = FALSE, mode = "wb")
-  if (!identical(unname(tools::md5sum(vcf)), expected))
+  message(sprintf("gnomAD %s download: %.1f s", label, proc.time()[["elapsed"]] - start))
+  message("Verifying gnomAD VCF checksum for ", label)
+  start <- proc.time()[["elapsed"]]
+  observed <- unname(tools::md5sum(vcf))
+  message(sprintf("gnomAD %s checksum: %.1f s", label, proc.time()[["elapsed"]] - start))
+  if (!identical(observed, expected))
     stop("gnomAD VCF checksum mismatch for ", label)
 
   message("Preparing gnomAD rsID lookup for ", label)
+  start <- proc.time()[["elapsed"]]
   lookup <- file.path(stage, basename(target))
   con <- gzfile(lookup, "wt", compression = 1)
   on.exit(if (!is.null(con)) close(con), add = TRUE)
@@ -181,6 +267,8 @@ downloadReferenceInputs <- function(panel = c("IGSR", "NYGC"), reference_dir = "
   })
   close(con)
   con <- NULL
+  message(sprintf("gnomAD %s scan and lookup write: %.1f s", label,
+                  proc.time()[["elapsed"]] - start))
   staged_receipt <- file.path(stage, basename(receipt))
   jsonlite::write_json(list(version = "4.1", chromosome = as.integer(chr), url = url,
     source_md5 = expected, output_md5 = unname(tools::md5sum(lookup))),
@@ -194,6 +282,144 @@ downloadReferenceInputs <- function(panel = c("IGSR", "NYGC"), reference_dir = "
   })
   unlink(vcf)
   invisible(target)
+}
+
+#' Package the compact gnomAD rsID lookups
+#'
+#' Archives gnomAD v4.1 GRCh38 lookup tables and their original provenance
+#' receipts. Includes SHA-256 checksums for all members and a separate
+#' checksum file for the archive.
+#' @param reference_dir Reference directory containing `gnomad-rsids`.
+#' @param out_dir Directory for the archive and checksum file.
+#' @param chromosomes Unique autosomes to package. Defaults to all 22.
+#' @return Invisibly, the archive path, checksum file path and archive SHA-256.
+#' @seealso [installGnomadLookups()]
+#' @export
+packageGnomadLookups <- function(reference_dir, out_dir = getwd(), chromosomes = 1:22) {
+  if (!length(chromosomes) || !all(chromosomes %in% 1:22) || anyDuplicated(chromosomes))
+    stop("Supply unique autosomes from 1 to 22.")
+  chromosomes <- sort(as.integer(chromosomes))
+  lookup_dir <- file.path(reference_dir, "gnomad-rsids")
+  if (!dir.exists(out_dir) && !dir.create(out_dir, recursive = TRUE))
+    stop("Cannot create output directory: ", out_dir)
+  out_dir <- normalizePath(out_dir, winslash = "/", mustWork = TRUE)
+  name <- "gnomad-v4.1-grch38-rsids.tar.gz"
+  archive <- file.path(out_dir, name)
+  checksum_file <- paste0(archive, ".sha256")
+  stage <- file.path(out_dir, paste0(".", name, ".lock"))
+  if (!dir.create(stage, mode = "0700", showWarnings = FALSE))
+    stop("Cannot stage gnomAD archive: ", stage)
+  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+  if (any(file.exists(c(archive, checksum_file))))
+    stop("gnomAD archive or checksum already exists in ", out_dir)
+
+  payload <- file.path(stage, "payload")
+  if (!dir.create(payload)) stop("Cannot create gnomAD archive payload.")
+  members <- unlist(lapply(chromosomes, .gact_gnomad_lookup_files), use.names = FALSE)
+  if (!all(file.copy(file.path(lookup_dir, members), payload)))
+    stop("Cannot copy gnomAD lookups and receipts from ", lookup_dir)
+  for (chr in chromosomes) .gact_verify_gnomad_lookup(chr, payload)
+  hashes <- vapply(file.path(payload, members), .gact_sha256_file, character(1L))
+  manifest <- list(build = "GRCh38", version = "4.1", chromosomes = as.list(chromosomes),
+                   sha256 = stats::setNames(as.list(unname(hashes)), members))
+  jsonlite::write_json(manifest, file.path(payload, "manifest.json"),
+                       auto_unbox = TRUE, pretty = TRUE)
+
+  staged_archive <- file.path(stage, name)
+  old <- setwd(payload)
+  status <- tryCatch(
+    utils::tar(staged_archive, c("manifest.json", members), compression = "gzip", tar = "internal"),
+    finally = setwd(old)
+  )
+  if (status != 0L) stop("Cannot create gnomAD lookup archive.")
+  checksum <- unclass(.gact_sha256_file(staged_archive))
+  staged_checksum <- paste0(staged_archive, ".sha256")
+  writeLines(paste(checksum, name, sep = "  "), staged_checksum)
+  suspendInterrupts({
+    if (!file.rename(staged_archive, archive)) stop("Cannot publish gnomAD lookup archive.")
+    if (!file.rename(staged_checksum, checksum_file)) {
+      unlink(archive)
+      stop("Cannot publish gnomAD archive checksum.")
+    }
+  })
+  invisible(list(archive = archive, checksum_file = checksum_file, sha256 = checksum))
+}
+
+#' Install packaged gnomAD rsID lookups
+#'
+#' Verifies the archive, member checksums and provenance before installing
+#' lookup pairs into `reference_dir/gnomad-rsids`. Existing identical files
+#' are reused. IGSR preparation uses these lookups for the included autosomes.
+#' @param archive Local archive from [packageGnomadLookups()].
+#' @param reference_dir Reference directory used by [downloadReferenceInputs()].
+#'   For automatic builds, use `file.path(dbdir, "reference")`.
+#' @param checksum_file SHA-256 file supplied with the archive.
+#' @return Invisibly, the installed lookup directory.
+#' @export
+installGnomadLookups <- function(archive, reference_dir,
+                                 checksum_file = paste0(archive, ".sha256")) {
+  checksum <- readLines(checksum_file)
+  expected <- sub("[[:space:]].*$", "", trimws(checksum))
+  if (length(expected) != 1L || !grepl("^[0-9a-fA-F]{64}$", expected) ||
+      tolower(expected) != .gact_sha256_file(archive))
+    stop("gnomAD archive SHA-256 mismatch.")
+  entries <- utils::untar(archive, list = TRUE, tar = "internal")
+  allowed <- c("manifest.json", unlist(lapply(1:22, .gact_gnomad_lookup_files)))
+  if (!"manifest.json" %in% entries || anyDuplicated(entries) || !all(entries %in% allowed))
+    stop("Unexpected gnomAD archive members.")
+
+  if (!dir.exists(reference_dir) && !dir.create(reference_dir, recursive = TRUE))
+    stop("Cannot create reference directory: ", reference_dir)
+  reference_dir <- normalizePath(reference_dir, winslash = "/", mustWork = TRUE)
+  stage <- file.path(reference_dir, ".gact-igsr-download")
+  if (!dir.create(stage, mode = "0700", showWarnings = FALSE))
+    stop("Cannot lock the IGSR download directory: ", stage)
+  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+  status <- utils::untar(archive, files = entries, exdir = stage, tar = "internal")
+  extracted <- file.path(stage, entries)
+  links <- Sys.readlink(extracted)
+  if (status != 0L || !all(file.exists(extracted) & !dir.exists(extracted)) ||
+      any(!is.na(links) & nzchar(links)))
+    stop("Cannot extract regular gnomAD archive files.")
+  manifest <- jsonlite::read_json(file.path(stage, "manifest.json"))
+  chromosomes <- unlist(manifest$chromosomes)
+  if (!identical(manifest$build, "GRCh38") || !identical(manifest$version, "4.1") ||
+      !is.numeric(chromosomes) || !length(chromosomes) ||
+      !all(chromosomes %in% 1:22) || anyDuplicated(chromosomes))
+    stop("Invalid gnomAD archive provenance.")
+  members <- unlist(lapply(chromosomes, .gact_gnomad_lookup_files), use.names = FALSE)
+  hashes <- unlist(manifest$sha256)
+  if (!setequal(entries, c("manifest.json", members)) || anyDuplicated(names(hashes)) ||
+      !setequal(names(hashes), members) ||
+      !identical(unname(hashes[members]),
+                 vapply(file.path(stage, members), .gact_sha256_file, character(1L),
+                        USE.NAMES = FALSE)))
+    stop("gnomAD archive member checksum mismatch.")
+  for (chr in chromosomes) .gact_verify_gnomad_lookup(chr, stage)
+
+  dest <- file.path(reference_dir, "gnomad-rsids")
+  if (!dir.exists(dest) && !dir.create(dest)) stop("Cannot create gnomAD lookup directory.")
+  targets <- file.path(dest, members)
+  links <- Sys.readlink(targets)
+  if (any(!is.na(links) & nzchar(links))) stop("gnomAD destination contains a symbolic link.")
+  existing <- file.exists(targets)
+  for (i in which(existing)) {
+    if (dir.exists(targets[i]) || .gact_sha256_file(targets[i]) != hashes[[members[i]]])
+      stop("Existing gnomAD destination differs from the archive: ", targets[i])
+  }
+  published <- character()
+  committed <- FALSE
+  on.exit(if (!committed) unlink(published, expand = FALSE), add = TRUE)
+  suspendInterrupts({
+    for (i in which(!existing)) {
+      if (file.exists(targets[i]) || !file.rename(file.path(stage, members[i]), targets[i]))
+        stop("Cannot install gnomAD lookup file: ", targets[i])
+      published <- c(published, targets[i])
+    }
+    committed <- TRUE
+  })
+  message("Verified gnomAD lookup bundle for ", length(chromosomes), " autosome(s) at ", dest)
+  invisible(dest)
 }
 
 #' Prepare one IGSR GRCh38 chromosome for the marker catalog
@@ -431,7 +657,7 @@ prepareIGSRMarkers <- function(chromosome, panel_dir, fasta_dir, rsid_dir,
  tables
 }
 
-.gact_prepare_grch38_marker_tables <- function(reference_dir) {
+.gact_prepare_grch38_marker_tables <- function(reference_dir, workers) {
   out_dir <- file.path(reference_dir, "grch38-prep.auto", "tables")
   if (!dir.exists(out_dir) && !dir.create(out_dir, recursive = TRUE, showWarnings = FALSE) &&
       !dir.exists(out_dir)) {
@@ -456,12 +682,20 @@ prepareIGSRMarkers <- function(chromosome, panel_dir, fasta_dir, rsid_dir,
   .gact_require_vcf_scan()
   message("Preparing GRCh38 chromosome tables in ", out_dir, " (",
           length(missing), " of ", length(chromosomes), " to prepare).")
+  inputs <- NULL
+  if (workers > 1L && length(missing) > 1L) {
+    message("Downloading or verifying reference inputs for ", length(missing), " chromosomes.")
+    inputs <- downloadReferenceInputs("IGSR", reference_dir, chromosomes = missing, workers = workers)
+  }
   for (chr in missing) {
-    message("Chromosome ", chr, "/22: downloading or verifying reference inputs")
-    inputs <- downloadReferenceInputs("IGSR", reference_dir, chromosomes = chr)
+    ready <- inputs
+    if (is.null(ready)) {
+      message("Chromosome ", chr, "/22: downloading or verifying reference inputs")
+      ready <- downloadReferenceInputs("IGSR", reference_dir, chromosomes = chr)
+    }
     message("Chromosome ", chr, "/22: preparing marker table")
-    prepareIGSRMarkers(chr, panel_dir = inputs$panel_dir, fasta_dir = inputs$fasta_dir,
-                       rsid_dir = inputs$rsid_dir, out_dir = out_dir)
+    prepareIGSRMarkers(chr, panel_dir = ready$panel_dir, fasta_dir = ready$fasta_dir,
+                       rsid_dir = ready$rsid_dir, out_dir = out_dir)
     message("Chromosome ", chr, "/22: marker table ready")
   }
   out_dir

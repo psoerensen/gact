@@ -8,7 +8,8 @@ downloadReferenceInputs(
   panel = c("IGSR", "NYGC"),
   reference_dir = "reference",
   chromosomes = 1:22,
-  include_rsids = TRUE
+  include_rsids = TRUE,
+  workers = 1L
 )
 }
 \arguments{
@@ -21,8 +22,11 @@ use \code{GAlist$dirs[["reference"]]}.}
 \item{chromosomes}{Autosomes to download, from 1 to 22.}
 
 \item{include_rsids}{For IGSR, prepare gnomAD rsID lookup tables. Set to
-FALSE to use separately prepared tables. gnomAD VCFs are processed
-one chromosome at a time and discarded after preparation.}
+FALSE to use separately prepared tables. gnomAD VCFs are discarded
+after preparation.}
+
+\item{workers}{Number of concurrent chromosomes for gnomAD lookup
+preparation. Defaults to 1. Each worker can stage a full gnomAD VCF.}
 }
 \value{
 Invisibly, the input paths for the corresponding preparation functions.
@@ -33,7 +37,10 @@ panels. VCFs, indexes and FASTAs are checked against their release manifests.
 The NYGC sample panel is checked for the expected sample count, unique
 IDs and ancestry groups. Existing verified files are reused and conflicting files cause an
 error. IGSR also prepares rsID lookup tables from gnomAD v4.1 genome VCFs.
+It reuses verified tables from \code{\link[=installGnomadLookups]{installGnomadLookups()}} and reports elapsed
+download, checksum, and scan-and-write times for newly processed gnomAD VCFs.
 }
 \seealso{
-\code{\link[=prepareIGSRMarkers]{prepareIGSRMarkers()}}, \code{\link[=buildMarkerDB]{buildMarkerDB()}}, \code{\link[=buildNYGCGenotypes]{buildNYGCGenotypes()}}
+\code{\link[=prepareIGSRMarkers]{prepareIGSRMarkers()}}, \code{\link[=buildMarkerDB]{buildMarkerDB()}}, \code{\link[=buildNYGCGenotypes]{buildNYGCGenotypes()}},
+\code{\link[=installGnomadLookups]{installGnomadLookups()}}
 }

@@ -22,6 +22,8 @@
 #'   in an existing GAlist.
 #' @param dbdir The directory where the database should be stored, by default the current working directory.
 #' @param timeout Download timeout in seconds for the published release.
+#' @param workers Number of chromosomes to process concurrently for gnomAD
+#'   lookup preparation in a GRCh38 build. Defaults to 1.
 #' @details A build uses the published marker backbone for GRCh37 and
 #'   runs [buildMarkerDB()] for GRCh38 using prepared chromosome tables.
 #'   It looks under `dbdir` and its parent for `reference/prepared_grch38`,
@@ -49,7 +51,7 @@
 #' @export
 #'
 gact <- function(GAlist=NULL, version=NULL, task="download",
-                 dbdir=NULL, timeout=3000) {
+                 dbdir=NULL, timeout=3000, workers=1L) {
 
  if (is.null(dbdir)) dbdir <- getwd()
  if (is.null(version))
@@ -76,7 +78,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
   )
  }
 
- if (identical(task, "build")) return(.gact_build_release(version, dbdir))
+ if (identical(task, "build")) return(.gact_build_release(version, dbdir, workers))
 
  if(task=="download") {
   if (isTRUE(version_metadata$local_build)) {
@@ -143,7 +145,8 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
  return(GAlist)
 }
 
-.gact_build_release <- function(version, dbdir) {
+.gact_build_release <- function(version, dbdir, workers) {
+ workers <- .gact_reference_workers(workers)
  download_options <- options(c("download.file.method", "url.method", "timeout"))
  on.exit(options(download_options), add = TRUE)
  if (!dir.exists(dbdir) && !dir.create(dbdir, recursive = TRUE))
@@ -159,7 +162,7 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
  if (.gact_version_metadata(version)$build == "GRCh38") {
   tables <- .gact_grch38_marker_tables(dbdir)
   if (is.null(tables)) {
-   tables <- .gact_prepare_grch38_marker_tables(file.path(dbdir, "reference"))
+   tables <- .gact_prepare_grch38_marker_tables(file.path(dbdir, "reference"), workers)
   } else {
    message("Using prepared GRCh38 chromosome tables at ", tables)
   }

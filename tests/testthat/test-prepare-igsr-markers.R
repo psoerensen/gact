@@ -2,6 +2,7 @@ test_that("IGSR preparation preserves allele and rsID rules and writes verified 
   skip_if_not_installed("gsim")
   skip_if_not("gsim_scan_vcf" %in% getNamespaceExports("gsim"))
   root <- tempfile("igsr-")
+  on.exit(unlink(root, recursive = TRUE))
   dirs <- file.path(root, c("panel", "fa", "rsid", "prepared"))
   for (dir in dirs) dir.create(dir, recursive = TRUE)
   panel_name <- "ALL.chr1.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz"
@@ -64,7 +65,10 @@ test_that("IGSR preparation preserves allele and rsID rules and writes verified 
          content = charToRaw(jsonlite::toJSON(list(md5Hash = hash), auto_unbox = TRUE)))
   }, .package = "curl")
   cache <- file.path(root, "downloads")
-  input <- downloadReferenceInputs("IGSR", cache, chromosomes = 1L)
+  messages <- capture.output(input <- downloadReferenceInputs("IGSR", cache, chromosomes = 1L),
+                             type = "message")
+  expect_length(grep("^gnomAD chr1 (download|checksum|scan and lookup write): [0-9.]+ s$",
+                     messages), 3L)
   expect_length(downloads, 5L)
   expect_identical(downloadReferenceInputs("IGSR", cache, chromosomes = 1L), input)
   expect_length(downloads, 5L)
@@ -78,6 +82,46 @@ test_that("IGSR preparation preserves allele and rsID rules and writes verified 
   expect_equal(unname(unlist(receipt$counts)), c(11, 2, 1, 1, 2, 5))
   expect_identical(receipt$output$md5, unname(tools::md5sum(table)))
   expect_length(jsonlite::read_json(file.path(dirs[4L], "chr1.json"))$sources, 3L)
+
+  bundle <- packageGnomadLookups(cache, file.path(root, "bundle"), chromosomes = 1L)
+  fresh <- file.path(root, "fresh")
+  expect_error(installGnomadLookups(bundle$archive, fresh, checksum_file = fasta),
+               "archive SHA-256 mismatch")
+  expect_false(dir.exists(fresh))
+  installed <- installGnomadLookups(bundle$archive, fresh)
+  expect_identical(installGnomadLookups(bundle$archive, fresh), installed)
+  members <- list.files(input$rsid_dir)
+  expect_identical(unname(tools::md5sum(file.path(installed, members))),
+                   unname(tools::md5sum(file.path(input$rsid_dir, members))))
+  downloads <- character()
+  reuse <- downloadReferenceInputs("IGSR", fresh, chromosomes = 1L)
+  expect_length(downloads, 4L)
+  expect_false(basename(gnomad) %in% downloads)
+  output <- file.path(root, "prepared-from-bundle")
+  reused <- prepareIGSRMarkers(1L, reuse$panel_dir, reuse$fasta_dir, reuse$rsid_dir, output)
+  expect_identical(reused$sources, receipt$sources)
+  expect_identical(data.table::fread(file.path(output, "chr1.tsv.gz")), markers)
+  writeLines("changed", file.path(installed, basename(rsid)))
+  expect_error(installGnomadLookups(bundle$archive, fresh), "destination differs")
+  expect_identical(readLines(file.path(installed, basename(rsid))), "changed")
+  expect_false(dir.exists(file.path(fresh, ".gact-igsr-download")))
+
+  altered <- file.path(root, "altered")
+  dir.create(altered)
+  utils::untar(bundle$archive, exdir = altered, tar = "internal")
+  writeLines("changed", file.path(altered, basename(rsid)))
+  bad_archive <- file.path(root, "altered.tar.gz")
+  local({
+    previous <- setwd(altered)
+    on.exit(setwd(previous))
+    expect_equal(utils::tar(bad_archive, list.files(),
+                            compression = "gzip", tar = "internal"), 0L)
+  })
+  writeLines(gact:::.gact_sha256_file(bad_archive), paste0(bad_archive, ".sha256"))
+  expect_error(installGnomadLookups(bad_archive, file.path(root, "invalid")),
+               "member checksum mismatch")
+  expect_false(dir.exists(file.path(root, "invalid", "gnomad-rsids")))
+
   expect_error(prepareIGSRMarkers(1L, dirs[1L], dirs[2L], dirs[3L], dirs[4L]),
                "already exists")
   write_gz(c(">chr1", "GGGGGGGGGG"), fasta)
@@ -88,4 +132,35 @@ test_that("IGSR preparation preserves allele and rsID rules and writes verified 
   expect_false(file.exists(file.path(root, "bad", "ucsc-hg38", "chr1.fa.gz")))
   expect_error(prepareIGSRMarkers(1L, dirs[1L], dirs[2L], file.path(root, "missing"), dirs[4L]),
                "gnomad_rsid_chr1\\.tsv\\.bgz")
+})
+
+test_that("parallel gnomAD workers reuse lookups and identify a failing chromosome", {
+  root <- tempfile("gnomad-parallel-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE))
+  stage <- file.path(root, "stage")
+  dir.create(stage)
+  for (chr in 1:2) {
+    paths <- file.path(root, gact:::.gact_gnomad_lookup_files(chr))
+    con <- gzfile(paths[1L], "wt")
+    writeLines(c("#CHROM\tPOS\tID\tREF\tALT", paste0("chr", chr, "\t1\trs", chr, "\tA\tG")), con)
+    close(con)
+    jsonlite::write_json(list(version = "4.1", chromosome = chr,
+      url = paste0("https://example.org/chr", chr, ".vcf.bgz"),
+      source_md5 = strrep("a", 32L), output_md5 = unname(tools::md5sum(paths[1L]))),
+      paths[2L], auto_unbox = TRUE)
+  }
+  messages <- capture.output(gact:::.gact_prepare_gnomad_lookups(1:2, root, stage, 2L),
+                             type = "message")
+  expect_true("Preparing or verifying gnomAD lookups with 2 workers." %in% messages)
+  expect_true(all(paste0("Reusing verified gnomAD rsID lookup for chr", 1:2) %in% messages))
+  expect_length(list.files(stage, all.files = TRUE, no.. = TRUE), 0L)
+
+  first <- file.path(root, gact:::.gact_gnomad_lookup_files(1L))
+  hashes <- tools::md5sum(first)
+  writeLines("changed", file.path(root, "gnomad_rsid_chr2.tsv.bgz"))
+  expect_error(gact:::.gact_prepare_gnomad_lookups(1:2, root, stage, 2L),
+               "failed for chr2: Invalid gnomAD lookup or provenance")
+  expect_identical(tools::md5sum(first), hashes)
+  expect_length(list.files(stage, all.files = TRUE, no.. = TRUE), 0L)
 })
