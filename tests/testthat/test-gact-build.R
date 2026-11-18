@@ -80,9 +80,17 @@ test_that("gact builds both releases with their own backbone and coordinates", {
   downloads <- integer()
   worker_counts <- integer()
   fail_on <- NA_integer_
+  chain <- file.path(shared, "liftover.chain")
+  variants <- file.path(shared, "liftover.tsv")
+  writeLines(c("chain 100 chr1 300000 + 9 10 chr1 300000 + 249999 250000 1", "1"), chain)
+  writeLines(c("chr\tpos\tref\talt", "1\t10\tA\tC"), variants)
   testthat::local_mocked_bindings(
     .gact_version_metadata = function(version) versions[[version]],
     .gact_require_vcf_scan = function() NULL,
+    .gact_cache_liftover_source = function(GAlist, source) {
+      expect_identical(GAlist$assembly, "GRCh38")
+      if (grepl("chain", source$url)) chain else variants
+    },
     downloadReferenceInputs = function(panel, reference_dir, chromosomes, workers = 1L) {
       expect_identical(panel, "IGSR")
       downloads <<- c(downloads, chromosomes)
@@ -122,8 +130,14 @@ test_that("gact builds both releases with their own backbone and coordinates", {
     expect_identical(getMarkerSets(ga, "Pathways")$"R-HSA-1", expected)
     expect_identical(getMarkerSets(ga, "DrugGenes")$Drug, expected)
     expect_error(gact(version = version, task = "build", dbdir = release_dir), "already exists")
-    if (ga$assembly == "GRCh37") expect_true(file.exists(ga$ldRegions$GRCh37$EUR$file))
+    map <- gact:::.gact_liftover_dir(ga)
+    if (ga$assembly == "GRCh37") {
+      expect_true(file.exists(ga$ldRegions$GRCh37$EUR$file))
+      expect_false(dir.exists(map))
+    }
     if (ga$assembly == "GRCh38") {
+      expect_true(file.exists(file.path(map, "index.bin")))
+      expect_identical(buildLiftoverMap(ga), map)
       expect_true(any(grepl("Chromosome 1/22: checking and reading", messages, fixed = TRUE)))
       expect_true(any(grepl("Chromosome 22/22: checking and reading", messages, fixed = TRUE)))
       manifest <- jsonlite::read_json(file.path(ga$dirs[["marker"]], "marker_manifest.json"))

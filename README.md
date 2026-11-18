@@ -595,18 +595,19 @@ This directory registration does not download data or run analyses.
 
 #### Lift GRCh37 GWAS positions during alignment
 
-Build the coordinate map once from a GRCh37 source variant list, such as the
-[Pan-UKB variant manifest](https://pan.ukbb.broadinstitute.org/docs/per-phenotype-files/#variant-manifest-file)
-and the [UCSC hg19-to-hg38 chain](https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/).
+`gact(task = "build")` prepares the map automatically for GRCh38. For an
+existing GRCh38 database, run `buildLiftoverMap(GAlist)`. It caches the
+[Pan-UKB variant list](https://pan.ukbb.broadinstitute.org/docs/per-phenotype-files/#variant-manifest-file)
+and the [UCSC hg19-to-hg38 chain](https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/)
+under `reference/` and verifies the chain against the UCSC checksum.
+
 ```r
-map <- buildLiftoverMap(GAlist, "panukb-variants.tsv.bgz", "hg19ToHg38.over.chain.gz")
-runGWASManifest(manifest, descriptor, knowledge = "formats.json",
-                engine = "cpp", liftover_map = map)
+runGWASManifest(manifest, descriptor, knowledge = "formats.json", engine = "cpp")
 ```
 
-By default the map builder saves a binary index, chromosome tables, and
-checksums under `marker/liftover-grch37-grch38/`. For later
-batches, pass that directory as `liftover_map`. A verified forward-strand
+The C++ engine finds the installed map under `marker/liftover-grch37-grch38/`
+for GRCh37 inputs targeting GRCh38. Use `liftover_map` to select a custom map.
+A verified forward-strand
 format profile identifies the coordinate and association columns. For
 original Pan-UKB files, select a single-ancestry profile and use
 `"neglog10p"` for the p-value scale. Other studies can reuse the same map
@@ -619,3 +620,10 @@ worker opens the saved index and lifts GRCh37 rows during alignment. GRCh38
 rows go directly to alignment. The same study QC JSON records `n_lifted` and
 `liftover_unmapped` for lifted studies. `scanGWAS()` continues to find Catalog
 files.
+
+Use `packageLiftoverMap(GAlist, out_dir)` to prepare the map archive and
+its SHA-256 file for distribution. Until a release bundle is published, supply
+the archive explicitly to `downloadDB(GAlist, what = "liftover", archive = path)`.
+For a local archive, keep its `.sha256` file alongside it. For an HTTPS archive,
+pass the checksum as `sha256`. Installation verifies the archive, map members,
+and compatibility with the destination marker catalog.

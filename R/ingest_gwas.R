@@ -831,17 +831,31 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
 #' compressed table per chromosome, a reusable C++ index, QC counts, and checksums.
 #' @param GAlist GRCh38 database descriptor from the IGSR marker build.
 #' @param variant_manifest Local GRCh37 variant list with chr, pos, ref, and alt columns.
+#'   Defaults to the Pan-UKB variant list cached in the release reference directory.
 #' @param chain Local UCSC hg19-to-hg38 chain file, plain or gzip compressed.
+#'   Defaults to a checksum-verified download cached in the release reference directory.
 #' @param out_dir New output directory. Defaults to liftover-grch37-grch38 under the release marker directory.
 #' @return Invisibly, the map directory. Pass it to [liftGWASStats()].
 #' @export
-buildLiftoverMap <- function(GAlist, variant_manifest, chain, out_dir = NULL) {
+buildLiftoverMap <- function(GAlist, variant_manifest = NULL, chain = NULL, out_dir = NULL) {
   if (!identical(.gact_catalog_build(GAlist), "GRCh38"))
     stop("A GRCh38 marker backbone is required.")
-  if (is.null(out_dir)) out_dir <- file.path(GAlist$dirs[["marker"]], "liftover-grch37-grch38")
+  if (is.null(out_dir)) out_dir <- .gact_liftover_dir(GAlist)
   parent <- normalizePath(dirname(out_dir), winslash = "/", mustWork = TRUE)
   out_dir <- file.path(parent, basename(out_dir))
-  if (file.exists(out_dir)) stop("Liftover output already exists: ", out_dir)
+  if (file.exists(out_dir)) {
+    if (!is.null(variant_manifest) || !is.null(chain))
+      stop("Liftover output already exists: ", out_dir)
+    .gact_verify_liftover_map(GAlist, out_dir)
+    message("Using verified liftover map at ", out_dir)
+    return(invisible(out_dir))
+  }
+  defaults <- .gact_liftover_sources()
+  sources <- list(if (is.null(variant_manifest)) defaults$variant_manifest,
+                  if (is.null(chain)) defaults$chain, NULL)
+  if (is.null(chain)) chain <- .gact_cache_liftover_source(GAlist, defaults$chain)
+  if (is.null(variant_manifest))
+    variant_manifest <- .gact_cache_liftover_source(GAlist, defaults$variant_manifest)
   catalog <- file.path(GAlist$dirs[["marker"]], "markers.txt.gz")
   provenance <- jsonlite::read_json(file.path(dirname(catalog), "marker_manifest.json"))
   if (!identical(provenance$build, "GRCh38") || !identical(provenance$effect_allele, "ALT"))
@@ -882,8 +896,11 @@ buildLiftoverMap <- function(GAlist, variant_manifest, chain, out_dir = NULL) {
   .Call(C_gact_gwas_liftover_index, file.path(stage, shards), index)
   jsonlite::write_json(list(source_build = "GRCh37", build = "GRCh38",
     index = list(file = basename(index), md5 = unname(tools::md5sum(index))),
-    inputs = Map(function(file, md5) list(file = basename(file), md5 = md5),
-                 as.list(inputs), as.list(unname(hashes))),
+    inputs = Map(function(file, md5, source) {
+      input <- list(file = basename(file), md5 = md5)
+      if (!is.null(source)) input$url <- source$url
+      input
+    }, as.list(inputs), as.list(unname(hashes)), sources),
     non_autosomal = sum(!variants$chr %in% autosomes), chromosomes = receipts),
     file.path(stage, "manifest.json"), pretty = TRUE, auto_unbox = TRUE)
   if (file.exists(out_dir) || !file.rename(stage, out_dir)) stop("Cannot publish liftover map.")
@@ -2890,7 +2907,9 @@ recodeSumstat <- recodeStat
 #' @param scratch_dir Parent directory for temporary C++ working files.
 #'   Defaults to SLURM_TMPDIR when available, or R's temporary directory.
 #'   Each run removes its own working directory when it exits.
-#' @param liftover_map Directory from [buildLiftoverMap()]. With `engine = "cpp"`,
+#' @param liftover_map Directory from [buildLiftoverMap()]. The C++ engine
+#'   automatically uses the installed map for GRCh37 inputs targeting GRCh38.
+#'   Supply this argument to override the installed map. With a map,
 #'   inputs with a verified forward-strand profile are checked against both
 #'   builds using the mapped chromosome, position and allele columns.
 #'   The declared build must agree. GRCh37
@@ -3028,7 +3047,12 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
         stop("Specify type (binary or quantitative) and build (GRCh37 or GRCh38)")
       }
       needs_lift <- !identical(build, row$build)
-      if (needs_lift && (is.null(liftover_map) || !identical(build, "GRCh38") ||
+      map_dir <- liftover_map
+      if (is.null(map_dir) && needs_lift && engine == "cpp" && identical(build, "GRCh38")) {
+        installed <- .gact_liftover_dir(GAlist)
+        if (dir.exists(installed)) map_dir <- installed
+      }
+      if (needs_lift && (is.null(map_dir) || !identical(build, "GRCh38") ||
                          !identical(row$build, "GRCh37"))) {
         stop("Verify that the study and marker catalog use the same genome build")
       }
@@ -3072,10 +3096,10 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
         }
       }
       forward <- identical(recipe$strand, "forward")
-      if (!is.null(liftover_map) && (needs_lift || forward)) {
+      if (!is.null(map_dir) && (needs_lift || forward)) {
         if (!forward || !identical(build, "GRCh38"))
           stop("Liftover requires a GRCh38 catalog and a verified forward-strand profile")
-        if (is.null(map_info)) map_info <- .gact_liftover_index(liftover_map, GAlist)
+        if (is.null(map_info)) map_info <- .gact_liftover_index(map_dir, GAlist)
         check <- recipe$build_check
         if (is.null(check)) {
           if (!inspected && !import) file <- .gact_gwas_manifest_file(row, data_dir)
@@ -3083,7 +3107,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
           mapping <- unlist(recipe$mapping)
           preview <- stats::setNames(preview[unname(mapping[c("chr", "pos", "nea", "ea")])],
                                     .gact_liftover_stat_keys)
-          check <- verifyGWASBuild(preview, liftover_map)
+          check <- verifyGWASBuild(preview, map_dir)
           check$index_md5 <- map_info$md5
           recipe$build_check <- check
           if (inspected) jsonlite::write_json(recipe, entry$recipe, pretty = TRUE, auto_unbox = TRUE)

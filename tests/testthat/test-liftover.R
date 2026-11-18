@@ -25,9 +25,31 @@ test_that("Pan-UKB liftover verifies unique positions and keeps the effect on it
     alt = c("G", rep("C", 10L), "AA", "C"), beta_EUR = seq_len(13L) / 10)
   variants <- file.path(root, "variants.tsv.gz")
   data.table::fwrite(stat, variants, sep = "\t")
-  map <- buildLiftoverMap(ga, variants, chain)
+  sources <- list(chain = list(url = "https://example.org/ucsc.chain.gz",
+                               md5 = unname(tools::md5sum(chain))),
+                  variant_manifest = list(url = "https://example.org/variants.tsv.gz"))
+  local_mocked_bindings(.gact_liftover_sources = function() sources, .package = "gact")
+  requests <- character()
+  local_mocked_bindings(curl_download = function(url, destfile, ...) {
+    requests <<- c(requests, url)
+    input <- if (url == sources$chain$url) chain else variants
+    stopifnot(file.copy(input, destfile))
+  }, .package = "curl")
+  chain_md5 <- sources$chain$md5
+  sources$chain$md5 <- strrep("0", 32)
+  expect_error(buildLiftoverMap(ga), "input checksum mismatch")
+  expect_identical(requests, sources$chain$url)
+  sources$chain$md5 <- chain_md5
+  requests <- character()
+  map <- buildLiftoverMap(ga)
   expect_identical(dirname(map), unname(ga$dirs[["marker"]]))
   expect_true(file.exists(file.path(map, "index.bin")))
+  expect_identical(buildLiftoverMap(ga), map)
+  expect_identical(requests, c(sources$chain$url, sources$variant_manifest$url))
+  expect_true(file.exists(file.path(ga$dirs[["reference"]], basename(map), "ucsc.chain.gz")))
+  expect_identical(gact:::.gact_cache_liftover_source(ga, sources$chain),
+                   file.path(ga$dirs[["reference"]], basename(map), "ucsc.chain.gz"))
+  expect_length(requests, 2L)
   counts <- jsonlite::read_json(file.path(map, "manifest.json"))
   expect_equal(counts$non_autosomal, 1)
   counts <- counts$chromosomes[[1L]]$counts
@@ -50,8 +72,40 @@ test_that("Pan-UKB liftover verifies unique positions and keeps the effect on it
   expect_identical(verifyGWASBuild(stat[rep(1L, 20L), ], map)$grch37_only, 1L)
   expect_identical(verifyGWASBuild(stat, map)$build, NA_character_)
   expect_error(buildLiftoverMap(ga, variants, chain), "already exists")
+
+  bundle <- packageLiftoverMap(ga, file.path(root, "bundle"))
+  other <- createDB(ga$version, tempfile(tmpdir = root))
+  expect_error(downloadDB(other, what = "liftover"), "No liftover bundle is configured")
+  expect_true(all(file.copy(c(catalog, file.path(dirname(catalog), "marker_manifest.json")),
+                           other$dirs[["marker"]])))
+  expect_error(downloadDB(other, what = "liftover", archive = bundle$archive,
+                          sha256 = strrep("0", 64)), "archive SHA-256 mismatch")
+  other <- downloadDB(other, what = "liftover", archive = bundle$archive)
+  installed <- gact:::.gact_liftover_dir(other)
+  expect_identical(liftGWASStats(stat, installed), lifted)
+  expect_identical(tail(downloadDB(other, "liftover")$downloads$dest_file, 1L), installed)
+
+  remote_db <- createDB(ga$version, tempfile(tmpdir = root))
+  remote_catalog <- file.path(remote_db$dirs[["marker"]], basename(catalog))
+  writeLines("mismatched catalog", remote_catalog)
+  expect_error(downloadDB(remote_db, "liftover", archive = bundle$archive),
+               "different GRCh38 marker catalog")
+  expect_false(dir.exists(gact:::.gact_liftover_dir(remote_db)))
+  expect_true(file.copy(catalog, remote_catalog, overwrite = TRUE))
+  local_mocked_bindings(curl_download = function(url, destfile, ...) {
+    expect_identical(url, "https://example.org/liftover.tar.gz")
+    stopifnot(file.copy(bundle$archive, destfile))
+  }, .package = "curl")
+  versions <- gact:::gact_versions
+  versions[[ga$version]]$sources$liftover <- "https://example.org/liftover.tar.gz"
+  versions[[ga$version]]$liftover_sha256 <- bundle$sha256
+  local_mocked_bindings(.gact_version_metadata = function(version) versions[[version]],
+                        .package = "gact")
+  remote_db <- downloadDB(remote_db, "liftover")
+  expect_true(file.exists(file.path(gact:::.gact_liftover_dir(remote_db), "index.bin")))
   writeLines("altered", file.path(map, "chr1.tsv.gz"))
   expect_error(liftGWASStats(stat, map), "checksum mismatch")
+  expect_error(buildLiftoverMap(ga), "checksum mismatch")
 })
 
 test_that("native manifest aligns verified GRCh37 and GRCh38 in one batch", {
@@ -101,7 +155,7 @@ test_that("native manifest aligns verified GRCh37 and GRCh38 in one batch", {
   jsonlite::write_json(list(formats = list(profile)), knowledge, auto_unbox = TRUE)
   run <- function(rows, ...) runGWASManifest(manifest[rows, , drop = FALSE], descriptor,
     knowledge = knowledge, engine = "cpp", ...)
-  expect_match(run(1L, import = FALSE)$issues, "same genome build")
+  expect_identical(run(1L, import = FALSE)$status, "ready")
   expect_match(run(1L, import = FALSE, liftover_map = map, preview_rows = 3L)$issues,
     "Preview does not verify")
   result <- run(1:3, liftover_map = map)

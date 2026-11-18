@@ -25,7 +25,8 @@
 #' @param workers Number of chromosomes to process concurrently for gnomAD
 #'   lookup preparation in a GRCh38 build. Defaults to 1.
 #' @details A build uses the published marker backbone for GRCh37 and
-#'   runs [buildMarkerDB()] for GRCh38 using prepared chromosome tables.
+#'   runs [buildMarkerDB()] for GRCh38 using prepared chromosome tables and
+#'   prepares the GRCh37 to GRCh38 reference with [buildLiftoverMap()].
 #'   It looks under `dbdir` and its parent for `reference/prepared_grch38`,
 #'   `prepared_grch38` or `reference/grch38-prep.*/tables`. If no complete
 #'   set exists, it downloads verified inputs with [downloadReferenceInputs()]
@@ -169,6 +170,8 @@ gact <- function(GAlist=NULL, version=NULL, task="download",
    message("Using prepared GRCh38 chromosome tables at ", tables)
   }
   ga <- buildMarkerDB(tables, dbdir = stage)
+  message("Preparing the GRCh37 to GRCh38 liftover map.")
+  buildLiftoverMap(ga)
  } else {
   ga <- downloadDB(createDB(version, stage), what = "marker")
   if (!length(ga$rsids) || !file.exists(file.path(ga$dirs[["marker"]], "cpra.txt.gz")))
@@ -452,15 +455,33 @@ list_gact_versions <- function() {
 #'   For GRCh38, \code{"1000G"} installs the five NYGC PLINK triplets from
 #'   Zenodo record 24292610 directly in the marker directory. It verifies
 #'   SHA-256 checksums and reuses files that already match the release.
+#'   Use code{"liftover"} to install a prepared GRCh37 to GRCh38 map
+#'   into the marker directory of the matching GRCh38 release.
 #' @param min_combined_score Minimum combined score for filtering STRING/STITCH data.
 #' @param min_interactions Minimum number of interactions for filtering STRING/STITCH data.
+#' @param archive For code{what = "liftover"}, a local archive or HTTPS URL
+#'   from [packageLiftoverMap()]. Defaults to the configured release bundle.
+#' @param sha256 Expected SHA-256 of the liftover archive. A local archive
+#'   can use its accompanying code{.sha256} file.
 #'
 #' @return The updated GAlist object with file paths and GAlist$downloads updated.
 #' @export
 downloadDB <- function(GAlist = NULL, what = NULL,
-                       min_combined_score = 900, min_interactions = 5) {
+                       min_combined_score = 900, min_interactions = 5,
+                       archive = NULL, sha256 = NULL) {
 
  if (is.null(what)) stop("Please specify what to download, e.g. what='gsets'")
+ if (identical(what, "liftover")) {
+  dest <- .gact_install_liftover_map(GAlist, archive, sha256)
+  source <- archive %||% .gact_version_metadata(GAlist$version)$sources[["liftover"]]
+  GAlist <- log_download(GAlist, what, "liftover", source %||% "installed map", dest, "success",
+                         "Verified GRCh37 to GRCh38 liftover map")
+  row <- nrow(GAlist$downloads)
+  GAlist$downloads$dest_file[row] <- dest
+  GAlist$downloads$file_size_MB[row] <-
+   round(sum(file.size(file.path(dest, .gact_liftover_members()))) / 1e6, 3)
+  return(GAlist)
+ }
  if (identical(what, "1000G") &&
      identical(.gact_catalog_build(GAlist) %||% GAlist$assembly, "GRCh38")) {
   doi <- gact_versions[["hsa.GRCh38.0.0.1"]]$sources[["1000G"]]

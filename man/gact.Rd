@@ -45,7 +45,9 @@ associations and their multifaceted relationships in the context of complex trai
 }
 \details{
 A build uses the published marker backbone for GRCh37 and
-runs \code{\link[=buildMarkerDB]{buildMarkerDB()}} for GRCh38 using prepared chromosome tables.
+runs \code{\link[=buildMarkerDB]{buildMarkerDB()}} for GRCh38 using prepared chromosome tables
+and prepares the GRCh37 to GRCh38 reference with
+\code{\link[=buildLiftoverMap]{buildLiftoverMap()}}.
 It looks under \code{dbdir} and its parent for \code{reference/prepared_grch38},
 \code{prepared_grch38} or \verb{reference/grch38-prep.*/tables}. If no complete
 set exists, it downloads verified inputs with \code{\link[=downloadReferenceInputs]{downloadReferenceInputs()}}

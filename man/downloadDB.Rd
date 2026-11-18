@@ -8,7 +8,9 @@ downloadDB(
   GAlist = NULL,
   what = NULL,
   min_combined_score = 900,
-  min_interactions = 5
+  min_interactions = 5,
+  archive = NULL,
+  sha256 = NULL
 )
 }
 \arguments{
@@ -19,11 +21,19 @@ downloadDB(
 the marker directory and register their paths in GAlist. For GRCh38,
 \code{"1000G"} installs the five NYGC PLINK triplets from Zenodo record 24292610
 directly in the marker directory. It verifies SHA-256 checksums and reuses
-files that already match the release.}
+files that already match the release. Use \code{"liftover"} to install a
+prepared GRCh37 to GRCh38 map into the marker directory of the matching
+GRCh38 release.}
 
 \item{min_combined_score}{Minimum combined score for filtering STRING/STITCH data.}
 
 \item{min_interactions}{Minimum number of interactions for filtering STRING/STITCH data.}
+
+\item{archive}{For \code{what = "liftover"}, a local archive or HTTPS URL
+from \code{\link[=packageLiftoverMap]{packageLiftoverMap()}}. Defaults to the configured release bundle.}
+
+\item{sha256}{Expected SHA-256 of the liftover archive. A local archive
+can use its accompanying \code{.sha256} file.}
 }
 \value{
 The updated GAlist object with file paths and GAlist$downloads updated.

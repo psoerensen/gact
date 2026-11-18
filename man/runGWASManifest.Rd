@@ -61,7 +61,9 @@ verified gzip TSV profiles.}
 Defaults to SLURM_TMPDIR when available, or R's temporary directory.
 Each run removes its own working directory when it exits.}
 
-\item{liftover_map}{Directory from \code{\link[=buildLiftoverMap]{buildLiftoverMap()}}. With \code{engine = "cpp"},
+\item{liftover_map}{Directory from \code{\link[=buildLiftoverMap]{buildLiftoverMap()}}. The C++ engine
+automatically uses the installed map for GRCh37 inputs targeting GRCh38.
+Supply this argument to override the installed map. With a map,
 inputs with a verified forward-strand profile are checked against both
 builds using the mapped chromosome, position and allele columns.
 The declared build must agree. GRCh37

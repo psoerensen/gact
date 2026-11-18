@@ -1009,6 +1009,160 @@ packageMarkerDB <- function(dbdir, out_dir = getwd()) {
   invisible(list(archive = archive, checksum_file = checksum_file, sha256 = checksum))
 }
 
+# GRCh37 to GRCh38 liftover reference --------
+
+.gact_liftover_dir <- function(GAlist) {
+  file.path(GAlist$dirs[["marker"]], "liftover-grch37-grch38")
+}
+
+.gact_liftover_sources <- function() {
+  list(
+    chain = list(
+      url = paste0("https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/",
+                   "hg19ToHg38.over.chain.gz"),
+      md5 = "35887f73fe5e2231656504d1f6430900"
+    ),
+    variant_manifest = list(
+      url = paste0("https://pan-ukb-us-east-1.s3.amazonaws.com/sumstats_release/",
+                   "full_variant_qc_metrics.txt.bgz")
+    )
+  )
+}
+
+.gact_cache_liftover_source <- function(GAlist, source) {
+  directory <- file.path(GAlist$dirs[["reference"]], "liftover-grch37-grch38")
+  if (!dir.exists(directory) && !dir.create(directory, recursive = TRUE))
+    stop("Cannot create the liftover reference directory")
+  name <- basename(source$url)
+  target <- file.path(directory, name)
+  receipt <- paste0(target, ".md5")
+  stage <- file.path(directory, paste0(".", name, ".lock"))
+  if (!dir.create(stage, showWarnings = FALSE)) stop("Liftover input is locked: ", name)
+  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+  if (file.exists(target)) {
+    expected <- source$md5
+    if (is.null(expected) && file.exists(receipt)) expected <- readLines(receipt)
+    if (!identical(unname(tools::md5sum(target)), expected))
+      stop("Liftover input checksum mismatch: ", target)
+    message("Using cached liftover input ", name)
+    return(target)
+  }
+  message("Downloading liftover input ", name)
+  incoming <- file.path(stage, name)
+  curl::curl_download(source$url, incoming, mode = "wb")
+  md5 <- unname(tools::md5sum(incoming))
+  if (is.na(md5) || !file.size(incoming) || (!is.null(source$md5) && md5 != source$md5))
+    stop("Liftover input checksum mismatch: ", name)
+  if (is.null(source$md5)) writeLines(md5, file.path(stage, "input.md5"))
+  suspendInterrupts({
+    if (!file.rename(incoming, target)) stop("Cannot cache liftover input: ", target)
+    if (is.null(source$md5) && !file.rename(file.path(stage, "input.md5"), receipt)) {
+      unlink(target)
+      stop("Cannot publish liftover input checksum: ", receipt)
+    }
+  })
+  target
+}
+
+.gact_liftover_members <- function() {
+  c("manifest.json", "index.bin", paste0("chr", 1:22, ".tsv.gz"))
+}
+
+.gact_verify_liftover_map <- function(GAlist, map_dir) {
+  if (!identical(.gact_catalog_build(GAlist), "GRCh38"))
+    stop("Liftover requires a GRCh38 marker backbone")
+  manifest <- .gact_liftover_map_manifest(map_dir)
+  chromosomes <- vapply(manifest$chromosomes, function(x) x$file, character(1L))
+  if (!identical(chromosomes, .gact_liftover_members()[-(1:2)]) ||
+      !identical(vapply(manifest$chromosomes, function(x) x$chromosome, character(1L)),
+                 as.character(1:22)))
+    stop("Invalid liftover chromosome manifest")
+  expected <- vapply(manifest$chromosomes, function(x) x$md5, character(1L))
+  actual <- unname(tools::md5sum(file.path(map_dir, chromosomes)))
+  if (anyNA(actual) || !identical(actual, expected))
+    stop("Liftover map chromosome checksum mismatch")
+  .gact_liftover_index(map_dir, GAlist)
+}
+
+#' Package a GRCh37 to GRCh38 liftover map
+#'
+#' Checks the map against the release marker catalog and creates a gzip tar
+#' archive with a separate SHA-256 file for [downloadDB()].
+#' @param GAlist Descriptor of the GRCh38 database.
+#' @param out_dir Directory for the archive and its checksum file.
+#' @return Invisibly, the archive path, checksum file path and archive SHA-256.
+#' @seealso [buildLiftoverMap()]
+#' @export
+packageLiftoverMap <- function(GAlist, out_dir = getwd()) {
+  map_dir <- .gact_liftover_dir(GAlist)
+  .gact_verify_liftover_map(GAlist, map_dir)
+  if (!dir.exists(out_dir) && !dir.create(out_dir, recursive = TRUE))
+    stop("Cannot create liftover archive directory")
+  out_dir <- normalizePath(out_dir, winslash = "/", mustWork = TRUE)
+  archive <- file.path(out_dir, "gact-liftover-grch37-grch38.tar.gz")
+  stage <- paste0(archive, ".lock")
+  if (!dir.create(stage, showWarnings = FALSE)) stop("Cannot stage liftover archive")
+  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+  .gact_pack_reference_tar(map_dir, .gact_liftover_members(), archive, stage)
+}
+
+.gact_install_liftover_map <- function(GAlist, archive, sha256) {
+  if (!identical(.gact_catalog_build(GAlist), "GRCh38"))
+    stop("Liftover requires a GRCh38 marker backbone")
+  dest <- .gact_liftover_dir(GAlist)
+  if (is.null(archive) && dir.exists(dest)) {
+    .gact_verify_liftover_map(GAlist, dest)
+    message("Using verified liftover map at ", dest)
+    return(invisible(dest))
+  }
+  if (is.null(archive)) {
+    release <- .gact_version_metadata(GAlist$version)
+    archive <- release$sources[["liftover"]]
+    if (is.null(sha256)) sha256 <- release$liftover_sha256
+  }
+  if (!is.character(archive) || length(archive) != 1L || is.na(archive) || !nzchar(archive))
+    stop("No liftover bundle is configured. Supply an archive from packageLiftoverMap().")
+  if (is.null(sha256) && file.exists(paste0(archive, ".sha256")))
+    sha256 <- sub("[[:space:]].*$", "", trimws(readLines(paste0(archive, ".sha256"))))
+  if (!is.character(sha256) || length(sha256) != 1L ||
+      !isTRUE(grepl("^[[:xdigit:]]{64}$", sha256)))
+    stop("Supply the liftover archive SHA-256")
+  stage <- tempfile(".gact-liftover-install-", tmpdir = dirname(dest))
+  if (!dir.create(stage, mode = "0700")) stop("Cannot stage the liftover bundle")
+  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+  if (startsWith(archive, "https://")) {
+    message("Downloading prepared liftover bundle")
+    remote <- archive
+    archive <- file.path(stage, "liftover.tar.gz")
+    curl::curl_download(remote, archive, mode = "wb")
+  }
+  if (!file.exists(archive) || tolower(sha256) != .gact_sha256_file(archive))
+    stop("Liftover archive SHA-256 mismatch")
+  members <- .gact_liftover_members()
+  entries <- utils::untar(archive, list = TRUE, tar = "internal")
+  if (anyDuplicated(entries) || !setequal(entries, members))
+    stop("Unexpected liftover archive members")
+  payload <- file.path(stage, "payload")
+  if (!dir.create(payload) ||
+      utils::untar(archive, files = members, exdir = payload, tar = "internal") != 0L)
+    stop("Cannot extract the liftover bundle")
+  paths <- file.path(payload, members)
+  links <- Sys.readlink(paths)
+  if (!all(file.exists(paths) & !dir.exists(paths)) || any(!is.na(links) & nzchar(links)))
+    stop("Liftover archive members must be regular files")
+  .gact_verify_liftover_map(GAlist, payload)
+  if (dir.exists(dest)) {
+    .gact_verify_liftover_map(GAlist, dest)
+    if (!identical(readLines(file.path(payload, "manifest.json")),
+                   readLines(file.path(dest, "manifest.json"))))
+      stop("An installed liftover map already exists and differs from the bundle")
+  } else if (file.exists(dest) || !file.rename(payload, dest)) {
+    stop("Cannot install the liftover map at ", dest)
+  }
+  message("Verified liftover map at ", dest)
+  invisible(dest)
+}
+
 # NYGC genotype preparation and merging --------
 
 #' Prepare ancestry-specific NYGC GRCh38 genotype files
