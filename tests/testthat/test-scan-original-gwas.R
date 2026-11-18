@@ -40,7 +40,7 @@ test_that("original Pan-UKB scans save reusable single-ancestry liftover recipes
     phenocode = c("30750", "DPP-4_inhibitor|diabetes", "other", "other2"), pheno_sex = "both_sexes",
     pops = c("EUR,CSA", "EUR", "EUR", "EUR"),
     description = c("HbA1c", NA_character_, "Wrong build", "Missing SE"),
-    n_cases_EUR = c(1000, 20, 1000, 1000), n_controls_EUR = c(NA, 980, NA, NA),
+    n_cases_EUR = c(400000, 20, 1000, 1000), n_controls_EUR = c(NA, 980, NA, NA),
     n_cases_CSA = c(100, NA, NA, NA), n_controls_CSA = NA,
     aws_path = paste0("s3://pan-ukb-us-east-1/sumstats_flat_files/", filenames),
     md5_hex = unname(tools::md5sum(upstream)))
@@ -63,7 +63,7 @@ test_that("original Pan-UKB scans save reusable single-ancestry liftover recipes
   manifest <- data.table::fread(result$manifest, data.table = FALSE)
   expect_identical(manifest$ancestry, c("EUR", "CSA", "EUR"))
   expect_identical(manifest$build, rep("GRCh37", 3))
-  expect_equal(manifest$study_n_total, c(1000, 100, 1000))
+  expect_equal(manifest$study_n_total, c(400000, 100, 1000))
   expect_equal(manifest$study_n_case[3L], 20)
   expect_equal(manifest$study_n_control[3L], 980)
   expect_identical(manifest$trait[3L], "DPP-4_inhibitor|diabetes")
@@ -86,6 +86,11 @@ test_that("original Pan-UKB scans save reusable single-ancestry liftover recipes
   again <- scan(selection = data.frame(filename = filenames[c(1, 1, 2)], analysis = c("EUR", "CSA", "EUR")))
   expect_true(all(again$review$reused))
   expect_length(requests, count)
+  expect_type(recipes[[1L]]$study_n_total, "integer")
+  changed_metadata <- manifest[1L, , drop = FALSE]
+  changed_metadata$study_n_total <- 400001
+  expect_error(gact:::.gact_read_verified_recipe(result$review$recipe[1L], changed_metadata),
+               "metadata changed: study_n_total")
   short <- scanGWAS(GAlist = ga, repository = "pan-ukb", files = "original",
     phenotype_manifest = metadata, selection = data.frame(filename = filenames[1L], analysis = "EUR"),
     recipe_dir = file.path(root, "short-recipes"), preview_rows = 3L)
@@ -93,6 +98,13 @@ test_that("original Pan-UKB scans save reusable single-ancestry liftover recipes
   expect_match(short$review$issues, "does not verify")
   recipe_path <- result$review$recipe[1L]
   previous <- readBin(recipe_path, "raw", n = file.size(recipe_path))
+  altered <- recipes[[1L]]
+  altered$study_n_total <- 400001
+  jsonlite::write_json(altered, recipe_path, auto_unbox = TRUE)
+  changed_count <- scan(selection = data.frame(filename = filenames[1L], analysis = "EUR"))
+  expect_identical(changed_count$review$status, "needs_review")
+  expect_match(changed_count$review$issues, "metadata changed: study_n_total")
+  writeBin(previous, recipe_path)
   altered <- recipes[[1L]]
   altered$build_check$index_md5 <- strrep("0", 32)
   jsonlite::write_json(altered, recipe_path, auto_unbox = TRUE)

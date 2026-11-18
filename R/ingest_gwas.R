@@ -123,7 +123,8 @@ panUKBManifest <- function(selection, out_dir,
     study_n_control = if (quantitative) NA_real_ else controls,
     cohort_evidence = "Pan-UKB ancestry-specific GWAS columns and phenotype manifest counts",
     reference = "https://pan.ukbb.broadinstitute.org/docs/per-phenotype-files/",
-    comments = comments)
+    comments = comments, coverage = "genome_wide",
+    coverage_evidence = "Pan-UKB official genome-wide per-phenotype SNP release")
 }
 
 .gact_panukb_original_profile <- function(ancestry) {
@@ -286,6 +287,8 @@ panUKBManifest <- function(selection, out_dir,
   if (is.null(counts)) {
     .gact_panukb_mismatch("Catalog cohort counts differ from the selected Pan-UKB analysis: ", id)
   }
+  coverage <- .gact_require_gwas_coverage(meta,
+    "Pan-UKB official genome-wide per-phenotype SNP release", id)
   for (i in seq_len(nrow(alternatives) %||% 0L)) {
     other <- alternatives[i, , drop = FALSE]
     if (.gact_panukb_trait_score(other, labels) >= score &&
@@ -305,7 +308,8 @@ panUKBManifest <- function(selection, out_dir,
     comments = paste0("Pan-UKB ", row$filename, "; analysis=", analysis, "; groups=", paste(pops, collapse = ",")),
     cohort_evidence = if (analysis %in% .gact_panukb_ancestries)
       "Pan-UKB separate ancestry GWAS and matching Catalog sample metadata" else NA_character_,
-    reference = .gact_gwas_catalog_url(id), stringsAsFactors = FALSE)
+    reference = .gact_gwas_catalog_url(id), coverage = coverage$coverage,
+    coverage_evidence = coverage$evidence, stringsAsFactors = FALSE)
 }
 
 .gact_panukb_cohort_counts <- function(row, pops, sizes, flags) {
@@ -321,9 +325,45 @@ panUKBManifest <- function(selection, out_dir,
   list(binary = binary, cases = cases, controls = controls)
 }
 
-.gact_catalog_recipe_row <- function(id, evidence, catalog_path = NULL) {
+.gact_gwas_coverage <- function(meta, evidence = NULL) {
+  notes <- tolower(paste(unlist(meta[c("author_notes", "file_type")]), collapse = " "))
+  technology <- tolower(paste(unlist(meta$genotyping_technology), collapse = " "))
+  restricted <- c(
+    cis_only = "\\bcis[-_ ]only\\b|\\bonly (cis|variants within)\\b|\\bcis[-_ ](pqtl|eqtl|sqtl|mqtl) summary",
+    targeted = "\\b(targeted|candidate)[-_ ](region|gene|variant|snp)|\\bregional[-_ ]only\\b",
+    exome = "\\b(exome[-_ ]only|exome[-_ ]wide|whole[-_ ]exome)\\b",
+    gene_based = "\\bgene[-_ ](based|level)\\b|\\bburden (test|results|analysis)\\b",
+    hits_only = "\\b(significant|lead|top)[-_ ](variants|snps|hits)[-_ ]only\\b"
+  )
+  matched <- names(restricted)[vapply(restricted, function(pattern)
+    grepl(pattern, notes, perl = TRUE), logical(1L))]
+  if (!length(matched) && grepl("\\bexome\\b|exomechip", technology, perl = TRUE) &&
+      !grepl("genome[-_ ]wide|whole[-_ ]genome", technology, perl = TRUE))
+    matched <- "exome"
+  if (length(matched)) return(list(coverage = "restricted",
+    evidence = paste("Metadata indicates", paste(matched, collapse = ", "))))
+  explicit <- grepl("\\bgenome[-_ ]wide[ -](association|summary|snp|variant|pqtl|mqtl|scan|analysis|results)\\b",
+                    notes, perl = TRUE)
+  negated <- grepl("\\b(not(?: a)?|non)[-_ ]genome[-_ ]wide\\b", notes, perl = TRUE)
+  if (negated) return(list(coverage = "restricted", evidence = "Metadata indicates non-genome-wide results"))
+  if (explicit) return(list(coverage = "genome_wide", evidence = paste(
+    "Provider metadata", paste(unlist(meta[c("author_notes", "file_type")]), collapse = " "))))
+  if (!is.null(evidence)) return(list(coverage = "genome_wide", evidence = evidence))
+  list(coverage = "unclear", evidence = "Metadata does not establish genome-wide SNP coverage")
+}
+
+.gact_require_gwas_coverage <- function(meta, evidence, id) {
+  coverage <- .gact_gwas_coverage(meta, evidence)
+  if (coverage$coverage != "genome_wide")
+    stop(errorCondition(paste(coverage$evidence, id), class = "gact_coverage_review",
+                        coverage = coverage$coverage, coverage_evidence = coverage$evidence))
+  coverage
+}
+
+.gact_catalog_recipe_row <- function(id, evidence, catalog_path = NULL, coverage_evidence = NULL) {
   asset <- .gact_catalog_file(id, catalog_path = catalog_path)
   meta <- asset$meta
+  coverage <- .gact_require_gwas_coverage(meta, coverage_evidence, id)
   if (!identical(meta$gwas_id, id) || !identical(meta$data_file_name, asset$file) ||
       !identical(meta$genome_assembly, "GRCh38") || !identical(meta$coordinate_system, "1-based") ||
       !isTRUE(meta$is_harmonised) || !isTRUE(grepl("^GWAS-SSF", meta$file_type))) {
@@ -361,7 +401,8 @@ panUKBManifest <- function(selection, out_dir,
     study_n_total = if (is.numeric(size) && length(size) == 1L && is.finite(size) && size > 0)
       size else NA_real_,
     comments = paste("Catalog ancestry:", paste(ancestry, collapse = ", ")),
-    reference = .gact_gwas_catalog_url(id), stringsAsFactors = FALSE)
+    reference = .gact_gwas_catalog_url(id), coverage = coverage$coverage,
+    coverage_evidence = coverage$evidence, stringsAsFactors = FALSE)
 }
 
 .gact_panukb_mismatch <- function(...) {
@@ -374,6 +415,8 @@ panUKBManifest <- function(selection, out_dir,
 #' C++ reader on a bounded gzip prefix and prepare recipes and an import manifest.
 #' Verified recipes are keyed by accession and input MD5. Use the same
 #' `recipe_dir` to reuse them on later scans; metadata is checked again.
+#' Sample counts are compared numerically so JSON integer and double
+#' representations of the same count reuse the same recipe.
 #' Pan-UKB discovery uses phenotype codes and labels, then checks sex,
 #' ancestry and cohort counts against the Catalog metadata. Ambiguous
 #' phenotype matches and shared checksums require review.
@@ -386,6 +429,10 @@ panUKBManifest <- function(selection, out_dir,
 #' Prescription traits with no description use the provider phenocode as the
 #' label and record that choice. Reserved filename characters are URL-encoded
 #' and use a stable safe local cache filename.
+#' Catalog coverage is checked from metadata before summary-statistics previews
+#' and before reusing recipes. Explicit cis-only, targeted, exome-only,
+#' gene-based and hits-only results are excluded. A leading preview and
+#' genome-wide genotyping technology alone do not establish file coverage.
 #'
 #' @param selection Pan-UKB data frame with filename, an ancestry in the
 #'   analysis column, and optional accession, or a vector of Catalog accessions.
@@ -403,6 +450,10 @@ panUKBManifest <- function(selection, out_dir,
 #'   single-cohort evidence keyed by Catalog accession. Used when the file
 #'   metadata lacks explicit evidence. Meta-analyses and mixed ancestry
 #'   files are excluded even when evidence is supplied.
+#' @param coverage_evidence Optional named character vector of reviewed evidence
+#'   establishing genome-wide SNP coverage, keyed by Catalog accession.
+#'   Explicitly restricted metadata takes precedence. Unclear coverage needs review.
+#'   Proteins and metabolites are included when their files meet the same coverage rules.
 #' @param GAlist Existing GRCh38 database descriptor. Its recipes directory is
 #'   the default when supplied.
 #' @param repository Provider name: `"pan-ukb"` or `"gwas-catalog"`.
@@ -413,13 +464,16 @@ panUKBManifest <- function(selection, out_dir,
 #'   require GAlist and its installed liftover map. Each recipe selects one
 #'   ancestry and records the preview build check and liftover index checksum.
 #' @return Paths to the manifest and format profiles, and a per-study review table.
+#'   Coverage is `genome_wide`, `restricted`, or `unclear`. Restricted files
+#'   have status `excluded` and unclear files have status `needs_review`.
+#'   The import manifest contains only ready studies.
 #' @export
 scanGWAS <- function(selection = NULL, out_dir = NULL,
     phenotype_manifest = "https://pan-ukb-us-east-1.s3.amazonaws.com/sumstats_release/phenotype_manifest.tsv.bgz",
     preview_rows = 1000L, max_preview_bytes = 1024L * 1024L, recipe_dir = NULL,
     source = c("panukb", "catalog"), analysis = "per_ancestry", cohort_evidence = NULL,
     GAlist = NULL, repository = NULL, workers = 1L,
-    files = c("catalog", "original")) {
+    files = c("catalog", "original"), coverage_evidence = NULL) {
   if (!is.null(repository)) {
     provider <- c("pan-ukb" = "panukb", "gwas-catalog" = "catalog")
     selected <- unname(provider[match.arg(repository, names(provider))])
@@ -459,6 +513,12 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
     stop("cohort_evidence must contain reviewed evidence named by Catalog accession")
   }
   cohort_evidence <- as.list(cohort_evidence)
+  if (!is.null(coverage_evidence) && (!is.character(coverage_evidence) ||
+      is.null(names(coverage_evidence)) || anyNA(coverage_evidence) ||
+      any(!nzchar(trimws(coverage_evidence))) || anyDuplicated(names(coverage_evidence)) ||
+      !all(grepl("^GCST[0-9]{6,8}$", names(coverage_evidence)))))
+    stop("coverage_evidence must contain reviewed evidence named by Catalog accession")
+  coverage_evidence <- as.list(coverage_evidence)
   if (source == "panukb") {
     phenotype <- .gact_read_panukb_manifest(phenotype_manifest)
     if (is.null(selection)) {
@@ -517,12 +577,14 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   recipe_dir <- normalizePath(recipe_dir, winslash = "/", mustWork = TRUE)
   review <- data.frame(filename = selection$filename, analysis = selection$analysis,
     accession = selection$accession, status = "needs_review", preview_bytes = NA_integer_,
-    preview_rows = NA_integer_, reused = FALSE, recipe = NA_character_, issues = NA_character_)
+    preview_rows = NA_integer_, reused = FALSE, recipe = NA_character_, issues = NA_character_,
+    coverage = NA_character_, coverage_evidence = NA_character_)
   rows <- formats <- vector("list", nrow(selection))
   context <- list(
     selection = selection, review = review, source = source, at = at, explicit = explicit,
     phenotype = if (source == "panukb") phenotype else NULL, catalog = catalog,
     phenotype_index = phenotype_index, cohort_evidence = cohort_evidence,
+    coverage_evidence = coverage_evidence,
     out_dir = out_dir, recipe_dir = recipe_dir, preview_rows = preview_rows,
     max_preview_bytes = max_preview_bytes, original = original,
     map_dir = map_dir, map_info = map_info
@@ -596,7 +658,8 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
       } else if (source == "catalog") {
         id <- selection$accession[i]
         if (isTRUE(selection$ambiguous[i])) stop("Multiple harmonised files listed for ", id)
-        .gact_catalog_recipe_row(id, cohort_evidence[[id]], selection$catalog_path[i])
+        .gact_catalog_recipe_row(id, cohort_evidence[[id]], selection$catalog_path[i],
+                                 coverage_evidence[[id]])
       } else {
         if (is.na(at[i])) stop("Filename is absent from the Pan-UKB phenotype manifest")
         row <- phenotype[at[i], , drop = FALSE]
@@ -613,7 +676,13 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
         }
         .gact_panukb_scan_match(row, candidates, selection$analysis[i], alternatives)
       }
+      if (source == "panukb" && is.null(picked$coverage)) {
+        picked$coverage <- "genome_wide"
+        picked$coverage_evidence <- "Pan-UKB documented genome-wide per-phenotype SNP release"
+      }
       entry$accession <- picked$accession
+      entry$coverage <- picked$coverage
+      entry$coverage_evidence <- picked$coverage_evidence
       path <- .gact_verified_recipe_path(recipe_dir, picked$accession, picked$md5)
       stored <- .gact_read_verified_recipe(path, picked)
       profile <- .gact_panukb_catalog_profile(picked$source)
@@ -674,6 +743,11 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
       list(manifest = picked, format = profile)
     }, error = function(e) e)
     if (inherits(result, "error")) {
+      if (inherits(result, "gact_coverage_review")) {
+        entry$coverage <- result$coverage
+        entry$coverage_evidence <- result$coverage_evidence
+        if (result$coverage == "restricted") entry$status <- "excluded"
+      }
       entry$issues <- conditionMessage(result)
       return(list(review = entry))
     }
@@ -720,7 +794,13 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   fields <- intersect(c("filename", "cohort_evidence", .gact_gwas_metadata_fields), names(study))
   same <- vapply(fields, function(field) {
     value <- study[[field]]
-    is.na(value) || identical(as.character(recipe[[field]]), as.character(value))
+    if (is.na(value)) return(TRUE)
+    if (field %in% c("n", "ncase", "ncontrol", "study_n_total", "study_n_case", "study_n_control")) {
+      saved <- suppressWarnings(as.numeric(recipe[[field]]))
+      expected <- suppressWarnings(as.numeric(value))
+      return(length(saved) == 1L && is.finite(saved) && is.finite(expected) && saved == expected)
+    }
+    identical(as.character(recipe[[field]]), as.character(value))
   }, logical(1))
   if (!all(same)) stop("Stored verified recipe metadata changed: ", paste(fields[!same], collapse = ", "))
   if (!all(unlist(recipe$mapping) %in% unlist(recipe$inspection$headers)))

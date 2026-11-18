@@ -15,7 +15,8 @@ scanGWAS(
   GAlist = NULL,
   repository = NULL,
   workers = 1L,
-  files = c("catalog", "original")
+  files = c("catalog", "original"),
+  coverage_evidence = NULL
 )
 }
 \arguments{
@@ -43,10 +44,16 @@ with no selection uses the published harmonised-file index.}
 matches or \code{"original"} for the provider's GRCh37 files. Original files
 require GAlist and its installed liftover map. Each recipe selects one
 ancestry and records the preview build check and liftover index checksum.}
+\item{coverage_evidence}{Optional named character vector of reviewed evidence
+establishing genome-wide SNP coverage, keyed by Catalog accession.
+Explicitly restricted metadata takes precedence. Unclear coverage needs review.
+Proteins and metabolites are included when their files meet the same coverage rules.}
 }
 \value{
 Invisibly, paths to the import manifest, format profiles and scan report, and a
 per-study review table. The manifest includes only ready studies.
+Coverage is \code{genome_wide}, \code{restricted}, or \code{unclear}. Restricted files
+have status \code{excluded} and unclear files have status \code{needs_review}.
 }
 \description{
 Match Pan-UK Biobank phenotypes or Catalog accessions to verified GRCh38
@@ -54,6 +61,8 @@ single-ancestry files using the C++ reader on a bounded gzip prefix. Verified re
 keyed by accession and input MD5. Use the same \code{recipe_dir} to reuse
 them on later scans. Pan-UKB discovery uses phenotype codes and labels and
 checks sex, ancestry and cohort counts against the Catalog metadata.
+Sample counts are compared numerically so JSON integer and double
+representations of the same count reuse the same recipe.
 Ambiguous phenotype matches and shared checksums require review.
 The scanner checks upstream metadata again and includes
 unresolved studies in the review report. The importer verifies the full
@@ -65,4 +74,8 @@ remain unmapped. Binary case/control frequencies remain unmapped.
 Prescription traits with no description use the provider phenocode as the
 label and record that choice. Reserved filename characters are URL-encoded
 and use a stable safe local cache filename.
+Catalog coverage is checked from metadata before summary-statistics previews
+and before reusing recipes. Explicit cis-only, targeted, exome-only,
+gene-based and hits-only results are excluded. A leading preview and
+genome-wide genotyping technology alone do not establish file coverage.
 }

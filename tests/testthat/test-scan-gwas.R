@@ -152,6 +152,7 @@ test_that("Catalog scanning verifies metadata and saves a checksum-keyed recipe"
            meta = list(gwas_id = id, data_file_name = file, genome_assembly = "GRCh38",
              coordinate_system = "1-based", is_harmonised = TRUE,
              file_type = if (id == ids[2L]) "pre-GWAS-SSF" else "GWAS-SSF v1.0",
+             author_notes = "Genome-wide association summary statistics",
              analysis_software = if (id == ids[3L]) "METAL" else "REGENIE",
              trait_description = list("Gastric ulcer"), data_file_md5sum = md5, sex = "combined",
              samples = list(list(case_control_study = TRUE, sample_size = 261647,

@@ -551,10 +551,29 @@ harmonised-file index. For Catalog files whose metadata lacks single-cohort
 evidence, supply reviewed `cohort_evidence` named by accession. Meta-analyses
 and mixed ancestry are excluded.
 
+Catalog scans check genome-wide SNP coverage from provider metadata before
+requesting a summary-statistics preview. Protein and metabolite GWAS use the
+same rules as disease and other quantitative traits. Explicit cis-only,
+targeted-region, exome-only, gene-based, and hits-only files have status
+`excluded`. Unclear coverage has status `needs_review`. The review records
+`coverage` and `coverage_evidence`; only ready studies enter the import manifest.
+The scanner still examines the harmonised index's metadata candidates.
+
+If a provider README or publication establishes genome-wide file coverage,
+pass reviewed evidence as `coverage_evidence = c(GCST12345678 = "source and
+coverage statement")`. Explicit restricted scope in metadata takes precedence.
+An array platform, a large variant count, and a leading preview alone cannot
+prove genome-wide file coverage. Known Pan-UKB releases use their documented
+genome-wide scope. Rescanning applies the coverage check before reusing an
+existing recipe. This is metadata screening, with no full-file coverage audit.
+
 
 Verified recipes are named by accession and input MD5. Reruns recheck
 upstream metadata and reuse a matching recipe without requesting another
 summary-statistics preview. Review reports are stored under `recipes/reviews/`.
+Sample counts compare numerically when checking saved recipes, so JSON integer
+and double representations of the same value agree. Changed counts still
+require review.
 To scan original Pan-UKB GRCh37 files, use the provider manifest directly
 and the liftover map installed in the GRCh38 database.
 
