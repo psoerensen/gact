@@ -67,6 +67,55 @@ panUKBManifest <- function(selection, out_dir,
     evidence = "GWAS-SSF v1.0 column definitions and verified harmonised GRCh38 Catalog metadata")
 }
 
+.gact_panukb_original_row <- function(row, ancestry) {
+  if (!ancestry %in% .gact_panukb_ancestries ||
+      !ancestry %in% trimws(strsplit(row$pops, ",", fixed = TRUE)[[1L]]))
+    stop("Selected ancestry is absent from the Pan-UKB phenotype")
+  required <- c("filename", "aws_path", "md5_hex", "description", "pheno_sex", "trait_type")
+  if (!all(required %in% names(row)) || anyNA(row[required]) ||
+      any(!nzchar(unlist(row[required]))) ||
+      !isTRUE(grepl("^[[:xdigit:]]{32}$", row$md5_hex)))
+    stop("Missing original Pan-UKB file metadata or provider MD5")
+  filename <- trimws(row$filename)
+  if (!identical(basename(filename), filename)) stop("Invalid Pan-UKB filename")
+  url <- sub("^s3://pan-ukb-us-east-1/", "https://pan-ukb-us-east-1.s3.amazonaws.com/",
+             row$aws_path)
+  if (!startsWith(url, "https://pan-ukb-us-east-1.s3.amazonaws.com/") ||
+      !identical(basename(url), filename)) stop("Unexpected original Pan-UKB download URL")
+  quantitative <- row$trait_type %in% c("continuous", "biomarkers")
+  if (!row$trait_type %in% c("continuous", "biomarkers", "prescriptions", "icd10", "phecode", "categorical"))
+    stop("Unknown Pan-UKB trait type")
+  cases <- suppressWarnings(as.numeric(row[[paste0("n_cases_", ancestry)]]))
+  controls <- if (quantitative) 0 else
+    suppressWarnings(as.numeric(row[[paste0("n_controls_", ancestry)]]))
+  if (length(cases) != 1L || length(controls) != 1L ||
+      !all(is.finite(c(cases, controls))) || cases <= 0 || controls < 0 ||
+      any(c(cases, controls) %% 1 != 0) || (!quantitative && controls == 0))
+    stop("Missing or invalid ancestry-specific sample counts")
+  gender <- unname(c(both_sexes = "both", females = "females", males = "males")[row$pheno_sex])
+  if (is.na(gender)) stop("Unknown Pan-UKB sex")
+  id <- toupper(substr(as.character(openssl::sha256(filename)), 1L, 24L))
+  data.frame(accession = paste0("PANUKB-", id, "-", ancestry), filename = filename,
+    url = url, md5 = tolower(row$md5_hex), source = paste("Pan-UK Biobank original", ancestry),
+    trait = row$description, type = if (quantitative) "quantitative" else "binary",
+    build = "GRCh37", ancestry = ancestry, gender = gender, strand = "forward",
+    category = row$category %||% NA_character_, study_n_total = cases + controls,
+    study_n_case = if (quantitative) NA_real_ else cases,
+    study_n_control = if (quantitative) NA_real_ else controls,
+    cohort_evidence = "Pan-UKB ancestry-specific GWAS columns and phenotype manifest counts",
+    reference = "https://pan.ukbb.broadinstitute.org/docs/per-phenotype-files/",
+    comments = paste("Original Pan-UKB", filename, "ancestry", ancestry))
+}
+
+.gact_panukb_original_profile <- function(ancestry) {
+  fields <- c(chr = "chr", pos = "pos", ea = "alt", nea = "ref",
+    b = paste0("beta_", ancestry), seb = paste0("se_", ancestry),
+    p = paste0("neglog10_pval_", ancestry))
+  list(source = paste("Pan-UK Biobank original", ancestry), mapping = as.list(fields),
+    effect_scale = "beta", p_scale = "neglog10p", verified = TRUE,
+    evidence = "Pan-UKB original per-phenotype definitions, ALT effect and forward-strand REF")
+}
+
 .gact_panukb_code_pattern <- "\\((phecode|ukb data field|icd-?10(?: code)?)[ :]+([a-z0-9.]+)\\)"
 
 .gact_panukb_catalog_code <- function(label) {
@@ -311,6 +360,10 @@ panUKBManifest <- function(selection, out_dir,
 #' phenotype matches and shared checksums require review.
 #' Unresolved studies appear in the review report. The scanner only writes
 #' recipes and reports. The importer verifies the full file MD5.
+#' Original Pan-UKB scans use the provider manifest's download paths, MD5s,
+#' sex and ancestry-specific counts. Recipes select one ancestry's signed beta,
+#' SE and negative log10 p-value columns. Cross-ancestry meta-analysis columns
+#' remain unmapped. Binary case/control frequencies remain unmapped.
 #'
 #' @param selection Pan-UKB data frame with filename, an ancestry in the
 #'   analysis column, and optional accession, or a vector of Catalog accessions.
@@ -333,13 +386,18 @@ panUKBManifest <- function(selection, out_dir,
 #' @param repository Provider name: `"pan-ukb"` or `"gwas-catalog"`.
 #'   Catalog scans with no selection use the published harmonised-file index.
 #' @param workers Number of concurrent recipe scans. Defaults to 1.
+#' @param files For Pan-UKB, use `"catalog"` (default) for harmonised Catalog
+#'   matches or `"original"` for the provider's GRCh37 files. Original files
+#'   require GAlist and its installed liftover map. Each recipe selects one
+#'   ancestry and records the preview build check and liftover index checksum.
 #' @return Paths to the manifest and format profiles, and a per-study review table.
 #' @export
 scanGWAS <- function(selection = NULL, out_dir = NULL,
     phenotype_manifest = "https://pan-ukb-us-east-1.s3.amazonaws.com/sumstats_release/phenotype_manifest.tsv.bgz",
     preview_rows = 1000L, max_preview_bytes = 1024L * 1024L, recipe_dir = NULL,
     source = c("panukb", "catalog"), analysis = "per_ancestry", cohort_evidence = NULL,
-    GAlist = NULL, repository = NULL, workers = 1L) {
+    GAlist = NULL, repository = NULL, workers = 1L,
+    files = c("catalog", "original")) {
   if (!is.null(repository)) {
     provider <- c("pan-ukb" = "panukb", "gwas-catalog" = "catalog")
     selected <- unname(provider[match.arg(repository, names(provider))])
@@ -348,6 +406,11 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
     source <- selected
   }
   source <- match.arg(source)
+  files <- match.arg(files)
+  original <- files == "original"
+  if (original && (source != "panukb" || is.null(GAlist)))
+    stop("Original Pan-UKB scans require repository = 'pan-ukb' and GAlist")
+  map_dir <- map_info <- NULL
   if (!is.numeric(workers) || length(workers) != 1L || !is.finite(workers) ||
       workers < 1L || workers > .Machine$integer.max || workers != floor(workers))
     stop("workers must be a positive integer")
@@ -358,8 +421,12 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
       if (!"recipes" %in% names(GAlist$dirs)) stop("GAlist has no recipes directory")
       recipe_dir <- GAlist$dirs[["recipes"]]
     }
+    if (original) {
+      map_dir <- .gact_liftover_dir(GAlist)
+      map_info <- .gact_liftover_index(map_dir, GAlist)
+    }
   }
-  if (!requireNamespace("yaml", quietly = TRUE)) stop("Install yaml to read Catalog metadata")
+  if (!original && !requireNamespace("yaml", quietly = TRUE)) stop("Install yaml to read Catalog metadata")
   if (is.null(out_dir) && is.null(recipe_dir)) stop("Supply GAlist, out_dir, or recipe_dir")
   if (is.null(out_dir)) out_dir <- tempfile("scan-", tmpdir = file.path(recipe_dir, "reviews"))
   if (is.null(recipe_dir)) recipe_dir <- file.path(out_dir, "recipes")
@@ -403,6 +470,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   if (!"accession" %in% names(selection)) selection$accession <- NA_character_
   selection$accession <- as.character(selection$accession)
   explicit <- !is.na(selection$accession) & nzchar(selection$accession)
+  if (original && any(explicit)) stop("Original Pan-UKB scans use provider IDs. Omit Catalog accessions")
   if (!all(grepl("^GCST[0-9]{6,8}$", selection$accession[explicit]))) stop("Invalid Catalog accession")
   for (value in list(preview_rows, max_preview_bytes)) {
     if (!is.numeric(value) || length(value) != 1L || !is.finite(value) ||
@@ -414,7 +482,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
     stop("out_dir must be new or empty")
   }
   at <- if (source == "panukb") match(selection$filename, phenotype$filename)
-  catalog <- if (source == "panukb" && any(!explicit & !is.na(at))) {
+  catalog <- if (source == "panukb" && !original && any(!explicit & !is.na(at))) {
     tryCatch(.gact_panukb_index_catalog(.gact_panukb_catalog_studies()),
              error = function(e) e)
   } else list()
@@ -434,7 +502,8 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
     phenotype = if (source == "panukb") phenotype else NULL, catalog = catalog,
     phenotype_index = phenotype_index, cohort_evidence = cohort_evidence,
     out_dir = out_dir, recipe_dir = recipe_dir, preview_rows = preview_rows,
-    max_preview_bytes = max_preview_bytes
+    max_preview_bytes = max_preview_bytes, original = original,
+    map_dir = map_dir, map_info = map_info
   )
   count <- min(as.integer(workers), nrow(selection))
   if (count > 1L) {
@@ -467,6 +536,13 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   for (field in c("accession", "md5")) {
     values <- vapply(rows[accepted], function(row) row[[field]], character(1))
     duplicate <- accepted[duplicated(values) | duplicated(values, fromLast = TRUE)]
+    if (original && field == "md5" && length(duplicate)) {
+      shared <- do.call(rbind, rows[duplicate])
+      same_file <- vapply(split(shared$filename, shared$md5),
+                          function(x) length(unique(x)) == 1L, logical(1L))
+      allowed <- .gact_shared_panukb_inputs(shared) & same_file[shared$md5]
+      duplicate <- duplicate[!allowed]
+    }
     review$status[duplicate] <- "needs_review"
     review$issues[duplicate] <- paste("Multiple selections resolved to the same", field)
   }
@@ -492,7 +568,10 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   with(context, {
     entry <- review[i, , drop = FALSE]
     result <- tryCatch({
-      picked <- if (source == "catalog") {
+      picked <- if (original) {
+        if (is.na(at[i])) stop("Filename is absent from the Pan-UKB phenotype manifest")
+        .gact_panukb_original_row(phenotype[at[i], , drop = FALSE], selection$analysis[i])
+      } else if (source == "catalog") {
         id <- selection$accession[i]
         if (isTRUE(selection$ambiguous[i])) stop("Multiple harmonised files listed for ", id)
         .gact_catalog_recipe_row(id, cohort_evidence[[id]], selection$catalog_path[i])
@@ -516,6 +595,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
       path <- .gact_verified_recipe_path(recipe_dir, picked$accession, picked$md5)
       stored <- .gact_read_verified_recipe(path, picked)
       profile <- .gact_panukb_catalog_profile(picked$source)
+      if (original) profile <- .gact_panukb_original_profile(picked$ancestry)
       if (is.null(stored)) {
         prefix <- tempfile(fileext = ".tsv.gz")
         sample <- tryCatch({
@@ -529,10 +609,24 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
         standard <- all(unlist(profile$mapping) %in% names(sample)) &&
           !any(c("odds_ratio", "hazard_ratio", "neg_log_10_p_value") %in% names(sample))
         known_panukb <- all(names(sample) %in% c(profile$headers, "low_confidence"))
-        if (standard && (source == "catalog" || known_panukb)) {
+        if (original) {
+          eaf <- paste0("af_", picked$ancestry)
+          if (picked$type == "quantitative" && eaf %in% names(sample))
+            profile$mapping$eaf <- eaf
+        }
+        if (original || (standard && (source == "catalog" || known_panukb))) {
           profile$headers <- names(sample)
         }
         recipe <- .gact_gwas_scan_recipe(picked, sample, bytes, profile)
+        if (original) {
+          recipe$build_check <- verifyGWASBuild(sample, map_dir)
+          recipe$build_check$index_md5 <- map_info$md5
+          recipe$liftover <- list(source_build = "GRCh37", build = "GRCh38",
+                                  index_md5 = map_info$md5)
+          if (!identical(recipe$build_check$build, "GRCh37"))
+            recipe$inspection_issues <- c(recipe$inspection_issues,
+              "Preview does not verify the original Pan-UKB GRCh37 build")
+        }
         if (length(recipe$inspection_issues)) {
           draft <- file.path(out_dir, sprintf("study_%05d.json", i))
           jsonlite::write_json(recipe, draft, auto_unbox = TRUE, pretty = TRUE,
@@ -543,11 +637,16 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
         recipe$verified <- TRUE
         .gact_save_verified_recipe(recipe, path, picked)
       } else {
+        if (original && (!identical(stored$build_check$build, "GRCh37") ||
+                         !identical(stored$build_check$index_md5, map_info$md5)))
+          stop("Saved recipe build check differs from the installed liftover index. Review the recipe")
         entry$reused <- TRUE
         entry$preview_bytes <- 0L
         entry$preview_rows <- stored$inspection$preview_rows
         profile$headers <- unlist(stored$inspection$headers, use.names = FALSE)
         profile$mapping <- stored$mapping
+        profile$effect_scale <- stored$effect_scale
+        profile$p_scale <- stored$p_scale
       }
       entry$recipe <- path
       list(manifest = picked, format = profile)
@@ -568,6 +667,21 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
     stop("Supply a valid accession and the provider's MD5 checksum")
   }
   file.path(directory, paste0(accession, "-", md5, ".json"))
+}
+
+.gact_shared_panukb_inputs <- function(manifest) {
+  result <- rep(FALSE, nrow(manifest))
+  groups <- split(seq_len(nrow(manifest)), .gact_gwas_path_key(manifest$filename))
+  for (rows in groups[lengths(groups) > 1L]) {
+    selected <- manifest[rows, , drop = FALSE]
+    if (!all(c("source", "ancestry") %in% names(selected))) next
+    valid <- !anyNA(selected[c("url", "md5", "source", "ancestry")]) &&
+      length(unique(tolower(selected$md5))) == 1L && length(unique(selected$url)) == 1L &&
+      all(selected$ancestry %in% .gact_panukb_ancestries) && !anyDuplicated(selected$ancestry) &&
+      all(selected$source == paste("Pan-UK Biobank original", selected$ancestry))
+    if (valid) result[rows] <- TRUE
+  }
+  result
 }
 
 .gact_read_verified_recipe <- function(path, study) {
@@ -2892,6 +3006,8 @@ recodeSumstat <- recodeStat
 #'   `url`, `md5`, `source`, `trait`, `type`, `build`, and `ancestry`.
 #'   Use unique accessions and filenames, a basename with a supported file
 #'   extension, and an HTTPS URL. URL can be blank for a cached file.
+#'   Original Pan-UKB ancestry recipes may share a filename when their URL and
+#'   checksum agree and the ancestries differ. The download cache reuses that file.
 #'   Shared study metadata can be supplied through `defaults`. Other metadata
 #'   fields from [inspectGWAS()] are optional.
 #' @param descriptor Path to the existing database's GAlist RDS. Successful
@@ -3018,8 +3134,9 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   data.table::fwrite(manifest, file.path(out_dir, "manifest.tsv"), sep = "\t", na = "NA")
   accessions <- toupper(manifest$accession)
   filenames <- .gact_gwas_path_key(manifest$filename)
+  repeated_file <- duplicated(filenames) | duplicated(filenames, fromLast = TRUE)
   duplicate <- duplicated(accessions) | duplicated(accessions, fromLast = TRUE) |
-    duplicated(filenames) | duplicated(filenames, fromLast = TRUE)
+    (repeated_file & !.gact_shared_panukb_inputs(manifest))
   jobs <- vector("list", nrow(manifest))
   report <- data.frame(accession = manifest$accession, filename = manifest$filename,
     status = "needs_review", study_id = NA_character_, recipe = NA_character_,

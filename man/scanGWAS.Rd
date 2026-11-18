@@ -14,7 +14,8 @@ scanGWAS(
   cohort_evidence = NULL,
   GAlist = NULL,
   repository = NULL,
-  workers = 1L
+  workers = 1L,
+  files = c("catalog", "original")
 )
 }
 \arguments{
@@ -38,6 +39,10 @@ explicit evidence. Meta-analyses and mixed ancestry files are excluded.}
 \item{repository}{\code{"pan-ukb"} or \code{"gwas-catalog"}. A Catalog scan
 with no selection uses the published harmonised-file index.}
 \item{workers}{Number of concurrent recipe scans. Defaults to 1.}
+\item{files}{For Pan-UKB, use \code{"catalog"} (default) for harmonised Catalog
+matches or \code{"original"} for the provider's GRCh37 files. Original files
+require GAlist and its installed liftover map. Each recipe selects one
+ancestry and records the preview build check and liftover index checksum.}
 }
 \value{
 Invisibly, paths to the import manifest, format profiles and scan report, and a
@@ -53,4 +58,8 @@ Ambiguous phenotype matches and shared checksums require review.
 The scanner checks upstream metadata again and includes
 unresolved studies in the review report. The importer verifies the full
 file MD5.
+Original Pan-UKB scans use the provider manifest's download paths, MD5s,
+sex and ancestry-specific counts. Recipes select one ancestry's signed beta,
+SE and negative log10 p-value columns. Cross-ancestry meta-analysis columns
+remain unmapped. Binary case/control frequencies remain unmapped.
 }

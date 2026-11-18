@@ -24,6 +24,8 @@ runGWASManifest(
 \code{url}, \code{md5}, \code{source}, \code{trait}, \code{type}, \code{build}, and \code{ancestry}.
 Use unique accessions and filenames, a basename with a supported file
 extension, and an HTTPS URL. URL can be blank for a cached file.
+Original Pan-UKB ancestry recipes may share a filename when their URL and
+checksum agree and the ancestries differ. The download cache reuses that file.
 Shared study metadata can be supplied through \code{defaults}. Other metadata
 fields from \code{\link[=inspectGWAS]{inspectGWAS()}} are optional.}
 

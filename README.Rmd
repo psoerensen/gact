@@ -479,6 +479,44 @@ and mixed ancestry are excluded.
 Verified recipes are named by accession and input MD5. Reruns recheck
 upstream metadata and reuse a matching recipe without requesting another
 summary-statistics preview. Review reports are stored under `recipes/reviews/`.
+To scan original Pan-UKB GRCh37 files, use the provider manifest directly
+and the liftover map installed in the GRCh38 database.
+
+```r
+original <- scanGWAS(
+  GAlist = GAlist, repository = "pan-ukb", files = "original",
+  selection = data.frame(
+    filename = c("biomarkers-30750-both_sexes-irnt.tsv.bgz",
+                 "phecode-250-both_sexes.tsv.bgz"),
+    analysis = c("EUR", "CSA")
+  ),
+  workers = 2L
+)
+original$review
+```
+
+Omit `selection` to scan the available ancestry analyses. The original-file
+route uses bounded C++ previews and saves ancestry-specific column mappings,
+provider MD5, study counts, and a GRCh37 preview verification tied to the
+liftover index checksum. Inconclusive builds or missing columns need review.
+Reruns reuse the verified recipes. Ancestries sharing a phenotype file share
+its download and checksum. Meta-analysis columns remain unmapped. For binary
+traits, case/control allele frequencies remain unmapped and ingestion uses
+the marker catalog EAF. Provider confidence flags stay in the source output
+and remain outside the importer's filters.
+
+Import the ready original-file recipes with the existing runner.
+
+```r
+report <- runGWASManifest(
+  original$manifest, descriptor, knowledge = original$knowledge,
+  engine = "cpp", workers = 2L
+)
+```
+
+This opens the installed liftover index during native alignment and verifies
+the complete source file against the provider MD5 before importing.
+
 Study-level sample counts stay in study metadata. Inputs with unverified
 formats or unclear metadata remain in the review report.
 The recipe records ancillary columns such as Pan-UKB's `low_confidence`
