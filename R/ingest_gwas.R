@@ -81,12 +81,40 @@ panUKBManifest <- function(selection, out_dir,
   match
 }
 
-.gact_panukb_catalog_row <- function(row, id, analysis, metadata_dir) {
+.gact_panukb_ancestries <- c("AFR", "AMR", "CSA", "EAS", "EUR", "MID")
+
+.gact_catalog_root <- "https://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/"
+
+.gact_catalog_index <- function() {
+  url <- paste0(.gact_catalog_root, "harmonised_list.txt")
+  response <- curl::curl_fetch_memory(url, handle = curl::new_handle(timeout = 120))
+  if (response$status_code != 200L) stop("Cannot read the GWAS Catalog harmonised-file index")
+  .gact_parse_catalog_index(strsplit(rawToChar(response$content), "\n", fixed = TRUE)[[1L]])
+}
+
+.gact_parse_catalog_index <- function(lines) {
+  paths <- unique(sub("^\\./", "", trimws(lines)))
+  pattern <- "^GCST[0-9]{6,8}-GCST[0-9]{6,8}/(GCST[0-9]{6,8})/harmonised/[A-Za-z0-9._-]+\\.h\\.tsv\\.gz$"
+  paths <- paths[grepl(pattern, paths)]
+  if (!length(paths)) stop("No harmonised gzip TSV files in the GWAS Catalog index")
+  accession <- sub(pattern, "\\1", paths)
+  ambiguous <- duplicated(accession) | duplicated(accession, fromLast = TRUE)
+  keep <- !duplicated(accession)
+  data.frame(filename = basename(paths[keep]), analysis = "catalog", accession = accession[keep],
+             catalog_path = paths[keep], ambiguous = ambiguous[keep])
+}
+
+.gact_catalog_file <- function(id, metadata_dir = NULL, catalog_path = NULL) {
   file <- paste0(id, ".h.tsv.gz")
   num <- as.integer(sub("^GCST", "", id))
   upper <- ceiling(num / 1000) * 1000
-  range <- sprintf("GCST%08d-GCST%08d", upper - 999L, upper)
-  base <- paste0("https://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/", range, "/", id, "/harmonised/")
+  width <- nchar(id) - 4L
+  range <- sprintf("GCST%0*d-GCST%0*d", width, upper - 999L, width, upper)
+  base <- paste0(.gact_catalog_root, range, "/", id, "/harmonised/")
+  if (!is.null(catalog_path)) {
+    file <- basename(catalog_path)
+    base <- paste0(.gact_catalog_root, dirname(catalog_path), "/")
+  }
   url <- paste0(base, file)
   fetch <- function(remote, local) {
     if (is.null(metadata_dir)) {
@@ -96,8 +124,30 @@ panUKBManifest <- function(selection, out_dir,
     } else paste(readLines(file.path(metadata_dir, local), warn = FALSE), collapse = "\n")
   }
   meta <- yaml::yaml.load(fetch(paste0(url, "-meta.yaml"), paste0(file, "-meta.yaml")), eval.expr = FALSE)
+  list(file = file, base = base, url = url, meta = meta, fetch = fetch)
+}
+
+.gact_catalog_md5 <- function(asset, id) {
+  listing <- strsplit(asset$fetch(paste0(asset$base, "md5sum.txt"), paste0(id, ".md5")),
+                      "\n", fixed = TRUE)[[1L]]
+  entries <- strsplit(trimws(listing), "[[:space:]]+")
+  match <- Filter(function(x) length(x) == 2L && sub("^\\*", "", x[2L]) == asset$file, entries)
+  checksums <- vapply(match, function(x) x[1L], character(1))
+  checksum <- tolower(asset$meta$data_file_md5sum)
+  if (length(checksum) != 1L || !grepl("^[0-9a-f]{32}$", checksum) ||
+      (length(checksums) && !identical(tolower(checksums), checksum))) {
+    stop("Catalog checksum metadata is invalid or disagrees with the checksum list: ", id)
+  }
+  checksum
+}
+
+.gact_panukb_catalog_row <- function(row, id, analysis, metadata_dir) {
+  asset <- .gact_catalog_file(id, metadata_dir)
+  meta <- asset$meta
+  file <- asset$file
   if (!identical(meta$gwas_id, id) || !identical(meta$data_file_name, file) ||
-      !identical(meta$genome_assembly, "GRCh38") || !isTRUE(meta$is_harmonised) ||
+      !identical(meta$genome_assembly, "GRCh38") ||
+      !identical(meta$coordinate_system, "1-based") || !isTRUE(meta$is_harmonised) ||
       !isTRUE(grepl("^GWAS-SSF", meta$file_type)) ||
       !any(grepl("pan.ukbb.broadinstitute.org", meta$author_notes, fixed = TRUE)) ||
       !identical(.gact_panukb_trait_key(unlist(meta$trait_description)), .gact_panukb_trait_key(row$description))) {
@@ -105,8 +155,8 @@ panUKBManifest <- function(selection, out_dir,
   }
   sexes <- c(both_sexes = "combined", females = "female", males = "male")
   if (!identical(meta$sex, unname(sexes[row$pheno_sex]))) .gact_panukb_mismatch("Catalog sex scope differs: ", id)
-  pops <- switch(analysis, EUR = "EUR", hq = strsplit(row$pops_pass_qc, ",", fixed = TRUE)[[1L]],
-                 all = strsplit(row$pops, ",", fixed = TRUE)[[1L]])
+  pops <- switch(analysis, hq = strsplit(row$pops_pass_qc, ",", fixed = TRUE)[[1L]],
+                 all = strsplit(row$pops, ",", fixed = TRUE)[[1L]], analysis)
   catalog_pops <- vapply(meta$samples, .gact_panukb_pop_code, character(1))
   if (!length(pops) || anyNA(pops) || anyDuplicated(catalog_pops) ||
       !setequal(pops, catalog_pops)) .gact_panukb_mismatch("Catalog ancestry scope differs: ", id)
@@ -118,16 +168,7 @@ panUKBManifest <- function(selection, out_dir,
       !all(vapply(meta$samples, function(sample) identical(sample$case_control_study, binary), logical(1)))) {
     .gact_panukb_mismatch("Catalog cohort counts differ from the selected Pan-UKB analysis: ", id)
   }
-  listing <- strsplit(fetch(paste0(base, "md5sum.txt"), paste0(id, ".md5")), "\n", fixed = TRUE)[[1L]]
-  entries <- strsplit(trimws(listing), "[[:space:]]+")
-  match <- Filter(function(x) length(x) == 2L && sub("^\\*", "", x[2L]) == file, entries)
-  checksums <- vapply(match, function(x) x[1L], character(1))
-  checksum <- tolower(meta$data_file_md5sum)
-  if (length(checksum) != 1L || !grepl("^[0-9a-f]{32}$", checksum) ||
-      (length(checksums) && !identical(tolower(checksums), checksum))) {
-    stop("Catalog checksum metadata is invalid or disagrees with the checksum list: ", id)
-  }
-  data.frame(accession = id, filename = file, url = url, md5 = checksum,
+  data.frame(accession = id, filename = file, url = asset$url, md5 = .gact_catalog_md5(asset, id),
     source = "Pan-UK Biobank Catalog harmonised GWAS-SSF v1.0", trait = row$description,
     type = if (binary) "binary" else "quantitative", build = "GRCh38",
     ancestry = if (length(pops) == 1L) pops else "Mixed",
@@ -136,6 +177,51 @@ panUKBManifest <- function(selection, out_dir,
     study_n_case = if (binary) sum(cases) else NA_real_,
     study_n_control = if (binary) sum(controls) else NA_real_,
     comments = paste0("Pan-UKB ", row$filename, "; analysis=", analysis, "; groups=", paste(pops, collapse = ",")),
+    cohort_evidence = if (analysis %in% .gact_panukb_ancestries)
+      "Pan-UKB separate ancestry GWAS and matching Catalog sample metadata" else NA_character_,
+    reference = .gact_gwas_catalog_url(id), stringsAsFactors = FALSE)
+}
+
+.gact_catalog_recipe_row <- function(id, evidence, catalog_path = NULL) {
+  asset <- .gact_catalog_file(id, catalog_path = catalog_path)
+  meta <- asset$meta
+  if (!identical(meta$gwas_id, id) || !identical(meta$data_file_name, asset$file) ||
+      !identical(meta$genome_assembly, "GRCh38") || !identical(meta$coordinate_system, "1-based") ||
+      !isTRUE(meta$is_harmonised) || !isTRUE(grepl("^GWAS-SSF", meta$file_type))) {
+    stop("Expected a harmonised, 1-based GRCh38 GWAS-SSF file: ", id)
+  }
+  trait <- unlist(meta$trait_description, use.names = FALSE)
+  samples <- meta$samples
+  design <- paste(unlist(meta[c("analysis_software", "author_notes")]), collapse = " ")
+  if (grepl("\\b(METAL|METASOFT|GWAMA|MR-MEGA|meta[- ]analysis|meta[- ]analy[sz]ed)\\b",
+            design, ignore.case = TRUE))
+    stop("Catalog metadata indicates a meta-analysis: ", id)
+  if (is.null(evidence) && grepl("\\bsingle[- ]cohort\\b", design, ignore.case = TRUE))
+    evidence <- design
+  if (is.null(evidence)) stop("Need verified single-cohort evidence for this Catalog file: ", id)
+  if (length(samples) != 1L) stop("Expected a single Catalog sample group: ", id)
+  flags <- lapply(samples, `[[`, "case_control_study")
+  if (!length(flags) || !all(vapply(flags, function(x) identical(x, TRUE) || identical(x, FALSE),
+                                   logical(1))) || length(unique(flags)) != 1L) {
+    stop("Catalog metadata does not establish the study type: ", id)
+  }
+  ancestry <- unique(unlist(lapply(samples, `[[`, "sample_ancestry_category"), use.names = FALSE))
+  if (length(trait) != 1L || anyNA(trait) || !nzchar(trait) ||
+      length(ancestry) != 1L || anyNA(ancestry) || any(!nzchar(ancestry)) ||
+      tolower(ancestry) %in% c("mixed", "multiple", "unknown", "not reported")) {
+    stop("Catalog metadata does not establish a single trait and ancestry: ", id)
+  }
+  size <- if (length(samples) == 1L) samples[[1L]]$sample_size else NULL
+  code <- tryCatch(.gact_panukb_pop_code(list(sample_ancestry_category = ancestry)),
+                   error = function(e) ancestry[1L])
+  data.frame(accession = id, filename = asset$file, url = asset$url,
+    md5 = .gact_catalog_md5(asset, id), source = paste("GWAS Catalog harmonised", meta$file_type),
+    trait = trait, type = if (flags[[1L]]) "binary" else "quantitative", build = "GRCh38",
+    ancestry = code, strand = "forward", cohort_evidence = evidence,
+    gender = unname(c(combined = "both", female = "females", male = "males")[meta$sex %||% ""]),
+    study_n_total = if (is.numeric(size) && length(size) == 1L && is.finite(size) && size > 0)
+      size else NA_real_,
+    comments = paste("Catalog ancestry:", paste(ancestry, collapse = ", ")),
     reference = .gact_gwas_catalog_url(id), stringsAsFactors = FALSE)
 }
 
@@ -143,34 +229,107 @@ panUKBManifest <- function(selection, out_dir,
   stop(errorCondition(paste0(...), class = "gact_panukb_mismatch"))
 }
 
-#' Scan Pan-UK Biobank studies for GWAS ingestion
+#' Scan Pan-UK Biobank and GWAS Catalog studies for ingestion
 #'
-#' Match selected phenotypes to verified GRCh38 GWAS Catalog files. Use the
+#' Match phenotypes or Catalog accessions to verified GRCh38 files. Use the
 #' C++ reader on a bounded gzip prefix and prepare recipes and an import manifest.
-#' The scanner does not open a database. The importer verifies the full file MD5.
+#' Verified recipes are keyed by accession and input MD5. Use the same
+#' `recipe_dir` to reuse them on later scans; metadata is checked again.
+#' Unresolved studies appear in the review report. The scanner only writes
+#' recipes and reports. The importer verifies the full file MD5.
 #'
-#' @param selection Data frame with Pan-UKB filename and analysis (EUR, hq, or
-#'   all). An optional accession column supplies an explicit Catalog match.
-#' @param out_dir New or empty directory for the recipes and scan reports.
+#' @param selection Pan-UKB data frame with filename, an ancestry in the
+#'   analysis column, and optional accession, or a vector of Catalog accessions.
+#'   Omit it to select all available phenotype and ancestry pairs.
+#' @param out_dir New or empty scan report directory. Defaults to a new
+#'   directory under `recipe_dir/reviews`.
 #' @param phenotype_manifest Official compressed Pan-UKB manifest URL or local path.
 #' @param preview_rows Number of complete leading rows to inspect.
 #' @param max_preview_bytes Maximum compressed bytes requested per file.
+#' @param recipe_dir Persistent recipe directory. Defaults to `out_dir/recipes`.
+#' @param source `"panukb"` or `"catalog"`.
+#' @param analysis `"per_ancestry"` (default) or one Pan-UKB ancestry code
+#'   for scans of the full phenotype manifest.
+#' @param cohort_evidence Optional named character vector of reviewed
+#'   single-cohort evidence keyed by Catalog accession. Used when the file
+#'   metadata lacks explicit evidence. Meta-analyses and mixed ancestry
+#'   files are excluded even when evidence is supplied.
+#' @param GAlist Existing GRCh38 database descriptor. Its recipes directory is
+#'   the default when supplied.
+#' @param repository Provider name: `"pan-ukb"` or `"gwas-catalog"`.
+#'   Catalog scans with no selection use the published harmonised-file index.
+#' @param workers Number of concurrent recipe scans. Defaults to 1.
 #' @return Paths to the manifest and format profiles, and a per-study review table.
 #' @export
-scanGWAS <- function(selection, out_dir,
+scanGWAS <- function(selection = NULL, out_dir = NULL,
     phenotype_manifest = "https://pan-ukb-us-east-1.s3.amazonaws.com/sumstats_release/phenotype_manifest.tsv.bgz",
-    preview_rows = 1000L, max_preview_bytes = 1024L * 1024L) {
+    preview_rows = 1000L, max_preview_bytes = 1024L * 1024L, recipe_dir = NULL,
+    source = c("panukb", "catalog"), analysis = "per_ancestry", cohort_evidence = NULL,
+    GAlist = NULL, repository = NULL, workers = 1L) {
+  if (!is.null(repository)) {
+    provider <- c("pan-ukb" = "panukb", "gwas-catalog" = "catalog")
+    selected <- unname(provider[match.arg(repository, names(provider))])
+    if (!missing(source) && !identical(match.arg(source), selected))
+      stop("source and repository specify different providers")
+    source <- selected
+  }
+  source <- match.arg(source)
+  if (!is.numeric(workers) || length(workers) != 1L || !is.finite(workers) ||
+      workers < 1L || workers > .Machine$integer.max || workers != floor(workers))
+    stop("workers must be a positive integer")
+  if (!is.null(GAlist)) {
+    if (!identical(.gact_catalog_build(GAlist), "GRCh38"))
+      stop("scanGWAS() requires a GRCh38 database when GAlist is supplied")
+    if (is.null(recipe_dir)) {
+      if (!"recipes" %in% names(GAlist$dirs)) stop("GAlist has no recipes directory")
+      recipe_dir <- GAlist$dirs[["recipes"]]
+    }
+  }
   if (!requireNamespace("yaml", quietly = TRUE)) stop("Install yaml to read Catalog metadata")
+  if (is.null(out_dir) && is.null(recipe_dir)) stop("Supply GAlist, out_dir, or recipe_dir")
+  if (is.null(out_dir)) out_dir <- tempfile("scan-", tmpdir = file.path(recipe_dir, "reviews"))
+  if (is.null(recipe_dir)) recipe_dir <- file.path(out_dir, "recipes")
+  if (!is.null(cohort_evidence) && (!is.character(cohort_evidence) ||
+      is.null(names(cohort_evidence)) || anyNA(cohort_evidence) ||
+      any(!nzchar(trimws(cohort_evidence))) || anyDuplicated(names(cohort_evidence)) ||
+      !all(grepl("^GCST[0-9]{6,8}$", names(cohort_evidence))))) {
+    stop("cohort_evidence must contain reviewed evidence named by Catalog accession")
+  }
+  cohort_evidence <- as.list(cohort_evidence)
+  if (source == "panukb") {
+    phenotype <- .gact_read_panukb_manifest(phenotype_manifest)
+    if (is.null(selection)) {
+      if (length(analysis) != 1L || !analysis %in% c("per_ancestry", .gact_panukb_ancestries))
+        stop("Choose per_ancestry or one Pan-UKB ancestry code")
+      populations <- lapply(strsplit(phenotype$pops, ",", fixed = TRUE), function(pops) {
+        eligible <- if (analysis == "per_ancestry") .gact_panukb_ancestries else analysis
+        intersect(trimws(pops), eligible)
+      })
+      selection <- data.frame(filename = rep(phenotype$filename, lengths(populations)),
+                              analysis = unlist(populations, use.names = FALSE))
+    }
+  } else {
+    if (is.null(selection)) {
+      selection <- .gact_catalog_index()
+    } else {
+      if (!is.character(selection) || !length(selection) || anyNA(selection) ||
+          anyDuplicated(selection) || !all(grepl("^GCST[0-9]{6,8}$", selection))) {
+        stop("Supply unique GWAS Catalog accessions")
+      }
+      selection <- data.frame(filename = paste0(selection, ".h.tsv.gz"),
+                              analysis = "catalog", accession = selection)
+    }
+  }
   required <- c("filename", "analysis")
   if (!is.data.frame(selection) || !nrow(selection) || !all(required %in% names(selection)) ||
-      anyNA(selection[required]) || anyDuplicated(selection[required]) ||
-      !all(selection$analysis %in% c("EUR", "hq", "all"))) {
-    stop("Supply a unique Pan-UKB filename and analysis per selection")
+      anyNA(selection[required]) || (source == "panukb" &&
+      (anyDuplicated(selection[required]) || !all(selection$analysis %in% .gact_panukb_ancestries)))) {
+    stop("Supply unique Pan-UKB filename and single-ancestry analysis pairs")
   }
   if (!"accession" %in% names(selection)) selection$accession <- NA_character_
   selection$accession <- as.character(selection$accession)
   explicit <- !is.na(selection$accession) & nzchar(selection$accession)
-  if (!all(grepl("^GCST[0-9]{8}$", selection$accession[explicit]))) stop("Invalid Catalog accession")
+  if (!all(grepl("^GCST[0-9]{6,8}$", selection$accession[explicit]))) stop("Invalid Catalog accession")
   for (value in list(preview_rows, max_preview_bytes)) {
     if (!is.numeric(value) || length(value) != 1L || !is.finite(value) ||
         value < 1 || value >= .Machine$integer.max || value != floor(value)) {
@@ -180,51 +339,61 @@ scanGWAS <- function(selection, out_dir,
   if (dir.exists(out_dir) && length(list.files(out_dir, all.files = TRUE, no.. = TRUE))) {
     stop("out_dir must be new or empty")
   }
-  phenotype <- .gact_read_panukb_manifest(phenotype_manifest)
-  at <- match(selection$filename, phenotype$filename)
-  catalog <- if (any(!explicit & !is.na(at))) {
-    tryCatch(.gact_panukb_catalog_studies(), error = function(e) e)
+  at <- if (source == "panukb") match(selection$filename, phenotype$filename)
+  catalog <- if (source == "panukb" && any(!explicit & !is.na(at))) {
+    tryCatch({
+      studies <- .gact_panukb_catalog_studies()
+      keys <- vapply(studies, function(study)
+        .gact_panukb_trait_key(study$reportedTrait %||% ""), character(1))
+      split(studies, keys)
+    }, error = function(e) e)
   } else list()
-  if (!dir.create(file.path(out_dir, "recipes"), recursive = TRUE, showWarnings = FALSE)) {
-    stop("Cannot create scan recipe directory")
+  duplicate_traits <- if (source == "panukb") {
+    keys <- paste(.gact_panukb_trait_key(phenotype$description), phenotype$pheno_sex)
+    unique(keys[duplicated(keys)])
+  }
+  for (path in c(out_dir, recipe_dir)) {
+    if (!dir.exists(path) && !dir.create(path, recursive = TRUE, showWarnings = FALSE))
+      stop("Cannot create scan directory: ", path)
   }
   out_dir <- normalizePath(out_dir, winslash = "/", mustWork = TRUE)
+  recipe_dir <- normalizePath(recipe_dir, winslash = "/", mustWork = TRUE)
   review <- data.frame(filename = selection$filename, analysis = selection$analysis,
     accession = selection$accession, status = "needs_review", preview_bytes = NA_integer_,
-    preview_rows = NA_integer_, recipe = NA_character_, issues = NA_character_)
+    preview_rows = NA_integer_, reused = FALSE, recipe = NA_character_, issues = NA_character_)
   rows <- formats <- vector("list", nrow(selection))
-  for (i in seq_len(nrow(selection))) {
-    result <- tryCatch({
-      if (is.na(at[i])) stop("Filename is absent from the Pan-UKB phenotype manifest")
-      row <- phenotype[at[i], , drop = FALSE]
-      accession <- if (explicit[i]) selection$accession[i] else {
-        if (inherits(catalog, "error")) stop(catalog)
-        .gact_panukb_candidates(row, phenotype, catalog)
-      }
-      picked <- .gact_panukb_scan_match(row, accession, selection$analysis[i])
-      review$accession[i] <- picked$accession
-      prefix <- tempfile(fileext = ".tsv.gz")
-      sample <- tryCatch({
-        bytes <- .gact_fetch_gwas_prefix(picked$url, prefix, max_preview_bytes)
-        review$preview_bytes[i] <- bytes
-        .gact_cpp_gwas_preview(prefix, preview_rows, 0L, prefix = TRUE)
-      }, finally = unlink(prefix))
-      review$preview_rows[i] <- nrow(sample)
-      if (nrow(sample) < preview_rows) stop("Byte limit reached before the requested number of complete rows")
-      profile <- .gact_panukb_catalog_profile(picked$source)
-      recipe <- .gact_gwas_scan_recipe(picked, sample, bytes, profile)
-      path <- file.path(out_dir, "recipes", sprintf("study_%05d.json", i))
-      jsonlite::write_json(recipe, path, auto_unbox = TRUE, pretty = TRUE, na = "null", digits = NA)
-      review$recipe[i] <- path
-      if (length(recipe$inspection_issues)) stop(paste(recipe$inspection_issues, collapse = " | "))
-      list(manifest = picked, format = profile)
-    }, error = function(e) e)
-    if (inherits(result, "error")) {
-      review$issues[i] <- conditionMessage(result)
+  context <- list(
+    selection = selection, review = review, source = source, at = at, explicit = explicit,
+    phenotype = if (source == "panukb") phenotype else NULL, catalog = catalog,
+    duplicate_traits = duplicate_traits, cohort_evidence = cohort_evidence,
+    out_dir = out_dir, recipe_dir = recipe_dir, preview_rows = preview_rows,
+    max_preview_bytes = max_preview_bytes
+  )
+  count <- min(as.integer(workers), nrow(selection))
+  if (count > 1L) {
+    cluster <- parallel::makePSOCKcluster(count)
+    on.exit(parallel::stopCluster(cluster), add = TRUE)
+    parallel::clusterCall(cluster, .libPaths, .libPaths())
+    .gact_scan_context <- context
+    parallel::clusterExport(cluster, ".gact_scan_context", envir = environment())
+  }
+  for (start in seq.int(1L, nrow(selection), by = 100L)) {
+    indices <- seq.int(start, min(start + 99L, nrow(selection)))
+    message("Scanning GWAS recipes ", start, "–", tail(indices, 1L), "/", nrow(selection),
+            " (", count, " workers)")
+    results <- if (count > 1L) {
+      parallel::parLapplyLB(cluster, indices, .gact_scan_recipe_worker, chunk.size = 1L)
     } else {
-      review$status[i] <- "ready"
-      rows[[i]] <- result$manifest
-      formats[[i]] <- result$format
+      lapply(indices, .gact_scan_recipe_one, context = context)
+    }
+    for (j in seq_along(indices)) {
+      i <- indices[j]
+      result <- results[[j]]
+      review[i, ] <- result$review
+      if (identical(result$review$status, "ready")) {
+        rows[[i]] <- result$manifest
+        formats[[i]] <- result$format
+      }
     }
   }
   accepted <- which(review$status == "ready")
@@ -248,6 +417,127 @@ scanGWAS <- function(selection, out_dir,
   invisible(list(manifest = manifest, knowledge = knowledge, review = review, report = report))
 }
 
+.gact_scan_recipe_worker <- function(i) {
+  .gact_scan_recipe_one(i, get(".gact_scan_context", envir = .GlobalEnv))
+}
+
+.gact_scan_recipe_one <- function(i, context) {
+  with(context, {
+    entry <- review[i, , drop = FALSE]
+    result <- tryCatch({
+      picked <- if (source == "catalog") {
+        id <- selection$accession[i]
+        if (isTRUE(selection$ambiguous[i])) stop("Multiple harmonised files listed for ", id)
+        .gact_catalog_recipe_row(id, cohort_evidence[[id]], selection$catalog_path[i])
+      } else {
+        if (is.na(at[i])) stop("Filename is absent from the Pan-UKB phenotype manifest")
+        row <- phenotype[at[i], , drop = FALSE]
+        accession <- if (explicit[i]) selection$accession[i] else {
+          if (inherits(catalog, "error")) stop(catalog)
+          .gact_panukb_candidates(row, duplicate_traits, catalog)
+        }
+        .gact_panukb_scan_match(row, accession, selection$analysis[i])
+      }
+      entry$accession <- picked$accession
+      path <- .gact_verified_recipe_path(recipe_dir, picked$accession, picked$md5)
+      stored <- .gact_read_verified_recipe(path, picked)
+      profile <- .gact_panukb_catalog_profile(picked$source)
+      if (is.null(stored)) {
+        prefix <- tempfile(fileext = ".tsv.gz")
+        sample <- tryCatch({
+          bytes <- .gact_fetch_gwas_prefix(picked$url, prefix, max_preview_bytes)
+          entry$preview_bytes <- bytes
+          .gact_cpp_gwas_preview(prefix, preview_rows, 0L, prefix = TRUE)
+        }, finally = unlink(prefix))
+        entry$preview_rows <- nrow(sample)
+        if (nrow(sample) < preview_rows)
+          stop("Byte limit reached before the requested number of complete rows")
+        standard <- all(unlist(profile$mapping) %in% names(sample)) &&
+          !any(c("odds_ratio", "hazard_ratio", "neg_log_10_p_value") %in% names(sample))
+        known_panukb <- all(names(sample) %in% c(profile$headers, "low_confidence"))
+        if (standard && (source == "catalog" || known_panukb)) {
+          profile$headers <- names(sample)
+        }
+        recipe <- .gact_gwas_scan_recipe(picked, sample, bytes, profile)
+        if (length(recipe$inspection_issues)) {
+          draft <- file.path(out_dir, sprintf("study_%05d.json", i))
+          jsonlite::write_json(recipe, draft, auto_unbox = TRUE, pretty = TRUE,
+                               na = "null", digits = NA)
+          entry$recipe <- draft
+          stop(paste(recipe$inspection_issues, collapse = " | "))
+        }
+        recipe$verified <- TRUE
+        .gact_save_verified_recipe(recipe, path, picked)
+      } else {
+        entry$reused <- TRUE
+        entry$preview_bytes <- 0L
+        entry$preview_rows <- stored$inspection$preview_rows
+        profile$headers <- unlist(stored$inspection$headers, use.names = FALSE)
+        profile$mapping <- stored$mapping
+      }
+      entry$recipe <- path
+      list(manifest = picked, format = profile)
+    }, error = function(e) e)
+    if (inherits(result, "error")) {
+      entry$issues <- conditionMessage(result)
+      return(list(review = entry))
+    }
+    entry$status <- "ready"
+    c(list(review = entry), result)
+  })
+}
+
+.gact_verified_recipe_path <- function(directory, accession, md5) {
+  md5 <- tolower(md5)
+  if (!isTRUE(grepl("^[A-Z0-9][A-Z0-9._-]*$", accession)) ||
+      !isTRUE(grepl("^[a-f0-9]{32}$", md5))) {
+    stop("Supply a valid accession and the provider's MD5 checksum")
+  }
+  file.path(directory, paste0(accession, "-", md5, ".json"))
+}
+
+.gact_read_verified_recipe <- function(path, study) {
+  if (!file.exists(path)) return(NULL)
+  recipe <- jsonlite::read_json(path)
+  if (!isTRUE(recipe$verified)) return(NULL)
+  if (!identical(recipe$accession, toupper(study$accession)) ||
+      !identical(recipe$input_md5, tolower(study$md5)) ||
+      !identical(recipe$input_url, study$url) ||
+      !isTRUE(recipe$inspection$profile_reused) || !isTRUE(recipe$validation$ok) ||
+      length(recipe$inspection_issues)) {
+    stop("Stored verified recipe does not match the input or validation: ", basename(path))
+  }
+  fields <- intersect(c("filename", "cohort_evidence", .gact_gwas_metadata_fields), names(study))
+  same <- vapply(fields, function(field) {
+    value <- study[[field]]
+    is.na(value) || identical(as.character(recipe[[field]]), as.character(value))
+  }, logical(1))
+  if (!all(same)) stop("Stored verified recipe metadata changed: ", paste(fields[!same], collapse = ", "))
+  if (!all(unlist(recipe$mapping) %in% unlist(recipe$inspection$headers)))
+    stop("Stored recipe mapping differs from its preview header")
+  .gact_cpp_gwas_mapping(recipe)
+  recipe
+}
+
+.gact_save_verified_recipe <- function(recipe, path, study) {
+  key <- substr(as.character(openssl::sha256(basename(path))), 1L, 16L)
+  lock <- file.path(dirname(path), paste0(".recipe-", key))
+  if (!dir.create(lock, showWarnings = FALSE)) stop("Cannot lock recipe: ", basename(path))
+  on.exit(unlink(lock, recursive = TRUE), add = TRUE)
+  if (file.exists(path)) {
+    saved <- .gact_read_verified_recipe(path, study)
+    if (is.null(saved) || !identical(saved$mapping, recipe$mapping) ||
+        !identical(unlist(saved$inspection$headers), recipe$inspection$headers)) {
+      stop("Existing recipe differs from the verified preview: ", basename(path))
+    }
+    return(invisible(path))
+  }
+  staged <- file.path(lock, "recipe.json")
+  jsonlite::write_json(recipe, staged, auto_unbox = TRUE, pretty = TRUE, na = "null", digits = NA)
+  .publish_gwas_import_file(staged, path)
+  invisible(path)
+}
+
 .gact_panukb_scan_match <- function(row, accession, analysis) {
   matches <- lapply(accession, function(id) {
     tryCatch(.gact_panukb_catalog_row(row, id, analysis, metadata_dir = NULL),
@@ -268,7 +558,9 @@ scanGWAS <- function(selection, out_dir,
   recipe$input_url <- study$url
   reused <- identical(names(sample), profile$headers)
   recipe$inspection <- list(headers = names(sample), preview_rows = nrow(sample),
-    preview_bytes = bytes, remote = TRUE, skip = 0L, profile_reused = reused)
+    preview_bytes = bytes, remote = TRUE, skip = 0L, profile_reused = reused,
+    evidence = if (reused) profile$evidence else NULL,
+    unmapped_columns = if (reused) setdiff(names(sample), unlist(profile$mapping)) else NULL)
   if (reused) {
     recipe$mapping <- profile$mapping
     recipe$effect_scale <- profile$effect_scale
@@ -276,7 +568,12 @@ scanGWAS <- function(selection, out_dir,
     recipe$validation <- validateStatSchema(normalizeStatSchema(sample, recipe$mapping,
       effect_scale = recipe$effect_scale, p_scale = recipe$p_scale))
     recipe$inspection_issues <- recipe$validation$errors
-    if (!length(recipe$inspection_issues)) .gact_cpp_gwas_mapping(recipe)
+    if (!length(recipe$inspection_issues)) {
+      recipe$inspection_issues <- tryCatch({
+        .gact_cpp_gwas_mapping(recipe)
+        character()
+      }, error = conditionMessage)
+    }
   } else {
     guesses <- detectStatSchema(sample, sample_n = NULL)
     recipe$mapping <- as.list(guesses$mapping)
@@ -303,22 +600,19 @@ scanGWAS <- function(selection, out_dir,
   unlist(pages, recursive = FALSE, use.names = FALSE)
 }
 
-.gact_panukb_candidates <- function(row, phenotype, catalog) {
+.gact_panukb_candidates <- function(row, duplicate_traits, catalog) {
   key <- .gact_panukb_trait_key(row$description)
-  same_label <- .gact_panukb_trait_key(phenotype$description) == key &
-    phenotype$pheno_sex == row$pheno_sex
-  if (sum(same_label, na.rm = TRUE) > 1L) {
+  if (paste(key, row$pheno_sex) %in% duplicate_traits) {
     stop("Several Pan-UKB files share this trait label and sex. Supply a reviewed Catalog accession")
   }
   hit <- Filter(function(study) {
     label <- study$reportedTrait
-    if (!isTRUE(.gact_panukb_trait_key(label) == key) ||
-        !isTRUE(grepl("^GCST[0-9]{8}$", study$accessionId)) ||
+    if (!isTRUE(grepl("^GCST[0-9]{8}$", study$accessionId)) ||
         !isTRUE(grepl("^https?://", study$summaryStatistics))) return(FALSE)
     if (!grepl("\\(phecode [^)]+\\)", label, ignore.case = TRUE)) return(TRUE)
     code <- sub(".*\\(phecode ([^)]+)\\).*", "\\1", label, ignore.case = TRUE)
     identical(row$trait_type, "phecode") && identical(code, row$phenocode)
-  }, catalog)
+  }, catalog[[key]])
   unique(vapply(hit, function(study) study$accessionId, character(1)))
 }
 
@@ -334,7 +628,8 @@ scanGWAS <- function(selection, out_dir,
     writeBin(chunk, connection)
     invisible(NULL)
   }
-  handle <- curl::new_handle(range = sprintf("0-%d", as.integer(max_bytes) - 1L), timeout = 45)
+  handle <- curl::new_handle(range = sprintf("0-%d", as.integer(max_bytes) - 1L),
+                             connecttimeout = 20, timeout = 45)
   response <- curl::curl_fetch_stream(url, receive, handle = handle)
   headers <- strsplit(rawToChar(response$headers), "\r?\n")[[1L]]
   range <- grep("^content-range:[[:space:]]*bytes 0-[0-9]+/[0-9]+$", trimws(headers),
@@ -2227,7 +2522,9 @@ recodeSumstat <- recodeStat
 #'   Nonempty manifest values take precedence. A GWAS Catalog accession
 #'   supplies the study URL when `reference` is missing.
 #' @param import Import automatically after a verified preview. Use `FALSE`
-#'   to check readiness without writing to the database.
+#'   to check readiness without importing studies. A matching verified
+#'   [scanGWAS()] recipe in the database's `recipes/` directory avoids a full
+#'   download in this mode. Importing still verifies the full input checksum.
 #' @param preview_rows Maximum number of rows per preview.
 #' @param engine Select the R importer or the C++ batch engine for supported
 #'   verified gzip TSV profiles.
@@ -2375,27 +2672,37 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
           (is.null(row$reference) || is.na(row$reference) || !nzchar(row$reference))) {
         row$reference <- .gact_gwas_catalog_url(accession)
       }
-      file <- .gact_gwas_manifest_file(row, data_dir)
-      pattern <- paste0("^", gsub(".", "[.]", row$filename, fixed = TRUE), "$")
-      inspection <- inspectGWAS(data_dir, row, file.path(out_dir, sprintf("study_%05d", i)),
-                                file_column = "filename", knowledge = knowledge,
-                                preview_rows = preview_rows,
-                                pattern = pattern, recursive = FALSE, reader = engine)
-      entry <- inspection$review
-      if (nrow(entry) != 1L || !identical(entry$file, file) || entry$metadata_matches != 1L) {
-        stop("Could not isolate the manifest input in the download directory")
+      path <- .gact_verified_recipe_path(recipes, accession, row$md5)
+      recipe <- .gact_read_verified_recipe(path, row)
+      if (is.null(recipe)) {
+        file <- .gact_gwas_manifest_file(row, data_dir)
+        pattern <- paste0("^", gsub(".", "[.]", row$filename, fixed = TRUE), "$")
+        inspection <- inspectGWAS(data_dir, row, file.path(out_dir, sprintf("study_%05d", i)),
+                                  file_column = "filename", knowledge = knowledge,
+                                  preview_rows = preview_rows,
+                                  pattern = pattern, recursive = FALSE, reader = engine)
+        entry <- inspection$review
+        if (nrow(entry) != 1L || !identical(entry$file, file) || entry$metadata_matches != 1L) {
+          stop("Could not isolate the manifest input in the download directory")
+        }
+        report$recipe[i] <- entry$recipe
+        recipe <- jsonlite::read_json(entry$recipe)
+        issues <- recipe$inspection_issues
+        if (!isTRUE(entry$preview_ok) || !isTRUE(recipe$inspection$profile_reused) || length(issues)) {
+          stop(paste(c("Review the preview or verified format", issues), collapse = " | "))
+        }
+        recipe$accession <- accession
+        recipe$input_md5 <- tolower(row$md5)
+        recipe$input_url <- row$url
+        if (engine == "cpp") .gact_cpp_gwas_mapping(recipe)
+      } else {
+        report$recipe[i] <- path
+        if (import) {
+          file <- .gact_gwas_manifest_file(row, data_dir)
+          recipe$file_name <- file
+        }
       }
-      report$recipe[i] <- entry$recipe
-      recipe <- jsonlite::read_json(entry$recipe)
       report$warnings[i] <- paste(unlist(recipe$validation$warnings), collapse = " | ")
-      issues <- recipe$inspection_issues
-      if (!isTRUE(entry$preview_ok) || !isTRUE(recipe$inspection$profile_reused) || length(issues)) {
-        stop(paste(c("Review the preview or verified format", issues), collapse = " | "))
-      }
-      recipe$accession <- accession
-      recipe$input_md5 <- tolower(row$md5)
-      recipe$input_url <- row$url
-      if (engine == "cpp") .gact_cpp_gwas_mapping(recipe)
       if (!import) {
         report$status[i] <- "ready"
         next

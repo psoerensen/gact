@@ -521,19 +521,43 @@ files, preview downloads, and downloads from failed imports are retained.
 `scanGWAS()` reads the provider phenotype manifest and looks for a matching
 harmonised GRCh38 Catalog file for each selected analysis. It checks study
 metadata and uses the C++ reader on a bounded HTTP byte range. The scan writes
-recipes and a report without opening a database. Use `analysis = "hq"` for the
-meta-analysis across ancestry groups that passed Pan-UKB QC. Supply a reviewed
+recipes and a report without opening a database. Use an ancestry code such
+as `"EUR"` or `"CSA"` in the `analysis` column. Supply a reviewed
 `accession` when the report flags an ambiguous match.
 
 ```r
 selection <- data.frame(
   filename = c("biomarkers-30750-both_sexes-irnt.tsv.bgz",
                "phecode-250-both_sexes.tsv.bgz"),
-  analysis = "hq"
+  analysis = c("EUR", "CSA")
 )
 prepared <- scanGWAS(selection, "panukb-selection")
 prepared$review
 ```
+
+To save verified recipes directly in the database's `recipes/` folder,
+pass the existing GRCh38 descriptor.
+
+```r
+panukb <- scanGWAS(GAlist = GAlist, repository = "pan-ukb", workers = 8L)
+catalog <- scanGWAS(GAlist = GAlist, repository = "gwas-catalog", workers = 8L)
+```
+
+Supply `selection` to scan a smaller batch. Without it, gact scans all available
+Pan-UKB single-ancestry studies or candidates in the Catalog's published
+harmonised-file index. For Catalog files whose metadata lacks single-cohort
+evidence, supply reviewed `cohort_evidence` named by accession. Meta-analyses
+and mixed ancestry are excluded.
+
+
+Verified recipes are named by accession and input MD5. Reruns recheck
+upstream metadata and reuse a matching recipe without requesting another
+summary-statistics preview. Review reports are stored under `recipes/reviews/`.
+Study-level sample counts stay in study metadata. Inputs with unverified
+formats or unclear metadata remain in the review report.
+The recipe records ancillary columns such as Pan-UKB's `low_confidence`
+as unmapped. The existing importer applies its own alignment and QC.
+
 
 Once the scan report is ready, run the manifest to fetch, checksum, and import
 the full files. The manifest contains only ready studies.

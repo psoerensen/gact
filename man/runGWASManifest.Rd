@@ -33,9 +33,9 @@ accession, including legacy GWAS Catalog study URLs in \code{reference}.}
 \item{data_dir}{Download and cache directory. Defaults to the database's
 download directory.}
 
-\item{out_dir}{New or empty report directory outside \code{data_dir}.
-Defaults to a new batch directory under the database's \code{recipes/reviews}.
-Use a fresh explicit report directory on subsequent runs.}
+\item{out_dir}{New or empty report directory outside \code{data_dir}. Use a
+fresh report directory on subsequent runs to preserve earlier reports.
+Defaults to a new batch directory under the database's recipes/reviews.}
 
 \item{knowledge}{Path to verified \code{formats.json} from \code{\link[=inspectGWAS]{inspectGWAS()}}.
 With no verified match, the workflow produces a preview for review.}
@@ -45,25 +45,28 @@ Nonempty manifest values take precedence. A GWAS Catalog accession
 supplies the study URL when \code{reference} is missing.}
 
 \item{import}{Import automatically after a verified preview. Use \code{FALSE}
-to check readiness without writing to the database.}
+to check readiness without importing studies. A matching verified
+\code{\link[=scanGWAS]{scanGWAS()}} recipe in the database's \verb{recipes/} directory avoids a full
+download in this mode. Importing still verifies the full input checksum.}
 
 \item{preview_rows}{Maximum number of rows per preview.}
 
-\item{engine}{Select the R importer or the C++ batch engine for supported verified gzip TSV profiles.}
+\item{engine}{Select the R importer or the C++ batch engine for supported
+verified gzip TSV profiles.}
 
 \item{workers}{Number of C++ staging workers on Unix. Windows uses one worker.}
 
 \item{scratch_dir}{Parent directory for temporary C++ working files.
-Defaults to \code{SLURM_TMPDIR} when available or R's temporary directory.
+Defaults to SLURM_TMPDIR when available, or R's temporary directory.
 Each run removes its own working directory when it exits.}
 }
 \value{
 Invisibly, the per-study report written to \code{manifest_review.tsv}.
 Status is \code{imported}, \code{already_imported}, \code{ready}, or \code{needs_review}.
-The \code{out_dir} attribute gives the batch report directory.
 Preview QC warnings are reported separately. Full-data QC counts are
 included for newly imported studies. The \code{cleanup} column records the
 outcome for managed downloads.
+The out_dir attribute gives the batch report directory.
 }
 \description{
 Each row represents one study. New inputs are downloaded or read from the

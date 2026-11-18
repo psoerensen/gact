@@ -106,3 +106,32 @@ test_that("native staging publishes verified recipes and reads both studies", {
   }
   expect_identical(run("repeat")$status, rep("already_imported", 2))
 })
+
+test_that("native import consumes a saved scan recipe and verifies the full input", {
+  x <- cpp_gwas_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  row <- x$manifest[1L, , drop = FALSE]
+  row$reference <- paste0("https://www.ebi.ac.uk/gwas/studies/", row$accession)
+  profile <- jsonlite::read_json(x$knowledge)$formats[[1L]]
+  profile$headers <- unlist(profile$headers, use.names = FALSE)
+  preview <- data.table::fread(x$files[1L], data.table = FALSE)
+  recipe <- gact:::.gact_gwas_scan_recipe(row, preview, 1024L, profile)
+  recipe$verified <- TRUE
+  directory <- file.path(x$root, "recipes")
+  dir.create(directory)
+  path <- gact:::.gact_verified_recipe_path(directory, row$accession, row$md5)
+  gact:::.gact_save_verified_recipe(recipe, path, row)
+  local_mocked_bindings(inspectGWAS = function(...) stop("Unexpected new preview"), .package = "gact")
+
+  backup <- file.path(x$root, "backup.tsv.gz")
+  expect_true(file.copy(x$files[1L], backup))
+  writeLines("different file", x$files[1L])
+  bad <- runGWASManifest(row, x$descriptor, engine = "cpp")
+  expect_identical(bad$status, "needs_review")
+  expect_match(bad$issues, "Input MD5 checksum mismatch")
+  expect_length(list.files(x$ga$dirs[["gstat"]]), 0L)
+  expect_true(file.copy(backup, x$files[1L], overwrite = TRUE))
+  good <- runGWASManifest(row, x$descriptor, engine = "cpp")
+  expect_identical(good$status, "imported")
+  expect_equal(good$n_final, 3L)
+})
