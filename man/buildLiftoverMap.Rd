@@ -25,4 +25,5 @@ Lift a GRCh37 source variant list once with a UCSC hg19-to-hg38
 chain. Process autosomal SNPs by chromosome and keep unique mappings
 whose REF and ALT agree with the release marker catalog. Saves one
 compressed table per chromosome, a reusable C++ index, QC counts, and checksums.
+Tables use R gzip compression and work with data.table builds without gzip support.
 }

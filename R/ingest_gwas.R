@@ -829,6 +829,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
 #' chain. Process autosomal SNPs by chromosome and keep unique mappings
 #' whose REF and ALT agree with the release marker catalog. Saves one
 #' compressed table per chromosome, a reusable C++ index, QC counts, and checksums.
+#' Tables use R gzip compression and work with data.table builds without gzip support.
 #' @param GAlist GRCh38 database descriptor from the IGSR marker build.
 #' @param variant_manifest Local GRCh37 variant list with chr (or chrom), pos, ref, and alt columns.
 #'   Defaults to the Pan-UKB variant list cached in the release reference directory.
@@ -891,7 +892,9 @@ buildLiftoverMap <- function(GAlist, variant_manifest = NULL, chain = NULL, out_
     chr <- chromosome
     file <- paste0("chr", chr, ".tsv.gz")
     path <- file.path(stage, file)
-    data.table::fwrite(result$map, path, sep = "\t")
+    plain <- sub("\\.gz$", "", path)
+    data.table::fwrite(result$map, plain, sep = "\t", compress = "none")
+    R.utils::gzip(plain, destname = path, remove = TRUE)
     message("Liftover chr", chr, ": ", result$counts$retained,
             " of ", result$counts$input, " variants retained")
     list(chromosome = chr, file = file, md5 = unname(tools::md5sum(path)), counts = result$counts)

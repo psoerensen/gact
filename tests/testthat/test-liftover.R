@@ -43,6 +43,19 @@ test_that("Pan-UKB liftover verifies unique positions and keeps the effect on it
   expect_identical(requests, sources$chain$url)
   sources$chain$md5 <- chain_md5
   requests <- character()
+  fwrite <- data.table::fwrite
+  local_mocked_bindings(fwrite = function(x, file, ...) {
+    if (grepl("\\.(gz|bgz)$", file, ignore.case = TRUE))
+      stop("Synthetic data.table build has no gzip support")
+    fwrite(x, file, ...)
+  }, .package = "data.table")
+  local({
+    local_mocked_bindings(gzip = function(...) stop("Simulated compression failure"),
+                          .package = "R.utils")
+    expect_error(buildLiftoverMap(ga), "Simulated compression failure")
+  })
+  expect_false(dir.exists(gact:::.gact_liftover_dir(ga)))
+  expect_length(list.files(ga$dirs[["marker"]], pattern = "^\\.gact-liftover-"), 0L)
   map <- buildLiftoverMap(ga)
   expect_identical(dirname(map), unname(ga$dirs[["marker"]]))
   expect_true(file.exists(file.path(map, "index.bin")))
