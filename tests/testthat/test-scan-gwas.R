@@ -32,7 +32,7 @@ test_that("Pan-UKB scanning writes importable recipes from bounded previews", {
   calls <- character()
   local_mocked_bindings(
     .gact_panukb_catalog_studies = function() records,
-    .gact_panukb_catalog_row = function(row, id, analysis, metadata_dir) {
+    .gact_panukb_catalog_row = function(row, id, analysis, metadata_dir, ...) {
       if (id == "GCST90691576") gact:::.gact_panukb_mismatch("ancestry differs")
       data.frame(accession = id, filename = paste0(id, ".h.tsv.gz"),
         url = paste0("https://ftp.ebi.ac.uk/", id), md5 = paste(rep("a", 32L), collapse = ""),
@@ -88,6 +88,54 @@ test_that("Pan-UKB scanning writes importable recipes from bounded previews", {
   conflict <- runGWASManifest(changed, descriptor, import = FALSE, engine = "cpp")
   expect_identical(conflict$status, "needs_review")
   expect_match(conflict$issues, "metadata changed")
+})
+
+test_that("Pan-UKB matching resolves shared labels using code, sex and ancestry", {
+  manifest <- data.frame(filename = c("diabetes-a", "diabetes-b", "diabetes-c"),
+    trait_type = "phecode", phenocode = c("250", "250.2", "250"),
+    description = "Diabetes mellitus", pheno_sex = c("both_sexes", "both_sexes", "females"),
+    pops = "CSA,EUR", n_cases_CSA = 1695, n_controls_CSA = 7181,
+    n_cases_EUR = 24348, n_controls_EUR = 396181, category = "Disease")
+  ids <- c("GCST90692416", "GCST90691951", "GCST90691952", "GCST90692999")
+  labels <- c("Diabetes (PheCode 250)", "Diabetes mellitus (PheCode 250)",
+              "Diabetes mellitus (PheCode 250.2)", "Diabetes mellitus (PheCode 250)")
+  records <- lapply(seq_along(ids), function(i) list(accessionId = ids[i],
+    reportedTrait = labels[i], summaryStatistics = "https://ftp.ebi.ac.uk/example",
+    discoverySampleAncestry = if (i %in% c(1L, 4L)) "8876 South Asian, Central Asian" else
+      "420529 European"))
+  catalog <- gact:::.gact_panukb_index_catalog(records)
+  row <- manifest[1L, , drop = FALSE]
+  csa <- gact:::.gact_panukb_candidates(row, catalog, "CSA")
+  eur <- gact:::.gact_panukb_candidates(row, catalog, "EUR")
+  expect_setequal(csa$accession, ids[c(1L, 4L)])
+  expect_identical(eur$accession, ids[2L])
+  expect_identical(gact:::.gact_panukb_catalog_code(
+    c("Body mass index (UKB data field 21001)", "Diabetes (ICD-10 code E11.9)")),
+    c("ukb:21001", "icd10:e119"))
+
+  local_mocked_bindings(.gact_catalog_file = function(id, metadata_dir) {
+    i <- match(id, ids)
+    file <- paste0(id, ".h.tsv.gz")
+    hash <- "5d140be767245495c51f255ec6effc4b"
+    list(file = file, url = paste0("https://ftp.ebi.ac.uk/", file),
+      base = "https://ftp.ebi.ac.uk/", fetch = function(...) paste(hash, file),
+      meta = list(gwas_id = id, data_file_name = file, genome_assembly = "GRCh38",
+        coordinate_system = "1-based", is_harmonised = TRUE, file_type = "GWAS-SSF v1.0",
+        author_notes = "https://pan.ukbb.broadinstitute.org/", trait_description = labels[i],
+        data_file_md5sum = hash, sex = if (i == 4L) "female" else "combined",
+        samples = list(list(
+          sample_size = if (i %in% c(1L, 4L)) 8876 else 420529, case_control_study = TRUE,
+          sample_ancestry_category = if (i %in% c(1L, 4L)) c("South Asian", "Central Asian") else
+            "European"))))
+  }, .package = "gact")
+  match_row <- gact:::.gact_panukb_scan_match
+  a <- match_row(row, csa, "CSA", manifest[2L, , drop = FALSE])
+  b <- match_row(row, eur, "EUR", manifest[2L, , drop = FALSE])
+  expect_identical(c(a$accession, b$accession), ids[1:2])
+  expect_identical(c(a$ancestry, b$ancestry), c("CSA", "EUR"))
+  expect_identical(a$md5, b$md5)
+  tied <- transform(row, filename = "other-diabetes-file")
+  expect_error(match_row(row, csa, "CSA", tied), "also match other-diabetes-file")
 })
 
 test_that("Catalog scanning verifies metadata and saves a checksum-keyed recipe", {

@@ -47,7 +47,10 @@ per-study review table. The manifest includes only ready studies.
 Match Pan-UK Biobank phenotypes or Catalog accessions to verified GRCh38
 single-ancestry files using the C++ reader on a bounded gzip prefix. Verified recipes are
 keyed by accession and input MD5. Use the same \code{recipe_dir} to reuse
-them on later scans. The scanner checks upstream metadata again and includes
+them on later scans. Pan-UKB discovery uses phenotype codes and labels and
+checks sex, ancestry and cohort counts against the Catalog metadata.
+Ambiguous phenotype matches and shared checksums require review.
+The scanner checks upstream metadata again and includes
 unresolved studies in the review report. The importer verifies the full
 file MD5.
 }

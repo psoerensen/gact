@@ -448,6 +448,8 @@ metadata and uses the C++ reader on a bounded HTTP byte range. The scan writes
 recipes and a report without opening a database. Use an ancestry code such
 as `"EUR"` or `"CSA"` in the `analysis` column. Supply a reviewed
 `accession` when the report flags an ambiguous match.
+Automatic matching uses phenotype codes and labels, then verifies the sex,
+ancestry and cohort counts for the exact Catalog file.
 
 ```r
 selection <- data.frame(

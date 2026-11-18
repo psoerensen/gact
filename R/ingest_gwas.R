@@ -67,9 +67,58 @@ panUKBManifest <- function(selection, out_dir,
     evidence = "GWAS-SSF v1.0 column definitions and verified harmonised GRCh38 Catalog metadata")
 }
 
+.gact_panukb_code_pattern <- "\\((phecode|ukb data field|icd-?10(?: code)?)[ :]+([a-z0-9.]+)\\)"
+
+.gact_panukb_catalog_code <- function(label) {
+  label <- tolower(label)
+  parts <- regmatches(label, regexec(.gact_panukb_code_pattern, label, perl = TRUE))
+  vapply(parts, function(part) {
+    if (!length(part)) return(NA_character_)
+    namespace <- if (part[2L] == "ukb data field") "ukb" else
+      if (part[2L] == "phecode") "phecode" else "icd10"
+    code <- if (namespace == "icd10") gsub(".", "", part[3L], fixed = TRUE) else part[3L]
+    paste0(namespace, ":", code)
+  }, character(1))
+}
+
+.gact_panukb_provider_code <- function(type, code) {
+  if (!length(type) || !length(code)) return(character())
+  namespace <- unname(c(biomarkers = "ukb", continuous = "ukb", categorical = "ukb",
+                        phecode = "phecode", icd10 = "icd10")[type])
+  code <- tolower(code)
+  icd <- which(type == "icd10")
+  code[icd] <- gsub(".", "", code[icd], fixed = TRUE)
+  result <- paste0(namespace, ":", code)
+  result[is.na(namespace) | is.na(code) | !nzchar(code)] <- NA_character_
+  result
+}
+
 .gact_panukb_trait_key <- function(x) {
-  x <- gsub(" \\(phecode [^)]+\\)| levels$", "", tolower(x))
+  x <- trimws(gsub(.gact_panukb_code_pattern, "", tolower(x), perl = TRUE))
+  x <- sub(" levels$", "", x)
   gsub("[^a-z0-9]", "", gsub("haemoglobin", "hemoglobin", x, fixed = TRUE))
+}
+
+.gact_panukb_label_keys <- function(row) {
+  labels <- row$description
+  if (!is.null(row$coding_description) && !is.na(row$coding_description) &&
+      nzchar(row$coding_description)) {
+    labels <- c(labels, paste(row$description, row$coding_description))
+  }
+  .gact_panukb_trait_key(labels)
+}
+
+.gact_panukb_keys <- function(row) {
+  code <- .gact_panukb_provider_code(row$trait_type, row$phenocode)
+  unique(c(paste0("label:", .gact_panukb_label_keys(row)), code[!is.na(code)]))
+}
+
+.gact_panukb_trait_score <- function(row, labels) {
+  code <- .gact_panukb_provider_code(row$trait_type, row$phenocode)
+  codes <- unique(na.omit(.gact_panukb_catalog_code(labels)))
+  if (length(codes) && (length(code) != 1L || is.na(code) || !all(codes == code))) return(0L)
+  if (any(.gact_panukb_label_keys(row) %in% .gact_panukb_trait_key(labels))) return(2L)
+  if (length(codes)) 1L else 0L
 }
 .gact_panukb_pop_code <- function(sample) {
   categories <- tolower(unlist(sample$sample_ancestry_category))
@@ -141,7 +190,8 @@ panUKBManifest <- function(selection, out_dir,
   checksum
 }
 
-.gact_panukb_catalog_row <- function(row, id, analysis, metadata_dir) {
+.gact_panukb_catalog_row <- function(row, id, analysis, metadata_dir,
+                                    catalog_label = NULL, alternatives = NULL) {
   asset <- .gact_catalog_file(id, metadata_dir)
   meta <- asset$meta
   file <- asset$file
@@ -149,10 +199,12 @@ panUKBManifest <- function(selection, out_dir,
       !identical(meta$genome_assembly, "GRCh38") ||
       !identical(meta$coordinate_system, "1-based") || !isTRUE(meta$is_harmonised) ||
       !isTRUE(grepl("^GWAS-SSF", meta$file_type)) ||
-      !any(grepl("pan.ukbb.broadinstitute.org", meta$author_notes, fixed = TRUE)) ||
-      !identical(.gact_panukb_trait_key(unlist(meta$trait_description)), .gact_panukb_trait_key(row$description))) {
+      !any(grepl("pan.ukbb.broadinstitute.org", meta$author_notes, fixed = TRUE))) {
     .gact_panukb_mismatch("Catalog metadata does not match the selected Pan-UKB phenotype: ", id)
   }
+  labels <- c(unlist(meta$trait_description, use.names = FALSE), catalog_label)
+  score <- .gact_panukb_trait_score(row, labels)
+  if (!score) .gact_panukb_mismatch("Catalog phenotype code or label differs: ", id)
   sexes <- c(both_sexes = "combined", females = "female", males = "male")
   if (!identical(meta$sex, unname(sexes[row$pheno_sex]))) .gact_panukb_mismatch("Catalog sex scope differs: ", id)
   pops <- switch(analysis, hq = strsplit(row$pops_pass_qc, ",", fixed = TRUE)[[1L]],
@@ -160,26 +212,45 @@ panUKBManifest <- function(selection, out_dir,
   catalog_pops <- vapply(meta$samples, .gact_panukb_pop_code, character(1))
   if (!length(pops) || anyNA(pops) || anyDuplicated(catalog_pops) ||
       !setequal(pops, catalog_pops)) .gact_panukb_mismatch("Catalog ancestry scope differs: ", id)
-  binary <- !row$trait_type %in% c("continuous", "biomarkers")
-  cases <- as.numeric(unlist(row[paste0("n_cases_", catalog_pops)]))
-  controls <- if (binary) as.numeric(unlist(row[paste0("n_controls_", catalog_pops)])) else rep(0, length(cases))
   sizes <- vapply(meta$samples, function(sample) as.numeric(sample$sample_size), numeric(1))
-  if (anyNA(c(cases, controls, sizes)) || !all(sizes == cases + controls) ||
-      !all(vapply(meta$samples, function(sample) identical(sample$case_control_study, binary), logical(1)))) {
+  flags <- lapply(meta$samples, `[[`, "case_control_study")
+  counts <- .gact_panukb_cohort_counts(row, catalog_pops, sizes, flags)
+  if (is.null(counts)) {
     .gact_panukb_mismatch("Catalog cohort counts differ from the selected Pan-UKB analysis: ", id)
   }
+  for (i in seq_len(nrow(alternatives) %||% 0L)) {
+    other <- alternatives[i, , drop = FALSE]
+    if (.gact_panukb_trait_score(other, labels) >= score &&
+        !is.null(.gact_panukb_cohort_counts(other, catalog_pops, sizes, flags))) {
+      .gact_panukb_mismatch("Catalog phenotype, sex and cohort also match ", other$filename, ": ", id)
+    }
+  }
+  binary <- counts$binary
   data.frame(accession = id, filename = file, url = asset$url, md5 = .gact_catalog_md5(asset, id),
     source = "Pan-UK Biobank Catalog harmonised GWAS-SSF v1.0", trait = row$description,
     type = if (binary) "binary" else "quantitative", build = "GRCh38",
     ancestry = if (length(pops) == 1L) pops else "Mixed",
     gender = switch(row$pheno_sex, both_sexes = "both", females = "females", males = "males"),
     category = row$category, strand = "forward", study_n_total = sum(sizes),
-    study_n_case = if (binary) sum(cases) else NA_real_,
-    study_n_control = if (binary) sum(controls) else NA_real_,
+    study_n_case = if (binary) sum(counts$cases) else NA_real_,
+    study_n_control = if (binary) sum(counts$controls) else NA_real_,
     comments = paste0("Pan-UKB ", row$filename, "; analysis=", analysis, "; groups=", paste(pops, collapse = ",")),
     cohort_evidence = if (analysis %in% .gact_panukb_ancestries)
       "Pan-UKB separate ancestry GWAS and matching Catalog sample metadata" else NA_character_,
     reference = .gact_gwas_catalog_url(id), stringsAsFactors = FALSE)
+}
+
+.gact_panukb_cohort_counts <- function(row, pops, sizes, flags) {
+  if (!is.null(row$pops) &&
+      !all(pops %in% trimws(strsplit(row$pops, ",", fixed = TRUE)[[1L]]))) return(NULL)
+  binary <- !row$trait_type %in% c("continuous", "biomarkers")
+  cases <- as.numeric(unlist(row[paste0("n_cases_", pops)]))
+  controls <- if (binary) as.numeric(unlist(row[paste0("n_controls_", pops)])) else
+    rep(0, length(pops))
+  if (length(cases) != length(pops) || length(controls) != length(pops) ||
+      anyNA(c(cases, controls, sizes)) || !all(sizes == cases + controls) ||
+      !all(vapply(flags, identical, logical(1), binary))) return(NULL)
+  list(binary = binary, cases = cases, controls = controls)
 }
 
 .gact_catalog_recipe_row <- function(id, evidence, catalog_path = NULL) {
@@ -235,6 +306,9 @@ panUKBManifest <- function(selection, out_dir,
 #' C++ reader on a bounded gzip prefix and prepare recipes and an import manifest.
 #' Verified recipes are keyed by accession and input MD5. Use the same
 #' `recipe_dir` to reuse them on later scans; metadata is checked again.
+#' Pan-UKB discovery uses phenotype codes and labels, then checks sex,
+#' ancestry and cohort counts against the Catalog metadata. Ambiguous
+#' phenotype matches and shared checksums require review.
 #' Unresolved studies appear in the review report. The scanner only writes
 #' recipes and reports. The importer verifies the full file MD5.
 #'
@@ -341,17 +415,10 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   }
   at <- if (source == "panukb") match(selection$filename, phenotype$filename)
   catalog <- if (source == "panukb" && any(!explicit & !is.na(at))) {
-    tryCatch({
-      studies <- .gact_panukb_catalog_studies()
-      keys <- vapply(studies, function(study)
-        .gact_panukb_trait_key(study$reportedTrait %||% ""), character(1))
-      split(studies, keys)
-    }, error = function(e) e)
+    tryCatch(.gact_panukb_index_catalog(.gact_panukb_catalog_studies()),
+             error = function(e) e)
   } else list()
-  duplicate_traits <- if (source == "panukb") {
-    keys <- paste(.gact_panukb_trait_key(phenotype$description), phenotype$pheno_sex)
-    unique(keys[duplicated(keys)])
-  }
+  phenotype_index <- if (source == "panukb") .gact_panukb_index_phenotypes(phenotype)
   for (path in c(out_dir, recipe_dir)) {
     if (!dir.exists(path) && !dir.create(path, recursive = TRUE, showWarnings = FALSE))
       stop("Cannot create scan directory: ", path)
@@ -365,7 +432,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   context <- list(
     selection = selection, review = review, source = source, at = at, explicit = explicit,
     phenotype = if (source == "panukb") phenotype else NULL, catalog = catalog,
-    duplicate_traits = duplicate_traits, cohort_evidence = cohort_evidence,
+    phenotype_index = phenotype_index, cohort_evidence = cohort_evidence,
     out_dir = out_dir, recipe_dir = recipe_dir, preview_rows = preview_rows,
     max_preview_bytes = max_preview_bytes
   )
@@ -432,11 +499,18 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
       } else {
         if (is.na(at[i])) stop("Filename is absent from the Pan-UKB phenotype manifest")
         row <- phenotype[at[i], , drop = FALSE]
-        accession <- if (explicit[i]) selection$accession[i] else {
+        candidates <- if (explicit[i]) {
+          data.frame(accession = selection$accession[i], label = NA_character_)
+        } else {
           if (inherits(catalog, "error")) stop(catalog)
-          .gact_panukb_candidates(row, duplicate_traits, catalog)
+          .gact_panukb_candidates(row, catalog, selection$analysis[i])
         }
-        .gact_panukb_scan_match(row, accession, selection$analysis[i])
+        alternatives <- if (!explicit[i]) {
+          siblings <- unlist(phenotype_index[paste(.gact_panukb_keys(row), row$pheno_sex)],
+                             use.names = FALSE)
+          phenotype[setdiff(siblings, at[i]), , drop = FALSE]
+        }
+        .gact_panukb_scan_match(row, candidates, selection$analysis[i], alternatives)
       }
       entry$accession <- picked$accession
       path <- .gact_verified_recipe_path(recipe_dir, picked$accession, picked$md5)
@@ -538,9 +612,10 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   invisible(path)
 }
 
-.gact_panukb_scan_match <- function(row, accession, analysis) {
-  matches <- lapply(accession, function(id) {
-    tryCatch(.gact_panukb_catalog_row(row, id, analysis, metadata_dir = NULL),
+.gact_panukb_scan_match <- function(row, candidates, analysis, alternatives) {
+  matches <- lapply(seq_len(nrow(candidates)), function(i) {
+    tryCatch(.gact_panukb_catalog_row(row, candidates$accession[i], analysis, metadata_dir = NULL,
+                                    catalog_label = candidates$label[i], alternatives = alternatives),
       gact_panukb_mismatch = function(e) e)
   })
   matched <- !vapply(matches, inherits, logical(1), "gact_panukb_mismatch")
@@ -548,7 +623,8 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
     detail <- if (length(matches)) paste(unique(vapply(matches, conditionMessage, "")), collapse = " | ")
     stop("No verified Catalog match", if (length(detail)) paste0(": ", detail))
   }
-  if (sum(matched) > 1L) stop("Multiple verified Catalog matches: ", paste(accession[matched], collapse = ", "))
+  if (sum(matched) > 1L)
+    stop("Multiple verified Catalog matches: ", paste(candidates$accession[matched], collapse = ", "))
   matches[[which(matched)]]
 }
 
@@ -600,20 +676,45 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   unlist(pages, recursive = FALSE, use.names = FALSE)
 }
 
-.gact_panukb_candidates <- function(row, duplicate_traits, catalog) {
-  key <- .gact_panukb_trait_key(row$description)
-  if (paste(key, row$pheno_sex) %in% duplicate_traits) {
-    stop("Several Pan-UKB files share this trait label and sex. Supply a reviewed Catalog accession")
-  }
-  hit <- Filter(function(study) {
-    label <- study$reportedTrait
-    if (!isTRUE(grepl("^GCST[0-9]{8}$", study$accessionId)) ||
-        !isTRUE(grepl("^https?://", study$summaryStatistics))) return(FALSE)
-    if (!grepl("\\(phecode [^)]+\\)", label, ignore.case = TRUE)) return(TRUE)
-    code <- sub(".*\\(phecode ([^)]+)\\).*", "\\1", label, ignore.case = TRUE)
-    identical(row$trait_type, "phecode") && identical(code, row$phenocode)
-  }, catalog[[key]])
-  unique(vapply(hit, function(study) study$accessionId, character(1)))
+.gact_panukb_index_catalog <- function(studies) {
+  studies <- Filter(function(study) isTRUE(grepl("^GCST[0-9]{8}$", study$accessionId)) &&
+    isTRUE(grepl("^https?://", study$summaryStatistics)), studies)
+  records <- data.frame(
+    accession = vapply(studies, `[[`, character(1), "accessionId"),
+    label = vapply(studies, function(study) study$reportedTrait %||% "", character(1)),
+    ancestry = vapply(studies, function(study) {
+      groups <- unlist(study$discoverySampleAncestry, use.names = FALSE)
+      if (!length(groups) || any(!grepl("^[0-9,]+ ", groups))) return(NA_character_)
+      groups <- sub("^[0-9,]+ ", "", groups)
+      pops <- vapply(groups, function(group) tryCatch(
+        .gact_panukb_pop_code(list(sample_ancestry_category = group)),
+        error = function(e) NA_character_), character(1))
+      if (anyNA(pops)) return(NA_character_)
+      if (length(unique(pops)) == 1L) pops[1L] else "Mixed"
+    }, character(1))
+  )
+  keys <- c(paste0("label:", .gact_panukb_trait_key(records$label)),
+            .gact_panukb_catalog_code(records$label))
+  list(records = records, index = split(rep(seq_len(nrow(records)), 2L), keys))
+}
+
+.gact_panukb_index_phenotypes <- function(phenotype) {
+  labels <- paste0("label:", .gact_panukb_trait_key(phenotype$description))
+  codes <- .gact_panukb_provider_code(phenotype$trait_type %||% rep(NA_character_, nrow(phenotype)),
+                                     phenotype$phenocode %||% rep(NA_character_, nrow(phenotype)))
+  keys <- c(paste(labels, phenotype$pheno_sex),
+            ifelse(is.na(codes), NA_character_, paste(codes, phenotype$pheno_sex)))
+  split(rep(seq_len(nrow(phenotype)), 2L), keys)
+}
+
+.gact_panukb_candidates <- function(row, catalog, analysis) {
+  indices <- unique(unlist(catalog$index[.gact_panukb_keys(row)], use.names = FALSE))
+  records <- catalog$records[indices, , drop = FALSE]
+  keep <- vapply(records$label, function(label)
+    .gact_panukb_trait_score(row, label) > 0L, logical(1))
+  keep <- keep & (is.na(records$ancestry) | records$ancestry == analysis)
+  records <- records[keep, , drop = FALSE]
+  records[!duplicated(records$accession), , drop = FALSE]
 }
 
 .gact_fetch_gwas_prefix <- function(url, path, max_bytes) {
