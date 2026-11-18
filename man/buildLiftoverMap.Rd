@@ -9,7 +9,7 @@ buildLiftoverMap(GAlist, variant_manifest = NULL, chain = NULL, out_dir = NULL)
 \arguments{
 \item{GAlist}{GRCh38 database descriptor from the IGSR marker build.}
 
-\item{variant_manifest}{Local GRCh37 variant list with chr, pos, ref, and alt columns.
+\item{variant_manifest}{Local GRCh37 variant list with chr (or chrom), pos, ref, and alt columns.
 Defaults to the Pan-UKB variant list cached in the release reference directory.}
 
 \item{chain}{Local UCSC hg19-to-hg38 chain file, plain or gzip compressed.

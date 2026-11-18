@@ -24,7 +24,9 @@ test_that("Pan-UKB liftover verifies unique positions and keeps the effect on it
     ref = c("A", "A", "A", "G", rep("A", 9L)),
     alt = c("G", rep("C", 10L), "AA", "C"), beta_EUR = seq_len(13L) / 10)
   variants <- file.path(root, "variants.tsv.gz")
-  data.table::fwrite(stat, variants, sep = "\t")
+  provider <- stat
+  names(provider)[1L] <- "chrom"
+  data.table::fwrite(provider, variants, sep = "\t")
   sources <- list(chain = list(url = "https://example.org/ucsc.chain.gz",
                                md5 = unname(tools::md5sum(chain))),
                   variant_manifest = list(url = "https://example.org/variants.tsv.gz"))
@@ -46,6 +48,8 @@ test_that("Pan-UKB liftover verifies unique positions and keeps the effect on it
   expect_true(file.exists(file.path(map, "index.bin")))
   expect_identical(buildLiftoverMap(ga), map)
   expect_identical(requests, c(sources$chain$url, sources$variant_manifest$url))
+  expect_identical(jsonlite::read_json(file.path(map, "manifest.json"))$inputs$variant_manifest$url,
+                   sources$variant_manifest$url)
   expect_true(file.exists(file.path(ga$dirs[["reference"]], basename(map), "ucsc.chain.gz")))
   expect_identical(gact:::.gact_cache_liftover_source(ga, sources$chain),
                    file.path(ga$dirs[["reference"]], basename(map), "ucsc.chain.gz"))
@@ -72,6 +76,15 @@ test_that("Pan-UKB liftover verifies unique positions and keeps the effect on it
   expect_identical(verifyGWASBuild(stat[rep(1L, 20L), ], map)$grch37_only, 1L)
   expect_identical(verifyGWASBuild(stat, map)$build, NA_character_)
   expect_error(buildLiftoverMap(ga, variants, chain), "already exists")
+  malformed <- file.path(root, "malformed.tsv")
+  data.table::fwrite(data.frame(chr = 1L, chrom = 1L, pos = 1L, ref = "A", alt = "C"),
+                     malformed, sep = "\t")
+  expect_error(buildLiftoverMap(ga, malformed, chain, file.path(root, "bad-map")),
+               "exactly one chromosome column")
+  data.table::fwrite(data.frame(chrom = 1L, pos = 1L, ref = "A"),
+                     malformed, sep = "\t")
+  expect_error(buildLiftoverMap(ga, malformed, chain, file.path(root, "bad-map")),
+               "plus pos, ref and alt")
 
   bundle <- packageLiftoverMap(ga, file.path(root, "bundle"))
   other <- createDB(ga$version, tempfile(tmpdir = root))

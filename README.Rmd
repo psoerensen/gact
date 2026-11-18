@@ -524,6 +524,9 @@ existing GRCh38 database, run `buildLiftoverMap(GAlist)`. It caches the
 [Pan-UKB variant list](https://pan.ukbb.broadinstitute.org/docs/per-phenotype-files/#variant-manifest-file)
 and the [UCSC hg19-to-hg38 chain](https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/)
 under `reference/` and verifies the chain against the UCSC checksum.
+The source variant reader accepts `chrom` in the official Pan-UKB variant
+list and `chr` in custom lists. Cached downloads are reused when retrying
+after an input-format failure.
 
 ```r
 runGWASManifest(manifest, descriptor, knowledge = "formats.json", engine = "cpp")

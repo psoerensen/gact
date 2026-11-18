@@ -830,7 +830,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
 #' whose REF and ALT agree with the release marker catalog. Saves one
 #' compressed table per chromosome, a reusable C++ index, QC counts, and checksums.
 #' @param GAlist GRCh38 database descriptor from the IGSR marker build.
-#' @param variant_manifest Local GRCh37 variant list with chr, pos, ref, and alt columns.
+#' @param variant_manifest Local GRCh37 variant list with chr (or chrom), pos, ref, and alt columns.
 #'   Defaults to the Pan-UKB variant list cached in the release reference directory.
 #' @param chain Local UCSC hg19-to-hg38 chain file, plain or gzip compressed.
 #'   Defaults to a checksum-verified download cached in the release reference directory.
@@ -864,8 +864,16 @@ buildLiftoverMap <- function(GAlist, variant_manifest = NULL, chain = NULL, out_
   hashes <- tools::md5sum(inputs)
   if (anyNA(hashes) || !identical(unname(hashes[3L]), provenance$checksums[["markers.txt.gz"]]))
     stop("Missing liftover input or marker catalog checksum mismatch.")
-  variants <- data.table::fread(variant_manifest, select = c("chr", "pos", "ref", "alt"),
-                                 colClasses = list(character = c("chr", "ref", "alt"), integer = "pos"))
+  connection <- gzfile(variant_manifest, "rt")
+  header <- tryCatch(strsplit(readLines(connection, n = 1L), "\t", fixed = TRUE)[[1L]],
+                     finally = close(connection))
+  chr_column <- intersect(c("chr", "chrom"), header)
+  required <- c("pos", "ref", "alt")
+  if (length(chr_column) != 1L || anyDuplicated(header) || !all(required %in% header))
+    stop("Variant list must have exactly one chromosome column (chr or chrom), plus pos, ref and alt")
+  variants <- data.table::fread(variant_manifest, select = c(chr_column, required),
+    colClasses = list(character = c(chr_column, "ref", "alt"), integer = "pos"))
+  data.table::setnames(variants, chr_column, "chr")
   variants[, chr := sub("^chr", "", chr)]
   data.table::setkeyv(variants, "chr")
   markers <- data.table::fread(catalog, select = c("rsids", "chr", "pos", "nea", "ea"),
