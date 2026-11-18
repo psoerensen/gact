@@ -575,6 +575,9 @@ Omit `selection` to scan the available ancestry analyses. The original-file
 route uses bounded C++ previews and saves ancestry-specific column mappings,
 provider MD5, study counts, and a GRCh37 preview verification tied to the
 liftover index checksum. Inconclusive builds or missing columns need review.
+For prescription phenotypes with no description, the trait label comes from
+the provider's phenocode and the recipe records that choice. Reserved filename
+characters are encoded in download URLs and use a stable safe cache filename.
 Reruns reuse the verified recipes. Ancestries sharing a phenotype file share
 its download and checksum. Meta-analysis columns remain unmapped. For binary
 traits, case/control allele frequencies remain unmapped and ingestion uses

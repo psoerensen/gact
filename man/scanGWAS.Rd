@@ -62,4 +62,7 @@ Original Pan-UKB scans use the provider manifest's download paths, MD5s,
 sex and ancestry-specific counts. Recipes select one ancestry's signed beta,
 SE and negative log10 p-value columns. Cross-ancestry meta-analysis columns
 remain unmapped. Binary case/control frequencies remain unmapped.
+Prescription traits with no description use the provider phenocode as the
+label and record that choice. Reserved filename characters are URL-encoded
+and use a stable safe local cache filename.
 }

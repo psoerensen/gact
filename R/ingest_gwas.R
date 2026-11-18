@@ -71,17 +71,30 @@ panUKBManifest <- function(selection, out_dir,
   if (!ancestry %in% .gact_panukb_ancestries ||
       !ancestry %in% trimws(strsplit(row$pops, ",", fixed = TRUE)[[1L]]))
     stop("Selected ancestry is absent from the Pan-UKB phenotype")
-  required <- c("filename", "aws_path", "md5_hex", "description", "pheno_sex", "trait_type")
-  if (!all(required %in% names(row)) || anyNA(row[required]) ||
-      any(!nzchar(unlist(row[required]))) ||
-      !isTRUE(grepl("^[[:xdigit:]]{32}$", row$md5_hex)))
-    stop("Missing original Pan-UKB file metadata or provider MD5")
+  required <- c("filename", "aws_path", "md5_hex", "pheno_sex", "trait_type")
+  missing <- required[vapply(required, function(field) {
+    value <- row[[field]]
+    length(value) != 1L || is.na(value) || !nzchar(trimws(value))
+  }, logical(1))]
+  if (length(missing))
+    stop("Missing original Pan-UKB metadata: ", paste(missing, collapse = ", "))
+  if (!isTRUE(grepl("^[[:xdigit:]]{32}$", row$md5_hex)))
+    stop("Invalid original Pan-UKB provider MD5")
+  trait <- row$description
+  fallback <- length(trait) != 1L || is.na(trait) || !nzchar(trimws(trait))
+  if (fallback) {
+    trait <- row$phenocode
+    if (row$trait_type != "prescriptions" || length(trait) != 1L ||
+        is.na(trait) || !nzchar(trimws(trait)))
+      stop("Missing original Pan-UKB metadata: description")
+  }
   filename <- trimws(row$filename)
   if (!identical(basename(filename), filename)) stop("Invalid Pan-UKB filename")
   url <- sub("^s3://pan-ukb-us-east-1/", "https://pan-ukb-us-east-1.s3.amazonaws.com/",
              row$aws_path)
   if (!startsWith(url, "https://pan-ukb-us-east-1.s3.amazonaws.com/") ||
       !identical(basename(url), filename)) stop("Unexpected original Pan-UKB download URL")
+  url <- paste0(dirname(url), "/", utils::URLencode(filename, reserved = TRUE))
   quantitative <- row$trait_type %in% c("continuous", "biomarkers")
   if (!row$trait_type %in% c("continuous", "biomarkers", "prescriptions", "icd10", "phecode", "categorical"))
     stop("Unknown Pan-UKB trait type")
@@ -95,16 +108,22 @@ panUKBManifest <- function(selection, out_dir,
   gender <- unname(c(both_sexes = "both", females = "females", males = "males")[row$pheno_sex])
   if (is.na(gender)) stop("Unknown Pan-UKB sex")
   id <- toupper(substr(as.character(openssl::sha256(filename)), 1L, 24L))
-  data.frame(accession = paste0("PANUKB-", id, "-", ancestry), filename = filename,
+  cache_filename <- filename
+  if (!grepl("^[A-Za-z0-9][A-Za-z0-9_. -]*\\.tsv\\.bgz$", filename))
+    cache_filename <- paste0("panukb-", tolower(id), ".tsv.bgz")
+  comments <- paste("Original Pan-UKB", filename, "ancestry", ancestry)
+  if (fallback) comments <- paste(comments,
+    "(trait label from provider phenocode, description missing)")
+  data.frame(accession = paste0("PANUKB-", id, "-", ancestry), filename = cache_filename,
     url = url, md5 = tolower(row$md5_hex), source = paste("Pan-UK Biobank original", ancestry),
-    trait = row$description, type = if (quantitative) "quantitative" else "binary",
+    trait = trait, type = if (quantitative) "quantitative" else "binary",
     build = "GRCh37", ancestry = ancestry, gender = gender, strand = "forward",
     category = row$category %||% NA_character_, study_n_total = cases + controls,
     study_n_case = if (quantitative) NA_real_ else cases,
     study_n_control = if (quantitative) NA_real_ else controls,
     cohort_evidence = "Pan-UKB ancestry-specific GWAS columns and phenotype manifest counts",
     reference = "https://pan.ukbb.broadinstitute.org/docs/per-phenotype-files/",
-    comments = paste("Original Pan-UKB", filename, "ancestry", ancestry))
+    comments = comments)
 }
 
 .gact_panukb_original_profile <- function(ancestry) {
@@ -364,6 +383,9 @@ panUKBManifest <- function(selection, out_dir,
 #' sex and ancestry-specific counts. Recipes select one ancestry's signed beta,
 #' SE and negative log10 p-value columns. Cross-ancestry meta-analysis columns
 #' remain unmapped. Binary case/control frequencies remain unmapped.
+#' Prescription traits with no description use the provider phenocode as the
+#' label and record that choice. Reserved filename characters are URL-encoded
+#' and use a stable safe local cache filename.
 #'
 #' @param selection Pan-UKB data frame with filename, an ancestry in the
 #'   analysis column, and optional accession, or a vector of Catalog accessions.
