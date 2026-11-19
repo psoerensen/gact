@@ -15,7 +15,10 @@ getLDscoresDB(
 \arguments{
 \item{GAlist}{A list containing directory paths where marker data is stored. It is assumed that \code{GAlist$dirs["marker"]} points to the correct directory.}
 
-\item{ancestry}{A character string specifying the ancestry population. The options are "EUR" (European), "EAS" (East Asian), or "SAS" (South Asian). Default is "EUR".}
+\item{chr}{Optional chromosome filter.}
+
+\item{ancestry}{Ancestry population: EUR, EAS, SAS, AFR or AMR. AFR and AMR
+currently support \code{version = "1000G"} only.}
 
 \item{version}{A character string specifying the version of the reference panel. The options are "HapMap3", "1000G", or "Original". Default is "HapMap3".}
 
@@ -28,6 +31,12 @@ A named vector of LD scores, where the names are rsIDs.
 This function retrieves LD scores for specified genetic markers based on the population ancestry and version of the reference panel. The function reads in marker files and extracts LD scores, allowing for optional filtering by specific rsIDs.
 }
 \details{
+Use \code{\link[=prepareLDscoresDB]{prepareLDscoresDB()}} to prepare the \verb{1000G} tables from matching BED
+panels. Prepared tables are checked against their build, ancestry and
+checksum manifest. GRCh38 tables require this provenance; existing GRCh37
+tables without a manifest remain supported. No computation or download is
+triggered by this reader.
+
 The function reads in precomputed LD score files for the selected ancestry and version, extracts the LD scores, and returns them as a named vector. If the \code{rsids} argument is provided, the returned vector will only include LD scores for the specified rsIDs.
 }
 \examples{

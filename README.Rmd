@@ -612,9 +612,21 @@ Its default exports all imported studies. For a small first correlation pilot,
 use two quantitative traits of the same ancestry with recorded sample sizes.
 `gminer::gminer(GAlist, task = "correlation", method = "ldsc", ancestry = "EUR")`
 reads the exported matrix and matching ancestry LD scores. GRCh38 requires
-matching score tables as a separate resource; the NYGC BED panels alone do not
-provide them. `getLDscoresDB(GAlist, ancestry = "EUR", version = "1000G")`
-checks availability of the default reference. The gminer native executable is
+matching score tables; the NYGC BED panels alone do not provide them.
+After downloading the matching panels, run
+`GAlist <- prepareLDscoresDB(GAlist, ancestry = "EUR", nthreads = 4)`.
+This uses gbase's direct BED scorer with the existing gact settings: a
+1,000-selected-marker distance window within each chromosome, no physical
+window or r² cutoff, and uncorrected scores including the unit diagonal.
+It applies no extra MAF filter and writes no pairwise sparse LD resource.
+Tables and checksummed provenance are stored in `marker/`; repeated calls
+reuse them when inputs and marker selection are unchanged. GRCh37 and GRCh38
+and the five NYGC ancestries are supported when matching panels are present.
+`getLDscoresDB(GAlist, ancestry = "EUR", version = "1000G")` reads the
+prepared scores and checks their provenance. HapMap3 tables remain separate
+resources. Tiny synthetic tests check numerical agreement with sparse LD;
+they do not establish genome-wide performance or downstream calibration.
+The gminer native executable is
 required. Correlation analysis is separate from ingestion and has not been
 scientifically validated by the ingestion scratch tests.
 
