@@ -31,7 +31,8 @@ fields from \code{\link[=inspectGWAS]{inspectGWAS()}} are optional.}
 
 \item{descriptor}{Path to the existing database's GAlist RDS. Successful
 imports update this file. Previously imported studies are detected by
-accession, including legacy GWAS Catalog study URLs in \code{reference}.}
+accession and ancestry in GWAS_information.csv, including legacy Catalog
+study URLs in \code{reference}. Input checksum conflicts require review.}
 
 \item{data_dir}{Download and cache directory. Defaults to the database's
 download directory.}

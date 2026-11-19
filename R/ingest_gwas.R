@@ -486,6 +486,21 @@ panUKBManifest <- function(selection, out_dir,
   if (length(trait) != 1L || anyNA(trait) || !nzchar(trait))
     stop("Catalog metadata does not establish a single trait: ", id)
   size <- if (length(samples) == 1L) samples[[1L]]$sample_size else NULL
+  counts <- stats::setNames(rep(NA_real_, 2L), c("case_count", "control_count"))
+  if (flags[[1L]]) {
+    for (field in names(counts)) {
+      value <- samples[[1L]][[field]]
+      if (is.null(value)) next
+      if (!is.numeric(value) || length(value) != 1L || !is.finite(value) ||
+          value <= 0 || value %% 1 != 0 ||
+          (is.numeric(size) && length(size) == 1L && is.finite(size) && value > size))
+        stop("Invalid Catalog ", field, ": ", id)
+      counts[field] <- value
+    }
+    if (all(is.finite(counts)) && is.numeric(size) && length(size) == 1L &&
+        is.finite(size) && sum(counts) != size)
+      stop("Catalog case/control counts disagree with sample_size: ", id)
+  }
   data.frame(accession = id, filename = asset$file, url = asset$url,
     md5 = .gact_catalog_md5(asset, id), source = paste("GWAS Catalog harmonised", meta$file_type %||% "legacy"),
     trait = trait, type = if (flags[[1L]]) "binary" else "quantitative", build = "GRCh38",
@@ -494,6 +509,8 @@ panUKBManifest <- function(selection, out_dir,
     gender = unname(c(combined = "both", female = "females", male = "males")[meta$sex %||% ""]),
     study_n_total = if (is.numeric(size) && length(size) == 1L && is.finite(size) && size > 0)
       size else NA_real_,
+    study_n_case = unname(counts["case_count"]),
+    study_n_control = unname(counts["control_count"]),
     comments = paste("Catalog ancestry:", paste(ancestry, collapse = ", ")),
     reference = .gact_gwas_catalog_url(id), coverage = coverage$coverage,
     coverage_evidence = coverage$evidence, stringsAsFactors = FALSE)
@@ -516,6 +533,14 @@ panUKBManifest <- function(selection, out_dir,
 #' phenotype matches and shared checksums require review.
 #' Unresolved studies appear in the review report. The scanner only writes
 #' recipes and reports. The importer verifies the full file MD5.
+#' On completion, recipes.tsv in recipe_dir is refreshed from all top-level
+#' verified JSON recipes, including those outside the current selection. It
+#' contains one metadata row per recipe. JSONs are not modified. Unverified
+#' drafts are omitted; unreadable or malformed JSONs are skipped with a warning.
+#' The TSV is replaced only after the new file has been fully written. It is
+#' an inventory of cached recipes; the scan manifest records current readiness.
+#' Explicit Catalog case_count/control_count fields are retained as study
+#' metadata and checked against sample_size. Missing breakdowns are not inferred.
 #' Original Pan-UKB scans use the provider manifest's download paths, MD5s,
 #' sex and ancestry-specific counts. Recipes select one ancestry's signed beta,
 #' SE and negative log10 p-value columns. Cross-ancestry meta-analysis columns
@@ -572,6 +597,7 @@ panUKBManifest <- function(selection, out_dir,
 #'   Coverage is `genome_wide`, `restricted`, or `unclear`. Restricted files
 #'   have status `excluded` and unclear files have status `needs_review`.
 #'   The import manifest contains only ready studies.
+#'   `recipes_tsv` is the path to the refreshed inventory in the recipe directory.
 #' @export
 scanGWAS <- function(selection = NULL, out_dir = NULL,
     phenotype_manifest = "https://pan-ukb-us-east-1.s3.amazonaws.com/sumstats_release/phenotype_manifest.tsv.bgz",
@@ -746,7 +772,52 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   data.table::fwrite(review, report, sep = "\t", na = "NA")
   jsonlite::write_json(list(formats = unique(formats[accepted])), knowledge,
     auto_unbox = TRUE, pretty = TRUE)
-  invisible(list(manifest = manifest, knowledge = knowledge, review = review, report = report))
+  recipes_tsv <- .gact_write_recipe_inventory(recipe_dir)
+  invisible(list(manifest = manifest, knowledge = knowledge, review = review, report = report,
+                 recipes_tsv = recipes_tsv))
+}
+
+.gact_write_recipe_inventory <- function(recipe_dir) {
+  fields <- c("accession", "filename", "source", "trait", "type", "ancestry",
+    "build", "gender", "study_n_total", "study_n_case", "study_n_control",
+    "reference", "input_url", "input_md5")
+  numeric_fields <- c("study_n_total", "study_n_case", "study_n_control")
+  skipped <- character()
+  paths <- list.files(recipe_dir, pattern = "\\.json$", full.names = TRUE)
+  rows <- lapply(paths, function(path) {
+    tryCatch({
+      recipe <- jsonlite::read_json(path, simplifyVector = TRUE)
+      if (!is.list(recipe) || !isTRUE(recipe$verified)) return(NULL)
+      row <- stats::setNames(lapply(fields, function(field) {
+        value <- recipe[[field]]
+        if (is.null(value) || !length(value)) return(if (field %in% numeric_fields) NA_real_ else NA_character_)
+        if (!is.atomic(value) || length(value) != 1L) stop("Nonscalar recipe metadata")
+        value
+      }), fields)
+      if (anyNA(unlist(row[c("accession", "input_md5")])) ||
+          any(!nzchar(unlist(row[c("accession", "input_md5")]))))
+        stop("Missing recipe identity")
+      row$recipe_file <- basename(path)
+      row
+    }, error = function(e) {
+      skipped <<- c(skipped, basename(path))
+      NULL
+    })
+  })
+  # Keep a stable header even when no verified recipes exist.
+  empty <- stats::setNames(lapply(c(fields, "recipe_file"), function(field)
+    if (field %in% numeric_fields) numeric() else character()), c(fields, "recipe_file"))
+  table <- data.table::rbindlist(c(list(empty), Filter(Negate(is.null), rows)), fill = TRUE)
+  if (nrow(table)) table <- table[order(table$accession, table$recipe_file, method = "radix")]
+  output <- file.path(recipe_dir, "recipes.tsv")
+  staged <- tempfile(".recipes-", tmpdir = recipe_dir, fileext = ".tsv")
+  on.exit(unlink(staged), add = TRUE)
+  data.table::fwrite(table, staged, sep = "\t", na = "NA")
+  .publish_gwas_import_file(staged, output, replace = TRUE)
+  if (length(skipped)) warning("Skipped ", length(skipped),
+    " unreadable or malformed recipe JSON file(s) while updating recipes.tsv: ",
+    paste(head(skipped, 5L), collapse = ", "), call. = FALSE)
+  output
 }
 
 .gact_scan_recipe_worker <- function(i) {
@@ -3206,6 +3277,113 @@ recodeSumstat <- recodeStat
 
 # Batch ingestion and C++ worker integration --------
 
+#' Ingest explicitly selected verified GWAS recipes
+#'
+#' Reads recipes.tsv and uses the selected JSON recipes as the source of study
+#' metadata and column mappings. No selection means no import. Existing imports
+#' are checked against GWAS_information.csv before downloading inputs. Matching
+#' accession, ancestry and input checksum are skipped; changed checksums or
+#' recipes require review. GWAS1, GWAS2, ... are assigned locally on publication.
+#' The CSV and saved descriptor are updated after successful imports. recipes.tsv
+#' and JSON recipes are not used as import-status records and are not modified.
+#'
+#' @param GAlist Database descriptor list, or path to its saved RDS.
+#' @param selection Required accessions or recipe filenames, or selected rows
+#'   from recipes.tsv. A character selection must match exactly one recipe.
+#'   Use recipe_file, ancestry and/or input_md5 to disambiguate data-frame rows.
+#'   Metadata edits to selected TSV rows do not override the JSON recipe.
+#' @param workers Number of C++ staging workers. Windows uses one worker.
+#' @param import Whether to import. FALSE checks selected recipes without
+#'   downloading full inputs or changing the database.
+#' @param descriptor Saved GAlist RDS path. By default find the single
+#'   GAlist*.rds in the database root. The current saved descriptor is reloaded.
+#' @param data_dir Optional input cache directory; defaults to download/.
+#' @param out_dir Optional new report directory; defaults to recipes/reviews/.
+#' @param scratch_dir Optional parent of temporary native working files.
+#' @return Invisibly, the per-study report from [runGWASManifest()], including
+#'   imported, already_imported, ready or needs_review status and local study IDs.
+#' @export
+ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
+                       descriptor = NULL, data_dir = NULL, out_dir = NULL,
+                       scratch_dir = NULL) {
+  if (missing(selection) || is.null(selection) || !length(selection) ||
+      (is.data.frame(selection) && !nrow(selection)))
+    stop("Select studies explicitly using accessions or rows from recipes.tsv")
+  if (is.character(GAlist) && length(GAlist) == 1L) {
+    if (!is.null(descriptor)) stop("Supply the descriptor path only once")
+    descriptor <- GAlist
+    GAlist <- readRDS(descriptor)
+  }
+  if (!is.list(GAlist) || length(GAlist$dirs[["gstat"]]) != 1L)
+    stop("Supply a GAlist database descriptor")
+  database <- dirname(normalizePath(GAlist$dirs[["gstat"]], winslash = "/", mustWork = TRUE))
+  if (is.null(descriptor)) {
+    candidates <- list.files(database, pattern = "^GAlist.*\\.rds$", full.names = TRUE)
+    if (length(candidates) != 1L) stop("Supply descriptor: expected one saved GAlist RDS in the database root")
+    descriptor <- candidates
+  }
+  descriptor <- normalizePath(descriptor, winslash = "/", mustWork = TRUE)
+  current <- readRDS(descriptor)
+  if (!identical(normalizePath(current$dirs[["gstat"]], winslash = "/", mustWork = TRUE),
+                 normalizePath(GAlist$dirs[["gstat"]], winslash = "/", mustWork = TRUE)))
+    stop("descriptor belongs to a different database")
+  recipes <- file.path(database, "recipes")
+  tsv <- file.path(recipes, "recipes.tsv")
+  if (!file.exists(tsv)) stop("Run scanGWAS() to create recipes/recipes.tsv first")
+  inventory <- data.table::fread(tsv, sep = "\t", colClasses = "character", data.table = FALSE)
+  keys <- c("accession", "ancestry", "input_md5", "recipe_file")
+  if (!all(keys %in% names(inventory))) stop("recipes.tsv is missing recipe identity columns")
+  if (is.character(selection)) {
+    if (anyNA(selection) || any(!nzchar(selection)) || anyDuplicated(selection))
+      stop("Supply unique, nonempty study accessions or recipe filenames")
+    hits <- lapply(selection, function(key)
+      which(inventory$accession == key | inventory$recipe_file == key))
+  } else if (is.data.frame(selection) && !anyDuplicated(names(selection))) {
+    fields <- intersect(keys, names(selection))
+    if (!any(c("accession", "recipe_file") %in% fields) || anyNA(selection[fields]))
+      stop("Select rows using accession or recipe_file, with nonmissing identity fields")
+    hits <- lapply(seq_len(nrow(selection)), function(i) {
+      match <- rep(TRUE, nrow(inventory))
+      for (field in fields) match <- match & inventory[[field]] == as.character(selection[[field]][i])
+      which(match)
+    })
+  } else stop("selection must be accessions, recipe filenames or selected recipes.tsv rows")
+  if (any(lengths(hits) != 1L))
+    stop("Each selection must match exactly one recipe; use recipe_file and ancestry/input_md5 to disambiguate")
+  indices <- unlist(hits, use.names = FALSE)
+  if (anyDuplicated(indices)) stop("The same recipe was selected more than once")
+  rows <- lapply(indices, function(i) {
+    key <- inventory[i, , drop = FALSE]
+    name <- key$recipe_file
+    if (is.na(name) || !grepl("^[A-Za-z0-9][A-Za-z0-9._-]*\\.json$", name))
+      stop("Invalid recipe_file in recipes.tsv")
+    path <- file.path(recipes, name)
+    recipe <- jsonlite::read_json(path)
+    for (field in c("accession", "ancestry", "input_md5")) {
+      if (!identical(recipe[[field]], key[[field]])) stop("Recipe identity differs from recipes.tsv: ", name)
+    }
+    if (!identical(name, basename(.gact_verified_recipe_path(recipes, recipe$accession, recipe$input_md5))))
+      stop("Recipe filename does not match its accession/checksum: ", name)
+    fields <- intersect(c("accession", "filename", "cohort_evidence", .gact_gwas_metadata_fields), names(recipe))
+    row <- lapply(recipe[fields], function(value) {
+      if (is.null(value) || !length(value)) return(NA)
+      if (!is.atomic(value) || length(value) != 1L) stop("Recipe study metadata must be scalar: ", name)
+      value
+    })
+    row$url <- recipe$input_url
+    row$md5 <- recipe$input_md5
+    row <- as.data.frame(row, stringsAsFactors = FALSE)
+    if (is.null(.gact_read_verified_recipe(path, row))) stop("Recipe is not verified: ", name)
+    if (tolower(row$ancestry) %in% c("mixed", "multiple", "unknown", "not reported"))
+      stop("Select single-ancestry recipes")
+    row$recipe_file <- name
+    row
+  })
+  manifest <- as.data.frame(data.table::rbindlist(rows, fill = TRUE))
+  runGWASManifest(manifest, descriptor, data_dir = data_dir, out_dir = out_dir,
+    import = import, engine = "cpp", workers = workers, scratch_dir = scratch_dir)
+}
+
 #' Download, review, and ingest GWAS studies from a manifest
 #'
 #' Each row represents one study. New inputs are downloaded or read from the
@@ -3226,7 +3404,8 @@ recodeSumstat <- recodeStat
 #'   fields from [inspectGWAS()] are optional.
 #' @param descriptor Path to the existing database's GAlist RDS. Successful
 #'   imports update this file. Previously imported studies are detected by
-#'   accession, including legacy GWAS Catalog study URLs in `reference`.
+#'   accession and ancestry in GWAS_information.csv, including legacy Catalog
+#'   study URLs in `reference`. Input checksum conflicts require review.
 #' @param data_dir Download and cache directory. Defaults to the database's
 #'   download directory.
 #' @param out_dir New or empty report directory outside `data_dir`. Use a
@@ -3313,8 +3492,10 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     stop("GAlist must point to an existing gstat directory")
   }
   inventory <- file.path(gstat, "GWAS_information.csv")
+  imported <- data.frame()
   inventory_ids <- if (file.exists(inventory)) {
-    ids <- read.csv2(inventory, colClasses = "character")$id
+    imported <- read.csv2(inventory, colClasses = "character")
+    ids <- imported$id
     if (is.null(ids)) stop("GWAS_information.csv is missing the id column")
     ids
   } else character()
@@ -3322,6 +3503,13 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   if (anyDuplicated(study_ids) || anyDuplicated(inventory_ids) ||
       !setequal(study_ids, as.character(inventory_ids))) {
     stop("GAlist study IDs differ from GWAS_information.csv. Load the current descriptor.")
+  }
+  for (field in intersect(c("accession", "reference", "ancestry", "input_md5", "recipe_checksum"),
+                          intersect(names(imported), names(GAlist$study)))) {
+    expected <- as.character(GAlist$study[[field]][match(imported$id, study_ids)])
+    actual <- imported[[field]]
+    same <- (is.na(expected) & is.na(actual)) | (!is.na(expected) & !is.na(actual) & expected == actual)
+    if (!all(same)) stop("GAlist import identity differs from GWAS_information.csv: ", field)
   }
 
   database <- dirname(gstat)
@@ -3353,7 +3541,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   accessions <- toupper(manifest$accession)
   filenames <- .gact_gwas_path_key(manifest$filename)
   repeated_file <- duplicated(filenames) | duplicated(filenames, fromLast = TRUE)
-  duplicate <- duplicated(accessions) | duplicated(accessions, fromLast = TRUE) |
+  identity <- paste(accessions, toupper(manifest$ancestry))
+  duplicate <- duplicated(identity) | duplicated(identity, fromLast = TRUE) |
     (repeated_file & !.gact_shared_panukb_inputs(manifest))
   jobs <- vector("list", nrow(manifest))
   report <- data.frame(accession = manifest$accession, filename = manifest$filename,
@@ -3368,18 +3557,23 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       if (!grepl("^[A-Z0-9][A-Z0-9._-]*$", accession) || duplicate[[i]]) {
         stop("Invalid or duplicate accession or duplicate filename")
       }
-      hits <- .gact_gwas_manifest_matches(GAlist$study, accession)
+      hits <- .gact_gwas_inventory_match(imported, row, strict = "recipe_file" %in% names(row))
       if (length(hits) > 1L) stop("Accession matches multiple imported studies")
       if (length(hits)) {
-        study_id <- GAlist$study$id[hits]
+        study_id <- imported$id[hits]
         study_file <- unname(GAlist$studyfiles[study_id])
         if (length(study_file) != 1L || !file.exists(study_file)) {
           stop("Stored summary statistics are missing for ", study_id)
         }
-        old_md5 <- GAlist$study$input_md5[hits]
+        old_md5 <- imported$input_md5[hits]
         if (length(old_md5) && !is.na(old_md5) &&
             !identical(tolower(old_md5), tolower(row$md5))) {
           stop("Accession was imported with a different input checksum")
+        }
+        old_recipe <- imported$recipe_checksum[hits]
+        if (length(old_recipe) && !is.na(old_recipe) && "recipe_file" %in% names(row)) {
+          actual <- unname(tools::md5sum(file.path(recipes, basename(row$recipe_file))))
+          if (is.na(actual) || !identical(actual, old_recipe)) stop("Imported study has a different verified recipe; review before retrying")
         }
         report$status[i] <- "already_imported"
         report$study_id[i] <- study_id
@@ -3412,6 +3606,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       }
       path <- .gact_verified_recipe_path(recipes, accession, row$md5)
       recipe <- .gact_read_verified_recipe(path, row)
+      if (is.null(recipe) && "recipe_file" %in% names(row))
+        stop("Selected verified recipe is missing or unverified; rescan before ingestion")
       inspected <- is.null(recipe)
       if (inspected) {
         file <- .gact_gwas_manifest_file(row, data_dir)
@@ -3515,6 +3711,22 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   catalog_url <- .gact_gwas_catalog_url(accession)
   legacy <- which(sub("/$", "", as.character(study$reference)) == catalog_url)
   union(explicit, legacy)
+}
+
+.gact_gwas_inventory_match <- function(study, row, strict = FALSE) {
+  hits <- .gact_gwas_manifest_matches(study, toupper(row$accession))
+  if (!length(hits)) return(hits)
+  ancestry <- toupper(trimws(as.character(study$ancestry[hits])))
+  if (length(ancestry) != length(hits)) ancestry <- rep(NA_character_, length(hits))
+  unknown <- is.na(ancestry) | !nzchar(ancestry) | ancestry %in% c("UNKNOWN", "NOT REPORTED")
+  if (strict && any(unknown)) stop("Stored ancestry is missing; review the existing import")
+  hits <- hits[unknown | ancestry == toupper(trimws(row$ancestry))]
+  if (strict && length(hits)) {
+    checksum <- study$input_md5[hits]
+    if (length(checksum) != length(hits) || anyNA(checksum) || any(!nzchar(checksum)))
+      stop("Stored input checksum is missing; review the existing import")
+  }
+  hits
 }
 
 .gact_gwas_manifest_file <- function(row, data_dir) {
@@ -3788,8 +4000,11 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     name <- paste0(id, ".txt")
     qc <- paste0(id, ".qc.json")
     recipe_path <- file.path("..", "recipes", basename(item$recipe_path))
-    numbers <- lapply(c("n", "ncase", "ncontrol"), function(field) {
-      if (is.null(recipe[[field]])) NA_real_ else as.numeric(recipe[[field]])
+    counts <- c(n = "study_n_total", ncase = "study_n_case", ncontrol = "study_n_control")
+    numbers <- lapply(names(counts), function(field) {
+      value <- recipe[[field]]
+      if (!length(value)) value <- recipe[[counts[[field]]]]
+      if (!length(value)) NA_real_ else as.numeric(value)
     })
     names(numbers) <- c("n", "ncase", "ncontrol")
     total <- numbers$ncase + numbers$ncontrol
@@ -3797,10 +4012,12 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       if (is.finite(total) && total > 0) numbers$ncase * numbers$ncontrol / total else NA_real_
     row <- c(list(id = id, file = name, created_at = Sys.time(), recipeID = recipeID,
                   recipe_file = recipe_path, qc_file = qc, checksum = item$checksum,
-                  accession = recipe$accession, input_md5 = recipe$input_md5, neff = neff),
-             numbers, recipe[intersect(names(recipe), c("source", "trait", "type", "category",
+                  accession = recipe$accession, input_md5 = recipe$input_md5,
+                  input_url = recipe$input_url,
+                  recipe_checksum = unname(tools::md5sum(item$recipe_path)), neff = neff),
+             numbers, Filter(function(value) length(value) > 0L, recipe[intersect(names(recipe), c("source", "trait", "type", "category",
                "efo", "gender", "ancestry", "build", "reference", "comments",
-               "study_n_total", "study_n_case", "study_n_control"))])
+               "study_n_total", "study_n_case", "study_n_control"))]))
     for (field in names(row)) {
       column <- current$study[[field]]
       if (is.null(column)) column <- rep(row[[field]][NA_integer_], at)

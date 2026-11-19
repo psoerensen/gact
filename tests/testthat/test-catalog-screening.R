@@ -96,6 +96,7 @@ test_that("report-derived Catalog cases save recipes and recheck exclusions on r
   ids <- c("GCST90432071", "GCST91007350", "GCST000028", "GCST90270929", "GCST90270930")
   calls <- 0L
   software <- "REGENIE"
+  scan_ids <- ids
   local_mocked_bindings(
     .gact_catalog_file = function(id, catalog_path = NULL) {
       i <- match(id, ids)
@@ -122,7 +123,7 @@ test_that("report-derived Catalog cases save recipes and recheck exclusions on r
                    "1\t727717\tC\tG\t0.1\t0.2\t0.4"), con)
       100L
     }, .package = "gact")
-  scan <- function() scanGWAS(ids, out_dir = tempfile(tmpdir = root),
+  scan <- function() scanGWAS(scan_ids, out_dir = tempfile(tmpdir = root),
     recipe_dir = file.path(root, "recipes"), repository = "gwas-catalog", preview_rows = 1L)
   result <- scan()
   expect_true(all(is.na(result$review$issues[c(1L, 3L)])),
@@ -131,9 +132,21 @@ test_that("report-derived Catalog cases save recipes and recheck exclusions on r
   expect_identical(calls, 2L)
   expect_identical(data.table::fread(result$manifest)$accession, ids[c(1L, 3L)])
   expect_length(list.files(file.path(root, "recipes"), pattern = "json$"), 2L)
+  expect_identical(result$recipes_tsv,
+    normalizePath(file.path(root, "recipes", "recipes.tsv"), winslash = "/"))
+  expect_setequal(data.table::fread(result$recipes_tsv)$accession, ids[c(1L, 3L)])
+  paths <- list.files(file.path(root, "recipes"), pattern = "json$", full.names = TRUE)
+  hashes <- tools::md5sum(paths)
   resumed <- scan()
   expect_true(all(resumed$review$reused[c(1L, 3L)]))
   expect_identical(calls, 2L)
+  scan_ids <- ids[1L]
+  partial <- scan()
+  expect_true(partial$review$reused)
+  expect_identical(data.table::fread(partial$manifest)$accession, ids[1L])
+  expect_setequal(data.table::fread(partial$recipes_tsv)$accession, ids[c(1L, 3L)])
+  expect_identical(tools::md5sum(paths), hashes)
+  scan_ids <- ids
   software <- "METAL"
   changed <- scan()
   expect_true(all(changed$review$status == "excluded"))

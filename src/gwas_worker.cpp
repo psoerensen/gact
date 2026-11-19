@@ -531,7 +531,7 @@ void process(const char* index_path, const char* source, const char* output, con
     }
     add("rsids", MarkerID);
     if (!supplied_eaf) add("eaf", Frequency);
-    if (supplied_n) add("n", SampleSize);
+    add("n", SampleSize); // Keep missing per-variant n explicit even when study totals are known.
 
     Gzip out(output, "wb6");
     string buffer;

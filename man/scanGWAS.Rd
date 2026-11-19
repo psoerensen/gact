@@ -53,6 +53,7 @@ Proteins and metabolites are included when their files meet the same coverage ru
 \value{
 Invisibly, paths to the import manifest, format profiles and scan report, and a
 per-study review table. The manifest includes only ready studies.
+\code{recipes_tsv} is the path to the refreshed inventory in the recipe directory.
 Coverage is \code{genome_wide}, \code{restricted}, or \code{unclear}. Restricted files
 have status \code{excluded} and unclear files have status \code{needs_review}.
 }
@@ -68,6 +69,14 @@ Ambiguous phenotype matches and shared checksums require review.
 The scanner checks upstream metadata again and includes
 unresolved studies in the review report. The importer verifies the full
 file MD5.
+On completion, \code{recipes.tsv} in \code{recipe_dir} is refreshed from all
+top-level verified JSON recipes, including those outside the current selection.
+It contains one metadata row per recipe. JSONs are not modified. Unverified
+drafts are omitted; unreadable or malformed JSONs are skipped with a warning.
+The TSV is replaced only after the new file has been fully written. It is an
+inventory of cached recipes; the scan manifest records current readiness.
+Explicit Catalog case_count/control_count fields are retained as study metadata
+and checked against sample_size. Missing breakdowns are not inferred.
 Original Pan-UKB scans use the provider manifest's download paths, MD5s,
 sex and ancestry-specific counts. Recipes select one ancestry's signed beta,
 SE and negative log10 p-value columns. Cross-ancestry meta-analysis columns

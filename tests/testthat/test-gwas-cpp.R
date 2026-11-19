@@ -174,7 +174,7 @@ test_that("native n survives recipe, alignment, duplicates and default retrieval
       expect_equal(actual$n, c(1200, NA, 875))
       expect_equal(actual$b, c(.5, -.2, .3))
       expect_equal(ga$study$study_n_total, 1200)
-      expect_true(is.na(ga$study$n))
+      expect_equal(ga$study$n, 1200)
       qc <- jsonlite::read_json(file.path(x$ga$dirs[["gstat"]], ga$study$qc_file))
       expect_equal(c(qc$n_input, qc$n_final, qc$n_dropped, qc$n_flipped), c(4, 3, 1, 1))
       expect_equal(qc$dropped_by_reason$redundant_duplicate, 1)

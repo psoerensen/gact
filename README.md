@@ -584,6 +584,15 @@ ingestion is performed by the scan.
 Verified recipes are named by accession and input MD5. Reruns recheck
 upstream metadata and reuse a matching recipe without requesting another
 summary-statistics preview. Review reports are stored under `recipes/reviews/`.
+Each completed scan refreshes `recipes/recipes.tsv` from all verified JSON
+recipes in that directory, including recipes outside a partial rescan. Access it
+with `result$recipes_tsv`. The TSV contains study metadata, source URLs, input
+checksums and recipe filenames. JSONs remain unchanged. Unverified drafts are
+omitted; unreadable or malformed JSONs produce a warning and are skipped.
+The TSV is replaced after writing the complete new file. It inventories cached
+recipes; use the current scan manifest for studies ready to import.
+Catalog case/control counts are retained when explicitly provided in file
+metadata and consistent with its total. Missing breakdowns remain missing.
 Sample counts compare numerically when checking saved recipes, so JSON integer
 and double representations of the same value agree. Changed counts still
 require review.
@@ -643,6 +652,42 @@ as unmapped. The existing importer applies its own alignment and QC.
 
 Once the scan report is ready, run the manifest to fetch, checksum, and import
 the full files. The manifest contains only ready studies.
+
+To ingest selected saved recipes, use `ingestGWAS()`. Selection is mandatory:
+
+```r
+report <- ingestGWAS(
+  GAlist = GAlist,
+  selection = c("GCST90274421", "GCST90274422"),
+  workers = 16,
+  import = FALSE
+)
+# After reviewing readiness, repeat with import = TRUE.
+```
+
+You can instead pass selected rows from `recipes.tsv`, or recipe filenames when
+an accession has multiple recipes. TSV metadata edits do not override the JSON.
+The current saved GAlist is reloaded. `GWAS_information.csv` records imports:
+matching accession, ancestry and input checksum are skipped before downloading;
+changed inputs or verified recipes require review. Missing legacy ancestry or
+checksums also require review. Local `GWAS1`, `GWAS2`, ... IDs are assigned at
+publication and may differ between installations. JSON study totals and
+case/control counts populate the CSV's `n`, `ncase` and `ncontrol`, with gact's
+existing effective-size definition. Missing per-variant counts remain missing.
+Neither recipes.tsv nor the JSON recipes are modified by ingestion.
+`runGWASManifest()` remains available for existing workflows.
+
+After importing at least two studies, reload the saved descriptor and export
+their Z matrix with `writeMarkerStat()` (the matrix writer's current name).
+Its default exports all imported studies. For a small first correlation pilot,
+use two quantitative traits of the same ancestry with recorded sample sizes.
+`gminer::gminer(GAlist, task = "correlation", method = "ldsc", ancestry = "EUR")`
+reads the exported matrix and matching ancestry LD scores. GRCh38 requires
+matching score tables as a separate resource; the NYGC BED panels alone do not
+provide them. `getLDscoresDB(GAlist, ancestry = "EUR", version = "1000G")`
+checks availability of the default reference. The gminer native executable is
+required. Correlation analysis is separate from ingestion and has not been
+scientifically validated by the ingestion scratch tests.
 
 ```r
 report <- runGWASManifest(
