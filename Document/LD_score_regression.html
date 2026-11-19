@@ -392,7 +392,7 @@ studyIDs &lt;- c(&quot;GWAS1&quot;,&quot;GWAS2&quot;,&quot;GWAS6&quot;)
 stat &lt;- getMarkerStat(GAlist=GAlist, studyID=studyIDs)
 
 # Get ldscores matched to the ancestry of GWAS data
-ldscores &lt;- getLDscoresDB(GAlist=GAlist, ancestry=&quot;EUR&quot;, version=&quot;1000G&quot;)
+ldscores &lt;- gact::getLDscores(GAlist=GAlist, ancestry=&quot;EUR&quot;, version=&quot;1000G&quot;)
 
 # Estimate narrow sense heritability using ldsc
 fit &lt;- ldsc(z=stat$z, n=stat$n, ldscores=ldscores, what=&quot;h2&quot;)

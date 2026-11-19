@@ -39,6 +39,8 @@ addLDPanels <- function(GAlist, Glist) {
                 ".col_idx.u32.0based.bin", ".values.f32.bin")
   for (ancestry in ancestries) {
     stem <- paste0("g1000_", tolower(ancestry), ".subset.aligned")
+    default <- paste0("g1000_", tolower(ancestry), ".1cm.aligned")
+    if (any(file.exists(file.path(marker_dir, paste0(default, suffixes))))) stem <- default
     paths <- file.path(marker_dir, paste0(stem, suffixes))
     present <- file.exists(paths)
     if (!any(present)) next
@@ -128,78 +130,6 @@ addLDRegions <- function(GAlist, assembly = "GRCh37") {
 
 # LD score preparation and retrieval --------
 
-#' Prepare reference LD scores in the database marker directory
-#'
-#' Uses the existing ancestry-specific `g1000_<ancestry>.bed/.bim/.fam`
-#' files and gbase's direct BED scorer. No pairwise LD resource is written.
-#' The settings match the existing gact sparse-LD walkthrough: a distance
-#' of 1,000 selected markers, no physical-distance bound, no r-squared cutoff,
-#' and ordinary uncorrected scores including the unit diagonal. Chromosomes
-#' are scored separately. No additional MAF filter is applied.
-#' @param GAlist A database descriptor with a build, marker directory and rsIDs.
-#' @param ancestry One or more of EUR, AFR, EAS, SAS or AMR.
-#' @param nthreads Number of threads passed to gbase.
-#' @param overwrite Replace an existing score table instead of checking reuse.
-#' @param progress Report preparation, computation and reuse stages.
-#' @return Updated GAlist with paths in `ldscorePanels`. The descriptor is not
-#'   saved automatically. Tables and checksum/provenance JSON files are saved
-#'   in `marker/`; unchanged inputs reuse the prepared tables.
-#' @details Coordinates and allele pairs must match the database catalog.
-#'   Allele swaps are allowed because squared correlations are unchanged.
-#'   Source BED/BIM/FAM files are never modified. Input checksums, marker
-#'   selection, build, ancestry, sample count, gbase version and settings are
-#'   recorded. This prepares `version = "1000G"` tables; HapMap3 tables remain
-#'   separate resources. An up-to-date gbase with `task = "ldscores"` is required.
-#'   Only required catalog columns are read. Alignment comparisons use bounded
-#'   chunks, and temporary alignment tables are released before genotype
-#'   preparation. Output metadata is read again after releasing Glist and unused
-#'   model arrays. The numerical settings and gsuite implementations are reused.
-#'   Reference preparation uses gsuite's indexed Glist. Immutable metadata
-#'   indexes are cached under `marker/g1000_<ancestry>.metadata-<checksum>/`
-#'   and reused for unchanged BED/BIM/FAM inputs. Sparse LD uses gsuite's mapped
-#'   reader; the scores-only engine still has its own native working arrays.
-#'   Alignment reads indexed columns in chunks; gact does not load a full BIM
-#'   table into R. The BIM is read by gsuite when first building the index.
-#' @seealso [getLDscoresDB()]
-#' @export
-prepareLDscoresDB <- function(GAlist, ancestry = "EUR", nthreads = 1L,
-                             overwrite = FALSE, progress = TRUE) {
-  .gact_prepare_ld(GAlist, ancestry, nthreads, overwrite, progress, sparse = FALSE)
-}
-
-#' Prepare sparse LD and reference LD scores together
-#'
-#' Uses the existing gsuite sparse-LD workflow on the database's matching
-#' ancestry-specific BED/BIM/FAM panels. Scores are extracted from the sparse
-#' resource produced by the same computation, without a separate direct-score
-#' calculation. Numerical computation remains in gbase/gmat.
-#' @inheritParams prepareLDscoresDB
-#' @return Updated GAlist with sparse resources registered in `ldPanels` and
-#'   score tables in `ldscorePanels`. GAlist is not saved automatically.
-#' @details The settings match [prepareLDscoresDB()]: a 1,000-selected-marker
-#'   distance window within chromosomes, no physical window or r-squared
-#'   cutoff, no extra MAF filter, and uncorrected scores with a unit diagonal.
-#'   Signed correlations are stored by gbase in its disk-backed CSR format.
-#'   Reference panels already aligned to the database backbone are used
-#'   directly; coordinates and BIM A1/A2 are checked against catalog EA/NEA.
-#'   Input genotype files are never modified.
-#'
-#'   Files use the existing marker layout: `g1000_<ancestry>.subset.aligned.*`,
-#'   `Glist_1000G_<ancestry>_filtered.rds` and the score tables read by
-#'   [getLDscoresDB()]. The JSON receipt includes resource checksums.
-#'   Repeated calls verify and reuse unchanged results. Verified score-only
-#'   results can be extended with sparse LD without `overwrite = TRUE`.
-#'   Unknown or incomplete sparse outputs require explicit overwrite.
-#'   Sparse storage can be substantial with the zero r-squared cutoff.
-#'   Temporary alignment tables are released before genotype preparation;
-#'   the saved Glist is released before assembling the score output table.
-#' @seealso [getLDscoresDB()], [writeMarkerStat()]
-#' @export
-prepareLDDB <- function(GAlist, ancestry = "EUR", nthreads = 1L,
-                        overwrite = FALSE, progress = TRUE) {
-  .gact_prepare_ld(GAlist, ancestry, nthreads, overwrite, progress, sparse = TRUE)
-}
-
 .gact_register_prepared_ld <- function(GAlist, ancestry, directory, metadata) {
   GAlist$ldPanels[[ancestry]] <- list(
     markers = normalizePath(file.path(directory, metadata$sparse$markers), winslash = "/", mustWork = TRUE),
@@ -208,48 +138,57 @@ prepareLDDB <- function(GAlist, ancestry = "EUR", nthreads = 1L,
   GAlist
 }
 
-# Selection tables live only in this helper, not alongside the native LD
-# buffers. Compare columns in bounded chunks instead of copying whole tables.
-.gact_ld_select_markers <- function(catalog_path, reference, rsids, sparse) {
-  fields <- c("rsids", "chr", "pos", "ea", "nea")
-  catalog <- data.table::fread(catalog_path, select = fields)
-  if (!identical(names(catalog), fields) || anyNA(catalog) ||
-      anyDuplicated(catalog$rsids) || any(!rsids %in% catalog$rsids))
-    stop("Catalog must have unique rsIDs, coordinates and alleles matching GAlist.")
-  keep <- which(reference$rsids[[1L]] %in% rsids)
-  if (!length(keep)) stop("No database markers in the reference panel.")
-  ids <- reference$rsids[[1L]][keep]
-  target <- match(ids, catalog$rsids)
-  chromosome <- function(x) {
-    x <- sub("^CHR", "", toupper(as.character(x)))
-    x[x == "X"] <- "23"; x[x == "Y"] <- "24"; x[x %in% c("M", "MT")] <- "25"
-    x
-  }
-  for (start in seq.int(1L, length(keep), by = 100000L)) {
-    at <- seq.int(start, min(start + 99999L, length(keep)))
-    source <- keep[at]
-    destination <- target[at]
-    ea <- toupper(reference$a1[[1L]][source]); nea <- toupper(reference$a2[[1L]][source])
-    target_ea <- toupper(catalog$ea[destination]); target_nea <- toupper(catalog$nea[destination])
-    same <- ea == target_ea & nea == target_nea
-    swapped <- ea == target_nea & nea == target_ea
-    if (any(chromosome(reference$chr[[1L]][source]) != chromosome(catalog$chr[destination]) |
-            reference$pos[[1L]][source] != catalog$pos[destination] | !(same | swapped)))
-      stop("Reference coordinates or alleles differ from the database catalog.")
-    if (sparse && any(!same))
-      stop("Sparse LD requires BIM A1/A2 to match catalog EA/NEA. Align the panel with gbase::gprep(task = 'recode') first.")
-  }
-  ids
+# Key file stamps by receipt name so a moved file or a missing stamp cannot
+# accidentally take a different file's cached checksum.
+.gact_ld_stamps <- function(files) {
+  info <- file.info(unname(files))
+  if (anyNA(info$size) || any(info$isdir)) stop("Missing LD file for checksum.")
+  stats::setNames(sprintf("%.0f/%.17g", info$size, as.numeric(info$mtime)), names(files))
 }
 
-.gact_ld_output_markers <- function(catalog_path, ids, scores) {
-  catalog <- data.table::fread(catalog_path, select = c("rsids", "chr", "pos", "ea", "nea"))
-  markers <- catalog[match(ids, catalog$rsids)]
-  data.table::set(markers, j = "ldscores", value = scores)
-  markers
+.gact_ld_hashes <- function(files, stamps, previous = NULL, previous_stamps = NULL) {
+  keys <- names(files)
+  hashes <- as.character(unlist(previous)[keys])
+  cached <- unlist(previous_stamps)[keys]
+  if (!length(hashes)) hashes <- rep(NA_character_, length(keys))
+  reuse <- rep(FALSE, length(keys))
+  if (length(cached)) reuse <- !is.na(cached) & cached == stamps & !is.na(hashes)
+  if (any(!reuse)) hashes[!reuse] <- unname(tools::md5sum(files[!reuse]))
+  if (anyNA(hashes)) stop("Cannot checksum LD files.")
+  as.list(stats::setNames(hashes, keys))
 }
 
-.gact_prepare_ld <- function(GAlist, ancestry, nthreads, overwrite, progress, sparse) {
+#' Prepare signed sparse LD and ordinary LD scores from an aligned BED panel
+#'
+#' Uses the installed ancestry panel in physical BED order. Each pair within
+#' the inclusive BIM genetic-distance window on one chromosome contributes
+#' when its raw squared correlation is at least `r2`. The score is one plus
+#' the sum of retained off-diagonal squared correlations, without a finite-sample
+#' correction. One sparse gprep call computes both outputs per ancestry.
+#' @param GAlist Database descriptor pointing to aligned ancestry BED panels.
+#'   BIM A1 must be the database effect allele. GRCh38 NYGC panels built or
+#'   downloaded by gact already use this convention.
+#' @param ancestry One or more of EUR, AFR, EAS, SAS or AMR.
+#' @param nthreads Number of computation threads.
+#' @param window_cm Positive maximum distance in centimorgans, default 1.
+#'   Requires a populated, nondecreasing genetic map within each chromosome.
+#' @param r2 Inclusive minimum squared correlation, from 0 through 1.
+#' @param rsids Optional unique marker IDs. Both ends of a pair must belong
+#'   to the selection. Unknown IDs raise an error. NULL uses the entire BED.
+#' @param overwrite Recompute an existing result with these settings.
+#' @param progress Report preparation, computation and reuse.
+#' @param verify Rehash all files on reuse. Otherwise reuse recorded checksums
+#'   for files with unchanged size and modification time.
+#' @return Updated GAlist with sparse resources in `ldPanels` and matching
+#'   scores in `ldscorePanels`. Save the descriptor to persist that selection.
+#' @details Each selection and combination of settings has its own output files
+#'   under marker/. Unchanged results reuse their checksum receipt. The indexed
+#'   BIM/FAM metadata is shared across selections of the same panel.
+#' @seealso [getLDscores()], [writeMarkerStat()]
+#' @export
+prepareLD <- function(GAlist, ancestry = "EUR", nthreads = 1L, window_cm = 1,
+                      r2 = 0, rsids = NULL, overwrite = FALSE,
+                      progress = TRUE, verify = FALSE) {
   build <- .gact_catalog_build(GAlist)
   if (length(build) != 1L || !build %in% c("GRCh37", "GRCh38"))
     stop("GAlist must specify GRCh37 or GRCh38.")
@@ -266,65 +205,92 @@ prepareLDDB <- function(GAlist, ancestry = "EUR", nthreads = 1L,
   if (!is.logical(overwrite) || length(overwrite) != 1L || is.na(overwrite) ||
       !is.logical(progress) || length(progress) != 1L || is.na(progress))
     stop("overwrite and progress must be TRUE or FALSE.")
-  if (!sparse && !"powers" %in% names(formals(gbase::gprep)))
-    stop("Update gbase to a version supporting gprep(task = 'ldscores').")
-  catalog_path <- file.path(directory, "markers.txt.gz")
-  if (!length(GAlist$rsids) || anyNA(GAlist$rsids) || anyDuplicated(GAlist$rsids))
-    stop("Catalog must have unique rsIDs, coordinates and alleles matching GAlist.")
-  settings <- list(max_distance_bp = 0L, max_distance_variants = 1000L,
-                   min_r2 = 0, corrected = FALSE)
-  selection_md5 <- as.character(openssl::md5(paste(GAlist$rsids, collapse = "\n")))
+  if (!is.logical(verify) || length(verify) != 1L || is.na(verify)) stop("verify must be TRUE or FALSE.")
+  if (!is.numeric(window_cm) || length(window_cm) != 1L || !is.finite(window_cm) || window_cm <= 0)
+    stop("window_cm must be a positive finite distance in centimorgans.")
+  if (!is.numeric(r2) || length(r2) != 1L || !is.finite(r2) || r2 < 0 || r2 > 1)
+    stop("r2 must be a finite number between 0 and 1.")
+  if (!is.null(rsids) && (!is.character(rsids) || !length(rsids) || anyNA(rsids) ||
+      any(!nzchar(rsids)) || anyDuplicated(rsids) || any(grepl("[[:space:]]", rsids))))
+    stop("rsids must contain unique, nonempty marker IDs.")
+  selection_md5 <- if (is.null(rsids)) "all" else
+    as.character(openssl::md5(paste(sort(rsids, method = "radix"), collapse = "\n")))
+  settings <- list(window_cm = as.double(window_cm), min_r2 = as.double(r2), corrected = FALSE)
+  tag <- "1cm"
+  if (window_cm != 1 || r2 != 0 || !is.null(rsids)) {
+    key <- paste(sprintf("%.17g", c(window_cm, r2)), selection_md5, collapse = "/")
+    tag <- paste0("ld-", as.character(openssl::md5(key)))
+  }
   for (population in ancestry) {
     prefix <- file.path(directory, paste0("g1000_", tolower(population)))
-    inputs <- c(catalog = catalog_path, bed = paste0(prefix, ".bed"),
+    inputs <- c(bed = paste0(prefix, ".bed"),
                 bim = paste0(prefix, ".bim"), fam = paste0(prefix, ".fam"))
     if (any(!file.exists(inputs))) stop("Missing reference inputs: ",
       paste(basename(inputs[!file.exists(inputs)]), collapse = ", "))
-    output <- file.path(directory, paste0("markers_1000G_", tolower(population), "_filtered.txt.gz"))
+    output <- file.path(directory, paste0("markers_1000G_", tolower(population), "_filtered.", tag, ".txt.gz"))
     receipt <- paste0(output, ".json")
-    ld_prefix <- file.path(directory, paste0("g1000_", tolower(population), ".subset.aligned"))
-    descriptor <- file.path(directory, paste0("Glist_1000G_", tolower(population), "_filtered.rds"))
+    ld_prefix <- file.path(directory, paste0("g1000_", tolower(population), ".", tag, ".aligned"))
+    descriptor <- file.path(directory, paste0("Glist_1000G_", tolower(population), "_filtered.", tag, ".rds"))
     lock <- paste0(output, ".lock")
     if (!dir.create(lock, showWarnings = FALSE)) stop("LD-score preparation is locked: ", lock)
     tryCatch({
-      hashes <- as.list(setNames(unname(tools::md5sum(inputs)), names(inputs)))
-      if (anyNA(unlist(hashes))) stop("Cannot checksum reference inputs.")
-      scores_verified <- FALSE
+      old <- if (!overwrite && file.exists(receipt)) jsonlite::read_json(receipt)
+      panel_directory <- normalizePath(directory, winslash = "/")
+      cached <- if (!verify && identical(old$sparse$directory, panel_directory))
+        old$file_stamps
+      input_stamps <- .gact_ld_stamps(inputs)
+      hashes <- .gact_ld_hashes(inputs, input_stamps, old$inputs, cached$inputs)
       if (file.exists(output) || file.exists(receipt)) {
         if (!overwrite) {
           if (!file.exists(receipt)) stop("Existing scores have no provenance; use overwrite = TRUE to rebuild.")
-          old <- jsonlite::read_json(receipt, simplifyVector = TRUE)
           if (!identical(old$inputs, hashes) || !identical(old$selection_md5, selection_md5) ||
-              !isTRUE(all.equal(old$settings, settings)) ||
+              !isTRUE(all.equal(old$settings, settings, tolerance = 0)) ||
               !identical(old$build, build) || !identical(old$ancestry, population))
             stop("LD-score inputs or settings changed; use overwrite = TRUE to rebuild.")
-          getLDscoresDB(GAlist, ancestry = population, version = "1000G")
-          scores_verified <- TRUE
-          if (!sparse || !is.null(old$sparse)) {
-            if (sparse) {
-              files <- file.path(directory, names(old$sparse$checksums))
-              if (!length(files) || any(!file.exists(files)) ||
-                  !identical(unname(tools::md5sum(files)), unname(unlist(old$sparse$checksums))))
-                stop("Sparse LD checksum differs or files are missing; use overwrite = TRUE to rebuild.")
-              saved <- readRDS(descriptor)
-              gbase::validate_Glist(saved)
-              GAlist <- .gact_register_prepared_ld(GAlist, population, directory, old)
-              rm(saved)
-              invisible(gc())
-            }
-            if (progress) message(population, ": reusing verified ", if (sparse) "sparse LD and scores" else "LD scores")
-            GAlist$ldscorePanels[[population]] <- list(file = output, manifest = receipt, build = build)
-            next
+          score_file <- c(scores = output)
+          output_stamps <- .gact_ld_stamps(score_file)
+          actual <- .gact_ld_hashes(score_file, output_stamps,
+            list(scores = old$md5), cached$output)
+          if (!identical(actual$scores, old$md5)) stop("LD-score checksum differs from its provenance manifest.")
+          if (is.null(old$sparse)) stop("Missing sparse LD receipt.")
+          keys <- names(old$sparse$checksums)
+          files <- stats::setNames(file.path(directory, keys), keys)
+          if (!length(files) || any(!file.exists(files))) stop("Missing sparse LD files for checksum.")
+          sparse_stamps <- .gact_ld_stamps(files)
+          if (!identical(.gact_ld_hashes(files, sparse_stamps,
+                old$sparse$checksums, cached$sparse), old$sparse$checksums))
+            stop("Sparse LD checksum differs or files are missing; use overwrite = TRUE to rebuild.")
+          if (is.null(cached$sparse)) {
+            saved <- readRDS(descriptor)
+            gbase::validate_Glist(saved)
+            if (!identical(normalizePath(dirname(saved$ldfiles$markers), winslash = "/"),
+                           panel_directory))
+              stop("Sparse LD descriptor points to a different marker directory.")
+            rm(saved)
           }
+          verified_stamps <- list(inputs = as.list(input_stamps),
+            output = as.list(output_stamps), sparse = as.list(sparse_stamps))
+          if (!identical(old$file_stamps, verified_stamps) ||
+              !identical(old$sparse$directory, panel_directory)) {
+            old$file_stamps <- verified_stamps
+            old$sparse$directory <- panel_directory
+            staged_receipt <- file.path(lock, "verified.json")
+            jsonlite::write_json(old, staged_receipt, auto_unbox = TRUE, pretty = TRUE, digits = NA)
+            if (!file.rename(staged_receipt, receipt)) stop("Cannot update verified LD receipt.")
+          }
+          GAlist <- .gact_register_prepared_ld(GAlist, population, directory, old)
+          if (progress) message(population, ": reusing verified sparse LD and scores")
+          GAlist$ldscorePanels[[population]] <- list(file = output, manifest = receipt, build = build)
+          next
         }
       }
-      if (progress) message(population, ": selecting database markers and preparing BED summaries")
-      if (sparse && !overwrite && (file.exists(descriptor) ||
+      if (progress) message(population, ": opening aligned BED panel")
+      if (!overwrite && (file.exists(descriptor) ||
           any(file.exists(paste0(ld_prefix, c(".markers.tsv", ".meta.txt", ".row_ptr.u64.bin",
                                               ".col_idx.u32.0based.bin", ".values.f32.bin"))))))
         stop("Unverified sparse LD outputs already exist; use overwrite = TRUE to rebuild.")
       # Reuse the existing gsuite indexed reader. Its metadata columns stay
-      # disk-backed; select the backbone only when requesting LD/scores.
+      # disk-backed. The BED already uses the database effect allele.
       # Content-address the immutable index so changed panels cannot reuse it.
       index_key <- as.character(openssl::md5(paste(unlist(hashes[c("bed", "bim", "fam")]), collapse = "")))
       index_dir <- file.path(directory, paste0("g1000_", tolower(population), ".metadata-", index_key))
@@ -337,65 +303,70 @@ prepareLDDB <- function(GAlist, ancestry = "EUR", nthreads = 1L,
           bimfiles = inputs[["bim"]], famfiles = inputs[["fam"]],
           out_dir = index_dir, study = paste("1000G", population))
       }
-      selected_ids <- .gact_ld_select_markers(catalog_path, gl, GAlist$rsids, sparse)
-      invisible(gc())
-      if (progress) message(population, ": computing ", if (sparse) "sparse LD and scores" else "LD scores",
-                            " (1,000-marker window)")
-      if (sparse) {
-        # Release unreachable disk-backed views before replacing their files
-        # on Windows. Callers must also close any Glist they are still using.
-        if (overwrite) invisible(gc())
-        gl <- gbase::gprep(gl, task = "sparseld", rsids = selected_ids, max_distance_bp = 0L,
-          max_distance_variants = 1000L, r2 = 0, out_prefix = ld_prefix,
-          overwrite = overwrite, nthreads = nthreads, progress = progress)
-        gl$assembly <- build
-      } else {
-        gl <- gbase::gprep(gl, task = "ldscores", rsids = selected_ids, max_distance_bp = 0L,
-          max_distance_variants = 1000L, min_r2 = 0, corrected = FALSE,
-          powers = c(U = -1), nthreads = nthreads, progress = progress)
-      }
-      ids <- unlist(gl$rsidsLD, use.names = FALSE)
-      scores <- unlist(gl$ldscores, use.names = FALSE)
-      if (!setequal(ids, selected_ids) || length(ids) != length(scores) ||
-          anyDuplicated(ids) || any(!is.finite(scores)) || any(scores < 1))
+      if (progress) message(population, ": computing sparse LD and scores (", window_cm,
+                            " cM, minimum r^2 ", r2, ")")
+      if (overwrite) invisible(gc())
+      gl <- gbase::gprep(gl, task = "sparseld", rsids = rsids, window_cm = window_cm,
+        r2 = r2, out_prefix = ld_prefix, overwrite = overwrite, nthreads = nthreads,
+        progress = progress)
+      gl$assembly <- build
+      ids <- gl$rsidsLD[[1L]]
+      scores <- unname(gl$ldscores[[1L]])
+      if (length(ids) != length(scores) || any(!is.finite(scores)) || any(scores < 1))
         stop("Invalid LD-score result from gbase.")
       stage <- tempfile(".ldscores-", tmpdir = lock)
       metadata <- list(build = build, ancestry = population, settings = settings,
         inputs = hashes, selection_md5 = selection_md5,
         n_markers = length(ids), n_samples = length(gl$idsLD),
         gbase_version = as.character(utils::packageVersion("gbase")),
-        formula = "1 + sum of in-window off-diagonal r^2; uncorrected")
-      if (sparse) {
-        saveRDS(gl, paste0(stage, ".rds"), compress = FALSE)
-        if (!file.copy(paste0(stage, ".rds"), descriptor, overwrite = overwrite))
-          stop("Cannot save the sparse LD descriptor.")
-        sidecars <- vapply(gl$sparseLD$metadata_storage, function(x)
-          if (is.null(x)) "" else x$path, character(1L))
-        index_files <- list.files(index_dir, recursive = TRUE, full.names = TRUE)
-        files <- c(unlist(gl$ldfiles, use.names = FALSE), sidecars[nzchar(sidecars)], descriptor, index_files)
-        relative <- substring(normalizePath(files, winslash = "/", mustWork = TRUE),
-                              nchar(normalizePath(directory, winslash = "/", mustWork = TRUE)) + 2L)
-        checksums <- as.list(setNames(unname(tools::md5sum(files)), relative))
-        if (anyNA(unlist(checksums))) stop("Cannot checksum sparse LD outputs.")
-        metadata$sparse <- list(descriptor = basename(descriptor),
-          markers = basename(gl$ldfiles$markers), checksums = checksums)
-      }
-      # Scores-only mode also drops unused model arrays here. In sparse mode
-      # the Glist has already been saved, so only IDs and scores need remain.
-      rm(gl, selected_ids)
+        formula = "1 + sum of retained in-window off-diagonal r^2; uncorrected")
+      if (progress) message(population, ": saving sparse LD descriptor and receipt checksums")
+      saveRDS(gl, paste0(stage, ".rds"), compress = FALSE)
+      if (!file.copy(paste0(stage, ".rds"), descriptor, overwrite = overwrite))
+        stop("Cannot save the sparse LD descriptor.")
+      sidecars <- vapply(gl$sparseLD$metadata_storage, function(x)
+        if (is.null(x)) "" else x$path, character(1L))
+      index_files <- list.files(index_dir, recursive = TRUE, full.names = TRUE)
+      files <- c(unlist(gl$ldfiles, use.names = FALSE), sidecars[nzchar(sidecars)], descriptor, index_files)
+      relative <- substring(normalizePath(files, winslash = "/", mustWork = TRUE),
+                            nchar(normalizePath(directory, winslash = "/", mustWork = TRUE)) + 2L)
+      # gbase already recorded all five LD file hashes. Its mapped writer
+      # streams the three CSR hashes. Preserve the existing receipt keys.
+      known <- c(unname(gl$sparseLD$checksums[names(gl$ldfiles)]),
+        vapply(Filter(Negate(is.null), gl$sparseLD$metadata_storage), "[[", "", "md5"))
+      remaining <- c(descriptor, index_files)
+      checksums <- as.list(setNames(c(known, unname(tools::md5sum(remaining))), relative))
+      sparse_stamps <- .gact_ld_stamps(setNames(files, relative))
+      if (anyNA(unlist(checksums))) stop("Cannot checksum sparse LD outputs.")
+      metadata$sparse <- list(directory = panel_directory,
+        descriptor = basename(descriptor),
+        markers = basename(gl$ldfiles$markers), checksums = checksums)
+      marker_file <- gl$ldfiles$markers
+      rm(gl)
       invisible(gc())
-      if (!identical(unname(tools::md5sum(catalog_path)), hashes$catalog))
-        stop("Marker catalog changed during LD preparation.")
-      markers <- .gact_ld_output_markers(catalog_path, ids, scores)
+      final_stamps <- .gact_ld_stamps(inputs)
+      if (!identical(input_stamps, final_stamps) &&
+          !identical(.gact_ld_hashes(inputs, final_stamps, hashes, input_stamps), hashes))
+        stop("Reference inputs changed during LD preparation.")
+      if (progress) message(population, ": writing compressed LD-score table")
+      fields <- c("marker_id", "chromosome", "position_bp", "allele1", "allele2")
+      markers <- data.table::fread(marker_file, select = fields)
+      data.table::setnames(markers, fields, c("rsids", "chr", "pos", "ea", "nea"))
+      if (!identical(markers$rsids, ids)) stop("Sparse LD sidecar and score marker order differ.")
+      data.table::set(markers, j = "chr", value = sub("^chr", "", markers$chr, ignore.case = TRUE))
+      data.table::set(markers, j = "ldscores", value = scores)
       data.table::fwrite(markers, stage, sep = "\t", compress = "none")
       R.utils::gzip(stage, destname = paste0(stage, ".gz"), remove = TRUE)
       metadata$md5 <- unname(tools::md5sum(paste0(stage, ".gz")))
-      jsonlite::write_json(metadata, paste0(stage, ".json"), auto_unbox = TRUE, pretty = TRUE)
-      if (!file.copy(paste0(stage, ".gz"), output, overwrite = overwrite || scores_verified) ||
-          !file.copy(paste0(stage, ".json"), receipt, overwrite = overwrite || scores_verified))
+      if (!file.copy(paste0(stage, ".gz"), output, overwrite = overwrite))
+        stop("Cannot publish LD scores.")
+      metadata$file_stamps <- list(inputs = as.list(final_stamps),
+        output = as.list(.gact_ld_stamps(c(scores = output))), sparse = as.list(sparse_stamps))
+      jsonlite::write_json(metadata, paste0(stage, ".json"), auto_unbox = TRUE, pretty = TRUE, digits = NA)
+      if (!file.copy(paste0(stage, ".json"), receipt, overwrite = overwrite))
         stop("Cannot publish LD scores and provenance.")
       GAlist$ldscorePanels[[population]] <- list(file = output, manifest = receipt, build = build)
-      if (sparse) GAlist <- .gact_register_prepared_ld(GAlist, population, directory, metadata)
+      GAlist <- .gact_register_prepared_ld(GAlist, population, directory, metadata)
       if (progress) message(population, ": saved ", length(ids), " LD scores")
       rm(ids, scores, markers)
       invisible(gc())
@@ -412,13 +383,13 @@ prepareLDDB <- function(GAlist, ancestry = "EUR", nthreads = 1L,
 #' @param chr Optional chromosome filter.
 #' @param ancestry Ancestry population: EUR, EAS, SAS, AFR or AMR. AFR and AMR
 #'   currently support `version = "1000G"` only.
-#' @param version A character string specifying the version of the reference panel. The options are "HapMap3", "1000G", or "Original". Default is "HapMap3".
+#' @param version A character string specifying the version of the reference panel. The options are "HapMap3", "1000G", or "Original". Default is "1000G", the scores selected by prepareLD().
 #' @param rsids An optional character vector of rsIDs to filter the LD scores. If not specified, all LD scores will be returned.
 #'
 #' @return A named vector of LD scores, where the names are rsIDs.
 #'
 #' @details
-#' Use [prepareLDscoresDB()] to prepare the `1000G` tables from matching BED
+#' Use [prepareLD()] to prepare the `1000G` tables from matching BED
 #' panels. Prepared tables are checked against their build, ancestry and
 #' checksum manifest. GRCh38 tables require this provenance; existing GRCh37
 #' tables without a manifest remain supported. No computation or download is
@@ -429,11 +400,11 @@ prepareLDDB <- function(GAlist, ancestry = "EUR", nthreads = 1L,
 #' @examples
 #' # Example usage:
 #' GAlist <- list(dirs = c(marker = "/path/to/marker/files"))
-#' ldscores <- getLDscoresDB(GAlist, ancestry = "EUR", version = "HapMap3", rsids = c("rs123", "rs456"))
+#' ldscores <- getLDscores(GAlist, ancestry = "EUR", version = "HapMap3", rsids = c("rs123", "rs456"))
 #'
 #' @export
 #'
-getLDscoresDB <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="HapMap3", rsids=NULL) {
+getLDscores <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="1000G", rsids=NULL) {
  # Check if GAlist is provided
  if (is.null(GAlist) || !("marker" %in% names(GAlist$dirs))) {
   stop("Error: GAlist or GAlist$dirs['marker'] is missing.")
@@ -469,9 +440,15 @@ getLDscoresDB <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="HapMap
  # Read the marker file
  marker_file_path <- file.path(GAlist$dirs["marker"], file_name)
 
+ if (version == "1000G") {
+   registered <- GAlist$ldscorePanels[[ancestry]]$file
+   default <- sub("[.]txt[.]gz$", ".1cm.txt.gz", marker_file_path)
+   if (!is.null(registered)) marker_file_path <- registered
+   else if (file.exists(default)) marker_file_path <- default
+ }
  if (!file.exists(marker_file_path)) {
   stop("LD-score table is missing: ", marker_file_path,
-       ". Run prepareLDscoresDB(GAlist, ancestry = '", ancestry, "').")
+       ". Run prepareLD(GAlist, ancestry = '", ancestry, "').")
  }
 
  receipt <- paste0(marker_file_path, ".json")
@@ -484,7 +461,7 @@ getLDscoresDB <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="HapMap
   if (!identical(metadata$md5, unname(tools::md5sum(marker_file_path))))
    stop("LD-score checksum differs from its provenance manifest.")
  } else if (identical(build, "GRCh38")) {
-  stop("GRCh38 LD scores require provenance; run prepareLDscoresDB().")
+  stop("GRCh38 LD scores require provenance; run prepareLD().")
  }
 
  marker <- fread(marker_file_path, data.table = FALSE)
@@ -526,7 +503,7 @@ getLDscoresDB <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="HapMap
 #' All studies use the gact catalog effect allele. Reference panels must use
 #' that same dosage allele. Each panel's binary map indexes Z rows in LD order.
 #' For EUR, EAS, SAS, AFR and AMR studies, the writer looks for sparse LD with prefix
-#' `g1000_<ancestry>.subset.aligned` in the marker directory, using lowercase
+#' `g1000_<ancestry>.1cm.aligned` (or the older `.subset.aligned` prefix) in the marker directory, using lowercase
 #' ancestry codes. Use [addLDPanels()] for custom paths.
 #' With LD regions installed by `downloadDB(GAlist, what = "ldetect")`, the
 #' export also writes zero-based Z and LD row pairs for each matching region.

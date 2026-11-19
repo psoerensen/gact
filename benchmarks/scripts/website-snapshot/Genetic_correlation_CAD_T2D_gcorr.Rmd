@@ -67,7 +67,7 @@ with multiplicative scaling. The extracted `stat$n` is unchanged.
 For LDSC, scores can also be retrieved directly from gact:
 
 ```{r direct-ldsc}
-ldscores <- getLDscoresDB(GAlist=GAlist, ancestry="EUR", version="1000G")
+ldscores <- gact::getLDscores(GAlist=GAlist, ancestry="EUR", version="1000G")
 fit <- gcorr::ldsc(z=stat$z, n=stat$n, ldscores=ldscores, what="rg")
 fit$rg
 ```

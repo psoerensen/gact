@@ -30,7 +30,7 @@ ancestry and the count of observed and missing scores for each column.
 
 For the EUR, EAS, SAS, AFR and AMR ancestries represented in the export,
 \code{writeMarkerStat()} looks for sparse LD in the marker directory
-with prefix \code{g1000_<ancestry>.subset.aligned}, using lowercase ancestry
+with prefix \code{g1000_<ancestry>.1cm.aligned} (also recognizes the older \code{.subset.aligned} prefix), using lowercase ancestry
 codes. Studies can be exported when their ancestry's panel is absent.
 An incomplete set of sparse LD files triggers an error.
 Use \code{addLDPanels()} to supply a custom panel for an ancestry.

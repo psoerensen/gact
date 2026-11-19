@@ -1,4 +1,4 @@
-test_that("prepareLDDB persists signed LD and matching scores for both builds", {
+test_that("prepareLD persists signed LD and matching scores for both builds", {
   for (build in c("GRCh37", "GRCh38")) {
     x <- ldscore_fixture(build)
     tryCatch({
@@ -7,53 +7,80 @@ test_that("prepareLDDB persists signed LD and matching scores for both builds", 
                paste0(x$prefix, ".bed"))
       inputs <- list.files(x$root, full.names = TRUE)
       before <- tools::md5sum(inputs)
-      ga <- prepareLDDB(x$ga, progress = FALSE)
+      ga <- prepareLD(x$ga, progress = FALSE)
       expect_identical(tools::md5sum(inputs), before)
       expect_identical(ga$ldPanels$EUR$assembly, build)
       gl <- readRDS(ga$ldPanels$EUR$descriptor)
       expect_true(inherits(gl, "gs_mapped_genotypes"))
+      payload <- c("row_ptr", "col_idx", "values")
+      paths <- unlist(gl$ldfiles[payload], use.names = FALSE)
+      actual <- unname(tools::md5sum(paths))
+      receipt <- jsonlite::read_json(ga$ldscorePanels$EUR$manifest)
+      expect_identical(unname(gl$sparseLD$checksums[payload]), actual)
+      expect_identical(unlist(receipt$sparse$checksums[basename(paths)], use.names = FALSE), actual)
+      expect_identical(prepareLD(ga, verify = TRUE, progress = FALSE), ga)
       expect_silent(gbase::verify_ld(gl))
       ids <- unlist(gl$rsidsLD, use.names = FALSE)
-      expect_identical(ids, paste0("rs", 1:5))
+      expect_identical(ids, paste0("rs", 1:6))
       region <- gbase::ld_region(gl, ids)
       genotype <- cbind(c(2, 1, 0, 2), c(0, 1, 2, 0), rep(0, 4), c(NA, 1, 0, 2))
       centered <- sweep(genotype, 2, colMeans(genotype, na.rm = TRUE))
       centered[is.na(centered)] <- 0
       scale <- sqrt(colSums(centered^2))
       centered[, scale > 0] <- sweep(centered[, scale > 0], 2, scale[scale > 0], "/")
-      expected <- diag(5)
+      expected <- diag(6)
       expected[1:4, 1:4] <- crossprod(centered)
+      expected[1, 4] <- expected[4, 1] <- 0 # 1.001 cM apart
       diag(expected) <- 1
       expect_equal(unname(region), expected, tolerance = 1e-6)
       expect_equal(unname(region[1, 2]), -1, tolerance = 1e-6)
-      scores <- getLDscoresDB(ga, ancestry = "EUR", version = "1000G")
+      scores <- getLDscores(ga, ancestry = "EUR", version = "1000G")
       expect_equal(unname(scores), rowSums(expected^2), tolerance = 1e-6)
       expect_equal(scores, gbase::getLDscores(gl), tolerance = 1e-6)
       hashes <- tools::md5sum(list.files(x$root, full.names = TRUE))
-      expect_message(again <- prepareLDDB(ga), "reusing verified")
+      expect_message(again <- prepareLD(ga), "reusing verified")
       expect_identical(again, ga)
       expect_identical(tools::md5sum(names(hashes)), hashes)
       cat("corrupt", file = gl$ldfiles$values, append = TRUE)
-      expect_error(prepareLDDB(ga, progress = FALSE), "checksum")
+      expect_error(prepareLD(ga, progress = FALSE), "checksum")
       rm(gl, ids, region, scores)
       invisible(gc())
-      expect_silent(prepareLDDB(ga, overwrite = TRUE, progress = FALSE))
+      expect_silent(prepareLD(ga, overwrite = TRUE, progress = FALSE))
     }, finally = unlink(x$root, recursive = TRUE))
   }
 })
 
-test_that("scores-only preparation can be upgraded to sparse LD", {
+test_that("older sparse receipts upgrade only after matching every checksum", {
   x <- ldscore_fixture()
   on.exit(unlink(x$root, recursive = TRUE))
-  ga <- prepareLDscoresDB(x$ga, progress = FALSE)
-  scores <- getLDscoresDB(ga, ancestry = "EUR", version = "1000G")
-  ga <- prepareLDDB(ga, progress = FALSE)
-  expect_true(file.exists(ga$ldPanels$EUR$markers))
-  expect_equal(getLDscoresDB(ga, ancestry = "EUR", version = "1000G"), scores, tolerance = 1e-6)
-  expect_message(prepareLDscoresDB(ga), "reusing verified LD scores")
-  bim <- paste0(x$prefix, ".bim")
-  writeLines(sub(" A G$", " G A", readLines(bim)), bim)
-  expect_error(prepareLDDB(x$ga, overwrite = TRUE, progress = FALSE), "BIM A1/A2")
+  ga <- prepareLD(x$ga, progress = FALSE)
+  path <- ga$ldscorePanels$EUR$manifest
+  legacy <- jsonlite::read_json(path)
+  legacy$file_stamps <- legacy$sparse$directory <- NULL
+  jsonlite::write_json(legacy, path, auto_unbox = TRUE)
+  original <- readLines(path)
+
+  payload <- unname(unlist(readRDS(ga$ldPanels$EUR$descriptor)$ldfiles[c("row_ptr", "col_idx", "values")]))
+  bytes <- readBin(payload[3], "raw", n = file.size(payload[3]))
+  writeBin(rev(bytes), payload[3])
+  expect_error(prepareLD(ga, progress = FALSE), "checksum")
+  expect_identical(readLines(path), original)
+  writeBin(bytes, payload[3])
+
+  md5 <- tools::md5sum
+  reads <- character()
+  testthat::local_mocked_bindings(md5sum = function(files) {
+    reads <<- c(reads, basename(files))
+    md5(files)
+  }, .package = "tools")
+  expect_identical(prepareLD(ga, progress = FALSE), ga)
+  expect_setequal(intersect(reads, basename(payload)), basename(payload))
+  upgraded <- jsonlite::read_json(path)
+  expect_identical(upgraded$sparse$checksums, legacy$sparse$checksums)
+  expect_named(upgraded$file_stamps, c("inputs", "output", "sparse"))
+  reads <- character()
+  expect_identical(prepareLD(ga, progress = FALSE), ga)
+  expect_length(reads, 0L)
 })
 
 test_that("prepared ancestry panels are found by the existing matrix writer", {
@@ -62,7 +89,7 @@ test_that("prepared ancestry panels are found by the existing matrix writer", {
   pops <- c("EUR", "AFR", "EAS", "SAS", "AMR")
   for (pop in tolower(pops[-1])) for (suffix in c(".bed", ".bim", ".fam"))
     file.copy(paste0(x$prefix, suffix), file.path(x$root, paste0("g1000_", pop, suffix)))
-  ga <- prepareLDDB(x$ga, ancestry = pops, progress = FALSE)
+  ga <- prepareLD(x$ga, ancestry = pops, progress = FALSE)
   expect_identical(names(ga$ldPanels), pops)
   stats <- data.frame(rsids = paste0("rs", 1:5), chr = c(1, 1, 1, 1, 2),
     pos = c(10L, 2000000L, 3000000L, 4000000L, 10L), ea = "A", nea = "G", z = 1:5)

@@ -688,11 +688,22 @@ Its default exports all imported studies. For a small first correlation pilot,
 use two quantitative traits of the same ancestry with recorded sample sizes.
 `gminer::gminer(GAlist, task = "correlation", method = "ldsc", ancestry = "EUR")`
 reads the exported matrix and matching ancestry LD scores. GRCh38 requires
-matching score tables as a separate resource; the NYGC BED panels alone do not
-provide them. `getLDscoresDB(GAlist, ancestry = "EUR", version = "1000G")`
-checks availability of the default reference. The gminer native executable is
-required. Correlation analysis is separate from ingestion and has not been
-scientifically validated by the ingestion scratch tests.
+matching score tables; the NYGC BED panels alone do not provide them.
+After downloading the aligned ancestry panel, prepare signed sparse LD and
+ordinary LD scores together. The default includes all same-chromosome pairs
+at most 1 cM apart. The BIM supplies the genetic map and marker order.
+
+```r
+GAlist <- prepareLD(GAlist, ancestry = "EUR", nthreads = 16)
+scores <- gact::getLDscores(GAlist, ancestry = "EUR")
+```
+
+Set `r2 = 0.00001` to filter stored pairs and their contributions to the
+scores. Set `rsids` to compute LD and scores within a particular marker set.
+Settings and selections have separate files under `marker/`. The returned
+GAlist selects the matching scores and sparse panel. A score is one plus the
+sum of retained off-diagonal squared correlations. These are uncorrected
+reference scores.
 
 ```r
 report <- runGWASManifest(

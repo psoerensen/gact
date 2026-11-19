@@ -9,7 +9,7 @@ ldscore_fixture <- function(build = "GRCh38") {
   writeLines(paste("f", paste0("i", 1:4), 0, 0, 0, -9), paste0(prefix, ".fam"))
   markers <- data.frame(rsids = paste0("rs", 1:6), chr = c(1, 1, 1, 1, 2, 2),
     pos = c(10L, 2000000L, 3000000L, 4000000L, 10L, 20L), ea = "A", nea = "G")
-  writeLines(with(markers, paste(chr, rsids, 0, pos, ea, nea)), paste0(prefix, ".bim"))
+  writeLines(with(markers, paste(chr, rsids, c(0, 1, 1, 1.001, 0, 2), pos, ea, nea)), paste0(prefix, ".bim"))
   data.table::fwrite(markers, file.path(root, "markers.txt.gz"))
   list(root = root, prefix = prefix, ga = list(metadata = list(build = build),
     dirs = c(marker = root), rsids = markers$rsids[5:1]))

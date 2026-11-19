@@ -16,7 +16,7 @@ started<-Sys.time();clock<-proc.time()[3];warn<-character()
 value<-tryCatch(withCallingHandlers(switch(stage,
  website_ldsc_inputs={
   GA<-readRDS('build/benchmarks/manuscript-20261004-143135/database-1/output.rds')
-  ld<-gact::getLDscoresDB(GAlist=GA,ancestry='EUR',version='1000G')
+  ld<-gact::getLDscores(GAlist=GA,ancestry='EUR',version='1000G')
   stat<-gact::getMarkerStat(GAlist=GA,studyID=c('GWAS1','GWAS2','GWAS6'))
   ids<-Reduce(intersect,list(rownames(stat$z),rownames(stat$n),names(ld)))
   z<-stat$z[ids,,drop=FALSE];n<-stat$n[ids,,drop=FALSE];ld<-ld[ids]

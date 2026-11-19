@@ -405,7 +405,7 @@ delete blocks. LDSC estimates intercepts and excludes squared Z above
 equal-marker baseline with multiplicative scaling. The extracted
 <code>stat$n</code> is unchanged.</p>
 <p>For LDSC, scores can also be retrieved directly from gact:</p>
-<pre class="r"><code>ldscores &lt;- getLDscoresDB(GAlist=GAlist, ancestry=&quot;EUR&quot;, version=&quot;1000G&quot;)
+<pre class="r"><code>ldscores &lt;- gact::getLDscores(GAlist=GAlist, ancestry=&quot;EUR&quot;, version=&quot;1000G&quot;)
 fit &lt;- gcorr::ldsc(z=stat$z, n=stat$n, ldscores=ldscores, what=&quot;rg&quot;)
 fit$rg</code></pre>
 <p>The direct interface leaves squared-Z filtering optional. Recorded

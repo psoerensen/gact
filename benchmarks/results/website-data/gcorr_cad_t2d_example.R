@@ -18,7 +18,7 @@ prepare_gcorr_cad_t2d <- function(GAlist, Glist, partition_file,
     stopifnot(length(scores)==length(score_ids))
     names(scores) <- score_ids
   } else {
-    scores <- gact::getLDscoresDB(GAlist=GAlist,ancestry='EUR',version='1000G')
+    scores <- gact::getLDscores(GAlist=GAlist,ancestry='EUR',version='1000G')
   }
   # Convert an existing qgg descriptor using the same physical reference files.
   if (!inherits(Glist,'gs_genotypes')) {
