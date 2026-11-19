@@ -54,6 +54,8 @@ test_that("ingestGWAS requires explicit selection and uses JSON metadata", {
   local_mocked_bindings(.gact_gwas_manifest_file = function(...) stop("Unexpected download"), .package = "gact")
   report <- ingestGWAS(x$ga, selected, import = FALSE)
   expect_identical(report$status, "ready")
+  from_table <- ingestGWAS(x$ga, data.table::as.data.table(selected), import = FALSE)
+  expect_identical(from_table$status, "ready")
   manifest <- data.table::fread(file.path(attr(report, "out_dir"), "manifest.tsv"))
   expect_identical(manifest$trait, "Trait 1")
   expect_identical(tools::md5sum(c(x$descriptor, x$paths, x$tsv)), before)
@@ -64,7 +66,7 @@ test_that("selected imports assign local IDs, publish metadata and skip CSV hist
   x <- ingest_recipe_fixture()
   on.exit(unlink(x$root, recursive = TRUE))
   before <- tools::md5sum(c(x$paths, x$tsv))
-  first <- ingestGWAS(x$ga, x$ids[2L])
+  first <- ingestGWAS(x$ga, data.table::fread(x$tsv)[2L])
   expect_identical(first$status, "imported")
   expect_identical(first$study_id, "GWAS1")
   second <- ingestGWAS(x$ga, basename(x$paths[1L])) # Stale caller list is reloaded.

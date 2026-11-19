@@ -3291,6 +3291,7 @@ recodeSumstat <- recodeStat
 #' @param selection Required accessions or recipe filenames, or selected rows
 #'   from recipes.tsv. A character selection must match exactly one recipe.
 #'   Use recipe_file, ancestry and/or input_md5 to disambiguate data-frame rows.
+#'   data.table selections are supported.
 #'   Metadata edits to selected TSV rows do not override the JSON recipe.
 #' @param workers Number of C++ staging workers. Windows uses one worker.
 #' @param import Whether to import. FALSE checks selected recipes without
@@ -3339,6 +3340,7 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
     hits <- lapply(selection, function(key)
       which(inventory$accession == key | inventory$recipe_file == key))
   } else if (is.data.frame(selection) && !anyDuplicated(names(selection))) {
+    selection <- as.data.frame(selection)
     fields <- intersect(keys, names(selection))
     if (!any(c("accession", "recipe_file") %in% fields) || anyNA(selection[fields]))
       stop("Select rows using accession or recipe_file, with nonmissing identity fields")

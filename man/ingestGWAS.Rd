@@ -10,7 +10,8 @@ ingestGWAS(GAlist, selection, workers = 1L, import = TRUE,
 \item{selection}{Required accessions or recipe filenames, or selected rows from
 recipes.tsv. Character selections must each match exactly one recipe. Use
 recipe_file, ancestry and/or input_md5 to disambiguate data-frame rows.
-TSV metadata edits do not override the JSON recipe.}
+TSV metadata edits do not override the JSON recipe. Selections returned by
+\code{data.table::fread} are supported.}
 \item{workers}{Number of C++ staging workers. Windows uses one worker.}
 \item{import}{Whether to import. FALSE checks selected recipes without
 downloading full inputs or changing the database.}
