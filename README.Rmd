@@ -554,6 +554,13 @@ the complete source file against the provider MD5 before importing.
 
 Study-level sample counts stay in study metadata. Inputs with unverified
 formats or unclear metadata remain in the review report.
+The C++ engine also supports mapped per-variant sample size `n`. Catalog
+previews recognise one unambiguous `n`, `N`, `N_sample_size`, `sample_size`,
+`n_total` or `total_sample_size` column. Supplied counts must be finite and
+positive. Missing counts remain missing, including when every count is absent;
+study-level totals are never copied into variant rows. Alignment preserves the
+counts, and duplicate variants with differing counts conflict. QC records
+`n_with_sample_size` and `n_missing_sample_size` among retained rows.
 The recipe records ancillary columns such as Pan-UKB's `low_confidence`
 as unmapped. The existing importer applies its own alignment and QC.
 

@@ -87,4 +87,8 @@ Neither an assay label nor a leading preview alone suffices. The report records
 the count and log URL. This is not a full-file coverage audit. Only one ancestry
 is accepted. Reported meta-analyses, including MTAG, are excluded. Absence of a
 meta-analysis statement is screening, not proof of a single cohort.
+A unique standard sample-size column (n, N, N_sample_size, sample_size,
+n_total or total_sample_size) is mapped to per-variant n. Missing n stays
+missing; observed values must be finite and positive. Multiple candidates
+require review. Study-level sample counts are not assigned to variants.
 }

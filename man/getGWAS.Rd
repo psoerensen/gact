@@ -26,6 +26,7 @@ types like "rsids", "b", "seb", "eaf", "ea", "nea", "z", "p" (default: "all").}
 
 \item{rm.na}{Remove missing rows (default TRUE). For a single GWAS with
 \code{what = "all"}, missing per-variant sample size (\code{n}) is allowed.
+The same applies to recognised source aliases such as \code{N_sample_size}.
 FALSE retains the requested database backbone, including gaps, and
 attaches marker identity for reference checking.}
 

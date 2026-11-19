@@ -135,3 +135,131 @@ test_that("native import consumes a saved scan recipe and verifies the full inpu
   expect_identical(good$status, "imported")
   expect_equal(good$n_final, 3L)
 })
+
+cpp_n_recipe <- function(x, source, column) {
+  data.table::fwrite(source, x$files[1L], sep = "\t")
+  row <- x$manifest[1L, , drop = FALSE]
+  row$md5 <- unname(tools::md5sum(x$files[1L]))
+  row$reference <- paste0("https://www.ebi.ac.uk/gwas/studies/", row$accession)
+  profile <- gact:::.gact_catalog_preview_profile(source, row$source)
+  recipe <- gact:::.gact_gwas_scan_recipe(row, source, 100L, profile)
+  if (!length(recipe$inspection_issues)) {
+    recipe$verified <- TRUE
+    directory <- file.path(x$root, "recipes")
+    dir.create(directory)
+    gact:::.gact_save_verified_recipe(recipe,
+      gact:::.gact_verified_recipe_path(directory, row$accession, row$md5), row)
+  }
+  list(row = row, recipe = recipe)
+}
+
+test_that("native n survives recipe, alignment, duplicates and default retrieval in any row order", {
+  observed <- list()
+  for (column in c("n", "N", "N_sample_size", "sample_size")) {
+    for (reverse in c(FALSE, TRUE)) {
+      x <- cpp_gwas_fixture()
+      source <- data.table::fread(x$files[1L], data.table = FALSE)
+      source[[column]] <- c(1200, NA_real_, 875)
+      source <- rbind(source, source[1L, ])
+      if (reverse) source <- source[nrow(source):1L, ]
+      saved <- cpp_n_recipe(x, source, column)
+      expect_length(saved$recipe$inspection_issues, 0L)
+      expect_identical(saved$recipe$mapping$n, column)
+      expect_true(is.null(saved$recipe$n)) # Study-level count is not a variant default.
+      result <- runGWASManifest(saved$row, x$descriptor, engine = "cpp")
+      expect_identical(result$status, "imported")
+      ga <- readRDS(x$descriptor)
+      actual <- getGWAS(ga, "GWAS1", format = "data.frame")
+      expect_identical(actual$rsids, x$ga$rsids)
+      expect_equal(actual$n, c(1200, NA, 875))
+      expect_equal(actual$b, c(.5, -.2, .3))
+      expect_equal(ga$study$study_n_total, 1200)
+      expect_true(is.na(ga$study$n))
+      qc <- jsonlite::read_json(file.path(x$ga$dirs[["gstat"]], ga$study$qc_file))
+      expect_equal(c(qc$n_input, qc$n_final, qc$n_dropped, qc$n_flipped), c(4, 3, 1, 1))
+      expect_equal(qc$dropped_by_reason$redundant_duplicate, 1)
+      expect_equal(c(qc$n_with_sample_size, qc$n_missing_sample_size), c(2, 1))
+      observed[[paste(column, reverse)]] <- actual[c("rsids", "b", "seb", "p", "eaf", "n")]
+      unlink(x$root, recursive = TRUE)
+    }
+  }
+  for (actual in observed) expect_equal(actual, observed[[1L]])
+})
+
+test_that("native duplicate conflicts include n and missing n", {
+  for (conflict in c(1201, NA_real_)) {
+    x <- cpp_gwas_fixture()
+    source <- data.table::fread(x$files[1L], data.table = FALSE)
+    source$n <- c(1200, 1100, 900)
+    source <- rbind(source, transform(source[1L, ], n = conflict))
+    saved <- cpp_n_recipe(x, source, "n")
+    result <- runGWASManifest(saved$row, x$descriptor, engine = "cpp")
+    expect_identical(result$status, "imported")
+    ga <- readRDS(x$descriptor)
+    actual <- getGWAS(ga, "GWAS1", format = "data.frame")
+    expect_identical(actual$rsids, c("rs2", "rs3"))
+    expect_equal(actual$n, c(1100, 900))
+    qc <- jsonlite::read_json(file.path(x$ga$dirs[["gstat"]], ga$study$qc_file))
+    expect_equal(c(qc$n_input, qc$n_final, qc$n_dropped), c(4, 2, 2))
+    expect_equal(qc$dropped_by_reason$conflicting_duplicate, 2)
+    unlink(x$root, recursive = TRUE)
+  }
+})
+
+test_that("invalid n fails preview and full streaming without publishing a study", {
+  x <- cpp_gwas_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  valid <- data.table::fread(x$files[1L], data.table = FALSE)
+  valid$n <- c(1200, 1100, 900)
+  for (bad in c("0", "-1", "Inf", "NaN", "not-a-count")) {
+    preview <- valid
+    preview$n <- c(bad, "1100", "900")
+    expect_error({
+      normalized <- normalizeStatSchema(preview, c(unlist(x$mapping), n = "n"))
+      stopifnot(validateStatSchema(normalized)$ok)
+    })
+    # A clean leading preview does not bypass validation of later full-file rows.
+    source <- valid
+    source$n <- c("1200", "1100", bad)
+    data.table::fwrite(source, x$files[1L], sep = "\t")
+    row <- x$manifest[1L, , drop = FALSE]
+    row$md5 <- unname(tools::md5sum(x$files[1L]))
+    row$reference <- paste0("https://www.ebi.ac.uk/gwas/studies/", row$accession)
+    profile <- gact:::.gact_catalog_preview_profile(valid, row$source)
+    recipe <- gact:::.gact_gwas_scan_recipe(row, valid[1:2, ], 100L, profile)
+    recipe$verified <- TRUE
+    directory <- file.path(x$root, "recipes")
+    dir.create(directory, showWarnings = FALSE)
+    gact:::.gact_save_verified_recipe(recipe,
+      gact:::.gact_verified_recipe_path(directory, row$accession, row$md5), row)
+    before <- tools::md5sum(x$descriptor)
+    result <- runGWASManifest(row, x$descriptor, engine = "cpp")
+    expect_identical(result$status, "needs_review")
+    expect_match(result$issues, "Per-variant n")
+    expect_identical(tools::md5sum(x$descriptor), before)
+    expect_length(list.files(x$ga$dirs[["gstat"]], all.files = TRUE, no.. = TRUE), 0L)
+  }
+})
+
+test_that("wholly missing n stays missing and ambiguous n needs review", {
+  x <- cpp_gwas_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  source <- data.table::fread(x$files[1L], data.table = FALSE)
+  source$n <- NA_real_
+  saved <- cpp_n_recipe(x, source, "n")
+  expect_length(saved$recipe$inspection_issues, 0L)
+  result <- runGWASManifest(saved$row, x$descriptor, engine = "cpp")
+  expect_identical(result$status, "imported")
+  ga <- readRDS(x$descriptor)
+  actual <- getGWAS(ga, "GWAS1", format = "data.frame")
+  expect_equal(nrow(actual), 3L)
+  expect_true(all(is.na(actual$n)))
+  qc <- jsonlite::read_json(file.path(x$ga$dirs[["gstat"]], ga$study$qc_file))
+  expect_equal(c(qc$n_with_sample_size, qc$n_missing_sample_size), c(0, 3))
+  source$N <- 1200
+  profile <- gact:::.gact_catalog_preview_profile(source, "Catalog")
+  expect_match(profile$issues, "Ambiguous per-variant n")
+  expect_error(gact:::.gact_cpp_gwas_mapping(list(mapping = c(x$mapping, n = "n"),
+    inspection = list(headers = names(source)), effect_scale = "beta", p_scale = "p")),
+    "unambiguous")
+})

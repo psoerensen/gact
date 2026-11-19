@@ -666,6 +666,7 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 #' @param format Specifies the format of the output; either "list" or "data.frame" (default: "list").
 #' @param rm.na Remove missing rows (default TRUE). For a single GWAS with
 #'   `what = "all"`, missing per-variant sample size (`n`) is allowed.
+#'   The same applies to recognised source aliases such as `N_sample_size`.
 #'   FALSE retains the requested database backbone, including gaps, and
 #'   attaches marker identity for reference checking.
 #' @param rsids An optional vector of SNP IDs to subset the marker statistics.
@@ -799,7 +800,7 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
   out <- stat[match(rsids,stat$rsids),,drop=FALSE]
   out$rsids <- rsids
   rownames(out) <- rsids
-  if(rm.na) out <- out[complete.cases(out[names(out) != "n"]), , drop = FALSE]
+  if(rm.na) out <- out[complete.cases(out[setdiff(names(out), .gact_gwas_n_columns(names(out)))]), , drop = FALSE]
   return(finish(out))
  }
 

@@ -330,8 +330,8 @@ enum State : uint32_t { Empty, Direct, Flipped, Conflicting };
 
 bool equal(double a, double b) { return a == b || (std::isnan(a) && std::isnan(b)); }
 
-enum Column { Chr, Pos, EA, NEA, Beta, SE, P, EAF, Columns };
-const std::array<string_view, Columns> canonical = {"chr","pos","ea","nea","b","seb","p","eaf"};
+enum Column { Chr, Pos, EA, NEA, Beta, SE, P, EAF, N, Columns };
+const std::array<string_view, Columns> canonical = {"chr","pos","ea","nea","b","seb","p","eaf","n"};
 
 void split(string_view line, std::vector<string_view>& columns) {
     columns.clear();
@@ -376,12 +376,12 @@ struct Schema {
             header += CHAR(STRING_ELT(columns, i));
         }
         split(header, names);
-        require(XLENGTH(mapping) == Columns, "Invalid native mapping");
+        require(XLENGTH(mapping) == Columns || XLENGTH(mapping) == Columns - 1, "Invalid native mapping");
         for (size_t i = 0; i < field.size(); ++i) {
-            auto name = STRING_ELT(mapping, i);
+            auto name = i < static_cast<size_t>(XLENGTH(mapping)) ? STRING_ELT(mapping, i) : NA_STRING;
             auto at = name == NA_STRING ? names.end() :
                 std::find(names.begin(), names.end(), CHAR(name));
-            require(at != names.end() || i == EAF, "Required column absent from native mapping");
+            require(at != names.end() || i >= EAF, "Required column absent from native mapping");
             field[i] = at - names.begin();
         }
     }
@@ -397,7 +397,7 @@ bool precedes(const Schema& schema, const std::vector<string_view>& row, const s
             continue;
         }
         if (j == schema.field[Beta] || j == schema.field[SE] ||
-            j == schema.field[P] || j == schema.field[EAF] || schema.names[j] == "N_sample_size") {
+            j == schema.field[P] || j == schema.field[EAF] || j == schema.field[N]) {
             auto a = real(row[j]), b = real(old[j]);
             if (a != b) return a < b;
         } else {
@@ -407,7 +407,7 @@ bool precedes(const Schema& schema, const std::vector<string_view>& row, const s
     return false;
 }
 
-enum Output { Raw, MarkerID, Chromosome, Position, Effect, Other, Coefficient, Error, Probability, Frequency };
+enum Output { Raw, MarkerID, Chromosome, Position, Effect, Other, Coefficient, Error, Probability, Frequency, SampleSize };
 
 void process(const char* index_path, const char* source, const char* output, const char* qc_path,
              const Schema& schema, const char* lift_path, bool neglog10p) {
@@ -416,14 +416,15 @@ void process(const char* index_path, const char* source, const char* output, con
     Gzip input(source, "rb");
     string line;
     require(input.read(line) && line == schema.header, "Input header differs from verified recipe");
-    struct Estimate { double beta, se, p, eaf; State state; uint32_t copies; };
+    struct Estimate { double beta, se, p, eaf, n; State state; uint32_t copies; };
     std::vector<Estimate> values(catalog.size);
     std::vector<string> original(catalog.size);
     std::vector<string_view> columns, previous;
     std::array<uint64_t, Drops> drops{};
-    uint64_t rows = 0, retained = 0, flipped = 0, mapped = 0, lifted = 0;
+    uint64_t rows = 0, retained = 0, flipped = 0, mapped = 0, lifted = 0, with_n = 0;
     std::array<bool, EAF> present{};
     bool supplied_eaf = schema.field[EAF] < schema.names.size();
+    bool supplied_n = schema.field[N] < schema.names.size();
     while (input.read(line)) {
         split(line, columns);
         require(columns.size() == schema.names.size(), "Input row width differs from verified header");
@@ -431,6 +432,13 @@ void process(const char* index_path, const char* source, const char* output, con
         int chr = chromosome(value(Chr)), pos = integer(value(Pos));
         double beta = real(value(Beta)), se = real(value(SE)), p = real(value(P));
         double eaf = supplied_eaf ? real(value(EAF)) : missing;
+        double n = missing;
+        if (supplied_n && !absent(value(N))) {
+            char* end;
+            n = std::strtod(value(N).data(), &end);
+            require(end == value(N).data() + value(N).size() && std::isfinite(n) && n > 0,
+                    "Per-variant n must be finite and strictly positive, or missing");
+        }
         require((std::isnan(se) || se > 0) && (std::isnan(p) || (p >= 0 && (neglog10p || p <= 1))) &&
                 (std::isnan(eaf) || (eaf >= 0 && eaf <= 1)), "SE, p-value or EAF outside the allowed range");
         bool observed[] = {chr != missing_integer, pos != missing_integer,
@@ -479,7 +487,7 @@ void process(const char* index_path, const char* source, const char* output, con
         if (p == 0) p = std::numeric_limits<double>::min();
         if (!supplied_eaf) eaf = marker.eaf;
         else if (!direct) eaf = 1 - eaf;
-        Estimate candidate{direct ? beta : -beta, se, p, eaf, direct ? Direct : Flipped, 0};
+        Estimate candidate{direct ? beta : -beta, se, p, eaf, n, direct ? Direct : Flipped, 0};
         auto& best = values[match->row];
         auto& raw = original[match->row];
         auto copies = best.copies + 1;
@@ -488,7 +496,7 @@ void process(const char* index_path, const char* source, const char* output, con
             raw = line;
         } else if (best.state != Conflicting) {
             if (!equal(best.beta, candidate.beta) || !equal(best.se, se) || best.p != p ||
-                !equal(std::nearbyint(best.eaf * 1e12), std::nearbyint(eaf * 1e12))) {
+                !equal(std::nearbyint(best.eaf * 1e12), std::nearbyint(eaf * 1e12)) || !equal(best.n, n)) {
                 best.state = Conflicting;
                 raw.clear();
             } else if ((best.state == Flipped && candidate.state == Direct) ||
@@ -515,7 +523,7 @@ void process(const char* index_path, const char* source, const char* output, con
     };
     add("marker", MarkerID);
     const std::array<Output, Columns> outputs = {
-        Chromosome, Position, Effect, Other, Coefficient, Error, Probability, Frequency
+        Chromosome, Position, Effect, Other, Coefficient, Error, Probability, Frequency, SampleSize
     };
     for (size_t j = 0; j < EAF; ++j) {
         if (j == Beta && supplied_eaf) add("eaf", Frequency);
@@ -523,6 +531,7 @@ void process(const char* index_path, const char* source, const char* output, con
     }
     add("rsids", MarkerID);
     if (!supplied_eaf) add("eaf", Frequency);
+    if (supplied_n) add("n", SampleSize);
 
     Gzip out(output, "wb6");
     string buffer;
@@ -540,6 +549,7 @@ void process(const char* index_path, const char* source, const char* output, con
         const auto& marker = catalog.marker[i];
         if (std::abs(marker.eaf - v.eaf) > 0.5) { ++drops[Maf]; continue; }
         ++retained;
+        with_n += !std::isnan(v.n);
         flipped += v.state == Flipped;
         split(original[i], columns);
         for (size_t j = 0; j < output_fields.size(); ++j) {
@@ -555,6 +565,7 @@ void process(const char* index_path, const char* source, const char* output, con
                 case Error: number(buffer, v.se); break;
                 case Probability: number(buffer, v.p); break;
                 case Frequency: number(buffer, v.eaf); break;
+                case SampleSize: number(buffer, v.n); break;
             }
         }
         buffer.push_back('\n');
@@ -571,7 +582,8 @@ void process(const char* index_path, const char* source, const char* output, con
     qc << "{\"strand\":\"" << (schema.forward ? "forward" : "unknown")
        << "\",\"n_input\":" << rows << ",\"n_mapped\":" << mapped << ",\"n_final\":" << retained
        << ",\"n_dropped\":" << dropped << ",\"n_flipped\":" << flipped
-       << ",\"n_removed_maf\":" << drops[Maf];
+       << ",\"n_removed_maf\":" << drops[Maf]
+       << ",\"n_with_sample_size\":" << with_n << ",\"n_missing_sample_size\":" << retained - with_n;
     if (lift_path) qc << ",\"n_lifted\":" << lifted;
     qc << ",\"dropped_by_reason\":{";
     for (size_t i = 0; i < (lift_path ? Drops : LiftUnmapped); ++i) {

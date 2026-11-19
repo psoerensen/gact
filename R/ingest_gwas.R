@@ -67,6 +67,11 @@ panUKBManifest <- function(selection, out_dir,
     evidence = "GWAS-SSF v1.0 column definitions and verified harmonised GRCh38 Catalog metadata")
 }
 
+.gact_gwas_n_columns <- function(headers) {
+  headers[gsub("[^a-z0-9]", "", tolower(headers)) %in%
+    c("n", "nsamplesize", "samplesize", "ntotal", "totalsamplesize")]
+}
+
 .gact_catalog_preview_profile <- function(sample, source) {
   profile <- .gact_panukb_catalog_profile(source)
   mapping <- unlist(profile$mapping)
@@ -78,6 +83,9 @@ panUKBManifest <- function(selection, out_dir,
   }
   if (!all(mapping[.gwas_required_fields] %in% names(sample))) return(profile)
   mapping <- mapping[mapping %in% names(sample)]
+  n_columns <- .gact_gwas_n_columns(names(sample))
+  if (length(n_columns) == 1L) mapping["n"] <- n_columns
+  if (length(n_columns) > 1L) profile$issues <- "Ambiguous per-variant n columns; review the sample-size mapping"
   profile$mapping <- as.list(mapping)
   profile$headers <- names(sample)
   profile$evidence <- paste("Catalog harmonised GRCh38 metadata and explicit",
@@ -526,6 +534,10 @@ panUKBManifest <- function(selection, out_dir,
 #' alone suffices. This is not a full-file coverage audit. Only one ancestry is
 #' accepted; reported meta-analyses (including MTAG) are excluded. Absence of a
 #' meta-analysis statement is recorded as screening, not proof of a single cohort.
+#' A unique standard sample-size column (n, N, N_sample_size, sample_size,
+#' n_total or total_sample_size) is mapped to per-variant n. Missing n stays
+#' missing; observed values must be finite and positive. Multiple candidates
+#' require review. Study-level sample counts are not assigned to variants.
 #'
 #' @param selection Pan-UKB data frame with filename, an ancestry in the
 #'   analysis column, and optional accession, or a vector of Catalog accessions.
@@ -2928,7 +2940,7 @@ normalizeStatSchema <- function(stat,
   if (is.null(values)) next
   if (is.factor(values)) values <- as.character(values)
   numeric_values <- suppressWarnings(as.numeric(values))
-  if (nm %in% c("b", "seb", "eaf", "p") && is.character(values)) {
+  if (nm %in% c("b", "seb", "eaf", "p", "n") && is.character(values)) {
    invalid <- is.na(numeric_values) & !is.nan(numeric_values) &
     !is.na(values) & !(trimws(values) %in% c("", "NA"))
    if (any(invalid)) stop("Non-numeric values in ", nm, ": ", sum(invalid), ".")
@@ -3009,6 +3021,8 @@ normalizeStatSchema <- function(stat,
 #' The ingestion schema requires `chr`, `pos`, `ea`, `nea`, `b`, `seb`, and `p`.
 #' Observed beta values must be finite, standard errors must be finite and
 #' strictly positive, and p-values and effect-allele frequencies must be in [0, 1].
+#' Optional per-variant sample sizes (`n`) must be finite and strictly positive
+#' when observed. Missing sample sizes are allowed.
 #' When `eaf` is absent, the writer uses effect-allele frequencies from the
 #' marker catalog after alignment.
 #'
@@ -3028,7 +3042,7 @@ validateStatSchema <- function(stat) {
   empty <- Filter(function(field) all(is.na(stat[[field]])), intersect(required, names(stat)))
   if (length(empty)) errors <- c(errors, paste("Empty required columns:", paste(empty, collapse = ", ")))
 
-  numeric_fields <- intersect(c("b", "seb", "p", "eaf"), names(stat))
+  numeric_fields <- intersect(c("b", "seb", "p", "eaf", "n"), names(stat))
   non_numeric <- Filter(function(field) !is.numeric(stat[[field]]), numeric_fields)
   if (length(non_numeric)) errors <- c(errors, paste("Columns must be numeric:", paste(non_numeric, collapse = ", ")))
 
@@ -3042,10 +3056,12 @@ validateStatSchema <- function(stat) {
   bad_seb <- count_invalid("seb", function(x) x <= 0)
   bad_p <- count_invalid("p", function(x) x < 0 | x > 1)
   bad_eaf <- count_invalid("eaf", function(x) x < 0 | x > 1)
+  bad_n <- count_invalid("n", function(x) x <= 0)
   if (bad_beta > 0) errors <- c(errors, sprintf("Non-finite beta values (b): %s", bad_beta))
   if (bad_seb > 0) errors <- c(errors, sprintf("Standard errors (seb) must be finite and strictly positive: %s", bad_seb))
   if (bad_p > 0) errors <- c(errors, sprintf("Invalid p-values outside [0,1]: %s", bad_p))
   if (bad_eaf > 0) errors <- c(errors, sprintf("Invalid effect-allele frequencies (eaf) outside [0,1]: %s", bad_eaf))
+  if (bad_n > 0) errors <- c(errors, sprintf("Per-variant sample sizes (n) must be finite and strictly positive: %s", bad_n))
 
   if (all(c("ea", "nea") %in% colnames(stat))) {
     valid <- c("A", "C", "G", "T")
@@ -3227,7 +3243,11 @@ recodeSumstat <- recodeStat
 #'   download in this mode. Importing still verifies the full input checksum.
 #' @param preview_rows Maximum number of rows per preview.
 #' @param engine Select the R importer or the C++ batch engine for supported
-#'   verified gzip TSV profiles.
+#'   verified gzip TSV profiles. C++ supports optional mapped per-variant `n`.
+#'   Missing counts are retained and never filled from study-level metadata.
+#'   Duplicate rows with different `n` conflict. The study QC reports retained
+#'   rows with and without sample sizes as `n_with_sample_size` and
+#'   `n_missing_sample_size`.
 #' @param workers Number of C++ staging workers on Unix. Windows uses one worker.
 #' @param scratch_dir Parent directory for temporary C++ working files.
 #'   Defaults to SLURM_TMPDIR when available, or R's temporary directory.
@@ -3580,20 +3600,23 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
 }
 
 .gact_cpp_gwas_mapping <- function(recipe) {
-  fields <- c("chr", "pos", "ea", "nea", "b", "seb", "p", "eaf")
+  fields <- c("chr", "pos", "ea", "nea", "b", "seb", "p", "eaf", "n")
   mapping <- unlist(recipe$mapping)
   mapping <- mapping[!is.na(mapping)]
   header <- unlist(recipe$inspection$headers, use.names = FALSE)
-  if (!all(fields[-8L] %in% names(mapping)) ||
+  if (!all(fields[1:7] %in% names(mapping)) ||
       !all(names(mapping) %in% c("marker", fields)) ||
       anyDuplicated(header) || any(!nzchar(header)) ||
       any(grepl('[,"\t\r\n]', header)) ||
-      any(c("n", "ncase", "ncontrol", "info", "z", "z_score") %in% header) ||
+      any(c("ncase", "ncontrol", "info", "z", "z_score") %in% header) ||
       !identical(recipe$effect_scale, "beta") ||
       !isTRUE(recipe$p_scale %in% c("p", "neglog10p")) ||
       !is.null(recipe[["n"]])) {
     stop("Verified recipe is outside the C++ profile. Use the R engine for this study")
   }
+  if (length(setdiff(.gact_gwas_n_columns(header), mapping["n"])) ||
+      ("n" %in% names(mapping) && !mapping[["n"]] %in% header))
+    stop("Per-variant n columns require an explicit, unambiguous sample-size mapping")
   unname(as.character(mapping[fields]))
 }
 

@@ -55,7 +55,11 @@ download in this mode. Importing still verifies the full input checksum.}
 \item{preview_rows}{Maximum number of rows per preview.}
 
 \item{engine}{Select the R importer or the C++ batch engine for supported
-verified gzip TSV profiles.}
+verified gzip TSV profiles. C++ supports optional mapped per-variant \code{n}.
+Missing counts are retained and never filled from study-level metadata.
+Duplicate rows with different \code{n} conflict. The study QC reports retained
+rows with and without sample sizes as \code{n_with_sample_size} and
+\code{n_missing_sample_size}.}
 
 \item{workers}{Number of C++ staging workers on Unix. Windows uses one worker.}
 
