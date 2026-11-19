@@ -67,6 +67,41 @@ panUKBManifest <- function(selection, out_dir,
     evidence = "GWAS-SSF v1.0 column definitions and verified harmonised GRCh38 Catalog metadata")
 }
 
+.gact_catalog_preview_profile <- function(sample, source) {
+  profile <- .gact_panukb_catalog_profile(source)
+  mapping <- unlist(profile$mapping)
+  legacy <- any(c("hm_chrom", "hm_pos", "hm_effect_allele", "hm_other_allele") %in% names(sample))
+  if (legacy) {
+    mapping[c("chr", "pos", "ea", "nea", "b", "eaf", "marker")] <-
+      c("hm_chrom", "hm_pos", "hm_effect_allele", "hm_other_allele", "hm_beta",
+        "hm_effect_allele_frequency", "hm_rsid")
+  }
+  if (!all(mapping[.gwas_required_fields] %in% names(sample))) return(profile)
+  mapping <- mapping[mapping %in% names(sample)]
+  profile$mapping <- as.list(mapping)
+  profile$headers <- names(sample)
+  profile$evidence <- paste("Catalog harmonised GRCh38 metadata and explicit",
+    if (legacy) "hm_* harmonised" else "standard", "column definitions; beta and SE on signed effect scale")
+  # Extra ratio columns are acceptable only when they agree with the mapped beta.
+  beta <- suppressWarnings(as.numeric(sample[[mapping[["b"]]]]))
+  ratios <- if (legacy) "hm_odds_ratio" else c("odds_ratio", "hazard_ratio")
+  for (column in intersect(ratios, names(sample))) {
+    ratio <- suppressWarnings(as.numeric(sample[[column]]))
+    valid <- is.finite(beta) & is.finite(ratio) & ratio > 0
+    if (any(abs(beta[valid] - log(ratio[valid])) > 5e-4 * (1 + abs(beta[valid]))))
+      profile$issues <- c(profile$issues, paste("Mapped beta disagrees with log", column))
+  }
+  pos <- suppressWarnings(as.numeric(sample[[mapping[["pos"]]]]))
+  se <- suppressWarnings(as.numeric(sample[[mapping[["seb"]]]]))
+  p <- suppressWarnings(as.numeric(sample[[mapping[["p"]]]]))
+  usable <- is.finite(pos) & pos > 0 & is.finite(beta) & is.finite(se) & se > 0 &
+    is.finite(p) & p >= 0 & p <= 1 &
+    toupper(sample[[mapping[["ea"]]]]) %in% c("A", "C", "G", "T") &
+    toupper(sample[[mapping[["nea"]]]]) %in% c("A", "C", "G", "T")
+  if (!any(usable)) profile$issues <- c(profile$issues, "No usable harmonised variants in the bounded preview")
+  profile
+}
+
 .gact_panukb_original_row <- function(row, ancestry) {
   if (!ancestry %in% .gact_panukb_ancestries ||
       !ancestry %in% trimws(strsplit(row$pops, ",", fixed = TRUE)[[1L]]))
@@ -238,8 +273,10 @@ panUKBManifest <- function(selection, out_dir,
     if (is.null(metadata_dir)) {
       response <- curl::curl_fetch_memory(remote, handle = curl::new_handle(timeout = 45))
       if (response$status_code != 200L) stop("Cannot fetch Catalog metadata: ", remote)
-      rawToChar(response$content)
-    } else paste(readLines(file.path(metadata_dir, local), warn = FALSE), collapse = "\n")
+      text <- rawToChar(response$content)
+      Encoding(text) <- "UTF-8"
+      text
+    } else paste(readLines(file.path(metadata_dir, local), warn = FALSE, encoding = "UTF-8"), collapse = "\n")
   }
   meta <- yaml::yaml.load(fetch(paste0(url, "-meta.yaml"), paste0(file, "-meta.yaml")), eval.expr = FALSE)
   list(file = file, base = base, url = url, meta = meta, fetch = fetch)
@@ -360,43 +397,92 @@ panUKBManifest <- function(selection, out_dir,
   coverage
 }
 
+.gact_catalog_coverage <- function(asset, evidence, id) {
+  coverage <- .gact_gwas_coverage(asset$meta, evidence)
+  if (coverage$coverage == "unclear") {
+    technology <- paste(unlist(asset$meta$genotyping_technology), collapse = " ")
+    # The small provider log supplies file-level evidence, not just an assay label.
+    if (grepl("genome[-_ ]wide|whole[-_ ]genome", technology, ignore.case = TRUE)) {
+      url <- paste0(asset$base, id, ".running.log")
+      log <- tryCatch(asset$fetch(url, paste0(id, ".running.log")), error = function(e) "")
+      lines <- strsplit(paste(log, collapse = "\n"), "\n", fixed = TRUE)[[1L]]
+      line <- grep("sites successfully harmoni[sz]ed", lines, value = TRUE)
+      pattern <- "\\([[:space:]]*([0-9,]+)[[:space:]]+of[[:space:]]+[0-9,]+[[:space:]]*\\)"
+      matches <- regmatches(line, regexec(pattern, line))
+      counts <- vapply(matches, function(x) if (length(x) > 1L)
+        as.numeric(gsub(",", "", x[2L], fixed = TRUE)) else NA_real_, numeric(1))
+      if (length(counts) == 1L && is.finite(counts) && counts >= 1000000) {
+        coverage <- list(coverage = "genome_wide", evidence = paste0(
+          "Genome-wide assay and provider harmonisation log: ", counts,
+          " successfully harmonised variants; ", url,
+          " (coverage screening, not a full-file coverage audit)"))
+      }
+    }
+  }
+  if (coverage$coverage != "genome_wide")
+    stop(errorCondition(paste(coverage$evidence, id), class = "gact_coverage_review",
+                        coverage = coverage$coverage, coverage_evidence = coverage$evidence))
+  coverage
+}
+
+.gact_catalog_study_scope <- function(meta, id) {
+  design <- paste(unlist(meta[c("analysis_software", "author_notes", "trait_description")]),
+                  collapse = " ")
+  if (grepl(paste0("\\b(METAL|METASOFT|GWAMA|MR[-_ ]MEGA|MTAG|METACARPA|",
+                   "meta[-_ ]?analys[ie]s|meta[-_ ]?analy[sz](ed|ing))\\b"),
+            design, ignore.case = TRUE, perl = TRUE))
+    stop(errorCondition(paste("Catalog metadata indicates a meta-analysis:", id),
+                        class = "gact_scan_excluded"))
+  samples <- meta$samples
+  ancestry <- unique(trimws(unlist(lapply(samples, `[[`, "sample_ancestry_category"),
+                                  use.names = FALSE)))
+  ancestry <- unique(trimws(unlist(strsplit(ancestry, ",|;| and | or ", perl = TRUE))))
+  if (!length(ancestry) || anyNA(ancestry) || any(!nzchar(ancestry)) ||
+      any(grepl("^(unknown|other|not reported|not available)( ancestry| ancestries)?$",
+                ancestry, ignore.case = TRUE)))
+    stop("Catalog metadata does not establish a single ancestry: ", id)
+  if (any(grepl("^(mixed|multiple|multi[- ]ancestry|trans[- ]ancestry)( ancestry| ancestries)?$",
+                ancestry, ignore.case = TRUE)))
+    stop(errorCondition(paste("Catalog file contains multiple ancestries:", id),
+                        class = "gact_scan_excluded"))
+  codes <- vapply(ancestry, function(x) tryCatch(
+    .gact_panukb_pop_code(list(sample_ancestry_category = x)), error = function(e)
+      if (grepl("African American|Afro-Caribbean", x, ignore.case = TRUE)) "AFR" else x), "")
+  if (length(unique(codes)) != 1L)
+    stop(errorCondition(paste("Catalog file contains multiple ancestries:", id),
+                        class = "gact_scan_excluded"))
+  if (length(samples) != 1L) stop("Multiple Catalog sample groups need study-design review: ", id)
+  list(ancestry = unname(codes[1L]), design = design)
+}
+
 .gact_catalog_recipe_row <- function(id, evidence, catalog_path = NULL, coverage_evidence = NULL) {
   asset <- .gact_catalog_file(id, catalog_path = catalog_path)
   meta <- asset$meta
-  coverage <- .gact_require_gwas_coverage(meta, coverage_evidence, id)
+  scope <- .gact_catalog_study_scope(meta, id)
   if (!identical(meta$gwas_id, id) || !identical(meta$data_file_name, asset$file) ||
       !identical(meta$genome_assembly, "GRCh38") || !identical(meta$coordinate_system, "1-based") ||
-      !isTRUE(meta$is_harmonised) || !isTRUE(grepl("^GWAS-SSF", meta$file_type))) {
-    stop("Expected a harmonised, 1-based GRCh38 GWAS-SSF file: ", id)
+      !isTRUE(meta$is_harmonised)) {
+    stop("Expected a harmonised, 1-based GRCh38 file: ", id)
   }
+  coverage <- .gact_catalog_coverage(asset, coverage_evidence, id)
   trait <- unlist(meta$trait_description, use.names = FALSE)
   samples <- meta$samples
-  design <- paste(unlist(meta[c("analysis_software", "author_notes")]), collapse = " ")
-  if (grepl("\\b(METAL|METASOFT|GWAMA|MR-MEGA|meta[- ]analysis|meta[- ]analy[sz]ed)\\b",
-            design, ignore.case = TRUE))
-    stop("Catalog metadata indicates a meta-analysis: ", id)
-  if (is.null(evidence) && grepl("\\bsingle[- ]cohort\\b", design, ignore.case = TRUE))
-    evidence <- design
-  if (is.null(evidence)) stop("Need verified single-cohort evidence for this Catalog file: ", id)
-  if (length(samples) != 1L) stop("Expected a single Catalog sample group: ", id)
+  if (is.null(evidence) && grepl("\\bsingle[- ]cohort\\b", scope$design, ignore.case = TRUE))
+    evidence <- scope$design
   flags <- lapply(samples, `[[`, "case_control_study")
   if (!length(flags) || !all(vapply(flags, function(x) identical(x, TRUE) || identical(x, FALSE),
                                    logical(1))) || length(unique(flags)) != 1L) {
     stop("Catalog metadata does not establish the study type: ", id)
   }
-  ancestry <- unique(unlist(lapply(samples, `[[`, "sample_ancestry_category"), use.names = FALSE))
-  if (length(trait) != 1L || anyNA(trait) || !nzchar(trait) ||
-      length(ancestry) != 1L || anyNA(ancestry) || any(!nzchar(ancestry)) ||
-      tolower(ancestry) %in% c("mixed", "multiple", "unknown", "not reported")) {
-    stop("Catalog metadata does not establish a single trait and ancestry: ", id)
-  }
+  ancestry <- unlist(samples[[1L]]$sample_ancestry_category, use.names = FALSE)
+  if (length(trait) != 1L || anyNA(trait) || !nzchar(trait))
+    stop("Catalog metadata does not establish a single trait: ", id)
   size <- if (length(samples) == 1L) samples[[1L]]$sample_size else NULL
-  code <- tryCatch(.gact_panukb_pop_code(list(sample_ancestry_category = ancestry)),
-                   error = function(e) ancestry[1L])
   data.frame(accession = id, filename = asset$file, url = asset$url,
-    md5 = .gact_catalog_md5(asset, id), source = paste("GWAS Catalog harmonised", meta$file_type),
+    md5 = .gact_catalog_md5(asset, id), source = paste("GWAS Catalog harmonised", meta$file_type %||% "legacy"),
     trait = trait, type = if (flags[[1L]]) "binary" else "quantitative", build = "GRCh38",
-    ancestry = code, strand = "forward", cohort_evidence = evidence,
+    ancestry = scope$ancestry, strand = "forward", cohort_evidence = evidence %||% NA_character_,
+    study_design = "not_reported_as_meta_analysis",
     gender = unname(c(combined = "both", female = "females", male = "males")[meta$sex %||% ""]),
     study_n_total = if (is.numeric(size) && length(size) == 1L && is.finite(size) && size > 0)
       size else NA_real_,
@@ -429,10 +515,17 @@ panUKBManifest <- function(selection, out_dir,
 #' Prescription traits with no description use the provider phenocode as the
 #' label and record that choice. Reserved filename characters are URL-encoded
 #' and use a stable safe local cache filename.
-#' Catalog coverage is checked from metadata before summary-statistics previews
-#' and before reusing recipes. Explicit cis-only, targeted, exome-only,
-#' gene-based and hits-only results are excluded. A leading preview and
-#' genome-wide genotyping technology alone do not establish file coverage.
+#' Catalog scans accept standard and legacy harmonised columns after preview
+#' validation; a GWAS-SSF label is not required. Legacy hm_* coordinates and
+#' alleles take precedence over source columns. Conflicting beta/ratio effects
+#' and inferred or missing mappings require review.
+#' Coverage is screened before previews and recipe reuse. Explicit restricted
+#' scope is excluded. If scope wording is absent, a genome-wide assay plus at
+#' least one million successfully harmonised variants in the provider's running
+#' log supplies screening evidence. Neither an assay label nor a leading preview
+#' alone suffices. This is not a full-file coverage audit. Only one ancestry is
+#' accepted; reported meta-analyses (including MTAG) are excluded. Absence of a
+#' meta-analysis statement is recorded as screening, not proof of a single cohort.
 #'
 #' @param selection Pan-UKB data frame with filename, an ancestry in the
 #'   analysis column, and optional accession, or a vector of Catalog accessions.
@@ -447,9 +540,9 @@ panUKBManifest <- function(selection, out_dir,
 #' @param analysis `"per_ancestry"` (default) or one Pan-UKB ancestry code
 #'   for scans of the full phenotype manifest.
 #' @param cohort_evidence Optional named character vector of reviewed
-#'   single-cohort evidence keyed by Catalog accession. Used when the file
-#'   metadata lacks explicit evidence. Meta-analyses and mixed ancestry
-#'   files are excluded even when evidence is supplied.
+#'   study-design evidence keyed by Catalog accession, retained in the recipe.
+#'   Literal single-cohort wording is not required. Evidence cannot override
+#'   reported meta-analyses or multiple ancestries.
 #' @param coverage_evidence Optional named character vector of reviewed evidence
 #'   establishing genome-wide SNP coverage, keyed by Catalog accession.
 #'   Explicitly restricted metadata takes precedence. Unclear coverage needs review.
@@ -697,15 +790,17 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
         entry$preview_rows <- nrow(sample)
         if (nrow(sample) < preview_rows)
           stop("Byte limit reached before the requested number of complete rows")
+        if (source == "catalog") profile <- .gact_catalog_preview_profile(sample, picked$source)
         standard <- all(unlist(profile$mapping) %in% names(sample)) &&
-          !any(c("odds_ratio", "hazard_ratio", "neg_log_10_p_value") %in% names(sample))
+          (source == "catalog" ||
+           !any(c("odds_ratio", "hazard_ratio", "neg_log_10_p_value") %in% names(sample)))
         known_panukb <- all(names(sample) %in% c(profile$headers, "low_confidence"))
         if (original) {
           eaf <- paste0("af_", picked$ancestry)
           if (picked$type == "quantitative" && eaf %in% names(sample))
             profile$mapping$eaf <- eaf
         }
-        if (original || (standard && (source == "catalog" || known_panukb))) {
+        if (original || (source != "catalog" && standard && known_panukb)) {
           profile$headers <- names(sample)
         }
         recipe <- .gact_gwas_scan_recipe(picked, sample, bytes, profile)
@@ -748,6 +843,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
         entry$coverage_evidence <- result$coverage_evidence
         if (result$coverage == "restricted") entry$status <- "excluded"
       }
+      if (inherits(result, "gact_scan_excluded")) entry$status <- "excluded"
       entry$issues <- conditionMessage(result)
       return(list(review = entry))
     }
@@ -859,7 +955,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
     recipe$p_scale <- profile$p_scale
     recipe$validation <- validateStatSchema(normalizeStatSchema(sample, recipe$mapping,
       effect_scale = recipe$effect_scale, p_scale = recipe$p_scale))
-    recipe$inspection_issues <- recipe$validation$errors
+    recipe$inspection_issues <- c(profile$issues, recipe$validation$errors)
     if (!length(recipe$inspection_issues)) {
       recipe$inspection_issues <- tryCatch({
         .gact_cpp_gwas_mapping(recipe)

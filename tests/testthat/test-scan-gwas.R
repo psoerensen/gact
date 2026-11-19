@@ -148,16 +148,17 @@ test_that("Catalog scanning verifies metadata and saves a checksum-keyed recipe"
   local_mocked_bindings(
     .gact_catalog_file = function(id, catalog_path = NULL) {
       file <- if (is.null(catalog_path)) paste0(id, ".h.tsv.gz") else basename(catalog_path)
+      hash <- paste0(substr(md5, 1L, 31L), match(id, ids))
       list(file = file, url = paste0("https://ftp.ebi.ac.uk/", file), base = "https://ftp.ebi.ac.uk/",
            meta = list(gwas_id = id, data_file_name = file, genome_assembly = "GRCh38",
              coordinate_system = "1-based", is_harmonised = TRUE,
              file_type = if (id == ids[2L]) "pre-GWAS-SSF" else "GWAS-SSF v1.0",
              author_notes = "Genome-wide association summary statistics",
              analysis_software = if (id == ids[3L]) "METAL" else "REGENIE",
-             trait_description = list("Gastric ulcer"), data_file_md5sum = md5, sex = "combined",
+             trait_description = list("Gastric ulcer"), data_file_md5sum = hash, sex = "combined",
              samples = list(list(case_control_study = TRUE, sample_size = 261647,
                                  sample_ancestry_category = list("East Asian")))),
-           fetch = function(...) paste(md5, file))
+           fetch = function(...) paste(hash, file))
     },
     .gact_fetch_gwas_prefix = function(url, path, max_bytes) {
       calls <<- calls + 1L
@@ -174,24 +175,24 @@ test_that("Catalog scanning verifies metadata and saves a checksum-keyed recipe"
   scan <- function() scanGWAS(ids, GAlist = ga, repository = "gwas-catalog",
                               preview_rows = 1L, cohort_evidence = evidence)
   result <- scan()
-  expect_identical(result$review$status, c("ready", rep("needs_review", 3L)))
+  expect_identical(result$review$status, c("ready", "ready", "excluded", "ready"))
   expect_identical(dirname(result$review$recipe[1L]), ga$dirs[["recipes"]])
   expect_length(list.files(ga$dirs[["gstat"]]), 0L)
-  expect_match(result$review$issues[2L], "GRCh38 GWAS-SSF")
+  expect_true(is.na(result$review$issues[2L]))
   expect_match(result$review$issues[3L], "meta-analysis")
-  expect_match(result$review$issues[4L], "single-cohort evidence")
+  expect_true(is.na(result$review$issues[4L]))
   recipe <- jsonlite::read_json(result$review$recipe[1L])
   expect_equal(recipe$study_n_total, 261647)
   expect_identical(recipe$ancestry, "EAS")
   expect_null(recipe$mapping[["n"]])
-  expect_identical(calls, 1L)
+  expect_identical(calls, 3L)
   expect_true(scan()$review$reused[1L])
-  expect_identical(calls, 1L)
+  expect_identical(calls, 3L)
   md5 <- strrep("b", 32L)
   updated <- scan()
   expect_false(updated$review$reused[1L])
   expect_false(identical(updated$review$recipe[1L], result$review$recipe[1L]))
-  expect_identical(calls, 2L)
+  expect_identical(calls, 6L)
 
   index <- gact:::.gact_parse_catalog_index(c(
     "./GCST90270001-GCST90271000/GCST90270927/harmonised/study.h.tsv.gz",

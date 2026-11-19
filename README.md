@@ -547,9 +547,11 @@ catalog <- scanGWAS(GAlist = GAlist, repository = "gwas-catalog", workers = 8L)
 
 Supply `selection` to scan a smaller batch. Without it, gact scans all available
 Pan-UKB single-ancestry studies or candidates in the Catalog's published
-harmonised-file index. For Catalog files whose metadata lacks single-cohort
-evidence, supply reviewed `cohort_evidence` named by accession. Meta-analyses
-and mixed ancestry are excluded.
+harmonised-file index. Catalog scans require a single ancestry and exclude
+reported meta-analyses, including MTAG. Literal single-cohort wording is not
+required. Optional reviewed `cohort_evidence` is retained in recipes but cannot
+override these exclusions. Absence of a meta-analysis statement is metadata
+screening, not proof of a single-cohort study.
 
 Catalog scans check genome-wide SNP coverage from provider metadata before
 requesting a summary-statistics preview. Protein and metabolite GWAS use the
@@ -562,10 +564,21 @@ The scanner still examines the harmonised index's metadata candidates.
 If a provider README or publication establishes genome-wide file coverage,
 pass reviewed evidence as `coverage_evidence = c(GCST12345678 = "source and
 coverage statement")`. Explicit restricted scope in metadata takes precedence.
-An array platform, a large variant count, and a leading preview alone cannot
-prove genome-wide file coverage. Known Pan-UKB releases use their documented
-genome-wide scope. Rescanning applies the coverage check before reusing an
-existing recipe. This is metadata screening, with no full-file coverage audit.
+When scope wording is absent, a genome-wide assay together with at least one
+million successfully harmonised variants in the Catalog's small running log
+provides screening evidence. The report records the count and log URL. An assay
+label, variant count or leading preview alone does not suffice. Missing evidence
+still needs review. Known Pan-UKB releases use their documented genome-wide
+scope. Rescanning applies these checks before recipe reuse. This is screening,
+not a full-file coverage audit.
+
+The GWAS-SSF label is not mandatory: standard columns and supported legacy
+harmonised `hm_*` columns are validated from a small C++ preview. Legacy
+harmonised coordinates and alleles take precedence over original source columns.
+Extra odds/hazard ratios are allowed when consistent with the mapped signed
+beta. Missing or ambiguous mappings, conflicting effects and previews without
+usable harmonised variants need review. No full summary-statistics download or
+ingestion is performed by the scan.
 
 
 Verified recipes are named by accession and input MD5. Reruns recheck

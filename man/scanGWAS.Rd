@@ -33,9 +33,10 @@ recipes directory when \code{GAlist} is supplied, otherwise \code{out_dir/recipe
 \item{source}{\code{"panukb"} or \code{"catalog"}.}
 \item{analysis}{\code{"per_ancestry"} (default) or one Pan-UKB ancestry code
 for scans of the full phenotype manifest.}
-\item{cohort_evidence}{Optional named character vector of reviewed
-single-cohort evidence keyed by Catalog accession, when file metadata lacks
-explicit evidence. Meta-analyses and mixed ancestry files are excluded.}
+\item{cohort_evidence}{Optional named character vector of reviewed study-design
+evidence keyed by Catalog accession, retained in recipes. Literal single-cohort
+wording is not required. Evidence cannot override reported meta-analyses or
+multiple ancestries.}
 \item{GAlist}{Existing GRCh38 database descriptor.}
 \item{repository}{\code{"pan-ukb"} or \code{"gwas-catalog"}. A Catalog scan
 with no selection uses the published harmonised-file index.}
@@ -74,8 +75,16 @@ remain unmapped. Binary case/control frequencies remain unmapped.
 Prescription traits with no description use the provider phenocode as the
 label and record that choice. Reserved filename characters are URL-encoded
 and use a stable safe local cache filename.
-Catalog coverage is checked from metadata before summary-statistics previews
-and before reusing recipes. Explicit cis-only, targeted, exome-only,
-gene-based and hits-only results are excluded. A leading preview and
-genome-wide genotyping technology alone do not establish file coverage.
+Catalog scans accept standard and legacy harmonised columns after preview
+validation. A GWAS-SSF label is not required. Legacy \code{hm_*} coordinates and
+alleles take precedence over source columns. Conflicting beta/ratio effects
+and missing or inferred mappings require review.
+Coverage is screened before previews and recipe reuse. Explicit cis-only,
+targeted, exome-only, gene-based and hits-only scope is excluded. When scope
+wording is absent, a genome-wide assay plus at least one million successfully
+harmonised variants in the provider's running log supplies screening evidence.
+Neither an assay label nor a leading preview alone suffices. The report records
+the count and log URL. This is not a full-file coverage audit. Only one ancestry
+is accepted. Reported meta-analyses, including MTAG, are excluded. Absence of a
+meta-analysis statement is screening, not proof of a single cohort.
 }
