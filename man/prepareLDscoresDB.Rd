@@ -27,5 +27,9 @@ are allowed because squared correlations are unchanged. Source BED/BIM/FAM
 files are never modified. The input checksums, marker selection, build,
 ancestry, sample count, gbase version and settings are recorded.
 This prepares \code{version = "1000G"} tables; HapMap3 tables remain separate
-resources. An up-to-date gbase with \code{task = "ldscores"} is required.}
+resources. An up-to-date gbase with \code{task = "ldscores"} is required.
+Only required catalog columns are read. Alignment comparisons use bounded
+chunks, and temporary catalog/BIM tables are released before genotype
+preparation. Output metadata is read again after releasing Glist and unused
+model arrays. Native gsuite allocations and numerical settings are unchanged.}
 \seealso{\code{\link{getLDscoresDB}}}

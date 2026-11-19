@@ -630,6 +630,27 @@ The gminer native executable is
 required. Correlation analysis is separate from ingestion and has not been
 scientifically validated by the ingestion scratch tests.
 
+To prepare sparse signed LD and its LD scores together, use
+`GAlist <- prepareLDDB(GAlist, ancestry = "EUR", nthreads = 4)`.
+This uses the same window and score settings through `gbase::gprep(task = "sparseld")`.
+It uses the reference genotypes already aligned to the marker backbone,
+checking their coordinates and dosage alleles before computation.
+It saves `g1000_eur.subset.aligned.*`, `Glist_1000G_eur_filtered.rds`, and
+the score table and checksum receipt in `marker/`. The returned GAlist registers
+the sparse panel for `writeMarkerStat()`; save the descriptor yourself if needed.
+Unchanged results are verified and reused. Previously verified scores-only
+tables can be extended with sparse LD. With no r² cutoff, sparse storage can
+be substantial. Synthetic tests check signed correlations, score agreement,
+serialization, reuse and matrix-writer integration; these do not establish
+whole-genome performance or downstream scientific validity.
+
+Both preparation functions read only required catalog columns and compare
+alignment in bounded chunks. Temporary catalog/BIM tables are released before
+genotype preparation, and Glist/model arrays are released before assembling
+the score output table. Output metadata is read again at that point to avoid
+holding it throughout computation. This reduces gact's live R objects; gsuite's
+native allocations and the LD calculation settings are unchanged.
+
 ```r
 report <- runGWASManifest(
   prepared$manifest, descriptor = "GAlist.rds", knowledge = prepared$knowledge,

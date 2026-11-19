@@ -1,0 +1,78 @@
+test_that("prepareLDDB persists signed LD and matching scores for both builds", {
+  for (build in c("GRCh37", "GRCh38")) {
+    x <- ldscore_fixture(build)
+    tryCatch({
+      # Reverse rs2 dosages, keeping BIM A1 aligned to the catalog.
+      writeBin(as.raw(c(0x6c, 0x1b, 0x01, 0x38, 0xcb, 0xff, 0x39, 0x38, 0x38)),
+               paste0(x$prefix, ".bed"))
+      inputs <- list.files(x$root, full.names = TRUE)
+      before <- tools::md5sum(inputs)
+      ga <- prepareLDDB(x$ga, progress = FALSE)
+      expect_identical(tools::md5sum(inputs), before)
+      expect_identical(ga$ldPanels$EUR$assembly, build)
+      gl <- readRDS(ga$ldPanels$EUR$descriptor)
+      expect_silent(gbase::verify_ld(gl))
+      ids <- unlist(gl$rsidsLD, use.names = FALSE)
+      expect_identical(ids, paste0("rs", 1:5))
+      region <- gbase::ld_region(gl, ids)
+      genotype <- cbind(c(2, 1, 0, 2), c(0, 1, 2, 0), rep(0, 4), c(NA, 1, 0, 2))
+      centered <- sweep(genotype, 2, colMeans(genotype, na.rm = TRUE))
+      centered[is.na(centered)] <- 0
+      scale <- sqrt(colSums(centered^2))
+      centered[, scale > 0] <- sweep(centered[, scale > 0], 2, scale[scale > 0], "/")
+      expected <- diag(5)
+      expected[1:4, 1:4] <- crossprod(centered)
+      diag(expected) <- 1
+      expect_equal(unname(region), expected, tolerance = 1e-6)
+      expect_equal(unname(region[1, 2]), -1, tolerance = 1e-6)
+      scores <- getLDscoresDB(ga, ancestry = "EUR", version = "1000G")
+      expect_equal(unname(scores), rowSums(expected^2), tolerance = 1e-6)
+      expect_equal(scores, gbase::getLDscores(gl), tolerance = 1e-6)
+      hashes <- tools::md5sum(list.files(x$root, full.names = TRUE))
+      expect_message(again <- prepareLDDB(ga), "reusing verified")
+      expect_identical(again, ga)
+      expect_identical(tools::md5sum(names(hashes)), hashes)
+      cat("corrupt", file = gl$ldfiles$values, append = TRUE)
+      expect_error(prepareLDDB(ga, progress = FALSE), "checksum")
+      rm(gl, ids, region, scores)
+      invisible(gc())
+      expect_silent(prepareLDDB(ga, overwrite = TRUE, progress = FALSE))
+    }, finally = unlink(x$root, recursive = TRUE))
+  }
+})
+
+test_that("scores-only preparation can be upgraded to sparse LD", {
+  x <- ldscore_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  ga <- prepareLDscoresDB(x$ga, progress = FALSE)
+  scores <- getLDscoresDB(ga, ancestry = "EUR", version = "1000G")
+  ga <- prepareLDDB(ga, progress = FALSE)
+  expect_true(file.exists(ga$ldPanels$EUR$markers))
+  expect_equal(getLDscoresDB(ga, ancestry = "EUR", version = "1000G"), scores, tolerance = 1e-6)
+  expect_message(prepareLDscoresDB(ga), "reusing verified LD scores")
+  bim <- paste0(x$prefix, ".bim")
+  writeLines(sub(" A G$", " G A", readLines(bim)), bim)
+  expect_error(prepareLDDB(x$ga, overwrite = TRUE, progress = FALSE), "BIM A1/A2")
+})
+
+test_that("prepared ancestry panels are found by the existing matrix writer", {
+  x <- ldscore_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  pops <- c("EUR", "AFR", "EAS", "SAS", "AMR")
+  for (pop in tolower(pops[-1])) for (suffix in c(".bed", ".bim", ".fam"))
+    file.copy(paste0(x$prefix, suffix), file.path(x$root, paste0("g1000_", pop, suffix)))
+  ga <- prepareLDDB(x$ga, ancestry = pops, progress = FALSE)
+  expect_identical(names(ga$ldPanels), pops)
+  stats <- data.frame(rsids = paste0("rs", 1:5), chr = c(1, 1, 1, 1, 2),
+    pos = c(10L, 2000000L, 3000000L, 4000000L, 10L), ea = "A", nea = "G", z = 1:5)
+  path <- file.path(x$root, "stats.tsv")
+  data.table::fwrite(stats, path, sep = "\t")
+  ga$studies <- data.frame(id = paste0("GWAS", 1:5), ancestry = pops)
+  ga$studyfiles <- setNames(rep(path, 5), ga$studies$id)
+  explicit <- writeMarkerStat(ga, out_dir = file.path(x$root, "explicit"), progress = FALSE)
+  ga$ldPanels <- NULL
+  discovered <- writeMarkerStat(ga, out_dir = file.path(x$root, "discovered"), progress = FALSE)
+  expect_identical(read.delim(explicit$ld)$ancestry, pops)
+  expect_setequal(read.delim(discovered$ld)$ancestry, pops)
+  expect_true(all(read.delim(discovered$ld)$matched == 5L))
+})

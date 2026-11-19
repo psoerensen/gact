@@ -28,7 +28,7 @@ finite \code{seb} when available, with finite stored Z as a fallback.
 Missing and unusable scores are stored as NaN. The study catalog records the
 ancestry and the count of observed and missing scores for each column.
 
-For the EUR, EAS and SAS ancestries represented in the export,
+For the EUR, EAS, SAS, AFR and AMR ancestries represented in the export,
 \code{writeMarkerStat()} looks for sparse LD in the marker directory
 with prefix \code{g1000_<ancestry>.subset.aligned}, using lowercase ancestry
 codes. Studies can be exported when their ancestry's panel is absent.
