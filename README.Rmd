@@ -599,6 +599,11 @@ publication and may differ between installations. JSON study totals and
 case/control counts populate the CSV's `n`, `ncase` and `ncontrol`, with gact's
 existing effective-size definition. Missing per-variant counts remain missing.
 Neither recipes.tsv nor the JSON recipes are modified by ingestion.
+The native catalog reader accepts CSV/TSV and quoted fields written by R,
+including integer-valued scientific coordinates such as `1e+06`. CPRA keys
+are compared by parsed coordinates and alleles, so equivalent numeric spellings
+match. Fractional/out-of-range coordinates, unsupported or identical alleles,
+and inconsistent CPRA keys remain errors with a catalog row number.
 `runGWASManifest()` remains available for existing workflows.
 
 After importing at least two studies, reload the saved descriptor and export

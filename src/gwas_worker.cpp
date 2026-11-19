@@ -92,8 +92,41 @@ std::array<string_view, N> fields(string_view line, char delim) {
 int integer(string_view field) {
     int value;
     auto result = std::from_chars(field.data(), field.data() + field.size(), value);
-    return result.ec == std::errc() && result.ptr == field.data() + field.size()
-        ? value : missing_integer;
+    if (result.ec == std::errc() && result.ptr == field.data() + field.size()) return value;
+    // fwrite can serialize integer-valued numeric coordinates as 1e+06.
+    if (field.empty() || field.find_first_not_of("0123456789+-.eE") != string_view::npos)
+        return missing_integer;
+    char* end;
+    double numeric = std::strtod(field.data(), &end);
+    return end == field.data() + field.size() && std::isfinite(numeric) &&
+        numeric >= std::numeric_limits<int>::min() && numeric <= std::numeric_limits<int>::max() &&
+        std::trunc(numeric) == numeric ? static_cast<int>(numeric) : missing_integer;
+}
+
+template <size_t N>
+std::array<string_view, N> csv_fields(string_view line, char delimiter = ',') {
+    std::array<string_view, N> result;
+    for (size_t i = 0; i < N; ++i) {
+        size_t end;
+        if (!line.empty() && line.front() == '"') {
+            end = line.find('"', 1);
+            require(end != string_view::npos, "Unclosed quoted catalog field");
+            result[i] = line.substr(1, end - 1);
+            ++end;
+            require(end == line.size() || line[end] == delimiter, "Invalid quoted catalog field");
+        } else {
+            end = line.find(delimiter);
+            if (end == string_view::npos) end = line.size();
+            result[i] = line.substr(0, end);
+            require(result[i].find('"') == string_view::npos, "Invalid catalog quote");
+        }
+        if (i + 1 == N) require(end == line.size(), "Catalog row has too many fields");
+        else {
+            require(end < line.size(), "Catalog row has too few fields");
+            line.remove_prefix(end + 1);
+        }
+    }
+    return result;
 }
 
 int chromosome(string_view field) {
@@ -194,17 +227,29 @@ void index(const char* markers, const char* cpra, const char* output) {
     string line, cpra_line, pool;
     std::vector<Marker> catalog;
     std::vector<Lookup> lookup;
-    require(input.read(line) && line == "rsids,chr,pos,ea,nea,eaf", "Unsupported marker header");
+    require(input.read(line), "Missing marker header");
+    if (line.compare(0, 3, "\xef\xbb\xbf") == 0) line.erase(0, 3);
+    const char delimiter = line.find('\t') != string::npos ? '\t' : ',';
+    const std::array<string_view, 6> expected_header = {"rsids", "chr", "pos", "ea", "nea", "eaf"};
+    require(csv_fields<6>(line, delimiter) == expected_header, "Unsupported marker header");
     bool has_key = keys.read(cpra_line);
-    if (has_key && cpra_line == "cpra") has_key = keys.read(cpra_line);
+    if (has_key && cpra_line.compare(0, 3, "\xef\xbb\xbf") == 0) cpra_line.erase(0, 3);
+    if (has_key && csv_fields<1>(cpra_line)[0] == "cpra") has_key = keys.read(cpra_line);
+    uint64_t row = 0;
     while (input.read(line)) {
-        auto col = fields<6>(line, ',');
+      ++row;
+      try {
+        auto col = csv_fields<6>(line, delimiter);
         int chr = chromosome(col[1]), pos = integer(col[2]);
         int effect = allele(col[3]), other = allele(col[4]);
-        require(chr > 0 && chr <= 25 && pos > 0 && effect >= 0 && other >= 0,
-                "Catalog must contain single-base alleles on chromosomes 1–25");
-        string expected = string(col[1]) + "_" + string(col[2]) + "_" + string(col[3]) + "_" + string(col[4]);
-        require(has_key && cpra_line == expected, "CPRA and marker catalog disagree");
+        if (!(chr > 0 && chr <= 25 && pos > 0 && effect >= 0 && other >= 0 && effect != other))
+            throw std::runtime_error("Invalid catalog coordinate or alleles: chr=" + string(col[1]) +
+                ", pos=" + string(col[2]) + ", ea=" + string(col[3]) + ", nea=" + string(col[4]));
+        require(has_key, "CPRA has fewer rows than the marker catalog");
+        auto cpra_fields = fields<4>(csv_fields<1>(cpra_line)[0], '_');
+        require(chromosome(cpra_fields[0]) == chr && integer(cpra_fields[1]) == pos &&
+                allele(cpra_fields[2]) == effect && allele(cpra_fields[3]) == other,
+                "CPRA and marker catalog disagree");
         require(!absent(col[0]) && pool.size() + col[0].size() < UINT32_MAX &&
                 catalog.size() < UINT32_MAX, "Invalid or oversized marker ID table");
         Key variant = key(chr, pos, effect, other);
@@ -213,6 +258,9 @@ void index(const char* markers, const char* cpra, const char* output) {
         pool.append(col[0]);
         pool.push_back('\0');
         has_key = keys.read(cpra_line);
+      } catch (const std::exception& error) {
+        throw std::runtime_error("Marker catalog row " + std::to_string(row) + ": " + error.what());
+      }
     }
     require(!has_key && !catalog.empty(), "CPRA and catalog row counts disagree");
     std::vector<uint32_t> ids(catalog.size());

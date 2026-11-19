@@ -33,4 +33,7 @@ are skipped; changed inputs or recipes require review. Local GWAS IDs are assign
 on publication. The CSV and saved descriptor are updated after successful imports.
 JSON recipes and recipes.tsv remain unchanged. Study totals and case/control
 counts populate study metadata; missing per-variant n remains missing.
+The native catalog reader accepts gact CSV/TSV catalogs, quoted fields and
+integer-valued decimal/scientific coordinates. CPRA keys are checked by parsed
+coordinates and alleles; invalid rows identify their catalog row number.
 }

@@ -3286,6 +3286,9 @@ recodeSumstat <- recodeStat
 #' recipes require review. GWAS1, GWAS2, ... are assigned locally on publication.
 #' The CSV and saved descriptor are updated after successful imports. recipes.tsv
 #' and JSON recipes are not used as import-status records and are not modified.
+#' The native catalog reader accepts gact CSV/TSV catalogs, quoted fields and
+#' integer-valued decimal/scientific coordinates. CPRA keys are checked by parsed
+#' coordinates and alleles; invalid rows identify their catalog row number.
 #'
 #' @param GAlist Database descriptor list, or path to its saved RDS.
 #' @param selection Required accessions or recipe filenames, or selected rows
