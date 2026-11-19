@@ -36,5 +36,8 @@ results. Verified scores-only tables can be extended with sparse LD without
 \code{overwrite = TRUE}. Unknown or incomplete sparse outputs require explicit
 overwrite. Sparse storage can be substantial with the zero r-squared cutoff.
 Temporary alignment tables are released before genotype preparation;
-the saved Glist is released before assembling the score output table.}
+the saved Glist is released before assembling the score output table.
+The existing gsuite mapped reader reuses the immutable metadata index under
+\code{marker/g1000_<ancestry>.metadata-<checksum>/}, avoiding the resident
+Glist summary columns and native resident-panel reconstruction for sparse LD.}
 \seealso{\code{\link{getLDscoresDB}}, \code{\link{writeMarkerStat}}}

@@ -29,7 +29,13 @@ ancestry, sample count, gbase version and settings are recorded.
 This prepares \code{version = "1000G"} tables; HapMap3 tables remain separate
 resources. An up-to-date gbase with \code{task = "ldscores"} is required.
 Only required catalog columns are read. Alignment comparisons use bounded
-chunks, and temporary catalog/BIM tables are released before genotype
+chunks, and temporary alignment tables are released before genotype
 preparation. Output metadata is read again after releasing Glist and unused
-model arrays. Native gsuite allocations and numerical settings are unchanged.}
+model arrays. Numerical settings are unchanged. Reference preparation uses
+gsuite's indexed Glist. Immutable metadata indexes are cached under
+\code{marker/g1000_<ancestry>.metadata-<checksum>/} and reused for unchanged
+BED/BIM/FAM inputs. Sparse LD reads this mapped reference directly; the
+scores-only engine still has its own native working arrays. Alignment reads
+indexed columns in chunks; gact does not load a full BIM table into R. gsuite
+reads the BIM when first building the reusable index.}
 \seealso{\code{\link{getLDscoresDB}}}

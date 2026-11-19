@@ -11,6 +11,7 @@ test_that("prepareLDDB persists signed LD and matching scores for both builds", 
       expect_identical(tools::md5sum(inputs), before)
       expect_identical(ga$ldPanels$EUR$assembly, build)
       gl <- readRDS(ga$ldPanels$EUR$descriptor)
+      expect_true(inherits(gl, "gs_mapped_genotypes"))
       expect_silent(gbase::verify_ld(gl))
       ids <- unlist(gl$rsidsLD, use.names = FALSE)
       expect_identical(ids, paste0("rs", 1:5))

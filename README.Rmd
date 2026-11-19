@@ -645,11 +645,19 @@ serialization, reuse and matrix-writer integration; these do not establish
 whole-genome performance or downstream scientific validity.
 
 Both preparation functions read only required catalog columns and compare
-alignment in bounded chunks. Temporary catalog/BIM tables are released before
+alignment in bounded chunks. Temporary alignment tables are released before
 genotype preparation, and Glist/model arrays are released before assembling
 the score output table. Output metadata is read again at that point to avoid
-holding it throughout computation. This reduces gact's live R objects; gsuite's
-native allocations and the LD calculation settings are unchanged.
+holding it throughout computation. This reduces gact's live R objects while
+reusing the existing gsuite implementations and LD calculation settings.
+
+Reference preparation also uses gsuite's indexed Glist rather than retaining
+every genotype-summary column and CPRA string in R. Its immutable metadata
+index is reused under `marker/g1000_<ancestry>.metadata-<checksum>/`.
+Sparse LD reads this mapped reference directly. The scores-only engine retains
+its own native working arrays. This does not copy or change the BED/BIM/FAM inputs.
+Alignment reads indexed columns in chunks; gact does not load a full BIM table
+into R. gsuite reads the BIM when first building the reusable index.
 
 ```r
 report <- runGWASManifest(

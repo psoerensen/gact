@@ -24,19 +24,17 @@ test_that("chunked alignment checks cover the final partial chunk", {
   markers <- data.table::data.table(rsids = paste0("rs", seq_len(count)),
     chr = "1", pos = seq_len(count), ea = "A", nea = "G")
   catalog <- file.path(root, "markers.tsv")
-  bim <- file.path(root, "panel.bim")
   data.table::fwrite(markers[rev(seq_len(count))], catalog)
   panel <- data.frame(chr = markers$chr, id = markers$rsids, map = 0,
     pos = markers$pos, a1 = "A", a2 = "G")
-  data.table::fwrite(panel, bim, sep = "\t", col.names = FALSE)
+  reference <- function() list(rsids = list(panel$id), chr = list(panel$chr),
+    pos = list(panel$pos), a1 = list(panel$a1), a2 = list(panel$a2))
   select <- gact:::.gact_ld_select_markers
-  expect_identical(select(catalog, bim, rev(markers$rsids), TRUE), markers$rsids)
+  expect_identical(select(catalog, reference(), rev(markers$rsids), TRUE), markers$rsids)
   panel$pos[count] <- panel$pos[count] + 1L
-  data.table::fwrite(panel, bim, sep = "\t", col.names = FALSE)
-  expect_error(select(catalog, bim, markers$rsids, TRUE), "coordinates or alleles")
+  expect_error(select(catalog, reference(), markers$rsids, TRUE), "coordinates or alleles")
   panel$pos[count] <- markers$pos[count]
   panel$a1[count] <- "G"; panel$a2[count] <- "A"
-  data.table::fwrite(panel, bim, sep = "\t", col.names = FALSE)
-  expect_identical(select(catalog, bim, markers$rsids, FALSE), markers$rsids)
-  expect_error(select(catalog, bim, markers$rsids, TRUE), "BIM A1/A2")
+  expect_identical(select(catalog, reference(), markers$rsids, FALSE), markers$rsids)
+  expect_error(select(catalog, reference(), markers$rsids, TRUE), "BIM A1/A2")
 })
