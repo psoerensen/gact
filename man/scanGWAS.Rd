@@ -16,7 +16,9 @@ scanGWAS(
   repository = NULL,
   workers = 1L,
   files = c("catalog", "original"),
-  coverage_evidence = NULL
+  coverage_evidence = NULL,
+  metadata_corrections = NULL,
+  quality_filters = NULL
 )
 }
 \arguments{
@@ -34,9 +36,8 @@ recipes directory when \code{GAlist} is supplied, otherwise \code{out_dir/recipe
 \item{analysis}{\code{"per_ancestry"} (default) or one Pan-UKB ancestry code
 for scans of the full phenotype manifest.}
 \item{cohort_evidence}{Optional named character vector of reviewed study-design
-evidence keyed by Catalog accession, retained in recipes. Literal single-cohort
-wording is not required. Evidence cannot override reported meta-analyses or
-multiple ancestries.}
+evidence keyed by Catalog accession, retained in recipes. Use
+\code{metadata_corrections} to supply a reviewed classification.}
 \item{GAlist}{Existing GRCh38 database descriptor.}
 \item{repository}{\code{"pan-ukb"} or \code{"gwas-catalog"}. A Catalog scan
 with no selection uses the published harmonised-file index.}
@@ -49,17 +50,28 @@ ancestry and records the preview build check and liftover index checksum.}
 establishing genome-wide SNP coverage, keyed by Catalog accession.
 Explicitly restricted metadata takes precedence. Unclear coverage needs review.
 Proteins and metabolites are included when their files meet the same coverage rules.}
+\item{metadata_corrections}{List keyed by Catalog accession. Each correction
+includes \code{evidence} and any reviewed metadata, for example \code{type}.
+For original files supply \code{mapping}, \code{build}, \code{strand = "forward"},
+\code{coordinate_system = "1-based"}, \code{effect_scale = "beta"},
+\code{se_scale = "beta"} and \code{p_scale}. Supply \code{md5} if the provider
+does not publish it. The evidence should document the effect allele and scales.}
+\item{quality_filters}{List keyed by accession. Each policy can define
+\code{low_confidence = list(column, evidence)} and \code{info = list(column, min, evidence)}.
+Pan-UKB uses the selected ancestry's flag when present. Missing values in a
+selected filter fail it.}
 }
 \value{
 Invisibly, paths to the import manifest, format profiles and scan report, and a
 per-study review table. The manifest includes only ready studies.
-\code{recipes_tsv} is the path to the refreshed inventory in the recipe directory.
+\code{recipes_tsv} is the path to the refreshed inventory, and \code{recipe_dir}
+can be passed to \code{ingestGWAS()}.
 Coverage is \code{genome_wide}, \code{restricted}, or \code{unclear}. Restricted files
 have status \code{excluded} and unclear files have status \code{needs_review}.
 }
 \description{
-Match Pan-UK Biobank phenotypes or Catalog accessions to verified GRCh38
-single-ancestry files using the C++ reader on a bounded gzip prefix. Verified recipes are
+Match Pan-UK Biobank phenotypes or Catalog accessions to verifiable variant
+files using the C++ reader on a bounded gzip prefix. Verified recipes are
 keyed by accession and input MD5. Use the same \code{recipe_dir} to reuse
 them on later scans. Pan-UKB discovery uses phenotype codes and labels and
 checks sex, ancestry and cohort counts against the Catalog metadata.
@@ -93,9 +105,11 @@ targeted, exome-only, gene-based and hits-only scope is excluded. When scope
 wording is absent, a genome-wide assay plus at least one million successfully
 harmonised variants in the provider's running log supplies screening evidence.
 Neither an assay label nor a leading preview alone suffices. The report records
-the count and log URL. This is not a full-file coverage audit. Only one ancestry
-is accepted. Reported meta-analyses, including MTAG, are excluded. Absence of a
-meta-analysis statement is screening, not proof of a single cohort.
+the count and log URL. The scan records \code{study_design}, its evidence,
+and the ancestry code \code{acn}. Meta-analyses may have a single ancestry
+or \code{MIXED}. Unspecified study designs are recorded as \code{unknown}.
+Explicitly selected accessions discover available Catalog assets. Reviewed
+original gzip TSVs require a successful preview build check.
 A unique standard sample-size column (n, N, N_sample_size, sample_size,
 n_total or total_sample_size) is mapped to per-variant n. Missing n stays
 missing; observed values must be finite and positive. Multiple candidates

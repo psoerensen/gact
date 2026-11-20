@@ -165,6 +165,8 @@ panUKBManifest <- function(selection, out_dir,
     study_n_case = if (quantitative) NA_real_ else cases,
     study_n_control = if (quantitative) NA_real_ else controls,
     cohort_evidence = "Pan-UKB ancestry-specific GWAS columns and phenotype manifest counts",
+    study_design = "single_cohort",
+    study_design_evidence = "Pan-UKB UK Biobank ancestry-specific GWAS and phenotype manifest",
     reference = "https://pan.ukbb.broadinstitute.org/docs/per-phenotype-files/",
     comments = comments, coverage = "genome_wide",
     coverage_evidence = "Pan-UKB official genome-wide per-phenotype SNP release")
@@ -246,6 +248,51 @@ panUKBManifest <- function(selection, out_dir,
 
 .gact_catalog_root <- "https://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/"
 
+.gact_recipe_dir <- function(ga, recipe_dir = NULL) {
+  if (!is.null(recipe_dir)) return(recipe_dir)
+  if ("recipes" %in% names(ga$dirs)) return(ga$dirs[["recipes"]])
+  file.path(dirname(ga$dirs[["gstat"]]), "recipes")
+}
+
+.gact_design_fields <- c("study_design", "acn", "study_design_evidence",
+  "meta_analysis_method", "n_cohorts", "ancestry_composition", "metadata_corrections")
+
+.gact_study_design <- function(study) {
+  ancestry <- toupper(trimws(study$ancestry %||% "UNKNOWN"))
+  if (is.na(ancestry) || ancestry %in% c("", "NOT REPORTED", "NOT AVAILABLE")) ancestry <- "UNKNOWN"
+  if (ancestry %in% c("MULTIPLE", "MULTI-ANCESTRY")) ancestry <- "MIXED"
+  acn <- study$acn %||% ancestry
+  if (length(acn) != 1L || is.na(acn) || !identical(acn, ancestry))
+    stop("Recipe acn and ancestry disagree")
+  study$acn <- study$ancestry <- ancestry
+  if (!length(study$study_design) ||
+      study$study_design %in% c(NA_character_, "not_reported_as_meta_analysis"))
+    study$study_design <- "unknown"
+  if (!study$study_design %in% c("single_cohort", "meta_analysis", "unknown"))
+    stop("Invalid recipe study_design")
+  if (!length(study$study_design_evidence) || is.na(study$study_design_evidence))
+    study$study_design_evidence <- "Provider metadata does not specify cohort design"
+  if (study$study_design != "unknown" && !nzchar(trimws(study$study_design_evidence)))
+    stop("Supply study-design evidence")
+  n <- study$n_cohorts
+  if (!length(n)) n <- NA_real_
+  if (length(n) != 1L || (!is.na(n) && (!is.numeric(n) || !is.finite(n) || n < 1 || n != floor(n))))
+    stop("Invalid n_cohorts")
+  study$n_cohorts <- n
+  if (!length(study$meta_analysis_method)) study$meta_analysis_method <- NA_character_
+  study
+}
+
+.gact_catalog_listing <- function(url) {
+  response <- curl::curl_fetch_memory(url, handle = curl::new_handle(timeout = 45,
+    maxfilesize = 2 * 1024^2))
+  if (response$status_code == 404L) return(character())
+  if (response$status_code != 200L) stop("Cannot list Catalog assets: ", url)
+  links <- regmatches(rawToChar(response$content),
+    gregexpr('href="[A-Za-z0-9][A-Za-z0-9._-]*/?"', rawToChar(response$content)))[[1L]]
+  unique(sub('^href="(.*)"$', "\\1", links))
+}
+
 .gact_catalog_index <- function() {
   url <- paste0(.gact_catalog_root, "harmonised_list.txt")
   response <- curl::curl_fetch_memory(url, handle = curl::new_handle(timeout = 120))
@@ -265,13 +312,43 @@ panUKBManifest <- function(selection, out_dir,
              catalog_path = paths[keep], ambiguous = ambiguous[keep])
 }
 
-.gact_catalog_file <- function(id, metadata_dir = NULL, catalog_path = NULL) {
+.gact_catalog_file <- function(id, metadata_dir = NULL, catalog_path = NULL, asset_file = NULL) {
   file <- paste0(id, ".h.tsv.gz")
   num <- as.integer(sub("^GCST", "", id))
   upper <- ceiling(num / 1000) * 1000
   width <- nchar(id) - 4L
   range <- sprintf("GCST%0*d-GCST%0*d", width, upper - 999L, width, upper)
-  base <- paste0(.gact_catalog_root, range, "/", id, "/harmonised/")
+  root <- paste0(.gact_catalog_root, range, "/", id, "/")
+  base <- paste0(root, "harmonised/")
+  availability <- "harmonised"
+  if (is.null(metadata_dir) && is.null(catalog_path)) {
+    assets <- .gact_catalog_listing(root)
+    harmonised <- if ("harmonised/" %in% assets)
+      grep("\\.h\\.tsv\\.gz$", .gact_catalog_listing(base), value = TRUE)
+    originals <- grep("\\.(tsv|txt|csv|sumstats|imp)(\\.(gz|bgz|bz2|xz|zip))?$",
+                      assets, value = TRUE, ignore.case = TRUE)
+    originals <- originals[!grepl("^(read[_ -]?me|notes|md5sum)\\.", originals, ignore.case = TRUE)]
+    if (!is.null(asset_file)) {
+      if (!asset_file %in% originals) stop("Reviewed original file is absent from the Catalog listing: ", asset_file)
+      harmonised <- character()
+      originals <- asset_file
+    }
+    candidates <- if (length(harmonised)) harmonised else originals
+    if (!length(candidates))
+      stop(errorCondition(paste("No summary-statistics assets listed for", id),
+        class = "gact_catalog_asset_review", availability = "unavailable"))
+    if (!length(harmonised)) {
+      availability <- "original_only"
+      base <- root
+    }
+    if (length(candidates) != 1L)
+      stop(errorCondition(paste("Review which Catalog file to use:", paste(candidates, collapse = ", ")),
+        class = "gact_catalog_asset_review", availability = availability))
+    file <- candidates
+    if (availability == "original_only" && !grepl("\\.(tsv|txt)\\.(gz|bgz)$", file, ignore.case = TRUE))
+      stop(errorCondition(paste("Original Catalog asset", file, "is available but requires a verified gzip TSV input."),
+        class = "gact_catalog_asset_review", availability = availability, filename = file))
+  }
   if (!is.null(catalog_path)) {
     file <- basename(catalog_path)
     base <- paste0(.gact_catalog_root, dirname(catalog_path), "/")
@@ -279,27 +356,33 @@ panUKBManifest <- function(selection, out_dir,
   url <- paste0(base, file)
   fetch <- function(remote, local) {
     if (is.null(metadata_dir)) {
-      response <- curl::curl_fetch_memory(remote, handle = curl::new_handle(timeout = 45))
+      response <- curl::curl_fetch_memory(remote, handle = curl::new_handle(timeout = 45,
+        maxfilesize = 2 * 1024^2))
       if (response$status_code != 200L) stop("Cannot fetch Catalog metadata: ", remote)
       text <- rawToChar(response$content)
       Encoding(text) <- "UTF-8"
       text
     } else paste(readLines(file.path(metadata_dir, local), warn = FALSE, encoding = "UTF-8"), collapse = "\n")
   }
-  meta <- yaml::yaml.load(fetch(paste0(url, "-meta.yaml"), paste0(file, "-meta.yaml")), eval.expr = FALSE)
-  list(file = file, base = base, url = url, meta = meta, fetch = fetch)
+  meta <- if (availability == "harmonised" || paste0(file, "-meta.yaml") %in% assets)
+    yaml::yaml.load(fetch(paste0(url, "-meta.yaml"), paste0(file, "-meta.yaml")), eval.expr = FALSE)
+  list(file = file, base = base, url = url, meta = meta %||% list(), fetch = fetch,
+       availability = availability)
 }
 
-.gact_catalog_md5 <- function(asset, id) {
-  listing <- strsplit(asset$fetch(paste0(asset$base, "md5sum.txt"), paste0(id, ".md5")),
+.gact_catalog_md5 <- function(asset, id, reviewed_md5 = NULL) {
+  list_url <- paste0(asset$base, "md5sum.txt")
+  contents <- tryCatch(asset$fetch(list_url, paste0(id, ".md5")), error = function(e) "")
+  listing <- strsplit(contents,
                       "\n", fixed = TRUE)[[1L]]
   entries <- strsplit(trimws(listing), "[[:space:]]+")
   match <- Filter(function(x) length(x) == 2L && sub("^\\*", "", x[2L]) == asset$file, entries)
   checksums <- vapply(match, function(x) x[1L], character(1))
-  checksum <- tolower(asset$meta$data_file_md5sum)
-  if (length(checksum) != 1L || !grepl("^[0-9a-f]{32}$", checksum) ||
+  checksum <- tolower(asset$meta$data_file_md5sum %||% reviewed_md5 %||% checksums)
+  if (length(checksum) != 1L || !isTRUE(grepl("^[0-9a-f]{32}$", checksum)) ||
+      (!is.null(reviewed_md5) && !identical(tolower(reviewed_md5), checksum)) ||
       (length(checksums) && !identical(tolower(checksums), checksum))) {
-    stop("Catalog checksum metadata is invalid or disagrees with the checksum list: ", id)
+    stop("Provide a verified input MD5, or resolve disagreement with the Catalog checksum list: ", id)
   }
   checksum
 }
@@ -434,60 +517,79 @@ panUKBManifest <- function(selection, out_dir,
 }
 
 .gact_catalog_study_scope <- function(meta, id) {
-  design <- paste(unlist(meta[c("analysis_software", "author_notes", "trait_description")]),
-                  collapse = " ")
-  if (grepl(paste0("\\b(METAL|METASOFT|GWAMA|MR[-_ ]MEGA|MTAG|METACARPA|",
-                   "meta[-_ ]?analys[ie]s|meta[-_ ]?analy[sz](ed|ing))\\b"),
-            design, ignore.case = TRUE, perl = TRUE))
-    stop(errorCondition(paste("Catalog metadata indicates a meta-analysis:", id),
-                        class = "gact_scan_excluded"))
+  design <- trimws(paste(unlist(meta[c("study_design", "analysis_software", "author_notes")]),
+                        collapse = " "))
+  is_meta <- grepl(paste0("\\b(METAL|METASOFT|GWAMA|MR[-_ ]MEGA|METACARPA|",
+                         "meta[-_ ]?analys[ie]s|meta[-_ ]?analy[sz](ed|ing))\\b"),
+                   design, ignore.case = TRUE, perl = TRUE)
+  single <- grepl("\\bsingle[-_ ]cohort\\b", design, ignore.case = TRUE)
   samples <- meta$samples
   ancestry <- unique(trimws(unlist(lapply(samples, `[[`, "sample_ancestry_category"),
                                   use.names = FALSE)))
-  ancestry <- unique(trimws(unlist(strsplit(ancestry, ",|;| and | or ", perl = TRUE))))
-  if (!length(ancestry) || anyNA(ancestry) || any(!nzchar(ancestry)) ||
-      any(grepl("^(unknown|other|not reported|not available)( ancestry| ancestries)?$",
-                ancestry, ignore.case = TRUE)))
-    stop("Catalog metadata does not establish a single ancestry: ", id)
-  if (any(grepl("^(mixed|multiple|multi[- ]ancestry|trans[- ]ancestry)( ancestry| ancestries)?$",
-                ancestry, ignore.case = TRUE)))
-    stop(errorCondition(paste("Catalog file contains multiple ancestries:", id),
-                        class = "gact_scan_excluded"))
-  codes <- vapply(ancestry, function(x) tryCatch(
+  categories <- unique(trimws(unlist(strsplit(ancestry, ",|;| and | or ", perl = TRUE))))
+  codes <- unique(vapply(categories, function(x) tryCatch(
     .gact_panukb_pop_code(list(sample_ancestry_category = x)), error = function(e)
-      if (grepl("African American|Afro-Caribbean", x, ignore.case = TRUE)) "AFR" else x), "")
-  if (length(unique(codes)) != 1L)
-    stop(errorCondition(paste("Catalog file contains multiple ancestries:", id),
-                        class = "gact_scan_excluded"))
-  if (length(samples) != 1L) stop("Multiple Catalog sample groups need study-design review: ", id)
-  list(ancestry = unname(codes[1L]), design = design)
+      if (grepl("African American|Afro-Caribbean", x, ignore.case = TRUE)) "AFR" else
+        if (toupper(x) %in% .gact_panukb_ancestries) toupper(x) else "UNKNOWN"), ""))
+  explicit_mixed <- any(grepl("^(mixed|multiple|multi[- ]ancestry|trans[- ]ancestry)( ancestry| ancestries)?$",
+                              categories, ignore.case = TRUE))
+  known <- setdiff(codes, "UNKNOWN")
+  code <- if (explicit_mixed || length(known) > 1L) "MIXED" else
+    if (length(known) == 1L && !"UNKNOWN" %in% codes) known else "UNKNOWN"
+  list(ancestry = code,
+       ancestry_composition = if (length(ancestry)) paste(ancestry, collapse = "; ") else NA_character_,
+       study_design = if (is_meta) "meta_analysis" else if (single) "single_cohort" else "unknown",
+       study_design_evidence = if (is_meta || single) paste("Catalog metadata", design) else
+         "Provider metadata does not specify cohort design",
+       meta_analysis_method = meta$meta_analysis_method %||% NA_character_,
+       n_cohorts = meta$n_cohorts %||% NA_real_)
 }
 
-.gact_catalog_recipe_row <- function(id, evidence, catalog_path = NULL, coverage_evidence = NULL) {
-  asset <- .gact_catalog_file(id, catalog_path = catalog_path)
+.gact_catalog_recipe_row <- function(id, evidence, catalog_path = NULL, coverage_evidence = NULL,
+                                     correction = NULL) {
+  asset <- if (is.null(correction$filename)) .gact_catalog_file(id, catalog_path = catalog_path) else
+    .gact_catalog_file(id, asset_file = correction$filename)
   meta <- asset$meta
+  original <- identical(asset$availability, "original_only")
+  if (original && is.null(correction$mapping))
+    stop(errorCondition(paste("Original Catalog asset", asset$file,
+      "requires reviewed mapping, build, strand, effect/SE scale and checksum before import."),
+      class = "gact_catalog_asset_review", availability = "original_only", filename = asset$file))
   scope <- .gact_catalog_study_scope(meta, id)
-  if (!identical(meta$gwas_id, id) || !identical(meta$data_file_name, asset$file) ||
+  if (!original && (!identical(meta$gwas_id, id) || !identical(meta$data_file_name, asset$file) ||
       !identical(meta$genome_assembly, "GRCh38") || !identical(meta$coordinate_system, "1-based") ||
-      !isTRUE(meta$is_harmonised)) {
+      !isTRUE(meta$is_harmonised))) {
     stop("Expected a harmonised, 1-based GRCh38 file: ", id)
   }
-  coverage <- .gact_catalog_coverage(asset, coverage_evidence, id)
-  trait <- unlist(meta$trait_description, use.names = FALSE)
+  if (original && (!isTRUE(correction$build %in% c("GRCh37", "GRCh38")) ||
+      !identical(correction$strand, "forward") || !identical(correction$coordinate_system, "1-based") ||
+      !identical(correction$effect_scale, "beta") || !identical(correction$se_scale, "beta") ||
+      !isTRUE(correction$p_scale %in% c("p", "neglog10p"))))
+    stop("Review source build, 1-based positions, forward alleles, signed beta and SE scale for ", id)
+  coverage <- .gact_catalog_coverage(asset, coverage_evidence %||% correction$coverage_evidence, id)
+  trait <- correction$trait %||% unlist(meta$trait_description, use.names = FALSE)
   samples <- meta$samples
-  if (is.null(evidence) && grepl("\\bsingle[- ]cohort\\b", scope$design, ignore.case = TRUE))
-    evidence <- scope$design
+  for (field in intersect(names(scope), names(correction))) scope[[field]] <- correction[[field]]
+  if (!is.null(correction$acn)) {
+    if (!is.null(correction$ancestry) && !identical(correction$acn, correction$ancestry))
+      stop("Reviewed acn and ancestry disagree")
+    scope$ancestry <- correction$acn
+  }
+  if (!is.null(correction$study_design)) scope$study_design_evidence <- correction$evidence
   flags <- lapply(samples, `[[`, "case_control_study")
+  if (!is.null(correction$type)) flags <- list(identical(correction$type, "binary"))
   if (!length(flags) || !all(vapply(flags, function(x) identical(x, TRUE) || identical(x, FALSE),
                                    logical(1))) || length(unique(flags)) != 1L) {
-    stop("Catalog metadata does not establish the study type: ", id)
+    stop(errorCondition(paste0("Catalog metadata does not establish the study type for ", id,
+         ". Supply metadata_corrections with a reviewed type and evidence."),
+         class = "gact_catalog_asset_review", availability = asset$availability %||% "harmonised",
+         filename = asset$file))
   }
-  ancestry <- unlist(samples[[1L]]$sample_ancestry_category, use.names = FALSE)
   if (length(trait) != 1L || anyNA(trait) || !nzchar(trait))
     stop("Catalog metadata does not establish a single trait: ", id)
   size <- if (length(samples) == 1L) samples[[1L]]$sample_size else NULL
   counts <- stats::setNames(rep(NA_real_, 2L), c("case_count", "control_count"))
-  if (flags[[1L]]) {
+  if (flags[[1L]] && length(samples) == 1L) {
     for (field in names(counts)) {
       value <- samples[[1L]][[field]]
       if (is.null(value)) next
@@ -501,19 +603,24 @@ panUKBManifest <- function(selection, out_dir,
         is.finite(size) && sum(counts) != size)
       stop("Catalog case/control counts disagree with sample_size: ", id)
   }
-  data.frame(accession = id, filename = asset$file, url = asset$url,
-    md5 = .gact_catalog_md5(asset, id), source = paste("GWAS Catalog harmonised", meta$file_type %||% "legacy"),
-    trait = trait, type = if (flags[[1L]]) "binary" else "quantitative", build = "GRCh38",
-    ancestry = scope$ancestry, strand = "forward", cohort_evidence = evidence %||% NA_character_,
-    study_design = "not_reported_as_meta_analysis",
+  result <- data.frame(accession = id, filename = asset$file, url = asset$url,
+    md5 = .gact_catalog_md5(asset, id, correction$md5),
+    source = if (original) "GWAS Catalog original" else paste("GWAS Catalog harmonised", meta$file_type %||% "legacy"),
+    trait = trait, type = if (flags[[1L]]) "binary" else "quantitative",
+    build = if (original) correction$build else "GRCh38",
+    strand = "forward", cohort_evidence = evidence %||% NA_character_,
     gender = unname(c(combined = "both", female = "females", male = "males")[meta$sex %||% ""]),
     study_n_total = if (is.numeric(size) && length(size) == 1L && is.finite(size) && size > 0)
       size else NA_real_,
     study_n_case = unname(counts["case_count"]),
     study_n_control = unname(counts["control_count"]),
-    comments = paste("Catalog ancestry:", paste(ancestry, collapse = ", ")),
+    comments = paste("Catalog ancestry:", scope$ancestry_composition),
+    metadata_corrections = if (length(correction))
+      as.character(jsonlite::toJSON(correction, auto_unbox = TRUE, digits = NA)) else NA_character_,
     reference = .gact_gwas_catalog_url(id), coverage = coverage$coverage,
     coverage_evidence = coverage$evidence, stringsAsFactors = FALSE)
+  for (field in names(scope)) result[[field]] <- scope[[field]]
+  .gact_study_design(result)
 }
 
 .gact_panukb_mismatch <- function(...) {
@@ -522,7 +629,7 @@ panUKBManifest <- function(selection, out_dir,
 
 #' Scan Pan-UK Biobank and GWAS Catalog studies for ingestion
 #'
-#' Match phenotypes or Catalog accessions to verified GRCh38 files. Use the
+#' Match phenotypes or Catalog accessions to verifiable variant files. Use the
 #' C++ reader on a bounded gzip prefix and prepare recipes and an import manifest.
 #' Verified recipes are keyed by accession and input MD5. Use the same
 #' `recipe_dir` to reuse them on later scans; metadata is checked again.
@@ -556,9 +663,9 @@ panUKBManifest <- function(selection, out_dir,
 #' scope is excluded. If scope wording is absent, a genome-wide assay plus at
 #' least one million successfully harmonised variants in the provider's running
 #' log supplies screening evidence. Neither an assay label nor a leading preview
-#' alone suffices. This is not a full-file coverage audit. Only one ancestry is
-#' accepted; reported meta-analyses (including MTAG) are excluded. Absence of a
-#' meta-analysis statement is recorded as screening, not proof of a single cohort.
+#' alone suffices. Catalog recipes record study design, evidence and ancestry
+#' code (`acn`). Supported meta-analyses use a single ancestry code or `MIXED`.
+#' Unspecified designs are `unknown`.
 #' A unique standard sample-size column (n, N, N_sample_size, sample_size,
 #' n_total or total_sample_size) is mapped to per-variant n. Missing n stays
 #' missing; observed values must be finite and positive. Multiple candidates
@@ -578,8 +685,16 @@ panUKBManifest <- function(selection, out_dir,
 #'   for scans of the full phenotype manifest.
 #' @param cohort_evidence Optional named character vector of reviewed
 #'   study-design evidence keyed by Catalog accession, retained in the recipe.
-#'   Literal single-cohort wording is not required. Evidence cannot override
-#'   reported meta-analyses or multiple ancestries.
+#'   Use `metadata_corrections` to supply a reviewed classification.
+#' @param metadata_corrections List keyed by Catalog accession. Each correction
+#'   includes `evidence` and any reviewed metadata, for example `type`.
+#'   For an original asset also document the mapping, 1-based coordinates,
+#'   genome build, forward strand, signed beta and SE scales, and p-value scale.
+#'   Supply a verified MD5 if the Catalog does not provide one.
+#' @param quality_filters List keyed by accession. Each policy can define
+#'   `low_confidence = list(column, evidence)` and
+#'   `info = list(column, min, evidence)`. The selected Pan-UKB low-confidence
+#'   flag is used when present. Missing values in a selected filter fail it.
 #' @param coverage_evidence Optional named character vector of reviewed evidence
 #'   establishing genome-wide SNP coverage, keyed by Catalog accession.
 #'   Explicitly restricted metadata takes precedence. Unclear coverage needs review.
@@ -597,14 +712,16 @@ panUKBManifest <- function(selection, out_dir,
 #'   Coverage is `genome_wide`, `restricted`, or `unclear`. Restricted files
 #'   have status `excluded` and unclear files have status `needs_review`.
 #'   The import manifest contains only ready studies.
-#'   `recipes_tsv` is the path to the refreshed inventory in the recipe directory.
+#'   `recipes_tsv` is the path to the refreshed inventory and `recipe_dir`
+#'   can be passed to [ingestGWAS()].
 #' @export
 scanGWAS <- function(selection = NULL, out_dir = NULL,
     phenotype_manifest = "https://pan-ukb-us-east-1.s3.amazonaws.com/sumstats_release/phenotype_manifest.tsv.bgz",
     preview_rows = 1000L, max_preview_bytes = 1024L * 1024L, recipe_dir = NULL,
     source = c("panukb", "catalog"), analysis = "per_ancestry", cohort_evidence = NULL,
     GAlist = NULL, repository = NULL, workers = 1L,
-    files = c("catalog", "original"), coverage_evidence = NULL) {
+    files = c("catalog", "original"), coverage_evidence = NULL,
+    metadata_corrections = NULL, quality_filters = NULL) {
   if (!is.null(repository)) {
     provider <- c("pan-ukb" = "panukb", "gwas-catalog" = "catalog")
     selected <- unname(provider[match.arg(repository, names(provider))])
@@ -624,10 +741,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   if (!is.null(GAlist)) {
     if (!identical(.gact_catalog_build(GAlist), "GRCh38"))
       stop("scanGWAS() requires a GRCh38 database when GAlist is supplied")
-    if (is.null(recipe_dir)) {
-      if (!"recipes" %in% names(GAlist$dirs)) stop("GAlist has no recipes directory")
-      recipe_dir <- GAlist$dirs[["recipes"]]
-    }
+    recipe_dir <- .gact_recipe_dir(GAlist, recipe_dir)
     if (original) {
       map_dir <- .gact_liftover_dir(GAlist)
       map_info <- .gact_liftover_index(map_dir, GAlist)
@@ -650,6 +764,18 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
       !all(grepl("^GCST[0-9]{6,8}$", names(coverage_evidence)))))
     stop("coverage_evidence must contain reviewed evidence named by Catalog accession")
   coverage_evidence <- as.list(coverage_evidence)
+  for (policies in list(metadata_corrections, quality_filters)) {
+    if (!is.null(policies) && (!is.list(policies) || is.null(names(policies)) ||
+        anyDuplicated(names(policies)) || anyNA(names(policies)) ||
+        !all(nzchar(names(policies))) || !all(vapply(policies, is.list, logical(1)))))
+      stop("metadata_corrections and quality_filters must be lists named by accession")
+  }
+  for (correction in metadata_corrections) {
+    if (!is.character(correction$evidence) || length(correction$evidence) != 1L ||
+        is.na(correction$evidence) || !nzchar(trimws(correction$evidence)) ||
+        (!is.null(correction$type) && !isTRUE(correction$type %in% c("binary", "quantitative"))))
+      stop("Supply evidence and a valid study type for each reviewed metadata correction")
+  }
   if (source == "panukb") {
     phenotype <- .gact_read_panukb_manifest(phenotype_manifest)
     if (is.null(selection)) {
@@ -709,13 +835,16 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   review <- data.frame(filename = selection$filename, analysis = selection$analysis,
     accession = selection$accession, status = "needs_review", preview_bytes = NA_integer_,
     preview_rows = NA_integer_, reused = FALSE, recipe = NA_character_, issues = NA_character_,
-    coverage = NA_character_, coverage_evidence = NA_character_)
+    coverage = NA_character_, coverage_evidence = NA_character_,
+    availability = NA_character_, warnings = NA_character_)
   rows <- formats <- vector("list", nrow(selection))
   context <- list(
     selection = selection, review = review, source = source, at = at, explicit = explicit,
     phenotype = if (source == "panukb") phenotype else NULL, catalog = catalog,
     phenotype_index = phenotype_index, cohort_evidence = cohort_evidence,
     coverage_evidence = coverage_evidence,
+    metadata_corrections = metadata_corrections, quality_filters = quality_filters,
+    build_descriptor = if (!is.null(GAlist)) list(dirs = GAlist$dirs),
     out_dir = out_dir, recipe_dir = recipe_dir, preview_rows = preview_rows,
     max_preview_bytes = max_preview_bytes, original = original,
     map_dir = map_dir, map_info = map_info
@@ -765,7 +894,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   manifest <- file.path(out_dir, "manifest.tsv")
   knowledge <- file.path(out_dir, "formats.json")
   report <- file.path(out_dir, "scan_review.tsv")
-  prepared <- if (length(accepted)) do.call(rbind, rows[accepted]) else
+  prepared <- if (length(accepted)) data.table::rbindlist(rows[accepted], fill = TRUE) else
     as.data.frame(stats::setNames(rep(list(character()), 9L),
       c("accession", "filename", "url", "md5", "source", "trait", "type", "build", "ancestry")))
   data.table::fwrite(prepared, manifest, sep = "\t", na = "NA")
@@ -774,20 +903,21 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
     auto_unbox = TRUE, pretty = TRUE)
   recipes_tsv <- .gact_write_recipe_inventory(recipe_dir)
   invisible(list(manifest = manifest, knowledge = knowledge, review = review, report = report,
-                 recipes_tsv = recipes_tsv))
+                 recipes_tsv = recipes_tsv, recipe_dir = recipe_dir))
 }
 
 .gact_write_recipe_inventory <- function(recipe_dir) {
   fields <- c("accession", "filename", "source", "trait", "type", "ancestry",
     "build", "gender", "study_n_total", "study_n_case", "study_n_control",
-    "reference", "input_url", "input_md5")
-  numeric_fields <- c("study_n_total", "study_n_case", "study_n_control")
+    "reference", "input_url", "input_md5", .gact_design_fields)
+  numeric_fields <- c("study_n_total", "study_n_case", "study_n_control", "n_cohorts")
   skipped <- character()
   paths <- list.files(recipe_dir, pattern = "\\.json$", full.names = TRUE)
   rows <- lapply(paths, function(path) {
     tryCatch({
       recipe <- jsonlite::read_json(path, simplifyVector = TRUE)
       if (!is.list(recipe) || !isTRUE(recipe$verified)) return(NULL)
+      recipe <- .gact_study_design(recipe)
       row <- stats::setNames(lapply(fields, function(field) {
         value <- recipe[[field]]
         if (is.null(value) || !length(value)) return(if (field %in% numeric_fields) NA_real_ else NA_character_)
@@ -808,7 +938,10 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   empty <- stats::setNames(lapply(c(fields, "recipe_file"), function(field)
     if (field %in% numeric_fields) numeric() else character()), c(fields, "recipe_file"))
   table <- data.table::rbindlist(c(list(empty), Filter(Negate(is.null), rows)), fill = TRUE)
-  if (nrow(table)) table <- table[order(table$accession, table$recipe_file, method = "radix")]
+  if (nrow(table)) {
+    order <- order(table$accession, table$recipe_file, method = "radix")
+    table <- table[order]
+  }
   output <- file.path(recipe_dir, "recipes.tsv")
   staged <- tempfile(".recipes-", tmpdir = recipe_dir, fileext = ".tsv")
   on.exit(unlink(staged), add = TRUE)
@@ -827,6 +960,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
 .gact_scan_recipe_one <- function(i, context) {
   with(context, {
     entry <- review[i, , drop = FALSE]
+    reviewed <- metadata_corrections[[selection$accession[i]]]
     result <- tryCatch({
       picked <- if (original) {
         if (is.na(at[i])) stop("Filename is absent from the Pan-UKB phenotype manifest")
@@ -835,7 +969,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
         id <- selection$accession[i]
         if (isTRUE(selection$ambiguous[i])) stop("Multiple harmonised files listed for ", id)
         .gact_catalog_recipe_row(id, cohort_evidence[[id]], selection$catalog_path[i],
-                                 coverage_evidence[[id]])
+                                 coverage_evidence[[id]], reviewed)
       } else {
         if (is.na(at[i])) stop("Filename is absent from the Pan-UKB phenotype manifest")
         row <- phenotype[at[i], , drop = FALSE]
@@ -852,6 +986,18 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
         }
         .gact_panukb_scan_match(row, candidates, selection$analysis[i], alternatives)
       }
+      picked <- .gact_study_design(picked)
+      catalog_original <- identical(picked$source, "GWAS Catalog original")
+      if (source == "catalog") {
+        entry$filename <- picked$filename
+        entry$availability <- if (catalog_original) "original_only" else "harmonised"
+      }
+      if (picked$acn == "UNKNOWN") stop("Ancestry is unresolved. Supply reviewed ancestry evidence.")
+      if (catalog_original) {
+        if (is.null(build_descriptor)) stop("Supply GAlist with an installed build-check liftover map for original Catalog assets")
+        map_dir <- .gact_liftover_dir(build_descriptor)
+        map_info <- .gact_liftover_index(map_dir, build_descriptor)
+      }
       if (source == "panukb" && is.null(picked$coverage)) {
         picked$coverage <- "genome_wide"
         picked$coverage_evidence <- "Pan-UKB documented genome-wide per-phenotype SNP release"
@@ -861,6 +1007,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
       entry$coverage_evidence <- picked$coverage_evidence
       path <- .gact_verified_recipe_path(recipe_dir, picked$accession, picked$md5)
       stored <- .gact_read_verified_recipe(path, picked)
+      specified <- quality_filters[[picked$accession]]
       profile <- .gact_panukb_catalog_profile(picked$source)
       if (original) profile <- .gact_panukb_original_profile(picked$ancestry)
       if (is.null(stored)) {
@@ -873,11 +1020,15 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
         entry$preview_rows <- nrow(sample)
         if (nrow(sample) < preview_rows)
           stop("Byte limit reached before the requested number of complete rows")
-        if (source == "catalog") profile <- .gact_catalog_preview_profile(sample, picked$source)
+        if (catalog_original) {
+          profile <- list(source = picked$source, headers = names(sample), mapping = reviewed$mapping,
+            effect_scale = reviewed$effect_scale, p_scale = reviewed$p_scale, verified = TRUE,
+            evidence = reviewed$evidence)
+        } else if (source == "catalog") profile <- .gact_catalog_preview_profile(sample, picked$source)
         standard <- all(unlist(profile$mapping) %in% names(sample)) &&
           (source == "catalog" ||
            !any(c("odds_ratio", "hazard_ratio", "neg_log_10_p_value") %in% names(sample)))
-        known_panukb <- all(names(sample) %in% c(profile$headers, "low_confidence"))
+        known_panukb <- all(names(sample) %in% c(profile$headers, .gact_quality_columns(names(sample))))
         if (original) {
           eaf <- paste0("af_", picked$ancestry)
           if (picked$type == "quantitative" && eaf %in% names(sample))
@@ -886,15 +1037,21 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
         if (original || (source != "catalog" && standard && known_panukb)) {
           profile$headers <- names(sample)
         }
-        recipe <- .gact_gwas_scan_recipe(picked, sample, bytes, profile)
-        if (original) {
-          recipe$build_check <- verifyGWASBuild(sample, map_dir)
+        recipe <- .gact_gwas_scan_recipe(picked, sample, bytes, profile, specified)
+        entry$warnings <- paste(unlist(recipe$quality_warnings), collapse = " | ")
+        if (original || catalog_original) {
+          mapping <- unlist(recipe$mapping)
+          keys <- c("chr", "pos", "nea", "ea")
+          if (!all(unname(mapping[keys]) %in% names(sample))) stop("Preview lacks reviewed build-check columns")
+          build_sample <- stats::setNames(sample[unname(mapping[keys])], .gact_liftover_stat_keys)
+          recipe$build_check <- verifyGWASBuild(build_sample, map_dir)
           recipe$build_check$index_md5 <- map_info$md5
-          recipe$liftover <- list(source_build = "GRCh37", build = "GRCh38",
-                                  index_md5 = map_info$md5)
-          if (!identical(recipe$build_check$build, "GRCh37"))
+          if (picked$build == "GRCh37")
+            recipe$liftover <- list(source_build = "GRCh37", build = "GRCh38",
+                                    index_md5 = map_info$md5)
+          if (!identical(recipe$build_check$build, picked$build))
             recipe$inspection_issues <- c(recipe$inspection_issues,
-              "Preview does not verify the original Pan-UKB GRCh37 build")
+              paste("Preview does not verify the declared original build", picked$build))
         }
         if (length(recipe$inspection_issues)) {
           draft <- file.path(out_dir, sprintf("study_%05d.json", i))
@@ -906,9 +1063,13 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
         recipe$verified <- TRUE
         .gact_save_verified_recipe(recipe, path, picked)
       } else {
-        if (original && (!identical(stored$build_check$build, "GRCh37") ||
+        if ((original || catalog_original) && (!identical(stored$build_check$build, picked$build) ||
                          !identical(stored$build_check$index_md5, map_info$md5)))
           stop("Saved recipe build check differs from the installed liftover index. Review the recipe")
+        expected <- .gact_quality_filters(stored, specified)
+        if (!.gact_same_quality_policy(stored$quality_filters, expected))
+          stop("Saved recipe quality policy differs. Rescan into a new recipe directory for review")
+        entry$warnings <- paste(.gact_quality_warnings(stored), collapse = " | ")
         entry$reused <- TRUE
         entry$preview_bytes <- 0L
         entry$preview_rows <- stored$inspection$preview_rows
@@ -927,6 +1088,10 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
         if (result$coverage == "restricted") entry$status <- "excluded"
       }
       if (inherits(result, "gact_scan_excluded")) entry$status <- "excluded"
+      if (inherits(result, "gact_catalog_asset_review")) {
+        entry$availability <- result$availability
+        if (!is.null(result$filename)) entry$filename <- result$filename
+      }
       entry$issues <- conditionMessage(result)
       return(list(review = entry))
     }
@@ -970,11 +1135,12 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
       length(recipe$inspection_issues)) {
     stop("Stored verified recipe does not match the input or validation: ", basename(path))
   }
-  fields <- intersect(c("filename", "cohort_evidence", .gact_gwas_metadata_fields), names(study))
+  if (!is.null(study$acn)) recipe <- .gact_study_design(recipe)
+  fields <- intersect(c("filename", "cohort_evidence", .gact_design_fields, .gact_gwas_metadata_fields), names(study))
   same <- vapply(fields, function(field) {
     value <- study[[field]]
     if (is.na(value)) return(TRUE)
-    if (field %in% c("n", "ncase", "ncontrol", "study_n_total", "study_n_case", "study_n_control")) {
+    if (field %in% c("n", "ncase", "ncontrol", "study_n_total", "study_n_case", "study_n_control", "n_cohorts")) {
       saved <- suppressWarnings(as.numeric(recipe[[field]]))
       expected <- suppressWarnings(as.numeric(value))
       return(length(saved) == 1L && is.finite(saved) && is.finite(expected) && saved == expected)
@@ -996,6 +1162,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   if (file.exists(path)) {
     saved <- .gact_read_verified_recipe(path, study)
     if (is.null(saved) || !identical(saved$mapping, recipe$mapping) ||
+        !.gact_same_quality_policy(saved$quality_filters, recipe$quality_filters) ||
         !identical(unlist(saved$inspection$headers), recipe$inspection$headers)) {
       stop("Existing recipe differs from the verified preview: ", basename(path))
     }
@@ -1023,7 +1190,7 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
   matches[[which(matched)]]
 }
 
-.gact_gwas_scan_recipe <- function(study, sample, bytes, profile) {
+.gact_gwas_scan_recipe <- function(study, sample, bytes, profile, filters = NULL) {
   recipe <- as.list(study)
   recipe$input_md5 <- study$md5
   recipe$input_url <- study$url
@@ -1032,11 +1199,14 @@ scanGWAS <- function(selection = NULL, out_dir = NULL,
     preview_bytes = bytes, remote = TRUE, skip = 0L, profile_reused = reused,
     evidence = if (reused) profile$evidence else NULL,
     unmapped_columns = if (reused) setdiff(names(sample), unlist(profile$mapping)) else NULL)
+  recipe$quality_filters <- .gact_quality_filters(recipe, filters)
+  recipe$quality_warnings <- as.list(.gact_quality_warnings(recipe))
   if (reused) {
     recipe$mapping <- profile$mapping
     recipe$effect_scale <- profile$effect_scale
     recipe$p_scale <- profile$p_scale
-    recipe$validation <- validateStatSchema(normalizeStatSchema(sample, recipe$mapping,
+    passed <- .gact_quality_preview(sample, recipe$quality_filters)
+    recipe$validation <- validateStatSchema(normalizeStatSchema(passed, recipe$mapping,
       effect_scale = recipe$effect_scale, p_scale = recipe$p_scale))
     recipe$inspection_issues <- c(profile$issues, recipe$validation$errors)
     if (!length(recipe$inspection_issues)) {
@@ -3094,8 +3264,7 @@ normalizeStatSchema <- function(stat,
 #' strictly positive, and p-values and effect-allele frequencies must be in [0, 1].
 #' Optional per-variant sample sizes (`n`) must be finite and strictly positive
 #' when observed. Missing sample sizes are allowed.
-#' When `eaf` is absent, the writer uses effect-allele frequencies from the
-#' marker catalog after alignment.
+#' When `eaf` is absent, the stored study frequencies remain missing.
 #'
 #' @param stat A normalized `data.frame` (typically from [normalizeStatSchema()]).
 #' @return A list with `ok`, `errors`, `warnings`, and `metrics`.
@@ -3289,6 +3458,11 @@ recodeSumstat <- recodeStat
 #' The native catalog reader accepts gact CSV/TSV catalogs, quoted fields and
 #' integer-valued decimal/scientific coordinates. CPRA keys are checked by parsed
 #' coordinates and alleles; invalid rows identify their catalog row number.
+#' Both storage modes require a finite aligned Z and apply the same verified
+#' provider filters. The report and QC JSON count usable Z values, unusable
+#' effects, missing backbone rows and exclusions by filter. A `MIXED` study
+#' only has a matrix LD map when a compatible panel is registered for that code.
+#' A subsequent import safely recovers interrupted native publication.
 #'
 #' @param GAlist Database descriptor list, or path to its saved RDS.
 #' @param selection Required accessions or recipe filenames, or selected rows
@@ -3308,13 +3482,18 @@ recodeSumstat <- recodeStat
 #' @param data_dir Optional input cache directory; defaults to download/.
 #' @param out_dir Optional new report directory; defaults to recipes/reviews/.
 #' @param scratch_dir Optional parent of temporary native working files.
+#' @param recipe_dir Recipe directory override. Use the `recipe_dir` returned
+#'   by [scanGWAS()] for recipes scanned into a different directory.
+#' @param warn_coverage_below Warn in the report when usable Z values cover
+#'   less than this fraction of the backbone. Defaults to 0.
 #' @return With `import = TRUE`, invisibly returns the updated GAlist. Its
 #'   `ingest_report` contains the per-study status, local IDs and QC counts for
 #'   this call. With `import = FALSE`, returns the readiness report directly.
 #' @export
 ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
                        descriptor = NULL, data_dir = NULL, out_dir = NULL,
-                       scratch_dir = NULL, storage = c("full", "z")) {
+                       scratch_dir = NULL, storage = c("full", "z"), recipe_dir = NULL,
+                       warn_coverage_below = 0) {
   storage <- match.arg(storage)
   if (missing(selection) || is.null(selection) || !length(selection) ||
       (is.data.frame(selection) && !nrow(selection)))
@@ -3335,12 +3514,13 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
     descriptor <- candidates
   }
   descriptor <- normalizePath(descriptor, winslash = "/", mustWork = TRUE)
+  if (.gact_recover_gwas(GAlist$dirs[["gstat"]], import)) descriptor_loaded <- FALSE
   if (!descriptor_loaded) descriptor_stamp <- .gact_gwas_stamp(descriptor)
   current <- if (descriptor_loaded) GAlist else readRDS(descriptor)
   if (!identical(normalizePath(current$dirs[["gstat"]], winslash = "/", mustWork = TRUE),
                  normalizePath(GAlist$dirs[["gstat"]], winslash = "/", mustWork = TRUE)))
     stop("descriptor belongs to a different database")
-  recipes <- file.path(database, "recipes")
+  recipes <- normalizePath(.gact_recipe_dir(GAlist, recipe_dir), winslash = "/", mustWork = TRUE)
   tsv <- file.path(recipes, "recipes.tsv")
   if (!file.exists(tsv)) stop("Run scanGWAS() to create recipes/recipes.tsv first")
   inventory <- data.table::fread(tsv, sep = "\t", colClasses = "character", data.table = FALSE)
@@ -3372,13 +3552,14 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
     if (is.na(name) || !grepl("^[A-Za-z0-9][A-Za-z0-9._-]*\\.json$", name))
       stop("Invalid recipe_file in recipes.tsv")
     path <- file.path(recipes, name)
-    recipe <- jsonlite::read_json(path)
+    recipe <- .gact_study_design(jsonlite::read_json(path))
     for (field in c("accession", "ancestry", "input_md5")) {
       if (!identical(recipe[[field]], key[[field]])) stop("Recipe identity differs from recipes.tsv: ", name)
     }
     if (!identical(name, basename(.gact_verified_recipe_path(recipes, recipe$accession, recipe$input_md5))))
       stop("Recipe filename does not match its accession/checksum: ", name)
-    fields <- intersect(c("accession", "filename", "cohort_evidence", .gact_gwas_metadata_fields), names(recipe))
+    fields <- intersect(c("accession", "filename", "cohort_evidence", .gact_design_fields,
+                          .gact_gwas_metadata_fields), names(recipe))
     row <- lapply(recipe[fields], function(value) {
       if (is.null(value) || !length(value)) return(NA)
       if (!is.atomic(value) || length(value) != 1L) stop("Recipe study metadata must be scalar: ", name)
@@ -3388,15 +3569,16 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
     row$md5 <- recipe$input_md5
     row <- as.data.frame(row, stringsAsFactors = FALSE)
     if (is.null(.gact_read_verified_recipe(path, row))) stop("Recipe is not verified: ", name)
-    if (tolower(row$ancestry) %in% c("mixed", "multiple", "unknown", "not reported"))
-      stop("Select single-ancestry recipes")
+    if (row$ancestry == "UNKNOWN")
+      stop("Ancestry is unresolved. Review the recipe metadata before import: ", name)
     row$recipe_file <- name
     row
   })
   manifest <- as.data.frame(data.table::rbindlist(rows, fill = TRUE))
   result <- .gact_run_gwas_manifest(manifest, descriptor, GAlist = current, descriptor_stamp = descriptor_stamp,
     data_dir = data_dir, out_dir = out_dir,
-    import = import, engine = "cpp", workers = workers, scratch_dir = scratch_dir, storage = storage)
+    import = import, engine = "cpp", workers = workers, scratch_dir = scratch_dir, storage = storage,
+    recipe_dir = recipes, warn_coverage_below = warn_coverage_below)
   if (!import) return(invisible(result$report))
   result$GAlist$ingest_report <- result$report
   invisible(result$GAlist)
@@ -3480,8 +3662,13 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
                                     data_dir = NULL, out_dir = NULL, knowledge = NULL,
                                     defaults = list(), import = TRUE, preview_rows = 1000L,
                                     engine, workers = 1L, scratch_dir = NULL, liftover_map = NULL,
-                                    descriptor_stamp = NULL, storage = NULL) {
-  if (missing(GAlist)) descriptor_stamp <- .gact_gwas_stamp(descriptor)
+                                    descriptor_stamp = NULL, storage = NULL, recipe_dir = NULL,
+                                    warn_coverage_below = 0) {
+  if (missing(GAlist)) {
+    .gact_recover_gwas(GAlist$dirs[["gstat"]], import)
+    descriptor_stamp <- .gact_gwas_stamp(descriptor)
+    GAlist <- readRDS(descriptor)
+  }
   if (!is.null(liftover_map) && engine != "cpp") stop("liftover_map requires engine = 'cpp'")
   if (length(workers) != 1L || !is.finite(workers) || workers < 1 ||
       workers > .Machine$integer.max || workers != floor(workers)) stop("workers must be a positive integer")
@@ -3504,6 +3691,9 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   if (!identical(import, TRUE) && !identical(import, FALSE)) {
     stop("import must be TRUE or FALSE")
   }
+  if (!is.numeric(warn_coverage_below) || length(warn_coverage_below) != 1L ||
+      !is.finite(warn_coverage_below) || warn_coverage_below < 0 || warn_coverage_below > 1)
+    stop("warn_coverage_below must be a fraction in [0,1]")
   factors <- vapply(manifest, is.factor, logical(1))
   manifest[factors] <- lapply(manifest[factors], as.character)
   for (field in names(defaults)) {
@@ -3543,7 +3733,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   }
 
   database <- dirname(gstat)
-  recipes <- file.path(database, "recipes")
+  recipes <- .gact_recipe_dir(GAlist, recipe_dir)
   if (is.null(data_dir)) {
     if ("download" %in% names(GAlist$dirs)) data_dir <- GAlist$dirs[["download"]]
     if (!length(data_dir) || is.na(data_dir)) data_dir <- file.path(database, "download")
@@ -3580,7 +3770,10 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     status = "needs_review", study_id = NA_character_, recipe = NA_character_,
     issues = NA_character_, warnings = NA_character_, cleanup = NA_character_,
     n_input = NA_integer_, n_final = NA_integer_, n_dropped = NA_integer_,
-    n_flipped = NA_integer_, stringsAsFactors = FALSE)
+    n_flipped = NA_integer_, n_observed_z = NA_integer_, n_unusable_effect = NA_integer_,
+    n_missing_backbone = NA_integer_, n_backbone = NA_integer_,
+    n_provider_low_confidence = NA_integer_, n_provider_info = NA_integer_,
+    qc_file = NA_character_, stringsAsFactors = FALSE)
   for (i in seq_len(nrow(manifest))) {
     row <- manifest[i, , drop = FALSE]
     tryCatch({
@@ -3605,8 +3798,13 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
         }
         old_recipe <- imported$recipe_checksum[hits]
         if (length(old_recipe) && !is.na(old_recipe) && "recipe_file" %in% names(row)) {
-          actual <- unname(tools::md5sum(file.path(recipes, basename(row$recipe_file))))
+          recipe_path <- file.path(recipes, basename(row$recipe_file))
+          actual <- unname(tools::md5sum(recipe_path))
           if (is.na(actual) || !identical(actual, old_recipe)) stop("Imported study has a different verified recipe; review before retrying")
+          previous <- jsonlite::read_json(recipe_path)
+          if (!.gact_same_quality_policy(previous$quality_filters,
+                                         .gact_quality_filters(previous, previous$quality_filters)))
+            stop("Imported study uses an older quality policy. Review it before retrying.")
         }
         report$status[i] <- "already_imported"
         report$study_id[i] <- study_id
@@ -3666,12 +3864,19 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
         if (engine == "cpp") .gact_cpp_gwas_mapping(recipe)
       } else {
         report$recipe[i] <- path
+        if (!.gact_same_quality_policy(recipe$quality_filters,
+                       .gact_quality_filters(recipe, recipe$quality_filters)))
+          stop("Pan-UKB recipe predates ancestry-specific quality filtering. Rescan in a new recipe directory.")
         if (import && engine != "cpp") {
           file <- .gact_gwas_manifest_file(row, data_dir, verified_files)
           recipe$file_name <- file
         }
       }
       forward <- identical(recipe$strand, "forward")
+      if (identical(recipe$source, "GWAS Catalog original") && is.null(map_dir)) {
+        map_dir <- .gact_liftover_dir(GAlist)
+        if (is.null(recipe$build_check)) stop("Original Catalog recipe needs a verified build")
+      }
       if (!is.null(map_dir) && (needs_lift || forward)) {
         if (!forward || !identical(build, "GRCh38"))
           stop("Liftover requires a GRCh38 catalog and a verified forward-strand profile")
@@ -3695,7 +3900,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
         recipe$filename <- row$filename
         recipe$verified <- TRUE
       }
-      report$warnings[i] <- paste(unlist(recipe$validation$warnings), collapse = " | ")
+      report$warnings[i] <- paste(c(unlist(recipe$validation$warnings), .gact_quality_warnings(recipe)),
+                                  collapse = " | ")
       if (!import) {
         report$status[i] <- "ready"
         next
@@ -3730,7 +3936,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     work_dir <- .gact_gwas_work_dir(scratch_dir)
     on.exit(unlink(work_dir, recursive = TRUE), add = TRUE)
     batch <- .gact_cpp_gwas_batch(GAlist, descriptor, jobs, report, recipes, work_dir,
-                                  as.integer(workers), descriptor_stamp, data_dir, verified_files, storage)
+                                  as.integer(workers), descriptor_stamp, data_dir, verified_files, storage,
+                                  out_dir, warn_coverage_below)
     GAlist <- batch$GAlist
     report <- batch$report
   }
@@ -3860,6 +4067,80 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   data.table::fread(text = text, sep = "\t", nrows = rows, data.table = FALSE, check.names = FALSE)
 }
 
+.gact_quality_filters <- function(recipe, filters = NULL) {
+  headers <- unlist(recipe$inspection$headers, use.names = FALSE)
+  ancestry <- recipe$ancestry
+  panukb <- startsWith(recipe$source %||% "", "Pan-UK Biobank ")
+  original <- startsWith(recipe$source %||% "", "Pan-UK Biobank original ")
+  filters <- filters %||% list()
+  if (!is.list(filters) || (length(filters) &&
+      (is.null(names(filters)) || anyDuplicated(names(filters)) ||
+       !all(names(filters) %in% c("low_confidence", "info")))))
+    stop("Quality policy supports low_confidence and info")
+  column <- paste0("low_confidence_", ancestry)
+  if (!original && !column %in% headers) column <- "low_confidence"
+  if (panukb && length(ancestry) == 1L && ancestry %in% .gact_panukb_ancestries &&
+      column %in% headers && is.null(filters$low_confidence))
+    filters$low_confidence <- list(column = column,
+      evidence = "https://pan.ukbb.broadinstitute.org/docs/per-phenotype-files/#population-specific-fields-1")
+  for (name in names(filters)) {
+    rule <- filters[[name]]
+    if (!is.list(rule) || !is.character(rule$column) || length(rule$column) != 1L ||
+        !rule$column %in% headers || !is.character(rule$evidence) || length(rule$evidence) != 1L ||
+        is.na(rule$evidence) || !nzchar(trimws(rule$evidence)))
+      stop("Quality filters require a preview column and provider evidence: ", name)
+    if (panukb && name == "low_confidence" && !identical(rule$column, column))
+      stop("Pan-UKB low_confidence column must match the recipe ancestry")
+    suffix <- toupper(sub("^.*_", "", rule$column))
+    if (panukb && name == "info" && suffix %in% .gact_panukb_ancestries && suffix != ancestry)
+      stop("Pan-UKB INFO column must match the recipe ancestry")
+    if (name == "info" && (!is.numeric(rule$min) || length(rule$min) != 1L ||
+                          !is.finite(rule$min) || rule$min < 0 || rule$min > 1))
+      stop("INFO filter requires min in [0,1]")
+    filters[[name]] <- rule[if (name == "info") c("column", "evidence", "min") else c("column", "evidence")]
+  }
+  filters[intersect(c("low_confidence", "info"), names(filters))]
+}
+
+.gact_same_quality_policy <- function(a, b) {
+  canonical <- function(filters) {
+    filters <- filters %||% list()
+    lapply(filters[sort(names(filters) %||% character())], function(rule) rule[sort(names(rule))])
+  }
+  isTRUE(all.equal(canonical(a), canonical(b), tolerance = 0))
+}
+
+.gact_quality_preview <- function(sample, filters) {
+  if (length(filters$low_confidence)) {
+    flag <- tolower(as.character(sample[[filters$low_confidence$column]]))
+    if (any(!is.na(flag) & !flag %in% c("", "true", "false", "0", "1", ".", "na", "nan")))
+      stop("Invalid low-confidence flag in preview")
+    sample <- sample[flag %in% c("false", "0"), , drop = FALSE]
+  }
+  if (length(filters$info)) {
+    raw <- sample[[filters$info$column]]
+    info <- suppressWarnings(as.numeric(raw))
+    if (any(!is.na(raw) & !as.character(raw) %in% c("", ".", "NA", "NaN") &
+            (!is.finite(info) | info < 0 | info > 1)))
+      stop("Invalid INFO in preview")
+    sample <- sample[is.finite(info) & info >= filters$info$min, , drop = FALSE]
+  }
+  if (length(filters) && !nrow(sample)) stop("No preview rows pass the provider quality filters")
+  sample
+}
+
+.gact_quality_columns <- function(headers) {
+  grep("^(low_confidence|info|imputation_info|imputation_quality)(_|$)",
+       headers, value = TRUE, ignore.case = TRUE)
+}
+
+.gact_quality_warnings <- function(recipe) {
+  columns <- .gact_quality_columns(unlist(recipe$inspection$headers, use.names = FALSE))
+  active <- vapply(recipe$quality_filters, `[[`, character(1), "column")
+  unused <- setdiff(columns, active)
+  if (length(unused)) paste("Unused provider quality columns:", paste(unused, collapse = ", "))
+}
+
 .gact_cpp_gwas_mapping <- function(recipe) {
   fields <- c("chr", "pos", "ea", "nea", "b", "seb", "p", "eaf", "n")
   mapping <- unlist(recipe$mapping)
@@ -3869,7 +4150,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       !all(names(mapping) %in% c("marker", fields)) ||
       anyDuplicated(header) || any(!nzchar(header)) ||
       any(grepl('[,"\t\r\n]', header)) ||
-      any(c("ncase", "ncontrol", "info", "z", "z_score") %in% header) ||
+      any(c("ncase", "ncontrol", "z", "z_score") %in% header) ||
       !identical(recipe$effect_scale, "beta") ||
       !isTRUE(recipe$p_scale %in% c("p", "neglog10p")) ||
       !is.null(recipe[["n"]])) {
@@ -3878,7 +4159,17 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   if (length(setdiff(.gact_gwas_n_columns(header), mapping["n"])) ||
       ("n" %in% names(mapping) && !mapping[["n"]] %in% header))
     stop("Per-variant n columns require an explicit, unambiguous sample-size mapping")
-  unname(as.character(mapping[fields]))
+  if (startsWith(recipe$source %||% "", "Pan-UK Biobank original ") &&
+      "eaf" %in% names(mapping) && mapping[["eaf"]] != paste0("af_", recipe$ancestry))
+    stop("Pan-UKB study EAF must match the recipe ancestry")
+  native <- unname(as.character(mapping[fields]))
+  filters <- .gact_quality_filters(recipe, recipe$quality_filters %||% list())
+  if (length(filters$low_confidence)) attr(native, "low_confidence") <- filters$low_confidence$column
+  if (length(filters$info)) {
+    attr(native, "info") <- filters$info$column
+    attr(native, "min_info") <- filters$info$min
+  }
+  native
 }
 
 .gact_liftover_index <- function(map_dir, ga) {
@@ -3934,7 +4225,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
 }
 
 .gact_cpp_gwas_batch <- function(ga, descriptor, jobs, report, recipe_dir, work_dir, workers,
-                                 descriptor_stamp, data_dir, verified_files, storage) {
+                                 descriptor_stamp, data_dir, verified_files, storage,
+                                 out_dir, warn_coverage_below) {
   files <- file.path(ga$dirs[["marker"]], c("markers.txt.gz", "cpra.txt.gz"))
   fingerprint <- .gact_gwas_stamp(files)
   index <- .gact_cached_gwas_index(files, fingerprint, work_dir)
@@ -3953,7 +4245,9 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       }, finally = unlink(temp))
     }
     stored <- jsonlite::read_json(path)
-    fields <- c("accession", "input_md5", "mapping", .gact_gwas_metadata_fields)
+    if (!is.null(recipe$acn)) stored <- .gact_study_design(stored)
+    fields <- c("accession", "input_md5", "mapping", "quality_filters", .gact_design_fields,
+                .gact_gwas_metadata_fields)
     if (!identical(stored[fields], recipe[fields]) ||
         (!is.null(stored$build_check) && !identical(stored$build_check, recipe$build_check)) ||
         !identical(stored$inspection$headers, recipe$inspection$headers)) {
@@ -3981,6 +4275,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
             job$lift_index, identical(recipe$p_scale, "neglog10p"))
       if (!identical(.gact_gwas_stamp(job$file), job$input_stamp)) stop("Verified input changed during staging")
       metrics <- jsonlite::read_json(qc, simplifyVector = TRUE)
+      if (!is.null(storage) && metrics$n_observed_z == 0)
+        return(list(error = "No finite Z values after alignment and filtering", qc = metrics, qc_file = qc))
       file <- if (is.na(full)) z else full
       checksum <- unname(tools::md5sum(file))
       stopifnot(!is.na(checksum), metrics$n_final > 0,
@@ -4004,10 +4300,29 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       staged[match(groups[[k]], active)] <- batches[[k]]
   }
   passed <- vapply(staged, function(value) is.list(value) && !is.null(value$staged), logical(1))
-  for (j in which(!passed)) {
+  for (j in seq_along(staged)) {
     value <- staged[[j]]
-    report$issues[active[j]] <- if (is.list(value) && length(value$error)) value$error else
-      "C++ worker exited before producing a validated result"
+    i <- active[j]
+    metrics <- if (is.list(value)) value$qc
+    if (!is.null(metrics)) {
+      for (field in intersect(names(report), names(metrics))) report[[field]][i] <- metrics[[field]]
+      report$n_provider_low_confidence[i] <- metrics$dropped_by_reason$provider_low_confidence
+      report$n_provider_info[i] <- metrics$dropped_by_reason$provider_info
+      fraction <- metrics$n_observed_z / metrics$n_backbone
+      if (fraction < warn_coverage_below) {
+        warnings <- c(report$warnings[i], sprintf("Usable Z coverage %.2f%% is below %.2f%% of the backbone",
+          100 * fraction, 100 * warn_coverage_below))
+        report$warnings[i] <- paste(warnings[!is.na(warnings) & nzchar(warnings)], collapse = " | ")
+      }
+    }
+    if (!passed[j]) {
+      report$issues[i] <- if (is.list(value) && length(value$error)) value$error else
+        "C++ worker exited before producing a validated result"
+      if (!is.null(metrics)) {
+        path <- file.path(out_dir, sprintf("study_%05d.qc.json", i))
+        if (file.copy(value$qc_file, path)) report$qc_file[i] <- path
+      }
+    }
   }
   if (!any(passed)) return(list(GAlist = ga, report = report))
   if (!identical(fingerprint, .gact_gwas_stamp(files))) stop("Marker catalog changed during staging")
@@ -4022,9 +4337,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     item <- staged[passed][[j]]
     report$status[i] <- "imported"
     report$study_id[i] <- result$ids[j]
-    for (field in c("n_input", "n_final", "n_dropped", "n_flipped")) {
-      report[[field]][i] <- item$qc[[field]]
-    }
+    report$qc_file[i] <- file.path(ga$dirs[["gstat"]], paste0(result$ids[j], ".qc.json"))
     if (keys[passed][j] %in% keys[!passed]) {
       report$cleanup[i] <- "retained"
       next
@@ -4099,58 +4412,107 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   rows <- data.frame(study_id = ids, ancestry = ancestry, observed = observed,
                      missing = n - observed, ld_map = ld_map)
   data.table::fwrite(rbind(previous, rows), next_studies, sep = "\t", na = "")
-  backup <- file.path(stage, "previous-studies.tsv")
-  if (!fresh && !file.copy(studies, backup)) stop("Cannot back up matrix study list")
-  installed <- FALSE
-  undo <- function() {
-    if (fresh) {
-      if (installed) unlink(matrix, recursive = TRUE)
-    } else {
-      con <- file(binary, "r+b")
-      on.exit(close(con))
-      seek(con, initial, rw = "write")
-      truncate(con)
-      if (!file.copy(backup, studies, overwrite = TRUE)) stop("Cannot restore matrix study list")
-    }
-  }
-  ok <- FALSE
-  on.exit(if (!ok) undo())
   if (!all(file.append(binary, columns)) || file.size(binary) != initial + 8 * n * length(ids))
     stop("Cannot append staged Z columns")
   .publish_gwas_import_file(next_studies, studies, replace = TRUE)
   if (fresh) {
     .publish_gwas_import_file(work, matrix)
-    installed <- TRUE
     markers <- file.path(matrix, "markers.tsv")
   }
-  result <- list(stamp = stamp(), undo = undo)
-  ok <- TRUE
-  result
+  stamp()
+}
+
+.gact_gwas_guard <- function(gstat) {
+  gstat <- normalizePath(gstat, winslash = "/", mustWork = TRUE)
+  .Call(C_gact_gwas_lock, file.path(dirname(gstat), paste0(".", basename(gstat), "-import.guard")))
+}
+
+.gact_gwas_sync <- function(paths, directory = FALSE) {
+  if (length(paths)) .Call(C_gact_gwas_sync, paths, directory)
+}
+
+.gact_finish_gwas_transaction <- function(stage) {
+  trash <- tempfile(".gact-finished-", tmpdir = dirname(stage))
+  if (!file.rename(stage, trash)) stop("Cannot retire the GWAS transaction directory")
+  .gact_gwas_sync(dirname(stage), directory = TRUE)
+  unlink(trash, recursive = TRUE)
+}
+
+# Run only while holding the OS lock. Backups remain available throughout recovery.
+.gact_restore_gwas_transaction <- function(stage) {
+  if (!file.exists(file.path(stage, "owner.rds")))
+    stop("An import lock has no recovery record. Check for a legacy writer before clearing it.")
+  journal <- file.path(stage, "journal.rds")
+  if (file.exists(journal) && !file.exists(file.path(stage, "committed"))) {
+    transaction <- readRDS(journal)
+    restore <- function(path, backup) {
+      if (!file.exists(backup)) {
+        if (unlink(path) != 0L) stop("Cannot restore absence of ", path)
+        return(invisible(NULL))
+      }
+      temp <- tempfile(".gact-restore-", tmpdir = dirname(path))
+      on.exit(unlink(temp))
+      if (!file.copy(backup, temp)) stop("Cannot stage recovery of ", path)
+      .gact_gwas_sync(temp)
+      if (!file.rename(temp, path)) stop("Cannot restore ", path)
+    }
+    matrix <- transaction$matrix
+    if (!is.null(matrix)) {
+      if (is.na(transaction$matrix_bytes)) {
+        if (unlink(matrix, recursive = TRUE) != 0L) stop("Cannot remove the incomplete matrix")
+      } else {
+        binary <- file.path(matrix, "z.f64.bin")
+        if (!file.exists(binary) || file.size(binary) < transaction$matrix_bytes)
+          stop("Z matrix is shorter than the backed-up length")
+        con <- file(binary, "r+b")
+        tryCatch({
+          seek(con, transaction$matrix_bytes, rw = "write")
+          truncate(con)
+        }, finally = close(con))
+        .gact_gwas_sync(binary)
+        restore(file.path(matrix, "studies.tsv"), file.path(stage, "previous-studies.tsv"))
+        .gact_gwas_sync(matrix, directory = TRUE)
+      }
+    }
+    restore(transaction$inventory, file.path(stage, "previous-inventory.csv"))
+    restore(transaction$descriptor, file.path(stage, "previous-descriptor.rds"))
+    if (unlink(c(transaction$destinations, transaction$temp_descriptor)) != 0L)
+      stop("Cannot remove incomplete GWAS files")
+    .gact_gwas_sync(unique(dirname(c(transaction$inventory, transaction$descriptor))), directory = TRUE)
+  }
+  .gact_finish_gwas_transaction(stage)
+}
+
+.gact_recover_gwas <- function(gstat, import) {
+  stage <- file.path(gstat, ".gact-import.lock")
+  if (!dir.exists(stage)) return(FALSE)
+  if (!isTRUE(import)) stop("An import transaction is present. Run an import to check and recover it.")
+  guard <- .gact_gwas_guard(gstat)
+  on.exit(.Call(C_gact_gwas_unlock, guard))
+  if (!dir.exists(stage)) return(FALSE)
+  .gact_restore_gwas_transaction(stage)
+  TRUE
 }
 
 .gact_publish_cpp_gwas <- function(ga, descriptor, staged, descriptor_stamp = NULL) {
   gstat <- ga$dirs[["gstat"]]
   inventory <- file.path(gstat, "GWAS_information.csv")
   stage <- file.path(gstat, ".gact-import.lock")
-  if (!dir.create(stage, mode = "0700", showWarnings = FALSE)) stop("Another GWAS import holds the database lock")
+  guard <- .gact_gwas_guard(gstat)
+  on.exit(.Call(C_gact_gwas_unlock, guard), add = TRUE, after = FALSE)
+  if (!dir.create(stage, mode = "0700", showWarnings = FALSE))
+    stop("Cannot open GWAS transaction directory. Check for a pending import and retry.")
+  owner <- file.path(stage, "owner.rds")
+  on.exit({
+    if (file.exists(owner)) .gact_restore_gwas_transaction(stage) else .gact_finish_gwas_transaction(stage)
+  }, add = TRUE, after = FALSE)
+  saveRDS(list(pid = Sys.getpid(), host = Sys.info()[["nodename"]], started = Sys.time()),
+          owner)
+  .gact_gwas_sync(owner)
+  .gact_gwas_sync(stage, directory = TRUE)
+  .gact_gwas_sync(gstat, directory = TRUE)
   temp_rds <- tempfile(".gact-descriptor-", tmpdir = dirname(descriptor))
   backup <- file.path(stage, "previous-inventory.csv")
-  published <- character()
-  matrix_update <- NULL
-  replaced <- committed <- FALSE
-  on.exit({
-    if (!committed) {
-      if (!is.null(matrix_update)) matrix_update$undo()
-      if (replaced) {
-        if (file.exists(backup)) {
-          if (!file.rename(backup, inventory)) warning("Cannot restore the previous GWAS inventory")
-        } else unlink(inventory)
-      }
-      unlink(published)
-    }
-    unlink(temp_rds)
-    unlink(stage, recursive = TRUE)
-  }, add = TRUE)
   current <- if (identical(descriptor_stamp, .gact_gwas_stamp(descriptor))) ga else readRDS(descriptor)
   if (!identical(current$study, ga$study) || !identical(current$dirs, ga$dirs) ||
       !identical(current$rsids, ga$rsids)) stop("Database changed while studies were staging. Retry the batch")
@@ -4173,7 +4535,11 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     z_only <- identical(item$storage, "z")
     name <- if (z_only) NA_character_ else paste0(id, ".txt")
     qc <- paste0(id, ".qc.json")
-    recipe_path <- file.path("..", "recipes", basename(item$recipe_path))
+    standard_recipes <- file.path(dirname(gstat), "recipes")
+    recipe_path <- if (identical(.gact_gwas_output_path(dirname(item$recipe_path)),
+                                  .gact_gwas_output_path(standard_recipes))) {
+      file.path("..", "recipes", basename(item$recipe_path))
+    } else normalizePath(item$recipe_path, winslash = "/", mustWork = TRUE)
     counts <- c(n = "study_n_total", ncase = "study_n_case", ncontrol = "study_n_control")
     numbers <- lapply(names(counts), function(field) {
       value <- recipe[[field]]
@@ -4189,7 +4555,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
                   accession = recipe$accession, input_md5 = recipe$input_md5,
                   input_url = recipe$input_url,
                   recipe_checksum = unname(tools::md5sum(item$recipe_path)), neff = neff),
-             numbers, Filter(function(value) length(value) > 0L, recipe[intersect(names(recipe), c("source", "trait", "type", "category",
+             numbers, Filter(function(value) length(value) > 0L, recipe[intersect(names(recipe), c(.gact_design_fields, "source", "trait", "type", "category",
                "efo", "gender", "ancestry", "build", "reference", "comments",
                "study_n_total", "study_n_case", "study_n_control"))]))
     if (!is.null(item$storage)) row$storage <- item$storage
@@ -4215,20 +4581,44 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   current$studyfiles[is.na(current$study$file)] <- NA_character_
   temp_csv <- file.path(stage, basename(inventory))
   write.csv2(current$studies, temp_csv, row.names = FALSE)
+  if (any(file.exists(destination))) stop("GWAS import destination already exists")
+  matrix <- if (!is.null(staged[[1L]]$z)) file.path(gstat, "matrix")
+  bytes <- NA_real_
+  if (!is.null(matrix) && file.exists(matrix) && !dir.exists(matrix))
+    stop("The Z matrix path must be a directory")
+  if (!is.null(matrix) && dir.exists(matrix)) {
+    bytes <- file.size(file.path(matrix, "z.f64.bin"))
+    if (is.na(bytes) || !file.copy(file.path(matrix, "studies.tsv"), file.path(stage, "previous-studies.tsv")))
+      stop("Cannot back up the existing Z matrix")
+  }
+  saved_descriptor <- file.path(stage, "previous-descriptor.rds")
+  if (!file.copy(descriptor, saved_descriptor)) stop("Cannot back up the saved GAlist")
+  backups <- c(backup, saved_descriptor, file.path(stage, "previous-studies.tsv"))
+  .gact_gwas_sync(backups[file.exists(backups)])
+  journal <- file.path(stage, "journal.rds")
+  pending <- file.path(stage, "pending.rds")
+  saveRDS(list(descriptor = descriptor, inventory = inventory, matrix = matrix,
+               matrix_bytes = bytes, destinations = destination, temp_descriptor = temp_rds), pending)
+  .gact_gwas_sync(pending)
+  .publish_gwas_import_file(pending, journal)
+  .gact_gwas_sync(stage, directory = TRUE)
   suspendInterrupts({
-    if (!is.null(staged[[1L]]$z)) {
-      matrix_update <- .gact_append_z(current, staged, new_ids, stage)
-      current$z_matrix_backbone <- matrix_update$stamp
-    }
+    if (!is.null(matrix)) current$z_matrix_backbone <- .gact_append_z(current, staged, new_ids, stage)
     saveRDS(current, temp_rds, compress = FALSE)
     for (i in seq_along(source)) {
       .publish_gwas_import_file(source[i], destination[i])
-      published <- c(published, destination[i])
     }
     .publish_gwas_import_file(temp_csv, inventory, replace = TRUE)
-    replaced <- TRUE
     .publish_gwas_import_file(temp_rds, descriptor, replace = TRUE)
-    committed <- TRUE
+    .gact_gwas_sync(c(destination, inventory, descriptor,
+      if (!is.null(matrix)) if (is.na(bytes)) list.files(matrix, full.names = TRUE) else
+        file.path(matrix, c("studies.tsv", "z.f64.bin"))))
+    .gact_gwas_sync(unique(c(gstat, dirname(descriptor), matrix)), directory = TRUE)
+    marker <- file.path(stage, "commit-ready")
+    if (!file.create(marker)) stop("Cannot mark GWAS transaction committed")
+    .gact_gwas_sync(marker)
+    .publish_gwas_import_file(marker, file.path(stage, "committed"))
+    .gact_gwas_sync(stage, directory = TRUE)
   })
   list(GAlist = current, ids = new_ids)
 }
@@ -4305,7 +4695,7 @@ removeStatDB <- function(GAlist,studyID=NULL) {
 #' @param GAlist A list object providing information and infrastructure of the gact database.
 #' @param stat A data frame with `chr`, `pos`, `ea`, `nea`, `b`, `seb`, and `p`
 #'   when writing a study. Supply `b` and `seb` on the beta or log-odds scale.
-#'   If `eaf` is omitted, QC uses the marker catalog's effect-allele frequency.
+#'   If `eaf` is omitted, the stored study frequency is missing.
 #' @param source Source of the summary statistics
 #' @param trait Trait being studied
 #' @param type Type of trait (binary or quantitative)
@@ -4452,7 +4842,9 @@ updateStatDB <- function(GAlist=NULL,
    stat$n <- n
   }
 
-  stat <- qcStatDB(GAlist = GAlist, stat = stat, excludeMAFDIFF = 0.5, strand = strand)
+  stat <- qcStatDB(GAlist = GAlist, stat = stat,
+                  excludeMAFDIFF = if (isTRUE(toupper(ancestry) == "MIXED")) Inf else 0.5,
+                  strand = strand)
   qc_metrics <- attr(stat, "qc_metrics")
   if (!nrow(stat)) {
    dropped <- unlist(qc_metrics$dropped_by_reason)
@@ -4464,6 +4856,8 @@ updateStatDB <- function(GAlist=NULL,
 
  # A single staging directory also serializes inventory updates.
  stage <- file.path(gstat_dir, ".gact-import.lock")
+ guard <- .gact_gwas_guard(gstat_dir)
+ on.exit(.Call(C_gact_gwas_unlock, guard), add = TRUE)
  if (!dir.create(stage, showWarnings = FALSE, mode = "0700")) {
   stop("Cannot stage GWAS import at ", stage,
        ". Check for another import or a filesystem permission error.")
@@ -4705,7 +5099,7 @@ updateStatDB <- function(GAlist=NULL,
 #'   uniquely matched allele pairs. Unsplit allele lists and shared rsIDs are
 #'   dropped. Duplicate estimates are compared after alignment, rounding EAF
 #'   to 12 decimal places for that comparison. Conflicting groups are dropped.
-#'   An absent EAF column is filled from the catalog. Output follows catalog
+#'   An absent study EAF column remains missing. Output follows catalog
 #'   order. The summary counts each dropped row once and counts flips only
 #'   among retained rows.
 #'
@@ -4791,7 +5185,7 @@ qcStatDB <- function(GAlist = NULL,
   stat[[field]][flipped] <- -as.numeric(stat[[field]][flipped])
  }
  if (!("eaf" %in% names(stat))) {
-  stat$eaf <- marker$eaf
+  stat$eaf <- rep(NA_real_, nrow(stat))
  } else {
   stat$eaf[flipped] <- 1 - stat$eaf[flipped]
  }

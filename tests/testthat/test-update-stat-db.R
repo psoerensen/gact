@@ -73,7 +73,7 @@ test_that("failed publication preserves the inventory and can be retried", {
   expect_identical(read.csv2(inventory)$id, c("GWAS1", "GWAS2"))
 })
 
-test_that("HbA1c-style ingestion is readable with catalog EAF and study N", {
+test_that("HbA1c-style ingestion preserves missing study EAF and study N", {
   root <- tempfile("gact-hba1c-")
   dir.create(root)
   on.exit(unlink(root, recursive = TRUE))
@@ -94,7 +94,7 @@ test_that("HbA1c-style ingestion is readable with catalog EAF and study N", {
   study <- getGWAS(result$GAlist, "GWAS1")
   expect_identical(study$rsids, "rs1")
   expect_equal(study$b, -0.8)
-  expect_equal(study$eaf, 0.2)
+  expect_true(is.na(study$eaf))
   expect_equal(study$n, 1000)
 
   log_stat <- transform(raw, `P-value` = NULL, Score = 0.3)

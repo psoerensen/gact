@@ -46,7 +46,7 @@ Matches either allele order against the marker catalog and keeps
 uniquely matched allele pairs. Unsplit allele lists and shared rsIDs are
 dropped. Duplicate estimates are compared after alignment, rounding EAF
 to 12 decimal places for that comparison. Conflicting groups are dropped.
-An absent EAF column is filled from the catalog. Output follows catalog
+An absent study EAF column remains missing. Output follows catalog
 order. The summary counts each dropped row once and counts flips only
 among retained rows.
 }

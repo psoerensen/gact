@@ -31,7 +31,7 @@ updateStatDB(
 
 \item{stat}{A data frame with \code{chr}, \code{pos}, \code{ea}, \code{nea}, \code{b}, \code{seb}, and \code{p}
 when writing a study. Supply \code{b} and \code{seb} on the beta or log-odds scale.
-If \code{eaf} is omitted, QC uses the marker catalog's effect-allele frequency.}
+If \code{eaf} is omitted, the stored study frequency is missing.}
 
 \item{source}{Source of the summary statistics}
 

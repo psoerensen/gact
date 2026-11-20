@@ -18,6 +18,5 @@ Observed beta values must be finite, standard errors must be finite and
 strictly positive, and p-values and effect-allele frequencies must be in {[}0, 1{]}.
 Optional per-variant sample sizes (\code{n}) must be finite and strictly positive
 when observed. Missing sample sizes are allowed.
-When \code{eaf} is absent, the writer uses effect-allele frequencies from the
-marker catalog after alignment.
+When \code{eaf} is absent, the stored study frequencies remain missing.
 }

@@ -280,3 +280,163 @@ test_that("absent and unusable effects occupy missing backbone rows in both mode
     unlink(x$root, recursive = TRUE)
   }
 })
+
+test_that("retained rows without usable Z never publish in either storage mode", {
+  x <- ingest_recipe_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  input <- data.table::fread(x$files[1L])
+  input$beta <- NA_real_
+  data.table::fwrite(input, x$files[1L], sep = "\t")
+  recipe <- jsonlite::read_json(x$paths[1L])
+  recipe$input_md5 <- unname(tools::md5sum(x$files[1L]))
+  path <- .gact_verified_recipe_path(dirname(x$paths[1L]), recipe$accession, recipe$input_md5)
+  jsonlite::write_json(recipe, path, auto_unbox = TRUE, digits = NA)
+  .gact_write_recipe_inventory(dirname(path))
+  for (storage in c("full", "z")) {
+    result <- ingestGWAS(x$ga, basename(path), storage = storage)$ingest_report
+    expect_identical(result$status, "needs_review")
+    expect_match(result$issues, "No finite Z")
+    expect_equal(c(result$n_input, result$n_final, result$n_observed_z,
+                   result$n_unusable_effect, result$n_missing_backbone), c(3, 3, 0, 3, 0))
+    qc <- jsonlite::read_json(result$qc_file)
+    expect_equal(qc$n_observed_z, 0)
+    expect_length(list.files(x$ga$dirs[["gstat"]], all.files = TRUE, no.. = TRUE), 0L)
+  }
+})
+
+test_that("full and Z-only apply the same provider filters and retain study EAF", {
+  observed <- list()
+  for (storage in c("full", "z")) {
+    x <- ingest_recipe_fixture()
+    on.exit(unlink(x$root, recursive = TRUE), add = TRUE)
+    input <- data.table::fread(x$files[1L])
+    input$effect_allele_frequency[1L] <- NA_real_
+    input$low_confidence_EUR <- FALSE
+    input$low_confidence_EAS <- TRUE
+    input$INFO <- .99
+    input <- rbind(input, transform(input[3L], low_confidence_EUR = TRUE),
+      transform(input[3L], INFO = .2))
+    input$low_confidence_EUR[3L] <- TRUE
+    data.table::fwrite(input, x$files[1L], sep = "\t")
+    recipe <- jsonlite::read_json(x$paths[1L])
+    recipe$input_md5 <- unname(tools::md5sum(x$files[1L]))
+    recipe$inspection$headers <- names(input)
+    recipe$quality_filters <- list(low_confidence = list(column = "low_confidence_EUR",
+      evidence = "Fixture provider flag"), info = list(column = "INFO", min = .8,
+      evidence = "Fixture provider quality specification"))
+    path <- .gact_verified_recipe_path(dirname(x$paths[1L]), recipe$accession, recipe$input_md5)
+    jsonlite::write_json(recipe, path, auto_unbox = TRUE, digits = NA)
+    .gact_write_recipe_inventory(dirname(path))
+    ga <- ingestGWAS(x$ga, basename(path), storage = storage, warn_coverage_below = .9)
+    report <- ga$ingest_report
+    expect_identical(report$status, "imported", info = report$issues)
+    expect_equal(c(report$n_observed_z, report$n_provider_low_confidence, report$n_provider_info),
+                 c(2, 2, 1))
+    expect_match(report$warnings, "low_confidence_EAS")
+    expect_match(report$warnings, "Usable Z coverage")
+    observed[[storage]] <- readBin(file.path(ga$dirs[["gstat"]], "matrix", "z.f64.bin"),
+                                   "double", 3L, endian = "little")
+    if (storage == "full") {
+      output <- data.table::fread(ga$studyfiles["GWAS1"])
+      expect_equal(output$eaf, c(NA, .3))
+      recipe$quality_filters$info$min <- .95
+      jsonlite::write_json(recipe, path, auto_unbox = TRUE, digits = NA)
+      retry <- ingestGWAS(ga, basename(path))$ingest_report
+      expect_identical(retry$status, "needs_review")
+      expect_match(retry$issues, "different verified recipe")
+    }
+  }
+  expect_identical(observed$full, observed$z)
+  expect_equal(observed$full, c(5, -2, NaN))
+})
+
+test_that("restart restores interrupted publication and honours the live lock", {
+  x <- ingest_recipe_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  ga <- ingestGWAS(x$ga, x$ids[1L], storage = "z")
+  gstat <- ga$dirs[["gstat"]]
+  lock <- file.path(gstat, ".gact-import.lock")
+  files <- c(x$descriptor, file.path(gstat, "GWAS_information.csv"),
+    file.path(gstat, "matrix", c("studies.tsv", "z.f64.bin")))
+  before <- tools::md5sum(files)
+  publish <- .publish_gwas_import_file
+  recover <- .gact_restore_gwas_transaction
+  interrupted <- TRUE
+  local_mocked_bindings(
+    .publish_gwas_import_file = function(from, to, ...) {
+      publish(from, to, ...)
+      if (interrupted && identical(to, x$descriptor)) stop("Interrupted after descriptor rename")
+    },
+    .gact_restore_gwas_transaction = function(stage) {
+      if (!interrupted) recover(stage)
+    }, .package = "gact")
+  result <- ingestGWAS(ga, x$ids[2L])
+  expect_match(result$ingest_report$issues, "Interrupted")
+  expect_true(file.exists(file.path(lock, "owner.rds"), file.path(lock, "journal.rds")) |> all())
+  expect_true(file.exists(file.path(gstat, "GWAS2.txt.gz")))
+  interrupted <- FALSE
+  guard <- .gact_gwas_guard(gstat)
+  tryCatch(expect_error(ingestGWAS(ga, x$ids[1L]), "holds the database lock"),
+           finally = .Call(C_gact_gwas_unlock, guard))
+  expect_true(dir.exists(lock))
+  recovered <- ingestGWAS(x$descriptor, x$ids[1L])
+  expect_identical(recovered$ingest_report$status, "already_imported")
+  expect_identical(tools::md5sum(files), before)
+  expect_false(file.exists(file.path(gstat, "GWAS2.txt.gz")))
+  expect_false(file.exists(file.path(gstat, "GWAS2.qc.json")))
+  expect_false(dir.exists(lock))
+  expect_identical(ingestGWAS(recovered, x$ids[2L])$ingest_report$status, "imported")
+})
+
+test_that("Catalog meta-analysis recipes keep ancestry and design across a custom directory handoff", {
+  x <- ingest_recipe_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  recipes <- file.path(x$root, "reviewed-recipes")
+  ga <- x$ga
+  ga$dirs[["recipes"]] <- file.path(x$root, "unused-default")
+  saveRDS(ga, x$descriptor)
+  hashes <- unname(tools::md5sum(x$files))
+  local_mocked_bindings(
+    .gact_catalog_file = function(id, catalog_path) {
+      i <- match(id, x$ids)
+      file <- basename(x$files[i])
+      list(file = file, url = paste0("https://example.org/", file), base = "https://example.org/",
+           meta = list(gwas_id = id, data_file_name = file, genome_assembly = "GRCh38",
+             coordinate_system = "1-based", is_harmonised = TRUE,
+             trait_description = paste("Trait", i), author_notes = "Genome-wide association meta-analysis",
+             n_cohorts = 2L, meta_analysis_method = "Inverse variance",
+             data_file_md5sum = hashes[i], samples = list(
+               list(sample_ancestry_category = "European", case_control_study = FALSE),
+               list(sample_ancestry_category = if (i == 1L) "European" else "East Asian",
+                    case_control_study = FALSE))),
+           fetch = function(...) "")
+    },
+    .gact_fetch_gwas_prefix = function(url, path, ...) {
+      stopifnot(file.copy(x$files[match(basename(url), basename(x$files))], path))
+      file.size(path)
+    }, .package = "gact")
+  scan <- scanGWAS(x$ids, GAlist = ga, recipe_dir = recipes,
+                   repository = "gwas-catalog", preview_rows = 2L)
+  expect_identical(scan$review$status, rep("ready", 2))
+  inventory <- data.table::fread(scan$recipes_tsv)
+  expect_identical(inventory$study_design, rep("meta_analysis", 2))
+  expect_identical(inventory$acn, c("EUR", "MIXED"))
+  expect_identical(inventory$n_cohorts, c(2L, 2L))
+  expect_match(inventory$ancestry_composition[2L], "East Asian")
+  expect_identical(jsonlite::read_json(scan$review$recipe[2L])$acn, "MIXED")
+  result <- ingestGWAS(ga, x$ids, recipe_dir = scan$recipe_dir, storage = "z")
+  expect_identical(result$ingest_report$status, rep("imported", 2),
+                   info = paste(result$ingest_report$issues, collapse = "; "))
+  gstat <- ga$dirs[["gstat"]]
+  info <- read.csv2(file.path(gstat, "GWAS_information.csv"))
+  expect_identical(info$acn, inventory$acn)
+  expect_identical(info$ancestry, info$acn)
+  expect_identical(info$study_design, inventory$study_design)
+  expect_identical(info$meta_analysis_method, inventory$meta_analysis_method)
+  expect_identical(info$n_cohorts, inventory$n_cohorts)
+  expect_identical(dirname(info$recipe_file), rep(scan$recipe_dir, 2))
+  expect_false(dir.exists(ga$dirs[["recipes"]]))
+  columns <- read.delim(file.path(gstat, "matrix", "studies.tsv"), colClasses = "character")
+  expect_identical(columns$ancestry, c("EUR", "MIXED"))
+  expect_identical(columns$ld_map[2L], "")
+})

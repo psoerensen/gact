@@ -801,6 +801,9 @@ extern "C" SEXP gact_gwas_check_ids(SEXP, SEXP);
 extern "C" SEXP gact_gwas_liftover_index(SEXP, SEXP);
 extern "C" SEXP gact_gwas_stage(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern "C" SEXP gact_gwas_preview(SEXP, SEXP, SEXP);
+extern "C" SEXP gact_gwas_lock(SEXP);
+extern "C" SEXP gact_gwas_unlock(SEXP);
+extern "C" SEXP gact_gwas_sync(SEXP, SEXP);
 
 namespace {
 const R_CallMethodDef calls[] = {
@@ -811,6 +814,9 @@ const R_CallMethodDef calls[] = {
     {"C_gact_gwas_liftover_index", reinterpret_cast<DL_FUNC>(&gact_gwas_liftover_index), 2},
     {"C_gact_gwas_stage", reinterpret_cast<DL_FUNC>(&gact_gwas_stage), 9},
     {"C_gact_gwas_preview", reinterpret_cast<DL_FUNC>(&gact_gwas_preview), 3},
+    {"C_gact_gwas_lock", reinterpret_cast<DL_FUNC>(&gact_gwas_lock), 1},
+    {"C_gact_gwas_unlock", reinterpret_cast<DL_FUNC>(&gact_gwas_unlock), 1},
+    {"C_gact_gwas_sync", reinterpret_cast<DL_FUNC>(&gact_gwas_sync), 2},
     {nullptr, nullptr, 0}
 };
 }  // namespace

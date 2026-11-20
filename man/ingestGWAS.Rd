@@ -4,7 +4,7 @@
 \usage{
 ingestGWAS(GAlist, selection, workers = 1L, import = TRUE,
   descriptor = NULL, data_dir = NULL, out_dir = NULL, scratch_dir = NULL,
-  storage = c("full", "z"))
+  storage = c("full", "z"), recipe_dir = NULL, warn_coverage_below = 0)
 }
 \arguments{
 \item{GAlist}{Database descriptor list, or path to its saved RDS.}
@@ -25,6 +25,10 @@ in the database root. The current saved descriptor is reloaded.}
 \item{data_dir}{Optional input cache directory; defaults to download/.}
 \item{out_dir}{Optional new report directory; defaults to recipes/reviews/.}
 \item{scratch_dir}{Optional parent of temporary native working files.}
+\item{recipe_dir}{Recipe directory override. Defaults to the recipe location
+in GAlist, or the database's recipes directory for older descriptors.}
+\item{warn_coverage_below}{Warn in the report when the usable Z fraction of
+the marker backbone is below this value. Defaults to 0.}
 }
 \value{
 With \code{import = TRUE}, invisibly returns the updated GAlist. Its
@@ -42,4 +46,11 @@ counts populate study metadata; missing per-variant n remains missing.
 The native catalog reader accepts gact CSV/TSV catalogs, quoted fields and
 integer-valued decimal/scientific coordinates. CPRA keys are checked by parsed
 coordinates and alleles; invalid rows identify their catalog row number.
+Both storage modes apply verified provider filters and require at least one
+usable Z value. The import report and QC JSON track aligned rows, usable Z
+values, unusable effects, absent backbone rows and exclusions by filter.
+Study EAF stays missing when absent. A \code{MIXED} ancestry is preserved and
+its Z column has an LD map only when a compatible panel is registered.
+The next import uses an OS file lock and a durable journal to recover
+an interrupted native publication.
 }

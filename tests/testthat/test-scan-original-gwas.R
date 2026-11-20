@@ -17,7 +17,7 @@ test_that("original Pan-UKB scans save reusable single-ancestry liftover recipes
   stat <- data.frame(chr = 1L, pos = 1:12, ref = "A", alt = "C",
     beta_EUR = .2, se_EUR = .1, neglog10_pval_EUR = 3, af_EUR = .2,
     beta_CSA = .3, se_CSA = .1, neglog10_pval_CSA = 4, af_CSA = .2,
-    beta_meta = 99, low_confidence_EUR = FALSE)
+    beta_meta = 99, low_confidence_EUR = FALSE, low_confidence_CSA = seq_len(12) == 3L)
   variants <- file.path(root, "variants.tsv")
   data.table::fwrite(stat, variants, sep = "\t")
   chain <- file.path(root, "example.chain")
@@ -77,6 +77,9 @@ test_that("original Pan-UKB scans save reusable single-ancestry liftover recipes
   expect_identical(recipes[[2L]]$mapping$b, "beta_CSA")
   expect_identical(recipes[[2L]]$p_scale, "neglog10p")
   expect_identical(recipes[[1L]]$mapping$eaf, "af_EUR")
+  expect_identical(recipes[[1L]]$quality_filters$low_confidence$column, "low_confidence_EUR")
+  expect_identical(recipes[[2L]]$quality_filters$low_confidence$column, "low_confidence_CSA")
+  expect_match(result$review$warnings[1L], "low_confidence_CSA")
   expect_null(recipes[[3L]]$mapping$eaf)
   expect_identical(recipes[[1L]]$build_check$build, "GRCh37")
   expect_identical(recipes[[1L]]$liftover$index_md5, unname(index_before))
@@ -112,6 +115,7 @@ test_that("original Pan-UKB scans save reusable single-ancestry liftover recipes
   expect_identical(stale$review$status, "needs_review")
   expect_match(stale$review$issues, "Saved recipe build check differs")
   writeBin(previous, recipe_path)
+  native_preview <- .gact_cpp_gwas_preview
   local_mocked_bindings(.gact_cpp_gwas_preview = function(...) stop("Unexpected new preview"),
                         .package = "gact")
   expect_identical(runGWASManifest(result$manifest, descriptor, engine = "cpp",
@@ -124,12 +128,14 @@ test_that("original Pan-UKB scans save reusable single-ancestry liftover recipes
   imported <- runGWASManifest(result$manifest, descriptor, engine = "cpp")
   expect_identical(imported$status, rep("imported", 3))
   expect_length(downloads, 2L)
-  expect_equal(imported$n_final, rep(12, 3))
+  expect_equal(imported$n_final, c(12, 11, 12))
+  expect_equal(imported$n_provider_low_confidence, c(0, 1, 0))
   saved <- readRDS(descriptor)
   for (i in seq_len(3)) {
     out <- getGWAS(saved, studyID = imported$study_id[i], rsids = catalog$rsids)
-    expect_equal(out$b, rep(c(.2, .3, .2)[i], 12))
-    expect_equal(out$pos, 101:112)
+    positions <- if (i == 2L) (101:112)[-3L] else 101:112
+    expect_equal(out$b, rep(c(.2, .3, .2)[i], length(positions)))
+    expect_equal(out$pos, positions)
     expect_true(all(is.na(out$n)))
   }
   expect_identical(tools::md5sum(file.path(map, "index.bin")), index_before)
@@ -138,6 +144,34 @@ test_that("original Pan-UKB scans save reusable single-ancestry liftover recipes
   bad <- transform(manifest, md5 = c(strrep("0", 32), md5[2:3]))
   expect_match(runGWASManifest(bad, descriptor, engine = "cpp")$issues[1L],
                "duplicate filename|different input checksum")
+
+  # Exercise a reviewed Catalog original with the same actual build map.
+  file <- "lifegen_phase2_bothpl_alldr_2017_09_18.tsv.gz"
+  path <- file.path(ga$dirs[["download"]], file)
+  expect_true(file.copy(upstream[1L], path))
+  local_mocked_bindings(.gact_cpp_gwas_preview = native_preview,
+    .gact_catalog_listing = function(...) file,
+    .gact_fetch_gwas_prefix = function(url, path, ...) {
+      stopifnot(file.copy(upstream[1L], path))
+      file.size(path)
+    }, .package = "gact")
+  local_mocked_bindings(curl_fetch_memory = function(...) list(status_code = 404L, content = raw()),
+    .package = "curl")
+  reviewed <- list(type = "quantitative", build = "GRCh37", strand = "forward",
+    coordinate_system = "1-based", effect_scale = "beta", se_scale = "beta",
+    p_scale = "neglog10p", ancestry = "EUR", study_design = "meta_analysis",
+    trait = "Lifespan", md5 = unname(tools::md5sum(path)),
+    evidence = "Fixture documents ALT effect, signed beta and SE, build and meta-analysis design",
+    coverage_evidence = "Fixture represents a whole-genome file",
+    mapping = .gact_panukb_original_profile("EUR")$mapping)
+  lifespan <- scanGWAS("GCST009890", GAlist = ga, repository = "gwas-catalog",
+    preview_rows = 12L, metadata_corrections = list(GCST009890 = reviewed))
+  expect_identical(lifespan$review$status, "ready", info = lifespan$review$issues)
+  recipe <- jsonlite::read_json(lifespan$review$recipe)
+  expect_identical(recipe$build_check$build, "GRCh37")
+  imported <- ingestGWAS(descriptor, "GCST009890", storage = "z")$ingest_report
+  expect_identical(imported$status, "imported", info = imported$issues)
+  expect_equal(imported$n_observed_z, 12)
 })
 
 test_that("original Pan-UKB metadata errors identify missing fields", {

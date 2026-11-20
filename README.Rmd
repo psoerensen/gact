@@ -471,11 +471,22 @@ catalog <- scanGWAS(GAlist = GAlist, repository = "gwas-catalog", workers = 8L)
 
 Supply `selection` to scan a smaller batch. Without it, gact scans all available
 Pan-UKB single-ancestry studies or candidates in the Catalog's published
-harmonised-file index. Catalog scans require a single ancestry and exclude
-reported meta-analyses, including MTAG. Literal single-cohort wording is not
-required. Optional reviewed `cohort_evidence` is retained in recipes but cannot
-override these exclusions. Absence of a meta-analysis statement is metadata
-screening, not proof of a single-cohort study.
+harmonised-file index. Catalog scans accept single- and mixed-ancestry
+meta-analyses with verified inputs. The JSON recipes, `recipes.tsv` and
+`GWAS_information.csv` record `study_design` (`single_cohort`,
+`meta_analysis` or `unknown`), its evidence, `acn`, and any reported method,
+cohort count and ancestry composition. A mixed-ancestry analysis uses
+`acn = "MIXED"`. Its matrix column has no ancestry-specific LD map unless
+a compatible panel is explicitly registered as `MIXED`.
+
+Explicit Catalog selections discover the provider's actual filenames. An
+original-only result requires documented column mapping, 1-based coordinates,
+forward alleles, signed beta and SE scales, a p-value scale and the exact
+file MD5. The bounded preview must verify the declared build against the
+installed liftover map. Use accession-keyed `metadata_corrections` for reviewed
+values and their evidence, for example `list(GCST007406 = list(type =
+"quantitative", evidence = "Zenin et al. 2019, doi:10.1038/s42003-019-0290-0,
+linear regression on Martingale residuals"))`.
 
 Catalog scans check genome-wide SNP coverage from provider metadata before
 requesting a summary-statistics preview. Protein and metabolite GWAS use the
@@ -599,6 +610,26 @@ GAlist <- ingestGWAS(GAlist, selection = ids, workers = 4, storage = "z")
 
 Choose the storage mode on first import. A repeat selection skips the study.
 Read Z-only studies with `getGWAS(GAlist, studyID, what = "z")`.
+Pass `recipe_dir = scan$recipe_dir` when importing from a custom scan location.
+Both storage modes require at least one finite aligned Z value. The report
+and QC JSON distinguish input rows, aligned rows, usable Z values, unusable
+effects and absent backbone rows. Set `warn_coverage_below` to record a warning
+when the observed Z fraction falls below a threshold of your choice.
+Study EAF stays missing when unavailable. The native importer aligns supplied
+EAF to the effect allele and applies no catalog-frequency threshold.
+
+Original Pan-UKB recipes use the selected ancestry's `low_confidence` flag
+when present. Set a reviewed INFO threshold or another provider flag with
+accession-keyed `quality_filters`. For example, an `info` rule has fields
+`column`, `min` and `evidence`. The scan and import warn about unused quality
+columns and QC counts the exclusions by rule. Rescan into a different recipe
+directory to review a changed policy.
+
+The next import recovers interrupted native publication under an OS file lock.
+Keep the database on storage that supports shared file locks and durable
+renames. The recovery journal covers the matrix, inventory, saved descriptor,
+and newly published files.
+
 Both modes store one little-endian float64 per backbone marker, with missing Z
 values represented by NaN. Creating the default matrix starts with the new
 imports. Existing studies and named pilot matrices are not backfilled.

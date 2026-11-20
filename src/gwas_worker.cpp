@@ -4,7 +4,11 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <unistd.h>
+#else
+#define NOMINMAX
+#include <windows.h>
 #endif
 
 #include <algorithm>
@@ -395,7 +399,8 @@ public:
     const char* id(uint32_t row) const { return pool + marker[row].id; }
 };
 
-enum Drop { Missing, Unsplit, Strand, Unmatched, Ambiguous, Shared, Conflict, Redundant, Maf, LiftUnmapped, Drops };
+enum Drop { Missing, Unsplit, Strand, Unmatched, Ambiguous, Shared, Conflict, Redundant, Maf,
+            LiftUnmapped, LowConfidence, Info, Drops };
 enum State : uint32_t { Empty, Direct, Flipped, Conflicting };
 
 bool equal(double a, double b) { return a == b || (std::isnan(a) && std::isnan(b)); }
@@ -439,6 +444,8 @@ struct Schema {
     string header;
     std::vector<string_view> names;
     std::array<size_t, Columns> field;
+    size_t low_confidence, info;
+    double min_info;
     bool forward;
     Schema(SEXP columns, SEXP mapping, bool strand) : forward(strand) {
         for (R_xlen_t i = 0; i < XLENGTH(columns); ++i) {
@@ -454,6 +461,16 @@ struct Schema {
             require(at != names.end() || i >= EAF, "Required column absent from native mapping");
             field[i] = at - names.begin();
         }
+        auto quality = [&](const char* key) {
+            SEXP column = Rf_getAttrib(mapping, Rf_install(key));
+            if (column == R_NilValue) return names.size();
+            auto at = std::find(names.begin(), names.end(), CHAR(STRING_ELT(column, 0)));
+            require(at != names.end(), "Quality filter column absent from verified header");
+            return static_cast<size_t>(at - names.begin());
+        };
+        low_confidence = quality("low_confidence");
+        info = quality("info");
+        min_info = Rf_asReal(Rf_getAttrib(mapping, Rf_install("min_info")));
     }
 };
 
@@ -488,16 +505,30 @@ void process(const char* index_path, const char* source, const char* output, con
     require(input.read(line) && line == schema.header, "Input header differs from verified recipe");
     struct Estimate { double beta, se, p, eaf, n; State state; uint32_t copies; };
     std::vector<Estimate> values(catalog.size);
-    std::vector<string> original(catalog.size);
+    std::vector<string> original(output ? catalog.size : 0);
     std::vector<string_view> columns, previous;
     std::array<uint64_t, Drops> drops{};
     uint64_t rows = 0, retained = 0, flipped = 0, mapped = 0, lifted = 0, with_n = 0;
-    std::array<bool, EAF> present{};
     bool supplied_eaf = schema.field[EAF] < schema.names.size();
     bool supplied_n = schema.field[N] < schema.names.size();
     while (input.read(line)) {
         split(line, columns);
         require(columns.size() == schema.names.size(), "Input row width differs from verified header");
+        ++rows;
+        if (schema.low_confidence != schema.names.size()) {
+            auto flag = columns[schema.low_confidence];
+            if (absent(flag) || flag == "true" || flag == "TRUE" || flag == "True" || flag == "1") {
+                ++drops[LowConfidence];
+                continue;
+            }
+            require(flag == "false" || flag == "FALSE" || flag == "False" || flag == "0",
+                    "Invalid low-confidence flag");
+        }
+        if (schema.info != schema.names.size()) {
+            double info = real(columns[schema.info]);
+            require(std::isnan(info) || (info >= 0 && info <= 1), "INFO outside [0,1]");
+            if (!std::isfinite(info) || info < schema.min_info) { ++drops[Info]; continue; }
+        }
         auto value = [&](Column j) { return columns[schema.field[j]]; };
         int chr = chromosome(value(Chr)), pos = integer(value(Pos));
         double beta = real(value(Beta)), se = real(value(SE)), p = real(value(P));
@@ -511,12 +542,8 @@ void process(const char* index_path, const char* source, const char* output, con
         }
         require((std::isnan(se) || se > 0) && (std::isnan(p) || (p >= 0 && (neglog10p || p <= 1))) &&
                 (std::isnan(eaf) || (eaf >= 0 && eaf <= 1)), "SE, p-value or EAF outside the allowed range");
-        bool observed[] = {chr != missing_integer, pos != missing_integer,
-                           !absent(value(EA)), !absent(value(NEA)), !std::isnan(beta),
-                           !std::isnan(se), !std::isnan(p)};
-        for (size_t j = 0; j < present.size(); ++j) present[j] = present[j] || observed[j];
-        ++rows;
-        if (!(observed[Chr] && observed[Pos] && observed[EA] && observed[NEA] && observed[P])) {
+        if (chr == missing_integer || pos == missing_integer ||
+            absent(value(EA)) || absent(value(NEA)) || std::isnan(p)) {
             ++drops[Missing];
             continue;
         }
@@ -554,30 +581,27 @@ void process(const char* index_path, const char* source, const char* output, con
         ++mapped;
         if (neglog10p) p = std::pow(10.0, -p);
         if (p == 0) p = std::numeric_limits<double>::min();
-        if (!supplied_eaf) eaf = marker.eaf;
-        else if (!direct) eaf = 1 - eaf;
+        if (supplied_eaf && !direct) eaf = 1 - eaf;
         Estimate candidate{direct ? beta : -beta, se, p, eaf, n, direct ? Direct : Flipped, 0};
         auto& best = values[match->row];
-        auto& raw = original[match->row];
+        auto raw = output ? &original[match->row] : nullptr;
         auto copies = best.copies + 1;
         if (best.state == Empty) {
             best = candidate;
-            raw = line;
+            if (raw) *raw = line;
         } else if (best.state != Conflicting) {
             if (!equal(best.beta, candidate.beta) || !equal(best.se, se) || best.p != p ||
                 !equal(std::nearbyint(best.eaf * 1e12), std::nearbyint(eaf * 1e12)) || !equal(best.n, n)) {
                 best.state = Conflicting;
-                raw.clear();
+                if (raw) raw->clear();
             } else if ((best.state == Flipped && candidate.state == Direct) ||
-                       (best.state == candidate.state && precedes(schema, columns, raw, previous))) {
+                       (raw && best.state == candidate.state && precedes(schema, columns, *raw, previous))) {
                 best = candidate;
-                raw = line;
+                if (raw) *raw = line;
             }
         }
         best.copies = copies;
     }
-    require(std::all_of(present.begin(), present.end(), [](bool seen) { return seen; }),
-            "Required summary statistic is wholly missing");
 
     std::vector<string_view> header = schema.names;
     std::vector<Output> output_fields(header.size(), Raw);
@@ -631,15 +655,12 @@ void process(const char* index_path, const char* source, const char* output, con
         if (v.state == Conflicting) { drops[Conflict] += v.copies; write_z(missing); continue; }
         drops[Redundant] += v.copies - 1;
         const auto& marker = catalog.marker[i];
-        if (std::abs(marker.eaf - v.eaf) > 0.5) { ++drops[Maf]; write_z(missing); continue; }
         ++retained;
         with_n += !std::isnan(v.n);
         flipped += v.state == Flipped;
-        if (z_path) {
-            const double score = v.beta / v.se;
-            observed_z += std::isfinite(score);
-            write_z(std::isfinite(score) ? score : missing);
-        }
+        const double score = v.beta == 0 && v.se > 0 ? 0.0 : v.beta / v.se;
+        observed_z += std::isfinite(score);
+        write_z(std::isfinite(score) ? score : missing);
         if (!out) continue;
         split(original[i], columns);
         for (size_t j = 0; j < output_fields.size(); ++j) {
@@ -667,10 +688,11 @@ void process(const char* index_path, const char* source, const char* output, con
     }
     if (z_path) z.close();
     auto dropped = std::accumulate(drops.begin(), drops.end(), uint64_t{0});
-    require(retained && rows == retained + dropped, "No retained variants or inconsistent QC counters");
+    require(rows == retained + dropped, "Inconsistent QC counters");
     constexpr const char* reasons[] = {"missing_required", "unsplit_multiallelic",
         "unresolved_strand", "unmatched", "ambiguous_catalog_match", "shared_catalog_rsid",
-        "conflicting_duplicate", "redundant_duplicate", "eaf_mismatch", "liftover_unmapped"};
+        "conflicting_duplicate", "redundant_duplicate", "eaf_mismatch", "liftover_unmapped",
+        "provider_low_confidence", "provider_info"};
     std::ofstream qc(qc_path);
     qc << "{\"strand\":\"" << (schema.forward ? "forward" : "unknown")
        << "\",\"n_input\":" << rows << ",\"n_mapped\":" << mapped << ",\"n_final\":" << retained
@@ -678,9 +700,13 @@ void process(const char* index_path, const char* source, const char* output, con
        << ",\"n_removed_maf\":" << drops[Maf]
        << ",\"n_with_sample_size\":" << with_n << ",\"n_missing_sample_size\":" << retained - with_n;
     if (lift_path) qc << ",\"n_lifted\":" << lifted;
-    if (z_path) qc << ",\"n_observed_z\":" << observed_z;
+    qc << ",\"n_observed_z\":" << observed_z
+       << ",\"n_unusable_effect\":" << retained - observed_z
+       << ",\"n_missing_backbone\":" << catalog.size - retained
+       << ",\"n_backbone\":" << catalog.size;
     qc << ",\"dropped_by_reason\":{";
-    for (size_t i = 0; i < (lift_path ? Drops : LiftUnmapped); ++i) {
+    for (size_t i = 0; i < Drops; ++i) {
+        if (i == LiftUnmapped && !lift_path) continue;
         if (i) qc << ',';
         qc << '"' << reasons[i] << "\":" << drops[i];
     }
@@ -743,5 +769,77 @@ extern "C" SEXP gact_gwas_preview(SEXP file, SEXP limit, SEXP prefix) {
         }
         return Rf_mkString(text.c_str());
     } catch (const std::exception& e) { Rf_error("%s", e.what()); }
+    return R_NilValue;
+}
+
+namespace {
+#ifdef _WIN32
+using Guard = HANDLE;
+#else
+using Guard = int;
+#endif
+
+void close_guard(SEXP token) {
+    auto guard = static_cast<Guard*>(R_ExternalPtrAddr(token));
+    if (!guard) return;
+#ifdef _WIN32
+    CloseHandle(*guard);
+#else
+    close(*guard);
+#endif
+    delete guard;
+    R_ClearExternalPtr(token);
+}
+}
+
+extern "C" SEXP gact_gwas_lock(SEXP name) {
+    SEXP token = PROTECT(R_MakeExternalPtr(nullptr, R_NilValue, R_NilValue));
+    R_RegisterCFinalizerEx(token, close_guard, TRUE);
+#ifdef _WIN32
+    auto handle = CreateFileA(path(name), GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (handle == INVALID_HANDLE_VALUE) Rf_error("Cannot open the GWAS import guard");
+    OVERLAPPED region{};
+    if (!LockFileEx(handle, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &region)) {
+        CloseHandle(handle);
+        Rf_error("Another GWAS import holds the database lock, or file locking is unavailable");
+    }
+#else
+    int handle = open(path(name), O_RDWR | O_CREAT | O_CLOEXEC, 0600);
+    if (handle < 0) Rf_error("Cannot open the GWAS import guard");
+    if (flock(handle, LOCK_EX | LOCK_NB) != 0) {
+        close(handle);
+        Rf_error("Another GWAS import holds the database lock, or file locking is unavailable");
+    }
+#endif
+    R_SetExternalPtrAddr(token, new Guard(handle));
+    UNPROTECT(1);
+    return token;
+}
+
+extern "C" SEXP gact_gwas_unlock(SEXP token) {
+    close_guard(token);
+    return R_NilValue;
+}
+
+extern "C" SEXP gact_gwas_sync(SEXP paths, SEXP directory) {
+    const bool is_dir = Rf_asLogical(directory) == TRUE;
+    for (R_xlen_t i = 0; i < XLENGTH(paths); ++i) {
+        const char* name = CHAR(STRING_ELT(paths, i));
+#ifdef _WIN32
+        if (is_dir) continue;
+        auto file = CreateFileA(name, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (file == INVALID_HANDLE_VALUE) Rf_error("Cannot sync GWAS transaction file: %s", name);
+        int ok = FlushFileBuffers(file);
+        CloseHandle(file);
+#else
+        int file = open(name, O_RDONLY | O_CLOEXEC);
+        if (file < 0) Rf_error("Cannot sync GWAS transaction path: %s", name);
+        bool ok = fsync(file) == 0;
+        close(file);
+#endif
+        if (!ok) Rf_error("Cannot sync GWAS transaction path: %s", name);
+    }
     return R_NilValue;
 }

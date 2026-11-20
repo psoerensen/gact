@@ -666,7 +666,7 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 #'        For studies ingested with Z-only storage, use `what = "z"`.
 #' @param format Specifies the format of the output; either "list" or "data.frame" (default: "list").
 #' @param rm.na Remove missing rows (default TRUE). For a single GWAS with
-#'   `what = "all"`, missing per-variant sample size (`n`) is allowed.
+#'   `what = "all"`, missing optional fields such as `n` and `eaf` are allowed.
 #'   The same applies to recognised source aliases such as `N_sample_size`.
 #'   FALSE retains the requested database backbone, including gaps, and
 #'   attaches marker identity for reference checking.
@@ -805,7 +805,10 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
   out <- stat[match(rsids,stat$rsids),,drop=FALSE]
   out$rsids <- rsids
   rownames(out) <- rsids
-  if(rm.na) out <- out[complete.cases(out[setdiff(names(out), .gact_gwas_n_columns(names(out)))]), , drop = FALSE]
+  if(rm.na) {
+   required <- intersect(c("rsids", "chr", "pos", "ea", "nea", "b", "seb", "p"), names(out))
+   out <- out[complete.cases(out[required]), , drop = FALSE]
+  }
   return(finish(out))
  }
 

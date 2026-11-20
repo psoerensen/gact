@@ -19,25 +19,26 @@ test_that("Catalog screening resolves missing coverage wording using provider fi
   expect_error(check(asset, NULL, "GCST90432071"), class = "gact_coverage_review")
 })
 
-test_that("single ancestry is independent of literal cohort wording and cannot override meta-analysis", {
+test_that("Catalog ancestry and design follow distinct metadata evidence", {
   check <- gact:::.gact_catalog_study_scope
   meta <- list(samples = list(list(sample_ancestry_category = "European")))
   expect_identical(check(meta, "GCST91007350")$ancestry, "EUR")
-  for (software in c("METAL", "MTAG v0.9.0", "MR-MEGA", "METASOFT", "GWAMA")) {
+  expect_identical(check(meta, "GCST91007350")$study_design, "unknown")
+  for (software in c("METAL", "MR-MEGA", "METASOFT", "GWAMA")) {
     meta$analysis_software <- software
-    expect_error(check(meta, "GCST91007350"), class = "gact_scan_excluded")
+    expect_identical(check(meta, "GCST91007350")$study_design, "meta_analysis")
   }
   meta$analysis_software <- "REGENIE"
   meta$author_notes <- "European meta-analysis"
-  expect_error(check(meta, "GCST91007350"), class = "gact_scan_excluded")
+  expect_identical(check(meta, "GCST91007350")$study_design, "meta_analysis")
   meta$author_notes <- NULL
   meta$samples[[1L]]$sample_ancestry_category <- c("European", "East Asian")
-  expect_error(check(meta, "GCST91007350"), class = "gact_scan_excluded")
+  expect_identical(check(meta, "GCST91007350")$ancestry, "MIXED")
   meta$samples[[1L]]$sample_ancestry_category <- "Unknown"
-  expect_error(check(meta, "GCST91007350"), "single ancestry")
+  expect_identical(check(meta, "GCST91007350")$ancestry, "UNKNOWN")
   for (ancestry in c("Mixed", "European, East Asian", "European and East Asian")) {
     meta$samples[[1L]]$sample_ancestry_category <- ancestry
-    expect_error(check(meta, "GCST91007350"), class = "gact_scan_excluded")
+    expect_identical(check(meta, "GCST91007350")$ancestry, "MIXED")
   }
   meta$samples[[1L]]$sample_ancestry_category <- "African American or Afro-Caribbean"
   expect_identical(check(meta, "GCST91007350")$ancestry, "AFR")
@@ -89,7 +90,7 @@ test_that("standard and legacy Catalog previews preserve harmonised coordinates 
   expect_match(profile$issues, "No usable harmonised")
 })
 
-test_that("report-derived Catalog cases save recipes and recheck exclusions on resume", {
+test_that("report-derived Catalog cases save recipes and recheck design on resume", {
   root <- tempfile("catalog-screening-")
   dir.create(root)
   on.exit(unlink(root, recursive = TRUE))
@@ -106,7 +107,7 @@ test_that("report-derived Catalog cases save recipes and recheck exclusions on r
         meta = list(gwas_id = id, data_file_name = file, genome_assembly = "GRCh38",
           coordinate_system = "1-based", is_harmonised = TRUE,
           file_type = c("Non-GWAS-SSF", "GWAS-SSF v1.0", "", "GWAS-SSF v1.0", "GWAS-SSF v1.0")[i],
-          analysis_software = if (i == 2L) "MTAG" else software,
+          analysis_software = if (i == 2L) "METAL" else software,
           genotyping_technology = "Genome-wide genotyping array", data_file_md5sum = hash,
           trait_description = "Metabolite level", sex = "combined",
           samples = list(list(case_control_study = FALSE, sample_size = 6840,
@@ -128,28 +129,80 @@ test_that("report-derived Catalog cases save recipes and recheck exclusions on r
   result <- scan()
   expect_true(all(is.na(result$review$issues[c(1L, 3L)])),
               info = paste(result$review$issues[c(1L, 3L)], collapse = " | "))
-  expect_identical(result$review$status, c("ready", "excluded", "ready", "needs_review", "excluded"))
-  expect_identical(calls, 2L)
-  expect_identical(data.table::fread(result$manifest)$accession, ids[c(1L, 3L)])
-  expect_length(list.files(file.path(root, "recipes"), pattern = "json$"), 2L)
+  accepted <- c(1L, 2L, 3L, 5L)
+  expect_identical(result$review$status, c("ready", "ready", "ready", "needs_review", "ready"))
+  expect_identical(calls, 4L)
+  expect_identical(data.table::fread(result$manifest)$accession, ids[accepted])
+  expect_length(list.files(file.path(root, "recipes"), pattern = "json$"), 4L)
   expect_identical(result$recipes_tsv,
     normalizePath(file.path(root, "recipes", "recipes.tsv"), winslash = "/"))
-  expect_setequal(data.table::fread(result$recipes_tsv)$accession, ids[c(1L, 3L)])
+  expect_setequal(data.table::fread(result$recipes_tsv)$accession, ids[accepted])
   paths <- list.files(file.path(root, "recipes"), pattern = "json$", full.names = TRUE)
   hashes <- tools::md5sum(paths)
   resumed <- scan()
-  expect_true(all(resumed$review$reused[c(1L, 3L)]))
-  expect_identical(calls, 2L)
+  expect_true(all(resumed$review$reused[accepted]))
+  expect_identical(calls, 4L)
   scan_ids <- ids[1L]
   partial <- scan()
   expect_true(partial$review$reused)
   expect_identical(data.table::fread(partial$manifest)$accession, ids[1L])
-  expect_setequal(data.table::fread(partial$recipes_tsv)$accession, ids[c(1L, 3L)])
+  expect_setequal(data.table::fread(partial$recipes_tsv)$accession, ids[accepted])
   expect_identical(tools::md5sum(paths), hashes)
   scan_ids <- ids
   software <- "METAL"
   changed <- scan()
-  expect_true(all(changed$review$status == "excluded"))
-  expect_false(any(changed$review$reused))
-  expect_identical(calls, 2L)
+  expect_identical(changed$review$status, c("needs_review", "ready", "needs_review", "needs_review", "needs_review"))
+  expect_identical(which(changed$review$reused), 2L)
+  expect_identical(calls, 4L)
+})
+
+test_that("Catalog discovery handles three original-only assets and incomplete healthspan YAML", {
+  skip_if_not_installed("yaml")
+  ids <- c("GCST009890", "GCST008598", "GCST008599", "GCST007406", "GCST009999", "GCST009998")
+  files <- c("lifegen_phase2_bothpl_alldr_2017_09_18.tsv.gz", "Results_90th_percentile.txt.gz",
+             "Results_99th_percentile.txt.gz", "GCST007406.h.tsv.gz")
+  md5 <- strrep("1", 32L)
+  root <- tempfile("catalog-layout-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE))
+  local_mocked_bindings(.gact_catalog_listing = function(url) {
+    if (endsWith(url, "/harmonised/")) return(files[4L])
+    i <- match(basename(url), ids)
+    if (i <= 3L) return(c("README.txt", files[i]))
+    if (i == 4L) return("harmonised/")
+    if (i == 6L) return("study.tsv")
+    character()
+  }, .gact_fetch_gwas_prefix = function(url, path, ...) {
+    con <- gzfile(path, "wt")
+    on.exit(close(con))
+    writeLines(c("chromosome\tbase_pair_location\teffect_allele\tother_allele\tbeta\tstandard_error\tp_value",
+                 "1\t10\tA\tC\t0.2\t0.1\t0.05"), con)
+    100L
+  }, .package = "gact")
+  local_mocked_bindings(curl_fetch_memory = function(url, ...) {
+    if (endsWith(url, "-meta.yaml")) {
+      yaml <- c("gwas_id: GCST007406", paste("data_file_name:", files[4L]),
+        "genome_assembly: GRCh38", "coordinate_system: 1-based", "is_harmonised: true",
+        "trait_description: Healthspan", "author_notes: Genome-wide association summary statistics",
+        paste("data_file_md5sum:", shQuote(md5)), "samples:", "  - sample_ancestry_category: European")
+      return(list(status_code = 200L, content = charToRaw(paste(yaml, collapse = "\n"))))
+    }
+    list(status_code = 404L, content = raw())
+  }, .package = "curl")
+  report <- scanGWAS(ids, out_dir = tempfile(tmpdir = root),
+    repository = "gwas-catalog", preview_rows = 1L)$review
+  expect_identical(report$filename[1:3], files[1:3])
+  expect_identical(report$availability[1:3], rep("original_only", 3))
+  expect_match(report$issues[1:3], "requires reviewed mapping", all = TRUE)
+  expect_match(report$issues[4L], "reviewed type")
+  expect_identical(report$availability[5L], "unavailable")
+  expect_identical(report$availability[6L], "original_only")
+  expect_match(report$issues[6L], "requires a verified gzip TSV")
+  corrected <- scanGWAS(ids[4L], out_dir = tempfile(tmpdir = root), repository = "gwas-catalog",
+    preview_rows = 1L, metadata_corrections = list(GCST007406 =
+      list(type = "quantitative", evidence = "Zenin et al. linear regression of Martingale residuals")))
+  expect_identical(corrected$review$status, "ready", info = corrected$review$issues)
+  recipe <- jsonlite::read_json(corrected$review$recipe)
+  expect_identical(recipe$type, "quantitative")
+  expect_match(recipe$metadata_corrections, "Martingale residuals")
 })

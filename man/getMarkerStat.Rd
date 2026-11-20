@@ -28,7 +28,7 @@ For studies ingested with Z-only storage, use \code{what = "z"}.}
 \item{format}{Specifies the format of the output; either "list" or "data.frame" (default: "list").}
 
 \item{rm.na}{Remove missing rows (default TRUE). For a single GWAS with
-\code{what = "all"}, missing per-variant sample size (\code{n}) is allowed.
+\code{what = "all"}, missing optional fields such as \code{n} and \code{eaf} are allowed.
 The same applies to recognised source aliases such as \code{N_sample_size}.
 FALSE retains the requested database backbone, including gaps, and
 attaches marker identity for reference checking.}
