@@ -22,8 +22,9 @@ in the database root. The current saved descriptor is reloaded.}
 \item{scratch_dir}{Optional parent of temporary native working files.}
 }
 \value{
-Invisibly, the per-study report from \code{\link{runGWASManifest}}, including
-imported, already_imported, ready or needs_review status and local study IDs.
+With \code{import = TRUE}, invisibly returns the updated GAlist. Its
+\code{ingest_report} contains the per-study status, local IDs and QC counts
+for this call. With \code{import = FALSE}, returns the readiness report directly.
 }
 \description{
 Reads recipes.tsv and uses selected verified JSON recipes as the source of study

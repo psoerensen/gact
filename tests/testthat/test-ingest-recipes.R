@@ -67,12 +67,15 @@ test_that("selected imports assign local IDs, publish metadata and skip CSV hist
   on.exit(unlink(x$root, recursive = TRUE))
   before <- tools::md5sum(c(x$paths, x$tsv))
   first <- ingestGWAS(x$ga, data.table::fread(x$tsv)[2L])
-  expect_identical(first$status, "imported")
-  expect_identical(first$study_id, "GWAS1")
-  second <- ingestGWAS(x$ga, basename(x$paths[1L])) # Stale caller list is reloaded.
+  expect_identical(first$ingest_report$status, "imported")
+  expect_identical(first$studies$id, "GWAS1")
+  ga <- ingestGWAS(x$ga, basename(x$paths[1L])) # Stale caller list is reloaded.
+  second <- ga$ingest_report
   expect_identical(second$status, "imported", info = second$issues)
   expect_identical(second$study_id, "GWAS2")
-  ga <- readRDS(x$descriptor)
+  saved <- readRDS(x$descriptor)
+  expect_identical(ga[names(saved)], saved)
+  expect_null(saved$ingest_report)
   csv_path <- file.path(x$ga$dirs[["gstat"]], "GWAS_information.csv")
   csv <- read.csv2(csv_path)
   expect_identical(csv$id, c("GWAS1", "GWAS2"))
@@ -98,7 +101,9 @@ test_that("selected imports assign local IDs, publish metadata and skip CSV hist
   expect_identical(data.table::fread(matrix$studies)$study_id, c("GWAS1", "GWAS2"))
   unlink(x$files)
   after <- tools::md5sum(c(x$descriptor, csv_path))
-  repeated <- ingestGWAS(x$descriptor, x$ids)
+  ga <- ingestGWAS(x$descriptor, x$ids)
+  repeated <- ga$ingest_report
+  expect_identical(ga$studies$id, csv$id)
   expect_identical(repeated$status, rep("already_imported", 2))
   expect_identical(repeated$study_id, c("GWAS2", "GWAS1"))
   expect_identical(tools::md5sum(c(x$descriptor, csv_path)), after)
@@ -108,7 +113,7 @@ test_that("selected imports assign local IDs, publish metadata and skip CSV hist
 test_that("changed sources, changed recipes and inconsistent CSVs require review", {
   x <- ingest_recipe_fixture()
   on.exit(unlink(x$root, recursive = TRUE))
-  expect_identical(ingestGWAS(x$ga, x$ids[1L])$status, "imported")
+  expect_identical(ingestGWAS(x$ga, x$ids[1L])$ingest_report$status, "imported")
   recipe <- jsonlite::read_json(x$paths[1L])
   recipe$input_md5 <- recipe$md5 <- strrep("f", 32)
   path <- gact:::.gact_verified_recipe_path(dirname(x$paths[1L]), recipe$accession, recipe$input_md5)
@@ -116,13 +121,13 @@ test_that("changed sources, changed recipes and inconsistent CSVs require review
   gact:::.gact_write_recipe_inventory(dirname(path))
   expect_error(ingestGWAS(x$ga, x$ids[1L]), "exactly one")
   before <- tools::md5sum(x$descriptor)
-  changed <- ingestGWAS(x$ga, basename(path))
+  changed <- ingestGWAS(x$ga, basename(path))$ingest_report
   expect_identical(changed$status, "needs_review")
   expect_match(changed$issues, "different input checksum")
   recipe <- jsonlite::read_json(x$paths[1L])
   recipe$comments <- "Changed after import"
   jsonlite::write_json(recipe, x$paths[1L], auto_unbox = TRUE, na = "null", digits = NA)
-  altered <- ingestGWAS(x$ga, basename(x$paths[1L]))
+  altered <- ingestGWAS(x$ga, basename(x$paths[1L]))$ingest_report
   expect_identical(altered$status, "needs_review")
   expect_match(altered$issues, "different verified recipe")
   expect_identical(tools::md5sum(x$descriptor), before)
@@ -146,7 +151,9 @@ test_that("a failed selected import publishes no history and can be retried", {
   jsonlite::write_json(recipe, path, auto_unbox = TRUE, na = "null", digits = NA)
   gact:::.gact_write_recipe_inventory(dirname(path))
   before <- tools::md5sum(x$descriptor)
-  failed <- ingestGWAS(x$ga, basename(path))
+  ga <- ingestGWAS(x$ga, basename(path))
+  expect_identical(ga$study$id, character())
+  failed <- ga$ingest_report
   expect_identical(failed$status, "needs_review")
   expect_match(failed$issues, "Per-variant n")
   expect_identical(tools::md5sum(x$descriptor), before)
@@ -157,7 +164,9 @@ test_that("a failed selected import publishes no history and can be retried", {
   corrected <- gact:::.gact_verified_recipe_path(dirname(path), recipe$accession, recipe$input_md5)
   jsonlite::write_json(recipe, corrected, auto_unbox = TRUE, na = "null", digits = NA)
   gact:::.gact_write_recipe_inventory(dirname(path))
-  retried <- ingestGWAS(x$ga, basename(corrected))
+  ga <- ingestGWAS(ga, basename(corrected))
+  retried <- ga$ingest_report
+  expect_identical(ga$studies$id, "GWAS1")
   expect_identical(retried$status, "imported", info = retried$issues)
   expect_identical(retried$study_id, "GWAS1")
 })

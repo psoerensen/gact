@@ -656,13 +656,13 @@ the full files. The manifest contains only ready studies.
 To ingest selected saved recipes, use `ingestGWAS()`. Selection is mandatory:
 
 ```r
-report <- ingestGWAS(
-  GAlist = GAlist,
-  selection = c("GCST90274421", "GCST90274422"),
-  workers = 16,
-  import = FALSE
-)
-# After reviewing readiness, repeat with import = TRUE.
+ids <- c("GCST90274421", "GCST90274422")
+check <- ingestGWAS(GAlist, selection = ids, import = FALSE)
+print(check)
+
+# After reviewing readiness, import and keep the updated descriptor.
+GAlist <- ingestGWAS(GAlist, selection = ids, workers = 16)
+print(GAlist$ingest_report)
 ```
 
 You can instead pass selected rows from `recipes.tsv`, or recipe filenames when
@@ -682,8 +682,8 @@ match. Fractional/out-of-range coordinates, unsupported or identical alleles,
 and inconsistent CPRA keys remain errors with a catalog row number.
 `runGWASManifest()` remains available for existing workflows.
 
-After importing at least two studies, reload the saved descriptor and export
-their Z matrix with `writeMarkerStat()` (the matrix writer's current name).
+After importing at least two studies, export their Z matrix directly with
+`writeMarkerStat(GAlist)`.
 Its default exports all imported studies. For a small first correlation pilot,
 use two quantitative traits of the same ancestry with recorded sample sizes.
 `gminer::gminer(GAlist, task = "correlation", method = "ldsc", ancestry = "EUR")`

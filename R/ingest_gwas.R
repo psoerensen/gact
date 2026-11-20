@@ -3304,8 +3304,9 @@ recodeSumstat <- recodeStat
 #' @param data_dir Optional input cache directory; defaults to download/.
 #' @param out_dir Optional new report directory; defaults to recipes/reviews/.
 #' @param scratch_dir Optional parent of temporary native working files.
-#' @return Invisibly, the per-study report from [runGWASManifest()], including
-#'   imported, already_imported, ready or needs_review status and local study IDs.
+#' @return With `import = TRUE`, invisibly returns the updated GAlist. Its
+#'   `ingest_report` contains the per-study status, local IDs and QC counts for
+#'   this call. With `import = FALSE`, returns the readiness report directly.
 #' @export
 ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
                        descriptor = NULL, data_dir = NULL, out_dir = NULL,
@@ -3313,7 +3314,8 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
   if (missing(selection) || is.null(selection) || !length(selection) ||
       (is.data.frame(selection) && !nrow(selection)))
     stop("Select studies explicitly using accessions or rows from recipes.tsv")
-  if (is.character(GAlist) && length(GAlist) == 1L) {
+  descriptor_loaded <- is.character(GAlist) && length(GAlist) == 1L
+  if (descriptor_loaded) {
     if (!is.null(descriptor)) stop("Supply the descriptor path only once")
     descriptor <- GAlist
     GAlist <- readRDS(descriptor)
@@ -3327,7 +3329,7 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
     descriptor <- candidates
   }
   descriptor <- normalizePath(descriptor, winslash = "/", mustWork = TRUE)
-  current <- readRDS(descriptor)
+  current <- if (descriptor_loaded) GAlist else readRDS(descriptor)
   if (!identical(normalizePath(current$dirs[["gstat"]], winslash = "/", mustWork = TRUE),
                  normalizePath(GAlist$dirs[["gstat"]], winslash = "/", mustWork = TRUE)))
     stop("descriptor belongs to a different database")
@@ -3385,8 +3387,12 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
     row
   })
   manifest <- as.data.frame(data.table::rbindlist(rows, fill = TRUE))
-  runGWASManifest(manifest, descriptor, data_dir = data_dir, out_dir = out_dir,
+  result <- .gact_run_gwas_manifest(manifest, descriptor, GAlist = current,
+    data_dir = data_dir, out_dir = out_dir,
     import = import, engine = "cpp", workers = workers, scratch_dir = scratch_dir)
+  if (!import) return(invisible(result$report))
+  result$GAlist$ingest_report <- result$report
+  invisible(result$GAlist)
 }
 
 #' Download, review, and ingest GWAS studies from a manifest
@@ -3455,7 +3461,17 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
                             knowledge = NULL, defaults = list(), import = TRUE,
                             preview_rows = 1000L, engine = c("R", "cpp"), workers = 1L,
                             scratch_dir = NULL, liftover_map = NULL) {
-  engine <- match.arg(engine)
+  result <- .gact_run_gwas_manifest(manifest, descriptor, data_dir = data_dir,
+    out_dir = out_dir, knowledge = knowledge, defaults = defaults, import = import,
+    preview_rows = preview_rows, engine = match.arg(engine), workers = workers,
+    scratch_dir = scratch_dir, liftover_map = liftover_map)
+  invisible(result$report)
+}
+
+.gact_run_gwas_manifest <- function(manifest, descriptor, GAlist = readRDS(descriptor),
+                                    data_dir = NULL, out_dir = NULL, knowledge = NULL,
+                                    defaults = list(), import = TRUE, preview_rows = 1000L,
+                                    engine, workers = 1L, scratch_dir = NULL, liftover_map = NULL) {
   if (!is.null(liftover_map) && engine != "cpp") stop("liftover_map requires engine = 'cpp'")
   if (length(workers) != 1L || !is.finite(workers) || workers < 1 ||
       workers > .Machine$integer.max || workers != floor(workers)) stop("workers must be a positive integer")
@@ -3489,7 +3505,6 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   manifest[required] <- lapply(manifest[required], function(x) trimws(as.character(x)))
   if (!is.null(knowledge)) knowledge <- normalizePath(knowledge, mustWork = TRUE)
   descriptor <- normalizePath(descriptor, winslash = "/", mustWork = TRUE)
-  GAlist <- readRDS(descriptor)
   build <- .gact_catalog_build(GAlist)
   map_info <- NULL
   gstat <- GAlist$dirs[["gstat"]]
@@ -3700,11 +3715,13 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   if (any(lengths(jobs) > 0L)) {
     work_dir <- .gact_gwas_work_dir(scratch_dir)
     on.exit(unlink(work_dir, recursive = TRUE), add = TRUE)
-    report <- .gact_cpp_gwas_batch(GAlist, descriptor, jobs, report, recipes, work_dir, as.integer(workers))
+    batch <- .gact_cpp_gwas_batch(GAlist, descriptor, jobs, report, recipes, work_dir, as.integer(workers))
+    GAlist <- batch$GAlist
+    report <- batch$report
   }
   data.table::fwrite(report, file.path(out_dir, "manifest_review.tsv"), sep = "\t", na = "NA")
   attr(report, "out_dir") <- out_dir
-  invisible(report)
+  list(GAlist = GAlist, report = report)
 }
 
 .gact_gwas_catalog_url <- function(accession) {
@@ -3934,19 +3951,19 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     report$issues[active[j]] <- if (is.list(value) && length(value$error)) value$error else
       "C++ worker exited before producing a validated result"
   }
-  if (!any(passed)) return(report)
+  if (!any(passed)) return(list(GAlist = ga, report = report))
   if (!identical(fingerprint, tools::md5sum(files))) stop("Marker catalog changed during staging")
   result <- tryCatch(.gact_publish_cpp_gwas(ga, descriptor, staged[passed]),
                      error = function(e) e)
   if (inherits(result, "error")) {
     report$issues[active[passed]] <- conditionMessage(result)
-    return(report)
+    return(list(GAlist = ga, report = report))
   }
-  for (j in seq_along(result)) {
+  for (j in seq_along(result$ids)) {
     i <- active[passed][j]
     item <- staged[passed][[j]]
     report$status[i] <- "imported"
-    report$study_id[i] <- result[j]
+    report$study_id[i] <- result$ids[j]
     for (field in c("n_input", "n_final", "n_dropped", "n_flipped")) {
       report[[field]][i] <- item$qc[[field]]
     }
@@ -3959,7 +3976,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       }
     }
   }
-  report
+  list(GAlist = result$GAlist, report = report)
 }
 
 .gact_publish_cpp_gwas <- function(ga, descriptor, staged) {
@@ -4052,7 +4069,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     .publish_gwas_import_file(temp_rds, descriptor, replace = TRUE)
     committed <- TRUE
   })
-  new_ids
+  list(GAlist = current, ids = new_ids)
 }
 
 # GWAS database quality control and study updates --------
