@@ -3,7 +3,8 @@
 \title{Ingest explicitly selected verified GWAS recipes}
 \usage{
 ingestGWAS(GAlist, selection, workers = 1L, import = TRUE,
-  descriptor = NULL, data_dir = NULL, out_dir = NULL, scratch_dir = NULL)
+  descriptor = NULL, data_dir = NULL, out_dir = NULL, scratch_dir = NULL,
+  storage = c("full", "z"))
 }
 \arguments{
 \item{GAlist}{Database descriptor list, or path to its saved RDS.}
@@ -12,7 +13,11 @@ recipes.tsv. Character selections must each match exactly one recipe. Use
 recipe_file, ancestry and/or input_md5 to disambiguate data-frame rows.
 TSV metadata edits do not override the JSON recipe. Selections returned by
 \code{data.table::fread} are supported.}
-\item{workers}{Number of C++ staging workers. Windows uses one worker.}
+\item{workers}{Concurrent download, verification and alignment workers on Unix.
+Recipes sharing an input file use one worker. Windows runs sequentially.}
+\item{storage}{Both modes append an aligned Z column to gstat/matrix.
+The default "full" also saves the aligned summary statistics. "z" retains only
+the matrix column, study metadata, verified recipe and QC. Choose on first import.}
 \item{import}{Whether to import. FALSE checks selected recipes without
 downloading full inputs or changing the database.}
 \item{descriptor}{Saved GAlist RDS path. By default find the single GAlist*.rds

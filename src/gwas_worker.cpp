@@ -17,6 +17,7 @@
 #include <cstring>
 #include <fstream>
 #include <limits>
+#include <memory>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -479,7 +480,7 @@ bool precedes(const Schema& schema, const std::vector<string_view>& row, const s
 enum Output { Raw, MarkerID, Chromosome, Position, Effect, Other, Coefficient, Error, Probability, Frequency, SampleSize };
 
 void process(const char* index_path, const char* source, const char* output, const char* qc_path,
-             const Schema& schema, const char* lift_path, bool neglog10p) {
+             const Schema& schema, const char* lift_path, bool neglog10p, const char* z_path) {
     Catalog catalog(index_path);
     Liftover liftover(lift_path);
     Gzip input(source, "rb");
@@ -601,7 +602,22 @@ void process(const char* index_path, const char* source, const char* output, con
     if (!supplied_eaf) add("eaf", Frequency);
     add("n", SampleSize); // Keep missing per-variant n explicit even when study totals are known.
 
-    Gzip out(output, "wb1");
+    std::unique_ptr<Gzip> out;
+    if (output) out = std::make_unique<Gzip>(output, "wb1");
+    std::ofstream z;
+    if (z_path) {
+        z.exceptions(std::ios::failbit | std::ios::badbit);
+        z.open(z_path, std::ios::binary);
+    }
+    static_assert(sizeof(double) == 8 && std::numeric_limits<double>::is_iec559);
+    const uint16_t one = 1;
+    uint64_t observed_z = 0;
+    auto write_z = [&](double value) {
+        if (!z_path) return;
+        auto bytes = reinterpret_cast<char*>(&value);
+        if (*reinterpret_cast<const char*>(&one) == 0) std::reverse(bytes, bytes + sizeof(value));
+        z.write(bytes, sizeof(value));
+    };
     string buffer;
     for (auto field : header) {
         if (!buffer.empty()) buffer.push_back(',');
@@ -611,14 +627,20 @@ void process(const char* index_path, const char* source, const char* output, con
     constexpr char bases[] = "ACGT";
     for (uint32_t i = 0; i < catalog.size; ++i) {
         const auto& v = values[i];
-        if (v.state == Empty) continue;
-        if (v.state == Conflicting) { drops[Conflict] += v.copies; continue; }
+        if (v.state == Empty) { write_z(missing); continue; }
+        if (v.state == Conflicting) { drops[Conflict] += v.copies; write_z(missing); continue; }
         drops[Redundant] += v.copies - 1;
         const auto& marker = catalog.marker[i];
-        if (std::abs(marker.eaf - v.eaf) > 0.5) { ++drops[Maf]; continue; }
+        if (std::abs(marker.eaf - v.eaf) > 0.5) { ++drops[Maf]; write_z(missing); continue; }
         ++retained;
         with_n += !std::isnan(v.n);
         flipped += v.state == Flipped;
+        if (z_path) {
+            const double score = v.beta / v.se;
+            observed_z += std::isfinite(score);
+            write_z(std::isfinite(score) ? score : missing);
+        }
+        if (!out) continue;
         split(original[i], columns);
         for (size_t j = 0; j < output_fields.size(); ++j) {
             if (j) buffer.push_back(',');
@@ -637,10 +659,13 @@ void process(const char* index_path, const char* source, const char* output, con
             }
         }
         buffer.push_back('\n');
-        if (buffer.size() >= 1 << 20) { out.write(buffer); buffer.clear(); }
+        if (buffer.size() >= 1 << 20) { out->write(buffer); buffer.clear(); }
     }
-    if (!buffer.empty()) out.write(buffer);
-    out.finish();
+    if (out) {
+        if (!buffer.empty()) out->write(buffer);
+        out->finish();
+    }
+    if (z_path) z.close();
     auto dropped = std::accumulate(drops.begin(), drops.end(), uint64_t{0});
     require(retained && rows == retained + dropped, "No retained variants or inconsistent QC counters");
     constexpr const char* reasons[] = {"missing_required", "unsplit_multiallelic",
@@ -653,6 +678,7 @@ void process(const char* index_path, const char* source, const char* output, con
        << ",\"n_removed_maf\":" << drops[Maf]
        << ",\"n_with_sample_size\":" << with_n << ",\"n_missing_sample_size\":" << retained - with_n;
     if (lift_path) qc << ",\"n_lifted\":" << lifted;
+    if (z_path) qc << ",\"n_observed_z\":" << observed_z;
     qc << ",\"dropped_by_reason\":{";
     for (size_t i = 0; i < (lift_path ? Drops : LiftUnmapped); ++i) {
         if (i) qc << ',';
@@ -696,8 +722,11 @@ extern "C" SEXP gact_gwas_stage(SEXP index_path, SEXP input, SEXP output, SEXP q
                                 SEXP neglog10p) {
     try {
         const Schema schema(headers, mapping, Rf_asLogical(forward) == TRUE);
-        process(path(index_path), path(input), path(output), path(qc), schema,
-                liftover == R_NilValue ? nullptr : path(liftover), Rf_asLogical(neglog10p) == TRUE);
+        const char* full = STRING_ELT(output, 0) == NA_STRING ? nullptr : path(output);
+        const char* z = XLENGTH(output) == 2 ? CHAR(STRING_ELT(output, 1)) : nullptr;
+        require(full || z, "No GWAS output requested");
+        process(path(index_path), path(input), full, path(qc), schema,
+                liftover == R_NilValue ? nullptr : path(liftover), Rf_asLogical(neglog10p) == TRUE, z);
     } catch (const std::exception& e) { Rf_error("%s", e.what()); }
     return R_NilValue;
 }

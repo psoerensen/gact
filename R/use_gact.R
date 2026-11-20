@@ -663,6 +663,7 @@ getFeatureDB <- function(GAlist=GAlist, feature=NULL, featureID=NULL, format="li
 #' @param studyID A vector of study IDs for which statistics are to be retrieved.
 #' @param what Specifies the type of statistics to retrieve; "all" for all statistics or specific
 #'        types like "rsids", "b", "seb", "eaf", "ea", "nea", "z", "p" (default: "all").
+#'        For studies ingested with Z-only storage, use `what = "z"`.
 #' @param format Specifies the format of the output; either "list" or "data.frame" (default: "list").
 #' @param rm.na Remove missing rows (default TRUE). For a single GWAS with
 #'   `what = "all"`, missing per-variant sample size (`n`) is allowed.
@@ -734,6 +735,10 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
 
  if (length(studyID)==1) format <- "data.frame"
  if (length(studyID)>1) format <- "list"
+ z_only <- studyID %in% GAlist$study$id[which(GAlist$study$storage == "z")]
+ if (any(z_only) && (what != "z" || !is.null(maf) || adjN))
+   stop("Only Z scores were stored for ", paste(studyID[z_only], collapse = ", "),
+        ". Use getGWAS(..., what = 'z') without MAF or sample-size adjustment.")
 
  if(format=="list" && what=="all") {
   b <- seb <- z <- p <- n <- matrix(NA,ncol=length(studyID),nrow=length(GAlist$rsids))
@@ -811,6 +816,10 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
   rownames(res) <- GAlist$rsids
   for (study in studyID) {
    message(paste("Extracting data from study:",study))
+   if (study %in% studyID[z_only]) {
+    res[, study] <- .gact_matrix_column(GAlist, study, read = TRUE)
+    next
+   }
    stat <- fread(GAlist$studyfiles[study], data.table=FALSE)
    stat$p <- as.numeric(stat$p)
    stat$p[stat$p<.Machine$double.xmin] <- .Machine$double.xmin
@@ -818,7 +827,7 @@ getMarkerStat <- function(GAlist=NULL, studyID=NULL, what="all", format="list", 
    if(!what=="z") res[stat$rsids,study] <- stat[,what]
   }
   if(!is.null(rsids)) rsids <- rsids[rsids%in%GAlist$rsids]
-  if(is.null(rsids)) rsids <- if(!rm.na) GAlist$rsids else stat$rsids[stat$rsids%in%GAlist$rsids]
+  if(is.null(rsids)) rsids <- if(!rm.na || any(z_only)) GAlist$rsids else stat$rsids[stat$rsids%in%GAlist$rsids]
   rsids <- match(rsids,GAlist$rsids)
 
   if(rm.na) res <- na.omit(res[rsids,,drop=FALSE])

@@ -658,16 +658,34 @@ std::size_t read_study(const std::string& path, const Index& index,
   return observed;
 }
 
-void write_column(std::ofstream& out, std::vector<double>& column) {
+void little_endian(double* data, std::size_t count) {
   static_assert(sizeof(double) == 8 && std::numeric_limits<double>::is_iec559,
                 "The Z matrix requires IEEE FP64.");
   const std::uint16_t one = 1;
-  auto bytes = reinterpret_cast<char*>(column.data());
+  auto bytes = reinterpret_cast<char*>(data);
   if (*reinterpret_cast<const unsigned char*>(&one) != 1) {
-    for (std::size_t i = 0; i < column.size(); ++i)
+    for (std::size_t i = 0; i < count; ++i)
       std::reverse(bytes + i * 8, bytes + (i + 1) * 8);
   }
-  out.write(bytes, static_cast<std::streamsize>(column.size() * 8));
+}
+
+void write_column(std::ofstream& out, std::vector<double>& column) {
+  little_endian(column.data(), column.size());
+  out.write(reinterpret_cast<char*>(column.data()), static_cast<std::streamsize>(column.size() * 8));
+}
+
+std::size_t read_saved_column(const char* path, std::streamoff offset, SEXP rows,
+                              std::vector<double>& column) {
+  const int* positions = INTEGER(rows);
+  const auto size = *std::max_element(positions, positions + column.size());
+  std::vector<double> source(size);
+  std::ifstream in(fs::u8path(path), std::ios::binary);
+  in.exceptions(std::ios::failbit | std::ios::badbit);
+  in.seekg(offset);
+  in.read(reinterpret_cast<char*>(source.data()), source.size() * sizeof(double));
+  little_endian(source.data(), source.size());
+  for (std::size_t i = 0; i < column.size(); ++i) column[i] = source[positions[i] - 1];
+  return std::count_if(column.begin(), column.end(), [](double z) { return std::isfinite(z); });
 }
 
 SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP ancestry,
@@ -731,8 +749,14 @@ SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP anc
     auto z = output_file(output / "z.f64.bin");
     auto studies = output_file(output / "studies.tsv");
     studies << "study_id\tancestry\tobserved\tmissing\tld_map\n";
-    std::vector<double> column(size);
-    std::vector<bool> seen(size);
+    std::vector<double> column(study_count ? size : 0);
+    std::vector<bool> seen(study_count ? size : 0);
+    SEXP offsets = Rf_getAttrib(paths, Rf_install("matrix_offsets"));
+    SEXP rows = Rf_getAttrib(paths, Rf_install("matrix_rows"));
+    if (offsets != R_NilValue && (TYPEOF(offsets) != REALSXP || XLENGTH(offsets) != XLENGTH(ids) ||
+        TYPEOF(rows) != INTSXP || XLENGTH(rows) != XLENGTH(rsids) || !size ||
+        *std::min_element(INTEGER(rows), INTEGER(rows) + size) < 1))
+      throw std::runtime_error("Invalid saved Z matrix offsets or rows");
     if (progress) {
       Rprintf("[writeMarkerStat] Writing study columns\n");
       R_FlushConsole();
@@ -740,8 +764,10 @@ SEXP write_z_matrix(SEXP rsids, SEXP marker_file, SEXP paths, SEXP ids, SEXP anc
     for (R_xlen_t j = 0; j < XLENGTH(ids); ++j) {
       checkpoint(0);
       const std::string panel = CHAR(STRING_ELT(ancestry, j));
-      const auto observed = read_study(CHAR(STRING_ELT(paths, j)), index, markers, labels,
-                                       column, seen);
+      const char* path = CHAR(STRING_ELT(paths, j));
+      const auto observed = offsets != R_NilValue && REAL(offsets)[j] >= 0 ?
+          read_saved_column(path, static_cast<std::streamoff>(REAL(offsets)[j]), rows, column) :
+          read_study(path, index, markers, labels, column, seen);
       write_column(z, column);
       studies << CHAR(STRING_ELT(ids, j)) << '\t' << panel
               << '\t' << observed << '\t' << size - observed << '\t';

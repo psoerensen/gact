@@ -184,3 +184,99 @@ test_that("duplicate identities distinguish ancestries and flag incomplete legac
   study$input_md5 <- NA_character_
   expect_error(check(study, row, strict = TRUE), "Stored input checksum is missing")
 })
+
+test_that("full and Z-only imports append aligned columns and roll back together", {
+  x <- ingest_recipe_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  gstat <- x$ga$dirs[["gstat"]]
+  dir <- file.path(gstat, "matrix")
+  z <- file.path(dir, "z.f64.bin")
+  studies <- file.path(dir, "studies.tsv")
+  first <- ingestGWAS(x$ga, x$ids[1])
+  expect_identical(first$ingest_report$status, "imported", info = first$ingest_report$issues)
+  expect_equal(readBin(z, "double", 3, endian = "little"), c(5, -2, 3))
+  expect_true(file.exists(first$studyfiles["GWAS1"]))
+  files <- c(z, studies, x$descriptor, file.path(gstat, "GWAS_information.csv"))
+  before <- tools::md5sum(files)
+  publish <- .publish_gwas_import_file
+  fail <- TRUE
+  local_mocked_bindings(.publish_gwas_import_file = function(from, to, ...) {
+    if (fail && identical(to, x$descriptor)) stop("test descriptor failure")
+    publish(from, to, ...)
+  }, .package = "gact")
+  failed <- ingestGWAS(first, x$ids[2], storage = "z")
+  expect_match(failed$ingest_report$issues, "test descriptor failure")
+  expect_identical(tools::md5sum(files), before)
+  fail <- FALSE
+  ga <- ingestGWAS(first, x$ids[2], storage = "z")
+  expect_identical(ga$ingest_report$status, "imported", info = ga$ingest_report$issues)
+  expect_identical(ga$studies$storage, c("full", "z"))
+  expect_equal(readBin(z, "double", 6, endian = "little"), c(5, -2, 3, 10, -4, 6))
+  expect_equal(data.table::fread(studies)$observed, c(3, 3))
+  expect_false(file.exists(file.path(gstat, "GWAS2.txt.gz")))
+  expect_true(file.exists(file.path(gstat, "GWAS2.qc.json")))
+  expect_error(getGWAS(ga, "GWAS2"), "Only Z scores")
+  expect_equal(as.numeric(getGWAS(ga, "GWAS2", what = "z")), c(10, -4, 6))
+  subset <- ga
+  subset$rsids <- c("rs3", "rs2")
+  subset$studies <- subset$studies[2:1, ]
+  named <- writeMarkerStat(subset, file.path(gstat, "pilot"), progress = FALSE)
+  expect_equal(readBin(named$z, "double", 4, endian = "little"), c(6, -4, 3, -2))
+  expect_identical(ingestGWAS(ga, x$ids)$ingest_report$status, rep("already_imported", 2))
+  expect_equal(file.size(z), 48)
+})
+
+test_that("one worker can finish alignment while another is still downloading", {
+  skip_on_os("windows")
+  x <- ingest_recipe_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  scratch <- file.path(x$root, "scratch")
+  dir.create(scratch)
+  upstream <- file.path(x$root, basename(x$files))
+  expect_true(all(file.rename(x$files, upstream)))
+  for (i in seq_along(upstream)) {
+    recipe <- jsonlite::read_json(x$paths[i])
+    recipe$input_url <- paste0("https://example.org/", basename(upstream[i]))
+    jsonlite::write_json(recipe, x$paths[i], auto_unbox = TRUE, digits = NA)
+  }
+  local_mocked_bindings(curl_download = function(url, destfile, mode) {
+    i <- match(basename(url), basename(upstream))
+    writeLines(as.character(Sys.getpid()), file.path(x$root, paste0("pid", i)))
+    if (i == 2L) {
+      until <- Sys.time() + 8
+      while (!length(list.files(scratch, "^study_00001.qc.json$", recursive = TRUE))) {
+        if (Sys.time() >= until) stop("First worker never staged its study during download")
+        Sys.sleep(.02)
+      }
+    }
+    if (!file.copy(upstream[i], destfile)) stop("Cannot copy fixture")
+  }, .package = "curl")
+  ga <- ingestGWAS(x$ga, x$ids, workers = 2, storage = "z", scratch_dir = scratch)
+  expect_identical(ga$ingest_report$status, rep("imported", 2), info = paste(ga$ingest_report$issues, collapse = "; "))
+  expect_length(unique(vapply(file.path(x$root, c("pid1", "pid2")), readLines, character(1))), 2)
+  expect_identical(ga$ingest_report$cleanup, rep("removed", 2))
+  expect_false(any(file.exists(x$files)))
+})
+
+test_that("absent and unusable effects occupy missing backbone rows in both modes", {
+  for (mode in c("full", "z")) {
+    x <- ingest_recipe_fixture()
+    on.exit(unlink(x$root, recursive = TRUE), add = TRUE)
+    input <- data.table::fread(x$files[1L])[2:1]
+    input$beta[2L] <- NA_real_
+    data.table::fwrite(input, x$files[1L], sep = "\t")
+    recipe <- jsonlite::read_json(x$paths[1L])
+    recipe$input_md5 <- recipe$md5 <- unname(tools::md5sum(x$files[1L]))
+    path <- .gact_verified_recipe_path(dirname(x$paths[1L]), recipe$accession, recipe$input_md5)
+    jsonlite::write_json(recipe, path, auto_unbox = TRUE, digits = NA)
+    .gact_write_recipe_inventory(dirname(path))
+    ga <- ingestGWAS(x$ga, basename(path), storage = mode)
+    expect_identical(ga$ingest_report$status, "imported", info = ga$ingest_report$issues)
+    dir <- file.path(ga$dirs[["gstat"]], "matrix")
+    expect_equal(readBin(file.path(dir, "z.f64.bin"), "double", 3, endian = "little"),
+                 c(NaN, -2, NaN))
+    expect_equal(data.table::fread(file.path(dir, "studies.tsv"))$observed, 1)
+    expect_equal(ga$ingest_report$n_final, 2)
+    unlink(x$root, recursive = TRUE)
+  }
+})

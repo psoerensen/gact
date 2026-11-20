@@ -3296,7 +3296,11 @@ recodeSumstat <- recodeStat
 #'   Use recipe_file, ancestry and/or input_md5 to disambiguate data-frame rows.
 #'   data.table selections are supported.
 #'   Metadata edits to selected TSV rows do not override the JSON recipe.
-#' @param workers Number of C++ staging workers. Windows uses one worker.
+#' @param workers Concurrent download, verification and native alignment workers
+#'   on Unix. Recipes sharing a file use one worker. Windows runs sequentially.
+#' @param storage Both modes append observed Z scores to the default gstat/matrix.
+#'   "full" also retains aligned summary statistics. "z" keeps the matrix column,
+#'   study metadata, verified recipe and QC. Choose on first import.
 #' @param import Whether to import. FALSE checks selected recipes without
 #'   downloading full inputs or changing the database.
 #' @param descriptor Saved GAlist RDS path. By default find the single
@@ -3310,7 +3314,8 @@ recodeSumstat <- recodeStat
 #' @export
 ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
                        descriptor = NULL, data_dir = NULL, out_dir = NULL,
-                       scratch_dir = NULL) {
+                       scratch_dir = NULL, storage = c("full", "z")) {
+  storage <- match.arg(storage)
   if (missing(selection) || is.null(selection) || !length(selection) ||
       (is.data.frame(selection) && !nrow(selection)))
     stop("Select studies explicitly using accessions or rows from recipes.tsv")
@@ -3391,7 +3396,7 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
   manifest <- as.data.frame(data.table::rbindlist(rows, fill = TRUE))
   result <- .gact_run_gwas_manifest(manifest, descriptor, GAlist = current, descriptor_stamp = descriptor_stamp,
     data_dir = data_dir, out_dir = out_dir,
-    import = import, engine = "cpp", workers = workers, scratch_dir = scratch_dir)
+    import = import, engine = "cpp", workers = workers, scratch_dir = scratch_dir, storage = storage)
   if (!import) return(invisible(result$report))
   result$GAlist$ingest_report <- result$report
   invisible(result$GAlist)
@@ -3475,7 +3480,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
                                     data_dir = NULL, out_dir = NULL, knowledge = NULL,
                                     defaults = list(), import = TRUE, preview_rows = 1000L,
                                     engine, workers = 1L, scratch_dir = NULL, liftover_map = NULL,
-                                    descriptor_stamp = NULL) {
+                                    descriptor_stamp = NULL, storage = NULL) {
   if (missing(GAlist)) descriptor_stamp <- .gact_gwas_stamp(descriptor)
   if (!is.null(liftover_map) && engine != "cpp") stop("liftover_map requires engine = 'cpp'")
   if (length(workers) != 1L || !is.finite(workers) || workers < 1 ||
@@ -3588,7 +3593,9 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       if (length(hits)) {
         study_id <- imported$id[hits]
         study_file <- unname(GAlist$studyfiles[study_id])
-        if (length(study_file) != 1L || !file.exists(study_file)) {
+        if (identical(imported$storage[hits], "z")) {
+          .gact_matrix_column(GAlist, study_id)
+        } else if (length(study_file) != 1L || is.na(study_file) || !file.exists(study_file)) {
           stop("Stored summary statistics are missing for ", study_id)
         }
         old_md5 <- imported$input_md5[hits]
@@ -3635,6 +3642,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       if (is.null(recipe) && "recipe_file" %in% names(row))
         stop("Selected verified recipe is missing or unverified; rescan before ingestion")
       inspected <- is.null(recipe)
+      file <- NULL
       if (inspected) {
         file <- .gact_gwas_manifest_file(row, data_dir, verified_files)
         pattern <- paste0("^", gsub(".", "[.]", row$filename, fixed = TRUE), "$")
@@ -3658,7 +3666,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
         if (engine == "cpp") .gact_cpp_gwas_mapping(recipe)
       } else {
         report$recipe[i] <- path
-        if (import) {
+        if (import && engine != "cpp") {
           file <- .gact_gwas_manifest_file(row, data_dir, verified_files)
           recipe$file_name <- file
         }
@@ -3670,7 +3678,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
         if (is.null(map_info)) map_info <- .gact_liftover_index(map_dir, GAlist)
         check <- recipe$build_check
         if (is.null(check)) {
-          if (!inspected && !import) file <- .gact_gwas_manifest_file(row, data_dir, verified_files)
+          if (is.null(file)) file <- .gact_gwas_manifest_file(row, data_dir, verified_files)
           preview <- .gact_cpp_gwas_preview(file, preview_rows, 0L)
           mapping <- unlist(recipe$mapping)
           preview <- stats::setNames(preview[unname(mapping[c("chr", "pos", "nea", "ea")])],
@@ -3693,7 +3701,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
         next
       }
       if (engine == "cpp") {
-        jobs[[i]] <- list(recipe = recipe, file = file, input_stamp = verified_files[[file]]$stamp,
+        jobs[[i]] <- list(recipe = recipe, row = row,
                           lift_index = if (needs_lift) map_info$path else NULL)
         next
       }
@@ -3722,7 +3730,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     work_dir <- .gact_gwas_work_dir(scratch_dir)
     on.exit(unlink(work_dir, recursive = TRUE), add = TRUE)
     batch <- .gact_cpp_gwas_batch(GAlist, descriptor, jobs, report, recipes, work_dir,
-                                  as.integer(workers), descriptor_stamp)
+                                  as.integer(workers), descriptor_stamp, data_dir, verified_files, storage)
     GAlist <- batch$GAlist
     report <- batch$report
   }
@@ -3926,7 +3934,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
 }
 
 .gact_cpp_gwas_batch <- function(ga, descriptor, jobs, report, recipe_dir, work_dir, workers,
-                                 descriptor_stamp = NULL) {
+                                 descriptor_stamp, data_dir, verified_files, storage) {
   files <- file.path(ga$dirs[["marker"]], c("markers.txt.gz", "cpra.txt.gz"))
   fingerprint <- .gact_gwas_stamp(files)
   index <- .gact_cached_gwas_index(files, fingerprint, work_dir)
@@ -3959,28 +3967,42 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     job <- jobs[[i]]
     tryCatch({
       base <- file.path(work_dir, sprintf("study_%05d", i))
-      file <- paste0(base, ".txt.gz")
+      job$file <- .gact_gwas_manifest_file(job$row, data_dir, verified_files)
+      job$input_stamp <- verified_files[[job$file]]$stamp
+      job$recipe$file_name <- job$file
+      full <- if (identical(storage, "z")) NA_character_ else paste0(base, ".txt.gz")
+      z <- if (!is.null(storage)) paste0(base, ".z.bin")
       qc <- paste0(base, ".qc.json")
       recipe <- jsonlite::read_json(job$recipe_path)
       if (!identical(.gact_gwas_stamp(job$file), job$input_stamp)) stop("Verified input changed before staging")
-      .Call(C_gact_gwas_stage, index, job$file, file, qc,
+      .Call(C_gact_gwas_stage, index, job$file, c(full, z), qc,
             unlist(recipe$inspection$headers, use.names = FALSE),
             .gact_cpp_gwas_mapping(recipe), identical(recipe$strand, "forward"),
             job$lift_index, identical(recipe$p_scale, "neglog10p"))
       if (!identical(.gact_gwas_stamp(job$file), job$input_stamp)) stop("Verified input changed during staging")
       metrics <- jsonlite::read_json(qc, simplifyVector = TRUE)
+      file <- if (is.na(full)) z else full
       checksum <- unname(tools::md5sum(file))
       stopifnot(!is.na(checksum), metrics$n_final > 0,
                 metrics$n_input == metrics$n_final + metrics$n_dropped,
                 metrics$n_dropped == sum(unlist(metrics$dropped_by_reason)),
                 metrics$n_flipped <= metrics$n_final)
-      c(job, list(staged = file, qc_file = qc, qc = metrics, checksum = checksum))
+      c(job, list(staged = file, z = z, storage = storage, qc_file = qc, qc = metrics, checksum = checksum))
     }, error = function(e) list(error = conditionMessage(e)))
   }
-  count <- min(workers, length(active))
-  staged <- if (.Platform$OS.type == "unix" && count > 1L) {
-    parallel::mclapply(active, stage_one, mc.cores = count, mc.preschedule = FALSE)
-  } else lapply(active, stage_one)
+  # Ancestry-specific recipes can share an input. Give it a single cache owner.
+  keys <- .gact_gwas_path_key(report$filename[active])
+  groups <- split(active, match(keys, unique(keys)))
+  run_group <- function(indices) lapply(indices, stage_one)
+  count <- min(workers, length(groups))
+  batches <- if (.Platform$OS.type == "unix" && count > 1L) {
+    parallel::mclapply(groups, run_group, mc.cores = count, mc.preschedule = FALSE)
+  } else lapply(groups, run_group)
+  staged <- vector("list", length(active))
+  for (k in seq_along(groups)) {
+    if (is.list(batches[[k]]))
+      staged[match(groups[[k]], active)] <- batches[[k]]
+  }
   passed <- vapply(staged, function(value) is.list(value) && !is.null(value$staged), logical(1))
   for (j in which(!passed)) {
     value <- staged[[j]]
@@ -4003,6 +4025,10 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     for (field in c("n_input", "n_final", "n_dropped", "n_flipped")) {
       report[[field]][i] <- item$qc[[field]]
     }
+    if (keys[passed][j] %in% keys[!passed]) {
+      report$cleanup[i] <- "retained"
+      next
+    }
     cleanup <- .gact_gwas_cleanup_download(item$recipe, item$input_stamp)
     if (!is.null(cleanup)) {
       report$cleanup[i] <- cleanup$status
@@ -4015,6 +4041,93 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   list(GAlist = result$GAlist, report = report)
 }
 
+.gact_matrix_column <- function(ga, id, read = FALSE) {
+  dir <- file.path(ga$dirs[["gstat"]], "matrix")
+  studies <- data.table::fread(file.path(dir, "studies.tsv"), select = "study_id")
+  at <- which(studies$study_id == id)
+  n <- length(ga$rsids)
+  path <- file.path(dir, "z.f64.bin")
+  if (length(at) != 1L || !file.exists(path) || file.size(path) != 8 * n * nrow(studies))
+    stop("Missing or incomplete matrix column for ", id)
+  if (!read) return(invisible(at))
+  con <- file(path, "rb")
+  on.exit(close(con))
+  seek(con, (at - 1) * 8 * n)
+  readBin(con, "double", n, size = 8L, endian = "little")
+}
+
+# The caller holds the import lock until the descriptor and inventory are committed.
+.gact_append_z <- function(ga, staged, ids, stage) {
+  matrix <- file.path(ga$dirs[["gstat"]], "matrix")
+  fresh <- !dir.exists(matrix)
+  work <- if (fresh) file.path(stage, "matrix") else matrix
+  marker <- file.path(ga$dirs[["marker"]], "markers.txt.gz")
+  ancestry <- .gact_ancestry_codes(vapply(staged, function(x) x$recipe$ancestry, character(1)))
+  markers <- file.path(work, "markers.tsv")
+  studies <- file.path(work, "studies.tsv")
+  binary <- file.path(work, "z.f64.bin")
+  stamp <- function() .gact_gwas_stamp(c(marker, markers))
+  if (fresh || !identical(ga$z_matrix_backbone, stamp())) {
+    template <- file.path(stage, "matrix")
+    if (!dir.create(template)) stop("Cannot stage matrix backbone")
+    panels <- if (fresh) .find_aligned_ld(dirname(marker), ancestry, ga$ldPanels)
+    ga$ldPanels <- panels
+    regions <- .stage_ld_regions(ga, template)
+    .Call(C_gact_write_z, ga$rsids, marker, character(), character(), character(),
+          template, as.character(names(panels)), vapply(panels, "[[", character(1), "markers"),
+          regions, if (any(nzchar(regions))) ga$assembly else "", FALSE)
+    if (!fresh && !identical(unname(tools::md5sum(markers)),
+                             unname(tools::md5sum(file.path(template, "markers.tsv")))))
+      stop("Existing Z matrix uses a different marker backbone")
+  }
+  previous <- data.table::fread(studies, colClasses = "character", data.table = FALSE)
+  n <- length(ga$rsids)
+  initial <- 8 * n * nrow(previous)
+  if (any(ids %in% previous$study_id) || !file.exists(binary) || file.size(binary) != initial)
+    stop("Z matrix size or study IDs disagree with studies.tsv")
+  columns <- vapply(staged, "[[", character(1), "z")
+  if (anyNA(file.size(columns)) || any(file.size(columns) != 8 * n))
+    stop("Incomplete staged Z column")
+  observed <- vapply(staged, function(x) x$qc$n_observed_z, numeric(1))
+  ld_map <- rep("", length(ids))
+  if (file.exists(file.path(work, "ld.tsv"))) {
+    panels <- data.table::fread(file.path(work, "ld.tsv"))
+    hit <- match(ancestry, panels$ancestry)
+    ld_map[!is.na(hit)] <- panels$map[hit[!is.na(hit)]]
+  }
+  next_studies <- file.path(stage, "next-studies.tsv")
+  rows <- data.frame(study_id = ids, ancestry = ancestry, observed = observed,
+                     missing = n - observed, ld_map = ld_map)
+  data.table::fwrite(rbind(previous, rows), next_studies, sep = "\t", na = "")
+  backup <- file.path(stage, "previous-studies.tsv")
+  if (!fresh && !file.copy(studies, backup)) stop("Cannot back up matrix study list")
+  installed <- FALSE
+  undo <- function() {
+    if (fresh) {
+      if (installed) unlink(matrix, recursive = TRUE)
+    } else {
+      con <- file(binary, "r+b")
+      on.exit(close(con))
+      seek(con, initial, rw = "write")
+      truncate(con)
+      if (!file.copy(backup, studies, overwrite = TRUE)) stop("Cannot restore matrix study list")
+    }
+  }
+  ok <- FALSE
+  on.exit(if (!ok) undo())
+  if (!all(file.append(binary, columns)) || file.size(binary) != initial + 8 * n * length(ids))
+    stop("Cannot append staged Z columns")
+  .publish_gwas_import_file(next_studies, studies, replace = TRUE)
+  if (fresh) {
+    .publish_gwas_import_file(work, matrix)
+    installed <- TRUE
+    markers <- file.path(matrix, "markers.tsv")
+  }
+  result <- list(stamp = stamp(), undo = undo)
+  ok <- TRUE
+  result
+}
+
 .gact_publish_cpp_gwas <- function(ga, descriptor, staged, descriptor_stamp = NULL) {
   gstat <- ga$dirs[["gstat"]]
   inventory <- file.path(gstat, "GWAS_information.csv")
@@ -4023,9 +4136,11 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   temp_rds <- tempfile(".gact-descriptor-", tmpdir = dirname(descriptor))
   backup <- file.path(stage, "previous-inventory.csv")
   published <- character()
+  matrix_update <- NULL
   replaced <- committed <- FALSE
   on.exit({
     if (!committed) {
+      if (!is.null(matrix_update)) matrix_update$undo()
       if (replaced) {
         if (file.exists(backup)) {
           if (!file.rename(backup, inventory)) warning("Cannot restore the previous GWAS inventory")
@@ -4055,7 +4170,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     at <- length(current$study$id) + 1L
     current$study <- lapply(current$study, function(column) { length(column) <- at; column })
     recipeID <- sub("^GWAS", "REC", id)
-    name <- paste0(id, ".txt")
+    z_only <- identical(item$storage, "z")
+    name <- if (z_only) NA_character_ else paste0(id, ".txt")
     qc <- paste0(id, ".qc.json")
     recipe_path <- file.path("..", "recipes", basename(item$recipe_path))
     counts <- c(n = "study_n_total", ncase = "study_n_case", ncontrol = "study_n_control")
@@ -4076,13 +4192,16 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
              numbers, Filter(function(value) length(value) > 0L, recipe[intersect(names(recipe), c("source", "trait", "type", "category",
                "efo", "gender", "ancestry", "build", "reference", "comments",
                "study_n_total", "study_n_case", "study_n_control"))]))
+    if (!is.null(item$storage)) row$storage <- item$storage
     for (field in names(row)) {
       column <- current$study[[field]]
       if (is.null(column)) column <- rep(row[[field]][NA_integer_], at)
       column[at] <- row[[field]]
       current$study[[field]] <- column
     }
-    for (pair in list(c(item$staged, paste0(name, ".gz")), c(item$qc_file, qc))) {
+    outputs <- list(c(item$qc_file, qc))
+    if (!z_only) outputs <- c(list(c(item$staged, paste0(name, ".gz"))), outputs)
+    for (pair in outputs) {
       from <- file.path(stage, pair[2L])
       if (!suppressWarnings(file.rename(pair[1L], from)) && !file.copy(pair[1L], from))
         stop("Cannot stage ", pair[2L], " for publication")
@@ -4093,10 +4212,15 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   current$studies <- as.data.frame(current$study)
   rownames(current$studies) <- current$studies$id
   current$studyfiles <- stats::setNames(file.path(gstat, paste0(current$study$file, ".gz")), current$study$id)
+  current$studyfiles[is.na(current$study$file)] <- NA_character_
   temp_csv <- file.path(stage, basename(inventory))
   write.csv2(current$studies, temp_csv, row.names = FALSE)
-  saveRDS(current, temp_rds, compress = FALSE)
   suspendInterrupts({
+    if (!is.null(staged[[1L]]$z)) {
+      matrix_update <- .gact_append_z(current, staged, new_ids, stage)
+      current$z_matrix_backbone <- matrix_update$stamp
+    }
+    saveRDS(current, temp_rds, compress = FALSE)
     for (i in seq_along(source)) {
       .publish_gwas_import_file(source[i], destination[i])
       published <- c(published, destination[i])

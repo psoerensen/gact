@@ -589,6 +589,23 @@ GAlist <- ingestGWAS(GAlist, selection = ids, workers = 16)
 print(GAlist$ingest_report)
 ```
 
+Each new study adds an observed Z column to `gstat/matrix/z.f64.bin` in
+marker-backbone order. The default `storage = "full"` also saves the aligned
+`GWAS*.txt.gz`. To keep just the Z column, recipe, QC and study metadata:
+
+```r
+GAlist <- ingestGWAS(GAlist, selection = ids, workers = 4, storage = "z")
+```
+
+Choose the storage mode on first import. A repeat selection skips the study.
+Read Z-only studies with `getGWAS(GAlist, studyID, what = "z")`.
+Both modes store one little-endian float64 per backbone marker, with missing Z
+values represented by NaN. Creating the default matrix starts with the new
+imports. Existing studies and named pilot matrices are not backfilled.
+On Unix each worker downloads, verifies and aligns its input. Recipes sharing
+a file use the same worker. The parent publishes successful studies in
+selection order. Windows processes inputs sequentially.
+
 You can instead pass selected rows from `recipes.tsv`, or recipe filenames when
 an accession has multiple recipes. TSV metadata edits do not override the JSON.
 The current saved GAlist is reloaded. `GWAS_information.csv` records imports:

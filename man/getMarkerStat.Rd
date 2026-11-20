@@ -22,7 +22,8 @@ getMarkerStat(
 \item{studyID}{A vector of study IDs for which statistics are to be retrieved.}
 
 \item{what}{Specifies the type of statistics to retrieve; "all" for all statistics or specific
-types like "rsids", "b", "seb", "eaf", "ea", "nea", "z", "p" (default: "all").}
+types like "rsids", "b", "seb", "eaf", "ea", "nea", "z", "p" (default: "all").
+For studies ingested with Z-only storage, use \code{what = "z"}.}
 
 \item{format}{Specifies the format of the output; either "list" or "data.frame" (default: "list").}
 

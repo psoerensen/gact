@@ -738,6 +738,8 @@ getLDscores <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="1000G", 
 #' The writer aligns study scores to the gact marker catalog. It computes Z
 #' from finite beta and positive finite SE when available, with stored Z as a
 #' fallback. Missing and unusable scores are stored as NaN.
+#' For Z-only imports, the writer reads the saved default-matrix column
+#' and selects markers in the requested backbone order.
 #' All studies use the gact catalog effect allele. Reference panels must use
 #' that same dosage allele. Each panel's binary map indexes Z rows in LD order.
 #' For EUR, EAS, SAS, AFR and AMR studies, the writer looks for sparse LD with prefix
@@ -787,9 +789,30 @@ writeMarkerStat <- function(GAlist, out_dir = NULL, stat = "z", progress = TRUE)
   if (anyNA(at) || anyDuplicated(names(files)[names(files) %in% ids]))
     stop("GAlist$studyfiles must identify one file per study ID.", call. = FALSE)
   files <- unname(files[at])
+  z_only <- which(studies$storage == "z")
+  if (length(z_only)) {
+    dir <- file.path(GAlist$dirs[["gstat"]], "matrix")
+    stored_ids <- data.table::fread(file.path(dir, "studies.tsv"), select = "study_id")$study_id
+    stored_markers <- data.table::fread(file.path(dir, "markers.tsv"), select = "rsids",
+                                        colClasses = "character")$rsids
+    rows <- match(rsids, stored_markers)
+    cols <- match(ids[z_only], stored_ids)
+    binary <- file.path(dir, "z.f64.bin")
+    if (anyNA(rows) || anyNA(cols) || !file.exists(binary) ||
+        file.size(binary) != 8 * length(stored_markers) * length(stored_ids))
+      stop("Default Z matrix does not cover the selected markers and studies.")
+    files[z_only] <- binary
+    offsets <- rep(-1, length(files))
+    offsets[z_only] <- (cols - 1) * 8 * length(stored_markers)
+  }
   if (anyNA(files) || any(!file.exists(files) | dir.exists(files)))
     stop("Missing aligned study file for ", ids[which(
       is.na(files) | !file.exists(files) | dir.exists(files))[1L]], ".", call. = FALSE)
+  files <- enc2utf8(normalizePath(files, winslash = "/", mustWork = TRUE))
+  if (length(z_only)) {
+    attr(files, "matrix_offsets") <- offsets
+    attr(files, "matrix_rows") <- rows
+  }
   marker_dir <- GAlist$dirs[["marker"]]
   marker_file <- file.path(marker_dir, "markers.txt.gz")
   if (length(marker_file) != 1L || !file.exists(marker_file))
@@ -827,7 +850,7 @@ writeMarkerStat <- function(GAlist, out_dir = NULL, stat = "z", progress = TRUE)
             paste(paste0(ids[without_ld], " (", ancestry[without_ld], ")"), collapse = ", "), ".")
   .Call(C_gact_write_z, enc2utf8(rsids),
         enc2utf8(normalizePath(marker_file, winslash = "/", mustWork = TRUE)),
-        enc2utf8(normalizePath(files, winslash = "/", mustWork = TRUE)),
+        files,
         enc2utf8(ids), enc2utf8(ancestry), enc2utf8(stage),
         enc2utf8(panels), enc2utf8(panel_files), enc2utf8(region_files), enc2utf8(assembly),
         progress)

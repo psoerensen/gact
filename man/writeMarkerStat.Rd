@@ -27,6 +27,8 @@ against the gact marker catalog. It derives Z from finite \code{b} and positive
 finite \code{seb} when available, with finite stored Z as a fallback.
 Missing and unusable scores are stored as NaN. The study catalog records the
 ancestry and the count of observed and missing scores for each column.
+For Z-only imports the writer reads the saved column from the default
+matrix and selects markers in the requested backbone order.
 
 For the EUR, EAS, SAS, AFR and AMR ancestries represented in the export,
 \code{writeMarkerStat()} looks for sparse LD in the marker directory
