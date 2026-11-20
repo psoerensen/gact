@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <limits>
 #include <numeric>
@@ -143,8 +144,13 @@ bool absent(string_view value) { return value.empty() || value == "NA"; }
 
 double real(string_view value) {
     if (absent(value)) return missing;
+    double result;
+    const auto parsed = std::from_chars(value.data(), value.data() + value.size(), result);
+    if (parsed.ec == std::errc() && parsed.ptr == value.data() + value.size() &&
+        std::isfinite(result)) return result;
+    // Preserve the original parser's handling of leading '+', underflow and errors.
     char* end;
-    double result = std::strtod(value.data(), &end);
+    result = std::strtod(value.data(), &end);
     require(end == value.data() + value.size() && std::isfinite(result),
             "Non-finite or invalid summary statistic");
     return result;
@@ -348,6 +354,7 @@ class Catalog {
     MappedFile file;
     const Lookup* lookup;
     const char* pool;
+    size_t cursor = 0;
 public:
     const Marker* marker;
     size_t size;
@@ -361,11 +368,25 @@ public:
         lookup = reinterpret_cast<const Lookup*>(marker + size);
         pool = reinterpret_cast<const char*>(lookup + size);
     }
-    const Lookup* find(Key variant) const {
-        auto end = lookup + size;
-        auto hit = std::lower_bound(lookup, end, variant,
-            [](const Lookup& row, Key target) { return row.key < target; });
-        return hit != end && hit->key == variant ? hit : nullptr;
+    std::pair<const Lookup*, const Lookup*> orientations(Key variant) {
+        // All allele pairs for a position are adjacent. Common sorted input
+        // usually advances zero or one entries. Seek on jumps and unsorted rows.
+        const Key start = variant & ~Key{15};
+        if ((cursor && lookup[cursor - 1].key >= start) ||
+            (size - cursor > 8 && lookup[cursor + 8].key < start)) {
+            cursor = std::lower_bound(lookup, lookup + size, start,
+                [](const Lookup& row, Key target) { return row.key < target; }) - lookup;
+        } else {
+            while (cursor < size && lookup[cursor].key < start) ++cursor;
+        }
+        const Key swapped = swap_alleles(variant);
+        const Lookup* direct = nullptr;
+        const Lookup* reverse = nullptr;
+        for (size_t j = cursor; j < size && lookup[j].key <= (start | 15); ++j) {
+            if (!direct && lookup[j].key == variant) direct = lookup + j;
+            if (!reverse && lookup[j].key == swapped) reverse = lookup + j;
+        }
+        return {direct, reverse};
     }
     bool duplicate(const Lookup* hit) const {
         return hit && hit + 1 < lookup + size && hit[1].key == hit->key;
@@ -520,8 +541,7 @@ void process(const char* index_path, const char* source, const char* output, con
             if (!variant) { ++drops[LiftUnmapped]; continue; }
             ++lifted;
         }
-        auto direct = catalog.find(variant);
-        auto swap = catalog.find(swap_alleles(variant));
+        auto [direct, swap] = catalog.orientations(variant);
         if ((direct && swap) || catalog.duplicate(direct) || catalog.duplicate(swap)) {
             ++drops[Ambiguous];
             continue;
@@ -581,7 +601,7 @@ void process(const char* index_path, const char* source, const char* output, con
     if (!supplied_eaf) add("eaf", Frequency);
     add("n", SampleSize); // Keep missing per-variant n explicit even when study totals are known.
 
-    Gzip out(output, "wb6");
+    Gzip out(output, "wb1");
     string buffer;
     for (auto field : header) {
         if (!buffer.empty()) buffer.push_back(',');
@@ -649,6 +669,19 @@ const char* path(SEXP arg) { return CHAR(STRING_ELT(arg, 0)); }
 extern "C" SEXP gact_gwas_index(SEXP markers, SEXP cpra, SEXP output) {
     try { index(path(markers), path(cpra), path(output)); }
     catch (const std::exception& e) { Rf_error("%s", e.what()); }
+    return R_NilValue;
+}
+
+extern "C" SEXP gact_gwas_check_ids(SEXP index_path, SEXP ids) {
+    try {
+        Catalog catalog(path(index_path));
+        require(XLENGTH(ids) == static_cast<R_xlen_t>(catalog.size), "Marker catalog and GAlist disagree");
+        for (size_t i = 0; i < catalog.size; ++i) {
+            SEXP id = STRING_ELT(ids, i);
+            require(id != NA_STRING && std::strcmp(CHAR(id), catalog.id(i)) == 0,
+                    "Marker catalog and GAlist disagree");
+        }
+    } catch (const std::exception& e) { Rf_error("%s", e.what()); }
     return R_NilValue;
 }
 

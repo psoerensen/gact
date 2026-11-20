@@ -739,9 +739,12 @@ liftover map described below.
 By default the manifest runner caches input files in the database's
 `download/` directory and writes the batch manifest and review reports under
 `recipes/reviews/`. Pass `data_dir` or `out_dir` to override those locations.
-The C++ marker index and staged outputs live in a per-run scratch directory
-that gact removes on exit. Set `scratch_dir` to choose its parent. Otherwise
-gact uses `SLURM_TMPDIR` when available or R's temporary directory.
+The first import builds a shared marker index under `marker/`. Later imports
+reuse it while the catalog and CPRA files have the same sizes and timestamps.
+Each batch verifies the provider MD5 once per distinct unchanged input.
+Temporary study outputs use fast gzip compression in `scratch_dir`,
+`SLURM_TMPDIR` or R's temporary directory. A read-only marker directory
+uses a temporary index for the batch.
 
 Analysis outputs use `GAlist$dirs[["results"]]`, created as `results/` at the
 database root by `createDB()`. Prepared association matrices remain in

@@ -3318,6 +3318,7 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
   if (descriptor_loaded) {
     if (!is.null(descriptor)) stop("Supply the descriptor path only once")
     descriptor <- GAlist
+    descriptor_stamp <- .gact_gwas_stamp(descriptor)
     GAlist <- readRDS(descriptor)
   }
   if (!is.list(GAlist) || length(GAlist$dirs[["gstat"]]) != 1L)
@@ -3329,6 +3330,7 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
     descriptor <- candidates
   }
   descriptor <- normalizePath(descriptor, winslash = "/", mustWork = TRUE)
+  if (!descriptor_loaded) descriptor_stamp <- .gact_gwas_stamp(descriptor)
   current <- if (descriptor_loaded) GAlist else readRDS(descriptor)
   if (!identical(normalizePath(current$dirs[["gstat"]], winslash = "/", mustWork = TRUE),
                  normalizePath(GAlist$dirs[["gstat"]], winslash = "/", mustWork = TRUE)))
@@ -3387,7 +3389,7 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
     row
   })
   manifest <- as.data.frame(data.table::rbindlist(rows, fill = TRUE))
-  result <- .gact_run_gwas_manifest(manifest, descriptor, GAlist = current,
+  result <- .gact_run_gwas_manifest(manifest, descriptor, GAlist = current, descriptor_stamp = descriptor_stamp,
     data_dir = data_dir, out_dir = out_dir,
     import = import, engine = "cpp", workers = workers, scratch_dir = scratch_dir)
   if (!import) return(invisible(result$report))
@@ -3441,7 +3443,8 @@ ingestGWAS <- function(GAlist, selection, workers = 1L, import = TRUE,
 #' @param workers Number of C++ staging workers on Unix. Windows uses one worker.
 #' @param scratch_dir Parent directory for temporary C++ working files.
 #'   Defaults to SLURM_TMPDIR when available, or R's temporary directory.
-#'   Each run removes its own working directory when it exits.
+#'   Each run removes its own working directory when it exits. A writable
+#'   marker directory caches the reusable C++ index across imports.
 #' @param liftover_map Directory from [buildLiftoverMap()]. The C++ engine
 #'   automatically uses the installed map for GRCh37 inputs targeting GRCh38.
 #'   Supply this argument to override the installed map. With a map,
@@ -3471,7 +3474,9 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
 .gact_run_gwas_manifest <- function(manifest, descriptor, GAlist = readRDS(descriptor),
                                     data_dir = NULL, out_dir = NULL, knowledge = NULL,
                                     defaults = list(), import = TRUE, preview_rows = 1000L,
-                                    engine, workers = 1L, scratch_dir = NULL, liftover_map = NULL) {
+                                    engine, workers = 1L, scratch_dir = NULL, liftover_map = NULL,
+                                    descriptor_stamp = NULL) {
+  if (missing(GAlist)) descriptor_stamp <- .gact_gwas_stamp(descriptor)
   if (!is.null(liftover_map) && engine != "cpp") stop("liftover_map requires engine = 'cpp'")
   if (length(workers) != 1L || !is.finite(workers) || workers < 1 ||
       workers > .Machine$integer.max || workers != floor(workers)) stop("workers must be a positive integer")
@@ -3565,6 +3570,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   duplicate <- duplicated(identity) | duplicated(identity, fromLast = TRUE) |
     (repeated_file & !.gact_shared_panukb_inputs(manifest))
   jobs <- vector("list", nrow(manifest))
+  verified_files <- new.env(parent = emptyenv())
   report <- data.frame(accession = manifest$accession, filename = manifest$filename,
     status = "needs_review", study_id = NA_character_, recipe = NA_character_,
     issues = NA_character_, warnings = NA_character_, cleanup = NA_character_,
@@ -3630,7 +3636,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
         stop("Selected verified recipe is missing or unverified; rescan before ingestion")
       inspected <- is.null(recipe)
       if (inspected) {
-        file <- .gact_gwas_manifest_file(row, data_dir)
+        file <- .gact_gwas_manifest_file(row, data_dir, verified_files)
         pattern <- paste0("^", gsub(".", "[.]", row$filename, fixed = TRUE), "$")
         inspection <- inspectGWAS(data_dir, row, file.path(out_dir, sprintf("study_%05d", i)),
                                   file_column = "filename", knowledge = knowledge,
@@ -3653,7 +3659,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       } else {
         report$recipe[i] <- path
         if (import) {
-          file <- .gact_gwas_manifest_file(row, data_dir)
+          file <- .gact_gwas_manifest_file(row, data_dir, verified_files)
           recipe$file_name <- file
         }
       }
@@ -3664,7 +3670,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
         if (is.null(map_info)) map_info <- .gact_liftover_index(map_dir, GAlist)
         check <- recipe$build_check
         if (is.null(check)) {
-          if (!inspected && !import) file <- .gact_gwas_manifest_file(row, data_dir)
+          if (!inspected && !import) file <- .gact_gwas_manifest_file(row, data_dir, verified_files)
           preview <- .gact_cpp_gwas_preview(file, preview_rows, 0L)
           mapping <- unlist(recipe$mapping)
           preview <- stats::setNames(preview[unname(mapping[c("chr", "pos", "nea", "ea")])],
@@ -3687,7 +3693,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
         next
       }
       if (engine == "cpp") {
-        jobs[[i]] <- list(recipe = recipe, file = file,
+        jobs[[i]] <- list(recipe = recipe, file = file, input_stamp = verified_files[[file]]$stamp,
                           lift_index = if (needs_lift) map_info$path else NULL)
         next
       }
@@ -3715,7 +3721,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   if (any(lengths(jobs) > 0L)) {
     work_dir <- .gact_gwas_work_dir(scratch_dir)
     on.exit(unlink(work_dir, recursive = TRUE), add = TRUE)
-    batch <- .gact_cpp_gwas_batch(GAlist, descriptor, jobs, report, recipes, work_dir, as.integer(workers))
+    batch <- .gact_cpp_gwas_batch(GAlist, descriptor, jobs, report, recipes, work_dir,
+                                  as.integer(workers), descriptor_stamp)
     GAlist <- batch$GAlist
     report <- batch$report
   }
@@ -3751,7 +3758,13 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   hits
 }
 
-.gact_gwas_manifest_file <- function(row, data_dir) {
+.gact_gwas_stamp <- function(path) {
+  info <- file.info(path)
+  if (anyNA(info$size) || any(info$isdir)) stop("Missing GWAS input: ", paste(path, collapse = ", "))
+  sprintf("%.0f/%.17g/%.17g", info$size, as.numeric(info$mtime), as.numeric(info$ctime))
+}
+
+.gact_gwas_manifest_file <- function(row, data_dir, verified = new.env(parent = emptyenv())) {
   expected <- tolower(row$md5)
   if (!grepl("^[a-f0-9]{32}$", expected)) stop("Supply the provider's MD5 checksum")
   file <- file.path(data_dir, row$filename)
@@ -3778,8 +3791,11 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     on.exit(unlink(candidate), add = TRUE)
     curl::curl_download(row$url, candidate, mode = "wb")
   }
-  if (!identical(unname(tools::md5sum(candidate)), expected)) {
-    stop("Input MD5 checksum mismatch: ", row$filename)
+  stamp <- .gact_gwas_stamp(candidate)
+  if (!identical(verified[[candidate]], list(md5 = expected, stamp = stamp))) {
+    if (!identical(unname(tools::md5sum(candidate)), expected) ||
+        !identical(.gact_gwas_stamp(candidate), stamp))
+      stop("Input MD5 checksum mismatch or file changed: ", row$filename)
   }
   if (!cached) {
     receipt <- tempfile(".gact-download-receipt-", tmpdir = data_dir)
@@ -3788,10 +3804,12 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     .publish_gwas_import_file(candidate, file)
     .publish_gwas_import_file(receipt, paste0(file, ".gact-download.json"), replace = TRUE)
   }
-  normalizePath(file, winslash = "/", mustWork = TRUE)
+  file <- normalizePath(file, winslash = "/", mustWork = TRUE)
+  verified[[file]] <- list(md5 = expected, stamp = if (cached) stamp else .gact_gwas_stamp(file))
+  file
 }
 
-.gact_gwas_cleanup_download <- function(recipe) {
+.gact_gwas_cleanup_download <- function(recipe, verified_stamp = NULL) {
   if (!is.list(recipe)) return(NULL)
   file <- recipe[["file_name"]]
   url <- recipe[["input_url"]]
@@ -3813,7 +3831,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     }
     if (!file.exists(file)) return(list(status = "already_absent"))
     if (dir.exists(file) || !identical(normalizePath(file, winslash = "/", mustWork = TRUE), file) ||
-        !identical(unname(tools::md5sum(file)), md5)) {
+        (!identical(.gact_gwas_stamp(file), verified_stamp) &&
+         !identical(unname(tools::md5sum(file)), md5))) {
       stop("the input path or checksum changed")
     }
     if (!suppressWarnings(file.remove(file))) stop("the file could not be removed")
@@ -3884,18 +3903,34 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   work
 }
 
-.gact_cpp_gwas_batch <- function(ga, descriptor, jobs, report, recipe_dir, work_dir, workers) {
-  marker <- ga$dirs[["marker"]]
-  markers <- file.path(marker, "markers.txt.gz")
-  cpra <- file.path(marker, "cpra.txt.gz")
-  stopifnot(file.exists(markers), file.exists(cpra))
-  index <- file.path(work_dir, "marker-index.bin")
-  files <- c(markers, cpra)
-  fingerprint <- tools::md5sum(files)
-  ids <- data.table::fread(markers, select = "rsids")$rsids
-  if (!identical(as.character(ga$rsids), as.character(ids))) stop("Marker catalog and GAlist disagree")
-  rm(ids)
-  .Call(C_gact_gwas_index, markers, cpra, index)
+.gact_cached_gwas_index <- function(files, stamps, work_dir) {
+  key <- as.character(openssl::md5(paste(c(.Platform$endian, stamps), collapse = "/")))
+  target <- file.path(dirname(files[1L]), paste0("gwas-index-v1-", key))
+  if (!dir.exists(target) && file.access(dirname(target), 2L) != 0L)
+    target <- file.path(work_dir, basename(target))
+  if (!dir.exists(target)) {
+    stage <- tempfile(".gwas-index-", tmpdir = dirname(target))
+    if (!dir.create(stage)) stop("Cannot stage GWAS marker index.")
+    on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+    path <- file.path(stage, "index.bin")
+    .Call(C_gact_gwas_index, files[1L], files[2L], path)
+    if (!identical(stamps, .gact_gwas_stamp(files))) stop("Marker catalog changed while indexing")
+    saveRDS(.gact_gwas_stamp(path), file.path(stage, "stamp.rds"))
+    if (!suppressWarnings(file.rename(stage, target)) && !dir.exists(target))
+      stop("Cannot publish GWAS marker index.")
+  }
+  index <- file.path(target, "index.bin")
+  if (!identical(.gact_gwas_stamp(index), readRDS(file.path(target, "stamp.rds"))))
+    stop("Cached GWAS marker index changed: ", target)
+  index
+}
+
+.gact_cpp_gwas_batch <- function(ga, descriptor, jobs, report, recipe_dir, work_dir, workers,
+                                 descriptor_stamp = NULL) {
+  files <- file.path(ga$dirs[["marker"]], c("markers.txt.gz", "cpra.txt.gz"))
+  fingerprint <- .gact_gwas_stamp(files)
+  index <- .gact_cached_gwas_index(files, fingerprint, work_dir)
+  .Call(C_gact_gwas_check_ids, index, as.character(ga$rsids))
   dir.create(recipe_dir, showWarnings = FALSE)
   if (!dir.exists(recipe_dir)) stop("Cannot create database recipe directory")
   active <- which(lengths(jobs) > 0L)
@@ -3927,11 +3962,12 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       file <- paste0(base, ".txt.gz")
       qc <- paste0(base, ".qc.json")
       recipe <- jsonlite::read_json(job$recipe_path)
-      if (!identical(unname(tools::md5sum(job$file)), recipe$input_md5)) stop("Input checksum changed before staging")
+      if (!identical(.gact_gwas_stamp(job$file), job$input_stamp)) stop("Verified input changed before staging")
       .Call(C_gact_gwas_stage, index, job$file, file, qc,
             unlist(recipe$inspection$headers, use.names = FALSE),
             .gact_cpp_gwas_mapping(recipe), identical(recipe$strand, "forward"),
             job$lift_index, identical(recipe$p_scale, "neglog10p"))
+      if (!identical(.gact_gwas_stamp(job$file), job$input_stamp)) stop("Verified input changed during staging")
       metrics <- jsonlite::read_json(qc, simplifyVector = TRUE)
       checksum <- unname(tools::md5sum(file))
       stopifnot(!is.na(checksum), metrics$n_final > 0,
@@ -3952,8 +3988,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
       "C++ worker exited before producing a validated result"
   }
   if (!any(passed)) return(list(GAlist = ga, report = report))
-  if (!identical(fingerprint, tools::md5sum(files))) stop("Marker catalog changed during staging")
-  result <- tryCatch(.gact_publish_cpp_gwas(ga, descriptor, staged[passed]),
+  if (!identical(fingerprint, .gact_gwas_stamp(files))) stop("Marker catalog changed during staging")
+  result <- tryCatch(.gact_publish_cpp_gwas(ga, descriptor, staged[passed], descriptor_stamp),
                      error = function(e) e)
   if (inherits(result, "error")) {
     report$issues[active[passed]] <- conditionMessage(result)
@@ -3967,7 +4003,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     for (field in c("n_input", "n_final", "n_dropped", "n_flipped")) {
       report[[field]][i] <- item$qc[[field]]
     }
-    cleanup <- .gact_gwas_cleanup_download(item$recipe)
+    cleanup <- .gact_gwas_cleanup_download(item$recipe, item$input_stamp)
     if (!is.null(cleanup)) {
       report$cleanup[i] <- cleanup$status
       if (length(cleanup$warning)) {
@@ -3979,7 +4015,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
   list(GAlist = result$GAlist, report = report)
 }
 
-.gact_publish_cpp_gwas <- function(ga, descriptor, staged) {
+.gact_publish_cpp_gwas <- function(ga, descriptor, staged, descriptor_stamp = NULL) {
   gstat <- ga$dirs[["gstat"]]
   inventory <- file.path(gstat, "GWAS_information.csv")
   stage <- file.path(gstat, ".gact-import.lock")
@@ -4000,7 +4036,7 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     unlink(temp_rds)
     unlink(stage, recursive = TRUE)
   }, add = TRUE)
-  current <- readRDS(descriptor)
+  current <- if (identical(descriptor_stamp, .gact_gwas_stamp(descriptor))) ga else readRDS(descriptor)
   if (!identical(current$study, ga$study) || !identical(current$dirs, ga$dirs) ||
       !identical(current$rsids, ga$rsids)) stop("Database changed while studies were staging. Retry the batch")
   ids <- as.character(current$study$id)
@@ -4048,7 +4084,8 @@ runGWASManifest <- function(manifest, descriptor, data_dir = NULL, out_dir = NUL
     }
     for (pair in list(c(item$staged, paste0(name, ".gz")), c(item$qc_file, qc))) {
       from <- file.path(stage, pair[2L])
-      if (!file.copy(pair[1L], from)) stop("Cannot stage ", pair[2L], " for publication")
+      if (!suppressWarnings(file.rename(pair[1L], from)) && !file.copy(pair[1L], from))
+        stop("Cannot stage ", pair[2L], " for publication")
       source <- c(source, from)
       destination <- c(destination, file.path(gstat, pair[2L]))
     }

@@ -34,6 +34,34 @@ cpp_gwas_fixture <- function() {
        files = files, mapping = mapping)
 }
 
+test_that("a warm index is reused and stale catalogs and changed inputs are detected", {
+  x <- cpp_gwas_fixture()
+  on.exit(unlink(x$root, recursive = TRUE))
+  catalog <- file.path(x$ga$dirs[["marker"]], c("markers.txt.gz", "cpra.txt.gz"))
+  index <- function() .gact_cached_gwas_index(catalog, .gact_gwas_stamp(catalog), x$root)
+  first <- index()
+  stamp <- .gact_gwas_stamp(first)
+  expect_identical(index(), first)
+  expect_identical(.gact_gwas_stamp(first), stamp)
+  expect_error(.Call(C_gact_gwas_check_ids, first, rev(x$ga$rsids)), "GAlist disagree")
+  Sys.setFileTime(catalog[1L], Sys.time() - 60)
+  expect_false(identical(index(), first))
+
+  checks <- new.env(parent = emptyenv())
+  row <- x$manifest[1L, , drop = FALSE]
+  original <- tools::md5sum
+  reads <- 0L
+  local_mocked_bindings(md5sum = function(files) {
+    reads <<- reads + 1L
+    original(files)
+  }, .package = "tools")
+  input <- .gact_gwas_manifest_file(row, x$ga$dirs[["download"]], checks)
+  expect_identical(.gact_gwas_manifest_file(row, x$ga$dirs[["download"]], checks), input)
+  expect_equal(reads, 1L)
+  writeLines("changed", input)
+  expect_error(.gact_gwas_manifest_file(row, x$ga$dirs[["download"]], checks), "MD5")
+})
+
 test_that("native staging publishes verified recipes and reads both studies", {
   x <- cpp_gwas_fixture()
   on.exit(unlink(x$root, recursive = TRUE))
@@ -59,8 +87,8 @@ test_that("native staging publishes verified recipes and reads both studies", {
     if (identical(to, x$descriptor)) {
       work <- setdiff(list.files(scratch, full.names = TRUE), file.path(scratch, "keep.me"))
       expect_length(work, 1L)
-      expect_true(file.exists(file.path(work, "marker-index.bin")))
-      expect_length(list.files(work, pattern = "\\.txt\\.gz$"), 2L)
+      expect_length(Sys.glob(file.path(x$ga$dirs[["marker"]], "gwas-index-v1-*", "index.bin")), 1L)
+      expect_length(list.files(x$ga$dirs[["gstat"]], pattern = "^GWAS.*\\.txt\\.gz$"), 2L)
       writes <<- writes + 1L
       if (fail) stop("Simulated batch descriptor failure")
     }

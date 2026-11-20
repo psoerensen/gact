@@ -66,7 +66,8 @@ rows with and without sample sizes as \code{n_with_sample_size} and
 
 \item{scratch_dir}{Parent directory for temporary C++ working files.
 Defaults to SLURM_TMPDIR when available, or R's temporary directory.
-Each run removes its own working directory when it exits.}
+Each run removes its own working directory when it exits. A writable marker
+directory caches the reusable C++ index across imports.}
 
 \item{liftover_map}{Directory from \code{\link[=buildLiftoverMap]{buildLiftoverMap()}}. The C++ engine
 automatically uses the installed map for GRCh37 inputs targeting GRCh38.
