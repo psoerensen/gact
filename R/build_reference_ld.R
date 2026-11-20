@@ -375,6 +375,129 @@ prepareLD <- function(GAlist, ancestry = "EUR", nthreads = 1L, window_cm = 1,
   GAlist
 }
 
+#' Prepare the local HapMap3 reference for ordinary LDSC
+#'
+#' @param GAlist Human database with an installed aligned 1000G ancestry panel and genetic map.
+#' @param ancestry One of EUR, AFR, EAS, SAS or AMR.
+#' @param nthreads Number of genotype computation threads.
+#' @param hm3_rsids Optional HapMap3 marker IDs. By default use the rsIDs from
+#'   the checksum-pinned Pan-UKB EUR HapMap3 resource matched to this release.
+#' @param overwrite Recompute an existing reference.
+#' @return GAlist with the reference path under `ldscPanels`.
+#' @details For each HapMap3 regression SNP, sum finite-sample corrected squared
+#'   correlations within 1 cM over variable panel markers with MAF above 1%.
+#'   A second sum over regression SNPs supplies the LD weights. Exclude the
+#'   extended MHC (chr6, 25-34 Mb inclusive) from regression and weight SNPs.
+#'   The common-marker count is the number of reference SNPs with MAF above 5%.
+#' @export
+prepareLDSC <- function(GAlist, ancestry = "EUR", nthreads = 1L, hm3_rsids = NULL,
+                        overwrite = FALSE) {
+  ancestry <- match.arg(ancestry, c("EUR", "AFR", "EAS", "SAS", "AMR"))
+  build <- .gact_catalog_build(GAlist)
+  if (length(build) != 1L || !build %in% c("GRCh37", "GRCh38"))
+    stop("prepareLDSC requires a human panel with a known build.")
+  GAlist$metadata$build <- build
+  if (length(nthreads) != 1L || !is.numeric(nthreads) || !is.finite(nthreads) ||
+      nthreads < 1 || nthreads != floor(nthreads)) stop("Expected a positive thread count.")
+  directory <- GAlist$dirs[["marker"]]
+  prefix <- file.path(directory, paste0("g1000_", tolower(ancestry)))
+  files <- stats::setNames(paste0(prefix, c(".bed", ".bim", ".fam")), c("bed", "bim", "fam"))
+  stamps <- .gact_ld_stamps(files)
+  source <- "caller"
+  if (is.null(hm3_rsids)) {
+    GAlist <- .gact_install_panukb_scores(GAlist, "EUR")
+    hm3_rsids <- data.table::fread(.gact_panukb_files(directory, "EUR"), select = "rsids")$rsids
+    source <- "Pan-UKB EUR HapMap3 rsIDs"
+  }
+  if (!is.character(hm3_rsids) || !length(hm3_rsids) || anyNA(hm3_rsids) ||
+      any(!nzchar(hm3_rsids)) || anyDuplicated(hm3_rsids)) stop("Expected unique HapMap3 rsIDs.")
+  selection <- intersect(hm3_rsids, GAlist$rsids)
+  if (length(selection) < 3L) stop("Too few HapMap3 SNPs match the catalog.")
+  settings <- list(version = 1L, build = build, ancestry = ancestry, source = source,
+    hm3_md5 = as.character(openssl::md5(paste(sort(selection, method = "radix"), collapse = "\n"))),
+    window_cm = 1, min_maf = 0.01, count_maf = 0.05, corrected = TRUE)
+  output <- file.path(directory, paste0("ldsc_1000g_", tolower(ancestry), "_hm3.rds"))
+  lock <- paste0(output, ".lock")
+  if (!dir.create(lock, showWarnings = FALSE)) stop("Cannot acquire LDSC preparation lock: ", lock)
+  on.exit(unlink(lock, recursive = TRUE), add = TRUE)
+  GAlist$ldscPanels[[ancestry]] <- list(file = output, build = build)
+  previous <- if (file.exists(output)) readRDS(output)
+  hashes <- .gact_ld_hashes(files, stamps, previous$inputs, previous$stamps)
+  if (!is.null(previous) && !overwrite) {
+    if (!identical(previous$settings, settings) || !identical(previous$inputs, hashes))
+      stop("LDSC reference inputs changed. Use overwrite = TRUE to recompute.")
+    return(GAlist)
+  }
+  # Bound genotype metadata and scratch disk by the largest chromosome.
+  chr <- sub("^chr", "", data.table::fread(files["bim"], header = FALSE, select = 1L)[[1L]])
+  runs <- rle(chr)
+  if (anyDuplicated(runs$values) || any(!runs$values %in% as.character(1:22)))
+    stop("Expected contiguous autosomes in the aligned BIM.")
+  n <- nrow(data.table::fread(files["fam"], header = FALSE, select = 1L))
+  stride <- ceiling(n / 4)
+  if (n < 3 || file.size(files["bed"]) != 3 + length(chr) * stride)
+    stop("Invalid reference BED extent or sample count.")
+  bed <- file(files["bed"], "rb")
+  on.exit(close(bed), add = TRUE)
+  magic <- readBin(bed, "raw", 3L)
+  if (!identical(magic, as.raw(c(108, 27, 1)))) stop("Expected SNP-major PLINK BED.")
+  bim <- file(files["bim"], "rt")
+  on.exit(close(bim), add = TRUE)
+  tmp <- file.path(lock, "chr")
+  rows <- vector("list", length(runs$values))
+  M <- 0
+  for (i in seq_along(rows)) {
+    chromosome <- runs$values[i]
+    message(ancestry, ": preparing HapMap3 LDSC scores for chr", chromosome)
+    len <- runs$lengths[i]
+    writeLines(readLines(bim, n = len), paste0(tmp, ".bim"))
+    out <- file(paste0(tmp, ".bed"), "wb")
+    remaining <- len * stride
+    tryCatch({
+      writeBin(magic, out)
+      while (remaining > 0) {
+        bytes <- readBin(bed, "raw", min(4194304, remaining))
+        if (!length(bytes)) stop("Truncated BED.")
+        writeBin(bytes, out)
+        remaining <- remaining - length(bytes)
+      }
+    }, finally = close(out))
+    args <- list(bedfiles = paste0(tmp, ".bed"), famfiles = files[["fam"]], nthreads = nthreads)
+    if ("companion" %in% names(formals(gbase::gprep))) args["companion"] <- list(NULL)
+    gl <- do.call(gbase::gprep, args)
+    cm <- gl$map[[1L]]
+    if (any(!is.finite(cm)) || is.unsorted(cm) || (len > 1 && cm[1L] == cm[len]))
+      stop("Expected a populated, ordered genetic map on chromosome ", chromosome, ".")
+    # Integer allele counts make strict 1% and 5% boundaries strand-independent.
+    copies <- 2 * (gl$n0[[1L]] + gl$n1[[1L]] + gl$n2[[1L]])
+    minor <- 2 * pmin(gl$n0[[1L]], gl$n2[[1L]]) + gl$n1[[1L]]
+    variable <- gl$het[[1L]] < 1 & 100 * minor > copies
+    M <- M + sum(variable & 20 * minor > copies)
+    ids <- gl$rsids[[1L]][variable]
+    pos <- gl$pos[[1L]][variable]
+    hm <- ids %in% selection & !(chromosome == "6" & pos >= 25e6 & pos <= 34e6)
+    if (!any(hm)) next
+    annotation <- cbind(reference = rep(1, length(ids)), hapmap3 = as.numeric(hm))
+    rownames(annotation) <- ids
+    gl <- gbase::gprep(gl, task = "ldscores", rsids = ids, annotation = annotation,
+      powers = c(U = -1), corrected = TRUE, r2 = 0, window_cm = 1, nthreads = nthreads)
+    scores <- gl$ldscore_models$scores
+    rows[[i]] <- data.frame(rsids = ids[hm], chr = as.integer(chromosome),
+      ld_score = unname(scores[hm, "reference", "U"]),
+      weight_ld = unname(scores[hm, "hapmap3", "U"]))
+  }
+  rows <- do.call(rbind, rows)
+  if (is.null(rows) || nrow(rows) < 3 || M < 1 || anyDuplicated(rows$rsids) ||
+      any(!is.finite(rows$ld_score) | !is.finite(rows$weight_ld))) stop("Invalid LDSC reference.")
+  if (!identical(stamps, .gact_ld_stamps(files))) stop("Panel changed during LDSC preparation.")
+  staged <- file.path(lock, "scores.rds")
+  saveRDS(list(settings = settings, inputs = hashes, stamps = stamps, n_samples = n,
+    marker_count = M, rows = rows), staged)
+  if (!file.rename(staged, output)) stop("Cannot publish LDSC reference.")
+  message(ancestry, ": saved ", nrow(rows), " HapMap3 scores; M_5_50 = ", M)
+  GAlist
+}
+
 # Pan-UK Biobank's published, ancestry-specific HapMap3 LD scores.
 .gact_panukb_panel <- function(ancestry) {
   ancestry <- sub("^PanUKBB-", "", ancestry)
@@ -479,7 +602,9 @@ prepareLD <- function(GAlist, ancestry = "EUR", nthreads = 1L, window_cm = 1,
 #' @param ancestry Ancestry population: EUR, EAS, SAS, AFR or AMR. AFR and AMR
 #'   support 1000G. Use `ancestry = "PanUKBB-EUR"` to select the Pan-UKB EUR scores;
 #'   AFR, AMR, CSA, EAS and MID are also supported with this prefix.
-#' @param version A character string specifying the version of the reference panel. The options are "HapMap3", "1000G", "Original" or "PanUKB". Default is "1000G", the scores selected by prepareLD().
+#' @param version Choose "HapMap3" for the regression score column saved by
+#'   prepareLDSC(), "1000G" (default) for the ordinary scores selected by
+#'   prepareLD(), "Original" or "PanUKB". Legacy HapMap3 tables are also supported.
 #' @param rsids An optional character vector of rsIDs to filter the LD scores. If not specified, all LD scores will be returned.
 #'
 #' @return A named vector of LD scores, where the names are rsIDs.
@@ -510,6 +635,18 @@ getLDscores <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="1000G", 
    if (!missing(version) && !identical(version, "PanUKB"))
      stop("The PanUKBB- ancestry prefix conflicts with the requested LD-score version.")
    version <- "PanUKB"
+ }
+ if (identical(version, "HapMap3") && ancestry %in% c("EUR", "AFR", "EAS", "SAS", "AMR")) {
+   path <- file.path(GAlist$dirs[["marker"]], paste0("ldsc_1000g_", tolower(ancestry), "_hm3.rds"))
+   if (file.exists(path)) {
+     ref <- readRDS(path)
+     if (!identical(ref$settings$build, .gact_catalog_build(GAlist)) ||
+         !identical(ref$settings$ancestry, ancestry)) stop("LDSC reference build or ancestry differs.")
+     rows <- ref$rows
+     if (!is.null(chr)) rows <- rows[rows$chr %in% chr, , drop = FALSE]
+     if (!is.null(rsids)) rows <- rows[rows$rsids %in% rsids, , drop = FALSE]
+     return(stats::setNames(rows$ld_score, rows$rsids))
+   }
  }
  if (identical(version, "PanUKB")) {
    spec <- .gact_panukb_panel(ancestry)

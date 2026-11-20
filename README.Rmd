@@ -621,10 +621,20 @@ at most 1 cM apart. The BIM supplies the genetic map and marker order.
 GAlist <- prepareLD(GAlist, ancestry = "EUR", nthreads = 16)
 scores <- gact::getLDscores(GAlist, ancestry = "EUR")
 
+# Prepare once for ordinary LDSC on this population's 1000G genotypes.
+GAlist <- prepareLDSC(GAlist, ancestry = "EUR", nthreads = 16)
+
 # Optional Pan-UK Biobank HapMap3 scores, matched to the release by rsID.
 GAlist <- downloadDB(GAlist, what = "panukb-ldscores", ancestry = "PanUKBB-EUR")
 pan_scores <- getLDscores(GAlist, ancestry = "PanUKBB-EUR")
 ```
+
+`prepareLDSC()` saves HapMap3 regression scores, LD weights and the panel's
+MAF-above-5% marker count together in `marker/ldsc_1000g_eur_hm3.rds` for
+EUR. It uses the published HapMap3 rsIDs for selection and computes both score
+columns from the local genotypes. Read the regression column with
+`getLDscores(GAlist, version = "HapMap3")`. gminer uses the full reference for
+ordinary LDSC. Preparing this reference does not require a sparse LD panel.
 
 Set `r2 = 0.00001` to filter stored pairs and their contributions to the
 scores. Set `rsids` to compute LD and scores within a particular marker set.

@@ -21,7 +21,9 @@ getLDscores(
 support 1000G. Use \code{ancestry = "PanUKBB-EUR"} to select the Pan-UKB EUR scores;
 AFR, AMR, CSA, EAS and MID are also supported with this prefix.}
 
-\item{version}{A character string specifying the version of the reference panel. The options are "HapMap3", "1000G", "Original" or "PanUKB". Default is "1000G", the scores selected by prepareLD().}
+\item{version}{Choose "HapMap3" for the regression score column saved by
+prepareLDSC(), "1000G" (default) for ordinary scores selected by prepareLD(),
+"Original" or "PanUKB". Legacy HapMap3 tables are also supported.}
 
 \item{rsids}{An optional character vector of rsIDs to filter the LD scores. If not specified, all LD scores will be returned.}
 }
