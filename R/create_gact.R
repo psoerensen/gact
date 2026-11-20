@@ -461,6 +461,7 @@ list_gact_versions <- function() {
 #' @param min_interactions Minimum number of interactions for filtering STRING/STITCH data.
 #' @param archive For code{what = "liftover"}, a local archive or HTTPS URL
 #'   from [packageLiftoverMap()]. Defaults to the configured release bundle.
+#' @param ancestry For `what = "panukb-ldscores"`, a population such as `"PanUKBB-EUR"` (default EUR).
 #' @param sha256 Expected SHA-256 of the liftover archive. A local archive
 #'   can use its accompanying code{.sha256} file.
 #'
@@ -468,9 +469,10 @@ list_gact_versions <- function() {
 #' @export
 downloadDB <- function(GAlist = NULL, what = NULL,
                        min_combined_score = 900, min_interactions = 5,
-                       archive = NULL, sha256 = NULL) {
+                       archive = NULL, sha256 = NULL, ancestry = "EUR") {
 
  if (is.null(what)) stop("Please specify what to download, e.g. what='gsets'")
+ if (identical(what, "panukb-ldscores")) return(.gact_install_panukb_scores(GAlist, ancestry))
  if (identical(what, "liftover")) {
   dest <- .gact_install_liftover_map(GAlist, archive, sha256)
   source <- archive %||% .gact_version_metadata(GAlist$version)$sources[["liftover"]]

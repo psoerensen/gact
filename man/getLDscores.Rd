@@ -18,9 +18,10 @@ getLDscores(
 \item{chr}{Optional chromosome filter.}
 
 \item{ancestry}{Ancestry population: EUR, EAS, SAS, AFR or AMR. AFR and AMR
-currently support \code{version = "1000G"} only.}
+support 1000G. Use \code{ancestry = "PanUKBB-EUR"} to select the Pan-UKB EUR scores;
+AFR, AMR, CSA, EAS and MID are also supported with this prefix.}
 
-\item{version}{A character string specifying the version of the reference panel. The options are "HapMap3", "1000G", or "Original". Default is "1000G", the scores selected by prepareLD().}
+\item{version}{A character string specifying the version of the reference panel. The options are "HapMap3", "1000G", "Original" or "PanUKB". Default is "1000G", the scores selected by prepareLD().}
 
 \item{rsids}{An optional character vector of rsIDs to filter the LD scores. If not specified, all LD scores will be returned.}
 }

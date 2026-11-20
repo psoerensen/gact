@@ -696,6 +696,10 @@ at most 1 cM apart. The BIM supplies the genetic map and marker order.
 ```r
 GAlist <- prepareLD(GAlist, ancestry = "EUR", nthreads = 16)
 scores <- gact::getLDscores(GAlist, ancestry = "EUR")
+
+# Optional Pan-UK Biobank HapMap3 scores, matched to the release by rsID.
+GAlist <- downloadDB(GAlist, what = "panukb-ldscores", ancestry = "PanUKBB-EUR")
+pan_scores <- getLDscores(GAlist, ancestry = "PanUKBB-EUR")
 ```
 
 Set `r2 = 0.00001` to filter stored pairs and their contributions to the

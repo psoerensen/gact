@@ -375,6 +375,101 @@ prepareLD <- function(GAlist, ancestry = "EUR", nthreads = 1L, window_cm = 1,
   GAlist
 }
 
+# Pan-UK Biobank's published, ancestry-specific HapMap3 LD scores.
+.gact_panukb_panel <- function(ancestry) {
+  ancestry <- sub("^PanUKBB-", "", ancestry)
+  manifest <- system.file("extdata", "panukb-ldscores.tsv", package = "gact", mustWork = TRUE)
+  panels <- utils::read.delim(manifest, stringsAsFactors = FALSE)
+  if (length(ancestry) != 1L || !ancestry %in% panels$ancestry)
+    stop("Choose one Pan-UKB ancestry: ", paste(panels$ancestry, collapse = ", "), ".")
+  panels[panels$ancestry == ancestry, , drop = FALSE]
+}
+
+.gact_panukb_files <- function(directory, ancestry) {
+  file.path(directory, paste0("markers_panukb_", tolower(ancestry), "_hm3.txt.gz"))
+}
+
+.gact_panukb_table <- function(path, catalog) {
+  scores <- data.table::fread(path, select = c("SNP", "L2"))
+  if (!identical(names(scores), c("SNP", "L2")) || !is.numeric(scores$L2))
+    stop("Invalid Pan-UKB score columns.")
+  repeated <- duplicated(scores$SNP) | duplicated(scores$SNP, fromLast = TRUE)
+  valid <- grepl("^rs[0-9]+$", scores$SNP) & is.finite(scores$L2)
+  counts <- list(input = nrow(scores), invalid = sum(!valid),
+                 ambiguous_source = sum(valid & repeated))
+  scores <- scores[valid & !repeated]
+  markers <- data.table::fread(catalog, select = c("rsids", "chr", "pos"))
+  if (!identical(names(markers), c("rsids", "chr", "pos"))) stop("Invalid marker catalog.")
+  markers <- markers[markers$rsids %in% scores$SNP]
+  at <- match(scores$SNP, markers$rsids)
+  ambiguous <- scores$SNP %in% markers$rsids[duplicated(markers$rsids)]
+  counts$outside_backbone <- sum(is.na(at))
+  counts$ambiguous_backbone <- sum(ambiguous)
+  keep <- !is.na(at) & !ambiguous
+  if (!any(keep)) stop("No unambiguous Pan-UKB rsIDs match the marker catalog.")
+  rows <- markers[at[keep]]
+  chr <- suppressWarnings(as.integer(sub("^chr", "", rows$chr, ignore.case = TRUE)))
+  if (anyNA(chr) || any(!chr %in% 1:22) || anyNA(rows$pos) || any(rows$pos <= 0))
+    stop("Invalid autosomal coordinates in matched marker catalog.")
+  data.table::set(rows, j = "chr", value = chr)
+  data.table::set(rows, j = "ldscores", value = scores$L2[keep])
+  data.table::setorder(rows, chr, pos, rsids)
+  counts$matched <- nrow(rows)
+  list(rows = rows, counts = counts)
+}
+
+.gact_install_panukb_scores <- function(GAlist, ancestry) {
+  spec <- .gact_panukb_panel(ancestry)
+  ancestry <- spec$ancestry
+  build <- .gact_catalog_build(GAlist)
+  if (is.null(build) || !build %in% c("GRCh37", "GRCh38")) stop("Expected a human marker catalog.")
+  directory <- GAlist$dirs[["marker"]]
+  catalog <- file.path(directory, "markers.txt.gz")
+  if (!file.exists(catalog)) stop("Install the release marker catalog first.")
+  output <- .gact_panukb_files(directory, ancestry)
+  receipt <- paste0(output, ".json")
+  names <- paste0("UKBB.", ancestry, c(".rsid.l2.ldscore.gz", ".l2.M_5_50"))
+  urls <- paste0("https://pan-ukb-us-east-1.s3.amazonaws.com/ld_release/", names)
+  expected <- c(spec$scores_sha256, spec$count_sha256)
+  catalog_md5 <- unname(tools::md5sum(catalog))
+  old <- if (file.exists(receipt)) jsonlite::read_json(receipt, simplifyVector = TRUE)
+  reusable <- file.exists(output) && identical(old$source, "PanUKB") &&
+    identical(old$build, build) && identical(old$ancestry, ancestry) &&
+    identical(old$catalog_md5, catalog_md5) && identical(old$input_sha256, expected) &&
+    identical(old$marker_count, spec$marker_count) && identical(old$md5, unname(tools::md5sum(output)))
+  if (!reusable) {
+    stage <- tempfile(".panukb-", tmpdir = directory)
+    if (!dir.create(stage)) stop("Cannot stage Pan-UKB scores.")
+    on.exit(unlink(stage, recursive = TRUE))
+    inputs <- file.path(stage, names)
+    for (i in seq_along(urls)) {
+      message("Downloading ", names[i])
+      curl::curl_download(urls[i], inputs[i], mode = "wb")
+      if (.gact_sha256_file(inputs[i]) != expected[i]) stop("SHA-256 mismatch for ", names[i])
+    }
+    count <- scan(inputs[2L], what = integer(), quiet = TRUE)
+    if (!identical(count, spec$marker_count)) stop("Invalid Pan-UKB M_5_50.")
+    result <- .gact_panukb_table(inputs[1L], catalog)
+    plain <- file.path(stage, "scores.tsv")
+    data.table::fwrite(result$rows, plain, sep = "\t")
+    compressed <- paste0(plain, ".gz")
+    R.utils::gzip(plain, destname = compressed)
+    metadata <- list(source = "PanUKB", ancestry = ancestry, build = build,
+      urls = urls, input_sha256 = expected, catalog_md5 = catalog_md5,
+      marker_count = count, counts = result$counts, md5 = unname(tools::md5sum(compressed)))
+    staged_receipt <- file.path(stage, "receipt.json")
+    jsonlite::write_json(metadata, staged_receipt, auto_unbox = TRUE, pretty = TRUE)
+    if (!file.rename(compressed, output) || !file.rename(staged_receipt, receipt))
+      stop("Could not publish Pan-UKB scores and receipt. Retry downloadDB().")
+  }
+  message(if (reusable) "Reusing " else "Installed ", basename(output))
+  GAlist <- log_download(GAlist, "panukb-ldscores", "PanUKB", urls, directory, "success")
+  entries <- tail(seq_len(nrow(GAlist$downloads)), 2L)
+  GAlist$downloads$dest_file[entries] <- output
+  GAlist$downloads$file_size_MB[entries] <- file.size(output) / 1e6
+  GAlist
+}
+
 #' Retrieve Linkage Disequilibrium (LD) Scores for Specific Genetic Markers
 #'
 #' This function retrieves LD scores for specified genetic markers based on the population ancestry and version of the reference panel. The function reads in marker files and extracts LD scores, allowing for optional filtering by specific rsIDs.
@@ -382,8 +477,9 @@ prepareLD <- function(GAlist, ancestry = "EUR", nthreads = 1L, window_cm = 1,
 #' @param GAlist A list containing directory paths where marker data is stored. It is assumed that `GAlist$dirs["marker"]` points to the correct directory.
 #' @param chr Optional chromosome filter.
 #' @param ancestry Ancestry population: EUR, EAS, SAS, AFR or AMR. AFR and AMR
-#'   currently support `version = "1000G"` only.
-#' @param version A character string specifying the version of the reference panel. The options are "HapMap3", "1000G", or "Original". Default is "1000G", the scores selected by prepareLD().
+#'   support 1000G. Use `ancestry = "PanUKBB-EUR"` to select the Pan-UKB EUR scores;
+#'   AFR, AMR, CSA, EAS and MID are also supported with this prefix.
+#' @param version A character string specifying the version of the reference panel. The options are "HapMap3", "1000G", "Original" or "PanUKB". Default is "1000G", the scores selected by prepareLD().
 #' @param rsids An optional character vector of rsIDs to filter the LD scores. If not specified, all LD scores will be returned.
 #'
 #' @return A named vector of LD scores, where the names are rsIDs.
@@ -410,36 +506,37 @@ getLDscores <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="1000G", 
   stop("Error: GAlist or GAlist$dirs['marker'] is missing.")
  }
 
- # Check if ancestry and version are valid
- valid_ancestries <- c("EUR", "EAS", "SAS", "AFR", "AMR")
- valid_versions <- c("HapMap3", "1000G", "Original")
-
- if (!(ancestry %in% valid_ancestries)) {
-  stop("Error: Invalid ancestry. Choose from EUR, EAS, SAS, AFR or AMR.")
+ if (isTRUE(startsWith(as.character(ancestry), "PanUKBB-"))) {
+   if (!missing(version) && !identical(version, "PanUKB"))
+     stop("The PanUKBB- ancestry prefix conflicts with the requested LD-score version.")
+   version <- "PanUKB"
  }
-
- if (!(version %in% valid_versions)) {
-  stop("Error: Invalid version. Choose from 'HapMap3', '1000G', or 'Original'.")
+ if (identical(version, "PanUKB")) {
+   spec <- .gact_panukb_panel(ancestry)
+   ancestry <- spec$ancestry
+   marker_file_path <- .gact_panukb_files(GAlist$dirs[["marker"]], ancestry)
+   if (!file.exists(paste0(marker_file_path, ".json")) || !file.exists(marker_file_path))
+     stop("Install the panel with downloadDB(GAlist, what = 'panukb-ldscores', ancestry = '", ancestry, "').")
+ } else {
+   if (!ancestry %in% c("EUR", "EAS", "SAS", "AFR", "AMR"))
+     stop("Error: Invalid ancestry. Choose from EUR, EAS, SAS, AFR or AMR.")
+   if (!version %in% c("HapMap3", "1000G", "Original"))
+     stop("Error: Invalid version. Choose HapMap3, 1000G, Original or PanUKB.")
+   file_name <- switch(
+     paste(ancestry, version, sep = "_"),
+     "EUR_HapMap3" = "markers_1000G_eur_hm3.txt.gz",
+     "EAS_HapMap3" = "markers_1000G_eas_hm3.txt.gz",
+     "SAS_HapMap3" = "markers_1000G_sas_hm3.txt.gz",
+     "EUR_1000G" = "markers_1000G_eur_filtered.txt.gz",
+     "EAS_1000G" = "markers_1000G_eas_filtered.txt.gz",
+     "SAS_1000G" = "markers_1000G_sas_filtered.txt.gz",
+     "AFR_1000G" = "markers_1000G_afr_filtered.txt.gz",
+     "AMR_1000G" = "markers_1000G_amr_filtered.txt.gz",
+     "EUR_Original" = "markers_1000G_eur_w_ld.txt.txt.gz",
+     stop("Error: No marker file found for the selected ancestry and version.")
+    )
+   marker_file_path <- file.path(GAlist$dirs["marker"], file_name)
  }
-
- # Define the file path based on ancestry and version
- file_name <- switch(
-  paste(ancestry, version, sep = "_"),
-  "EUR_HapMap3" = "markers_1000G_eur_hm3.txt.gz",
-  "EAS_HapMap3" = "markers_1000G_eas_hm3.txt.gz",
-  "SAS_HapMap3" = "markers_1000G_sas_hm3.txt.gz",
-  "EUR_1000G" = "markers_1000G_eur_filtered.txt.gz",
-  "EAS_1000G" = "markers_1000G_eas_filtered.txt.gz",
-  "SAS_1000G" = "markers_1000G_sas_filtered.txt.gz",
-  "AFR_1000G" = "markers_1000G_afr_filtered.txt.gz",
-  "AMR_1000G" = "markers_1000G_amr_filtered.txt.gz",
-  "EUR_Original" = "markers_1000G_eur_w_ld.txt.txt.gz",
-  stop("Error: No marker file found for the selected ancestry and version.")
- )
-
- # Read the marker file
- marker_file_path <- file.path(GAlist$dirs["marker"], file_name)
-
  if (version == "1000G") {
    registered <- GAlist$ldscorePanels[[ancestry]]$file
    default <- sub("[.]txt[.]gz$", ".1cm.txt.gz", marker_file_path)
@@ -455,6 +552,10 @@ getLDscores <- function(GAlist=NULL, chr=NULL, ancestry="EUR", version="1000G", 
  build <- .gact_catalog_build(GAlist)
  if (file.exists(receipt)) {
   metadata <- jsonlite::read_json(receipt, simplifyVector = TRUE)
+  if (identical(version, "PanUKB") &&
+      (!identical(metadata$source, version) || !identical(metadata$marker_count, spec$marker_count) ||
+       !identical(metadata$input_sha256, c(spec$scores_sha256, spec$count_sha256))))
+    stop("Invalid Pan-UKB LD-score receipt.")
   if ((!is.null(build) && !identical(metadata$build, build)) ||
       !identical(metadata$ancestry, ancestry))
    stop("LD-score build or ancestry differs from the database.")

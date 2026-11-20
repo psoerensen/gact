@@ -10,7 +10,8 @@ downloadDB(
   min_combined_score = 900,
   min_interactions = 5,
   archive = NULL,
-  sha256 = NULL
+  sha256 = NULL,
+  ancestry = "EUR"
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ GRCh38 release.}
 
 \item{archive}{For \code{what = "liftover"}, a local archive or HTTPS URL
 from \code{\link[=packageLiftoverMap]{packageLiftoverMap()}}. Defaults to the configured release bundle.}
+
+\item{ancestry}{For \code{what = "panukb-ldscores"}, a population such as \code{"PanUKBB-EUR"} (default EUR).}
 
 \item{sha256}{Expected SHA-256 of the liftover archive. A local archive
 can use its accompanying \code{.sha256} file.}
